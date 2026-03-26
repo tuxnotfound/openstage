@@ -4,7 +4,10 @@ class ApplicationController < ActionController::Base
   private
 
   def current_user
-    @current_user ||= User.find_by(id: session[:user_id]) if session[:user_id]
+    return nil unless session[:user_id]
+    user = User.find_by(id: session[:user_id])
+    return nil if user&.deleted?
+    @current_user ||= user
   end
 
   def user_signed_in?

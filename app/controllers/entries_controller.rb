@@ -12,6 +12,12 @@ class EntriesController < ApplicationController
     end
   end
 
+  def update
+    entry = current_user.entries.find(params[:id])
+    entry.update!(hidden: params[:hidden])
+    redirect_to dashboard_path
+  end
+
   def destroy
     entry = current_user.entries.find(params[:id])
     entry.destroy
