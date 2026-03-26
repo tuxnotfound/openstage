@@ -13,6 +13,9 @@ Rails.application.routes.draw do
   # Dashboard
   get "/dashboard", to: "dashboard#index"
 
+  # Entries
+  resources :entries, only: [ :create, :destroy ]
+
   # Health check
   get "up" => "rails/health#show", as: :rails_health_check
 
