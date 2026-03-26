@@ -1,0 +1,61 @@
+<%#
+  Day 3: entry is an Entry record with fields:
+    entry_type: shipped | milestone | note | link | repo_created | released | posted
+    source:     github | twitter | manual
+    title:      string
+    body:       text (optional)
+    url:        string (optional)
+    occurred_at: datetime
+%>
+
+<% type   = entry.try(:entry_type) || entry[:entry_type] %>
+<% source = entry.try(:source) || entry[:source] %>
+<% title  = entry.try(:title) || entry[:title] %>
+<% body   = entry.try(:body) || entry[:body] %>
+<% url    = entry.try(:url) || entry[:url] %>
+<% ts     = entry.try(:occurred_at) || entry[:occurred_at] %>
+
+<div class="group flex gap-4 py-4 border-b border-gray-100 last:border-0">
+  <!-- Icon -->
+  <div class="shrink-0 mt-0.5">
+    <%= render "profiles/entry_icon", type: type %>
+  </div>
+
+  <!-- Content -->
+  <div class="flex-1 min-w-0">
+    <div class="flex items-start justify-between gap-4">
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 mb-1">
+          <%= render "profiles/entry_badge", type: type, source: source %>
+        </div>
+
+        <p class="text-sm font-medium text-gray-900 leading-snug"><%= title %></p>
+
+        <% if body.present? %>
+          <p class="text-sm text-gray-500 mt-1 leading-relaxed line-clamp-3"><%= body %></p>
+        <% end %>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <% if ts.present? %>
+          <time datetime="<%= ts.iso8601 %>"
+                title="<%= ts.strftime("%B %-d, %Y at %H:%M") %>"
+                class="text-xs text-gray-400 whitespace-nowrap">
+            <%= time_ago_in_words(ts) %> ago
+          </time>
+        <% end %>
+
+        <% if url.present? %>
+          <a href="<%= url %>"
+             target="_blank"
+             rel="noopener"
+             class="text-gray-300 hover:text-gray-600 transition-colors opacity-0 group-hover:opacity-100">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
+            </svg>
+          </a>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

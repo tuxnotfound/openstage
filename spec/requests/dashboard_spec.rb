@@ -1,10 +1,12 @@
-require 'rails_helper'
+require "rails_helper"
 
-RSpec.describe "Dashboards", type: :request do
-  describe "GET /index" do
-    it "returns http success" do
-      get "/dashboard/index"
-      expect(response).to have_http_status(:success)
+RSpec.describe "Dashboard", type: :request do
+  describe "GET /dashboard" do
+    context "when not signed in" do
+      it "redirects to root" do
+        get "/dashboard"
+        expect(response).to redirect_to(root_path)
+      end
     end
   end
 end

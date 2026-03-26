@@ -1,0 +1,15 @@
+<div class="text-center py-16">
+  <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/>
+    </svg>
+  </div>
+  <p class="text-gray-900 font-medium">Nothing here yet</p>
+  <p class="text-gray-400 text-sm mt-1">Connect GitHub or post a manual update to start the timeline.</p>
+
+  <% if user_signed_in? && current_user == @user %>
+    <div class="flex items-center justify-center gap-3 mt-6">
+      <%= link_to "Go to dashboard", dashboard_path, class: "bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors" %>
+    </div>
+  <% end %>
+</div>

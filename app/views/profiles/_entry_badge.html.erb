@@ -1,0 +1,32 @@
+<% label_text = case type&.to_s
+  when "shipped"      then "shipped"
+  when "milestone"    then "milestone"
+  when "released"     then "released"
+  when "repo_created" then "new repo"
+  when "posted"       then "posted"
+  when "link"         then "link"
+  when "note"         then "note"
+  else type.to_s
+  end
+
+  label_class = case type&.to_s
+  when "shipped"      then "text-blue-600 bg-blue-50"
+  when "milestone"    then "text-amber-600 bg-amber-50"
+  when "released"     then "text-green-600 bg-green-50"
+  when "repo_created" then "text-violet-600 bg-violet-50"
+  when "posted"       then "text-sky-600 bg-sky-50"
+  when "link"         then "text-rose-600 bg-rose-50"
+  else                     "text-gray-500 bg-gray-100"
+  end
+
+  source_label = case source&.to_s
+  when "github"  then "GitHub"
+  when "twitter" then "X / Twitter"
+  else nil
+  end
+%>
+
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium <%= label_class %>"><%= label_text %></span>
+<% if source_label %>
+  <span class="text-xs text-gray-400"><%= source_label %></span>
+<% end %>
