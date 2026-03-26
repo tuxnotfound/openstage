@@ -5,6 +5,7 @@ class ProfilesController < ApplicationController
       render file: Rails.root.join("public/404.html"), status: :not_found, layout: false
       return
     end
-    @entries = []
+
+    @entries = @user.entries.visible.chronological
   end
 end

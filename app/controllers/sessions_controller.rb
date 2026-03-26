@@ -16,6 +16,7 @@ class SessionsController < ApplicationController
       redirect_to new_username_path
     elsif user.save
       session[:user_id] = user.id
+      GithubSyncJob.perform_later(user.id)
       redirect_to dashboard_path, notice: "Welcome back, #{user.display_name}!"
     else
       redirect_to root_path, alert: "Sign in failed. Please try again."

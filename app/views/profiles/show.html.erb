@@ -58,11 +58,11 @@
     <div class="text-xs text-gray-400 uppercase tracking-wide mt-0.5">entries</div>
   </div>
   <div>
-    <div class="text-2xl font-bold text-gray-900">0</div>
+    <div class="text-2xl font-bold text-gray-900"><%= @user.github_repos.included_repos.count %></div>
     <div class="text-xs text-gray-400 uppercase tracking-wide mt-0.5">repos</div>
   </div>
   <div>
-    <div class="text-2xl font-bold text-gray-900">0</div>
+    <div class="text-2xl font-bold text-gray-900"><%= @user.entries.visible.milestone.count %></div>
     <div class="text-xs text-gray-400 uppercase tracking-wide mt-0.5">milestones</div>
   </div>
 </div>

@@ -19,6 +19,7 @@ class UsernamesController < ApplicationController
     if user.save
       session.delete(:pending_user)
       session[:user_id] = user.id
+      GithubSyncJob.perform_later(user.id)
       redirect_to dashboard_path, notice: "Welcome to Openstage, #{user.display_name}!"
     else
       @proposed_username = params[:username]

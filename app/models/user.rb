@@ -1,6 +1,10 @@
 class User < ApplicationRecord
   USERNAME_CHANGE_COOLDOWN = 30.days
 
+  has_many :entries, dependent: :destroy
+  has_many :github_repos, dependent: :destroy
+  has_many :sync_logs, dependent: :destroy
+
   validates :github_uid, presence: true, uniqueness: true
   validates :username, presence: true, uniqueness: { case_sensitive: false },
                        format: { with: /\A[a-zA-Z0-9_-]+\z/, message: "only allows letters, numbers, hyphens, and underscores" },
