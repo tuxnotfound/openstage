@@ -1,0 +1,12 @@
+<div class="text-center py-20">
+  <h1 class="text-4xl font-bold text-gray-900 mb-4">Build in public. One link.</h1>
+  <p class="text-lg text-gray-500 mb-8 max-w-xl mx-auto">
+    Openstage aggregates your GitHub commits, tweets, and milestones into a single chronological timeline — automatically updated.
+  </p>
+
+  <% unless user_signed_in? %>
+    <%= link_to "Sign in with GitHub", "/auth/github", data: { turbo: false }, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700" %>
+  <% else %>
+    <%= link_to "Go to Dashboard", dashboard_path, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700" %>
+  <% end %>
+</div>
