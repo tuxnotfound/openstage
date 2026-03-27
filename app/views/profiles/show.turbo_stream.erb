@@ -1,0 +1,18 @@
+<%= turbo_stream.append "timeline-entries" do %>
+  <% @entries.each do |entry| %>
+    <%= render "profiles/entry_card", entry: entry %>
+  <% end %>
+<% end %>
+
+<% if @entries.next_page %>
+  <%= turbo_stream.replace "load-more" do %>
+    <div id="load-more" class="mt-6 text-center">
+      <%= link_to "Load more",
+          profile_path(@user.username, page: @entries.next_page, filter: @filter == "all" ? nil : @filter),
+          class: "text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg px-5 py-2.5 inline-block transition-colors",
+          data: { turbo_stream: true } %>
+    </div>
+  <% end %>
+<% else %>
+  <%= turbo_stream.remove "load-more" %>
+<% end %>

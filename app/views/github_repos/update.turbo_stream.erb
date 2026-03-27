@@ -1,0 +1,15 @@
+<%= turbo_stream.replace dom_id(@repo) do %>
+  <div class="flex items-center justify-between py-2">
+    <div class="min-w-0 flex-1">
+      <p class="text-sm font-medium text-gray-800 truncate"><%= @repo.name %></p>
+      <% if @repo.description.present? %>
+        <p class="text-xs text-gray-400 truncate"><%= @repo.description %></p>
+      <% end %>
+    </div>
+    <%= button_to github_repo_path(@repo), method: :patch,
+        params: { included: (!@repo.included?).to_s },
+        class: "ml-4 shrink-0 text-xs px-3 py-1 rounded-full border transition-colors #{@repo.included? ? 'border-green-300 text-green-700 bg-green-50 hover:bg-green-100' : 'border-gray-200 text-gray-400 bg-white hover:border-gray-400'}" do %>
+      <%= @repo.included? ? "Included" : "Excluded" %>
+    <% end %>
+  </div>
+<% end %>

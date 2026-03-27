@@ -13,11 +13,17 @@ Rails.application.routes.draw do
   # Dashboard
   get "/dashboard", to: "dashboard#index"
 
+  # Sync triggers
+  post "/sync/github", to: "syncs#github", as: :sync_github
+
+  # Repo management
+  resources :github_repos, only: [ :update ]
+
   # Entries
   resources :entries, only: [ :create, :update, :destroy ]
 
   # Settings
-  get  "/settings", to: "settings#show",            as: :settings
+  get "/settings", to: "settings#show",            as: :settings
   patch "/settings", to: "settings#update"
   patch "/settings/username", to: "settings#update_username", as: :settings_username
   delete "/settings", to: "settings#destroy"

@@ -5,7 +5,8 @@ class GithubSyncJob < ApplicationJob
   INITIAL_SYNC_WINDOW = 3.months
 
   def perform(user_id)
-    user = User.find(user_id)
+    user = User.find_by(id: user_id)
+    return unless user
     client = Octokit::Client.new(access_token: user.github_access_token, auto_paginate: true)
 
     log = SyncLog.create!(user: user, source: :github, status: :running, ran_at: Time.current)
@@ -24,6 +25,7 @@ class GithubSyncJob < ApplicationJob
 
       log.update!(status: :success, entries_added: entries_added)
       Rails.logger.info "[GithubSyncJob] user=#{user.username} repos=#{repos.size} entries_added=#{entries_added}"
+      GithubSyncJob.set(wait: 2.hours).perform_later(user_id)
     rescue => e
       log.update!(status: :failed, error_message: e.message)
       Rails.logger.error "[GithubSyncJob] user=#{user.username} error=#{e.message}"

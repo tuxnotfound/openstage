@@ -13,7 +13,7 @@ class User < ApplicationRecord
                        length: { minimum: 2, maximum: 39 }
   validate :username_change_cooldown, if: :username_changed?
 
-  before_save :track_username_change, if: :will_save_change_to_username?
+  before_save :track_username_change, if: -> { persisted? && will_save_change_to_username? }
 
   def self.from_github_omniauth(auth)
     user = find_or_initialize_by(github_uid: auth.uid)
@@ -40,6 +40,10 @@ class User < ApplicationRecord
   def next_username_change_at
     return nil if can_change_username?
     username_changed_at + USERNAME_CHANGE_COOLDOWN
+  end
+
+  def last_synced_at(source:)
+    sync_logs.where(source: source, status: :success).maximum(:ran_at)
   end
 
   private

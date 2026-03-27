@@ -6,6 +6,18 @@ class ProfilesController < ApplicationController
       return
     end
 
-    @entries = @user.entries.visible.chronological
+    @filter = params[:filter].presence_in(%w[shipped posted milestone note link]) || "all"
+    base = @user.entries.visible.chronological
+    filtered = @filter == "all" ? base : base.where(entry_type: @filter)
+    @entries = filtered.page(params[:page]).per(25)
+
+    @total_entries = @user.entries.visible.count
+    @repos_synced  = @user.github_repos.included_repos.count
+    @milestones    = @user.entries.visible.where(entry_type: :milestone).count
+
+    respond_to do |format|
+      format.html
+      format.turbo_stream
+    end
   end
 end

@@ -1,4 +1,5 @@
 <% content_for :title, "#{@user.display_name} (@#{@user.username}) — Openstage" %>
+<% content_for :meta_description, @user.bio.presence || "#{@user.display_name} is building in public on Openstage. #{@total_entries} entries, #{@milestones} milestones." %>
 
 <!-- Profile header -->
 <div class="flex flex-col sm:flex-row gap-6 items-start pb-8 border-b border-gray-200">
@@ -54,28 +55,48 @@
 <!-- Stats bar -->
 <div class="flex gap-8 py-5 border-b border-gray-200">
   <div>
-    <div class="text-2xl font-bold text-gray-900"><%= @entries.size %></div>
+    <div class="text-2xl font-bold text-gray-900"><%= @total_entries %></div>
     <div class="text-xs text-gray-400 uppercase tracking-wide mt-0.5">entries</div>
   </div>
   <div>
-    <div class="text-2xl font-bold text-gray-900"><%= @user.github_repos.included_repos.count %></div>
+    <div class="text-2xl font-bold text-gray-900"><%= @repos_synced %></div>
     <div class="text-xs text-gray-400 uppercase tracking-wide mt-0.5">repos</div>
   </div>
   <div>
-    <div class="text-2xl font-bold text-gray-900"><%= @user.entries.visible.milestone.count %></div>
+    <div class="text-2xl font-bold text-gray-900"><%= @milestones %></div>
     <div class="text-xs text-gray-400 uppercase tracking-wide mt-0.5">milestones</div>
   </div>
 </div>
 
-<!-- Timeline -->
-<div class="mt-8">
-  <% if @entries.empty? %>
-    <%= render "profiles/empty_state" %>
-  <% else %>
-    <div class="space-y-1">
-      <% @entries.each do |entry| %>
-        <%= render "profiles/entry_card", entry: entry %>
-      <% end %>
-    </div>
+<!-- Filter tabs -->
+<div class="flex gap-1 mt-6 border-b border-gray-100">
+  <% [["all", "All"], ["shipped", "Shipped"], ["posted", "Posted"], ["milestone", "Milestones"], ["note", "Notes"]].each do |value, label| %>
+    <%= link_to label,
+        profile_path(@user.username, filter: value == "all" ? nil : value),
+        class: "px-4 py-2 text-sm font-medium transition-colors #{@filter == value ? 'text-gray-900 border-b-2 border-gray-900 -mb-px' : 'text-gray-500 hover:text-gray-900'}",
+        data: { turbo_frame: "timeline" } %>
   <% end %>
 </div>
+
+<!-- Timeline -->
+<%= turbo_frame_tag "timeline" do %>
+  <div class="mt-6">
+    <% if @entries.empty? %>
+      <%= render "profiles/empty_state" %>
+    <% else %>
+      <div id="timeline-entries" class="space-y-1">
+        <% @entries.each do |entry| %>
+          <%= render "profiles/entry_card", entry: entry %>
+        <% end %>
+      </div>
+      <% if @entries.next_page %>
+        <div id="load-more" class="mt-6 text-center">
+          <%= link_to "Load more",
+              profile_path(@user.username, page: @entries.next_page, filter: @filter == "all" ? nil : @filter),
+              class: "text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg px-5 py-2.5 inline-block transition-colors",
+              data: { turbo_stream: true } %>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
