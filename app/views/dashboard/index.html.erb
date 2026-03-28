@@ -121,3 +121,101 @@
   <% end %>
 </div>
 
+<!-- Timeline -->
+<div class="mb-6">
+  <h2 class="text-sm font-semibold text-gray-700 mb-4">Your timeline (<%= @entries.size %>)</h2>
+
+  <% if @entries.empty? %>
+    <div class="text-center py-12 text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl">
+      Nothing here yet — post your first update above.
+    </div>
+  <% else %>
+    <div class="border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden">
+      <% @entries.each do |entry| %>
+        <div class="group flex gap-4 p-4 hover:bg-gray-50 transition-colors">
+          <div class="shrink-0 mt-0.5">
+            <%= render "profiles/entry_icon", type: entry.entry_type %>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-0.5">
+                  <%= render "profiles/entry_badge", type: entry.entry_type, source: entry.source %>
+                  <% if entry.repo_name.present? %>
+                    <span class="text-xs text-gray-400 truncate"><%= entry.repo_name %></span>
+                  <% end %>
+                </div>
+                <p class="text-sm font-medium text-gray-900"><%= entry.title %></p>
+                <% if entry.body.present? %>
+                  <p class="text-sm text-gray-500 mt-0.5 line-clamp-2"><%= entry.body %></p>
+                <% end %>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <time class="text-xs text-gray-400"><%= entry.occurred_at.strftime("%-d %b %Y") %></time>
+                <%= button_to entry_path(entry), method: :patch, params: { hidden: true },
+                    class: "text-gray-300 hover:text-gray-600 transition-colors opacity-0 group-hover:opacity-100 bg-transparent border-0 cursor-pointer p-0",
+                    title: "Hide from timeline" do %>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>
+                  </svg>
+                <% end %>
+                <% if entry.source == "manual" %>
+                  <%= button_to entry_path(entry), method: :delete,
+                      data: { turbo_confirm: "Permanently delete this entry?" },
+                      class: "text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 bg-transparent border-0 cursor-pointer p-0" do %>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                    </svg>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<!-- Hidden entries -->
+<% if @hidden_entries.any? %>
+  <div>
+    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+      Hidden (<%= @hidden_entries.size %>)
+    </h2>
+    <div class="border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden">
+      <% @hidden_entries.each do |entry| %>
+        <div class="group flex gap-4 p-4 bg-gray-50 hover:bg-gray-100 transition-colors opacity-60 hover:opacity-100">
+          <div class="shrink-0 mt-0.5">
+            <%= render "profiles/entry_icon", type: entry.entry_type %>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-700"><%= entry.title %></p>
+                <% if entry.repo_name.present? %>
+                  <p class="text-xs text-gray-400 mt-0.5"><%= entry.repo_name %></p>
+                <% end %>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <time class="text-xs text-gray-400"><%= entry.occurred_at.strftime("%-d %b %Y") %></time>
+                <%= button_to entry_path(entry), method: :patch, params: { hidden: false },
+                    class: "text-xs text-gray-500 hover:text-gray-900 bg-white border border-gray-200 px-2 py-1 rounded transition-colors",
+                    title: "Restore to timeline" do %>
+                  Restore
+                <% end %>
+                <%= button_to entry_path(entry), method: :delete,
+                    data: { turbo_confirm: "Permanently delete this entry?" },
+                    class: "text-gray-300 hover:text-red-500 transition-colors bg-transparent border-0 cursor-pointer p-0" do %>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.241-2.09-2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                  </svg>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>
