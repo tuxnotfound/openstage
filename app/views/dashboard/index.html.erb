@@ -1,221 +1,196 @@
+<% content_for :title, "Dashboard — Openstage" %>
+
+<!-- Header -->
 <div class="flex items-center justify-between mb-8">
   <h1 class="text-2xl font-bold">Dashboard</h1>
-  <%= link_to "Timeline →", profile_path(current_user.username), class: "text-sm text-gray-500 hover:text-gray-900" %>
-</div>
-
-<!-- Connected accounts -->
-<div class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
-  <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Connected accounts</h2>
-  <div class="flex flex-col gap-2">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <svg class="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
-          <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/>
-        </svg>
-        <div>
-          <p class="text-sm font-medium text-gray-900">GitHub</p>
-          <p class="text-xs text-gray-400">@<%= current_user.github_username %></p>
-        </div>
-      </div>
-      <span class="flex items-center gap-1.5 text-xs text-green-600 font-medium">
-        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-        Connected
-      </span>
-    </div>
-
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-        </svg>
-        <div>
-          <p class="text-sm font-medium text-gray-400">X / Twitter</p>
-          <p class="text-xs text-gray-300">Coming soon</p>
-        </div>
-      </div>
-      <span class="text-xs text-gray-400">Not connected</span>
-    </div>
-  </div>
-</div>
-
-<!-- GitHub repos -->
-<div class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
-  <div class="flex items-center justify-between mb-3">
-    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">GitHub repos</h2>
-    <div class="flex items-center gap-3">
+  <div class="flex items-center gap-4">
+    <div class="flex items-center gap-3 text-sm text-gray-500">
       <% if @last_github_sync %>
-        <span class="text-xs text-gray-400">Synced <%= time_ago_in_words(@last_github_sync) %> ago</span>
+        <span>Synced <%= time_ago_in_words(@last_github_sync) %> ago</span>
+      <% else %>
+        <span>Never synced</span>
       <% end %>
       <%= button_to "Sync now", sync_github_path, method: :post,
           class: "text-xs bg-gray-900 text-white px-3 py-1.5 rounded-md hover:bg-gray-700 transition-colors" %>
     </div>
+    <%= link_to "View Timeline", profile_path(current_user.username), class: "text-sm text-gray-400 hover:text-gray-900 transition-colors" %>
+  </div>
+</div>
+
+<!-- Entry composer (collapsible) -->
+<div class="mb-6" data-controller="toggle">
+  <button data-action="click->toggle#toggle"
+          class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-xl px-5 py-3.5 hover:border-gray-300 transition-colors group">
+    <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900">+ Post an update</span>
+    <svg data-toggle-target="openIcon" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+    </svg>
+    <svg data-toggle-target="closeIcon" class="w-4 h-4 text-gray-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/>
+    </svg>
+  </button>
+
+  <div data-toggle-target="content" class="hidden">
+    <div class="bg-white border border-gray-200 border-t-0 rounded-b-xl px-6 py-5">
+      <%= form_with url: entries_path, method: :post, scope: :entry do |f| %>
+        <div class="flex flex-wrap gap-2 mb-4">
+          <% [
+            ["milestone", "Milestone"],
+            ["shipped",   "Shipped"],
+            ["note",      "Note"],
+            ["link",      "Link"],
+            ["released",  "Released"],
+          ].each do |value, label| %>
+            <label class="cursor-pointer">
+              <%= f.radio_button :entry_type, value, id: "entry_type_#{value}", class: "peer sr-only", checked: value == "milestone" %>
+              <span class="peer-checked:bg-gray-900 peer-checked:text-white inline-block px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 text-gray-600 hover:border-gray-400 transition-colors">
+                <%= label %>
+              </span>
+            </label>
+          <% end %>
+        </div>
+
+        <%= f.text_field :title,
+            placeholder: "What did you do?",
+            class: "w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent mb-3" %>
+
+        <%= f.text_area :body,
+            placeholder: "More detail (optional)",
+            rows: 3,
+            class: "w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent mb-3 resize-none" %>
+
+        <div class="flex flex-col sm:flex-row gap-3 mb-4">
+          <%= f.url_field :url,
+              placeholder: "Link (optional)",
+              class: "flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent" %>
+          <%= f.datetime_local_field :occurred_at,
+              value: Time.current.strftime("%Y-%m-%dT%H:%M"),
+              class: "border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent" %>
+        </div>
+
+        <%= f.submit "Post entry",
+            class: "bg-gray-900 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors cursor-pointer" %>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Timeline + Hidden tabs -->
+<div data-controller="tabs">
+  <!-- Tab bar -->
+  <div class="flex items-center gap-1 border-b border-gray-100 mb-4">
+    <button data-tabs-target="tab"
+            data-tabs-tab="timeline"
+            data-action="click->tabs#show"
+            class="px-4 py-2 text-sm font-medium transition-colors data-[active=true]:text-gray-900 data-[active=true]:border-b-2 data-[active=true]:border-gray-900 data-[active=true]:-mb-px data-[active=false]:text-gray-500 data-[active=false]:hover:text-gray-900">
+      Timeline (<%= @entries.size %>)
+    </button>
+    <% if @hidden_entries.any? %>
+      <button data-tabs-target="tab"
+              data-tabs-tab="hidden"
+              data-action="click->tabs#show"
+              class="px-4 py-2 text-sm font-medium transition-colors data-[active=true]:text-gray-900 data-[active=true]:border-b-2 data-[active=true]:border-gray-900 data-[active=true]:-mb-px data-[active=false]:text-gray-500 data-[active=false]:hover:text-gray-900">
+        Hidden (<%= @hidden_entries.size %>)
+      </button>
+    <% end %>
   </div>
 
-  <% if @github_repos.empty? %>
-    <p class="text-sm text-gray-400">No repos synced yet.</p>
-  <% else %>
-    <div class="flex flex-col divide-y divide-gray-100">
-      <% @github_repos.each do |repo| %>
-        <%= turbo_frame_tag dom_id(repo) do %>
-          <div class="flex items-center justify-between py-2">
-            <div class="min-w-0 flex-1">
-              <p class="text-sm font-medium text-gray-800 truncate"><%= repo.name %></p>
-              <% if repo.description.present? %>
-                <p class="text-xs text-gray-400 truncate"><%= repo.description %></p>
-              <% end %>
+  <!-- Timeline panel -->
+  <div data-tabs-target="panel" data-tabs-panel="timeline">
+    <% if @entries.empty? %>
+      <div class="text-center py-12 text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl">
+        Nothing here yet — post your first update above.
+      </div>
+    <% else %>
+      <div class="border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden">
+        <% @entries.each do |entry| %>
+          <div class="group flex gap-4 p-4 hover:bg-gray-50 transition-colors">
+            <div class="shrink-0 mt-0.5">
+              <%= render "profiles/entry_icon", type: entry.entry_type %>
             </div>
-            <%= button_to github_repo_path(repo), method: :patch,
-                params: { included: (!repo.included?).to_s },
-                class: "ml-4 shrink-0 text-xs px-3 py-1 rounded-full border transition-colors #{repo.included? ? 'border-green-300 text-green-700 bg-green-50 hover:bg-green-100' : 'border-gray-200 text-gray-400 bg-white hover:border-gray-400'}" do %>
-              <%= repo.included? ? "Included" : "Excluded" %>
-            <% end %>
-          </div>
-        <% end %>
-      <% end %>
-    </div>
-  <% end %>
-</div>
-
-<!-- Entry composer -->
-<div class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-  <h2 class="text-sm font-semibold text-gray-700 mb-4">Post an update</h2>
-
-  <%= form_with url: entries_path, method: :post, scope: :entry do |f| %>
-    <div class="flex flex-wrap gap-2 mb-4">
-      <% [
-        ["milestone", "Milestone"],
-        ["shipped",   "Shipped"],
-        ["note",      "Note"],
-        ["link",      "Link"],
-        ["released",  "Released"],
-      ].each do |value, label| %>
-        <label class="cursor-pointer">
-          <%= f.radio_button :entry_type, value, id: "entry_type_#{value}", class: "peer sr-only", checked: value == "milestone" %>
-          <span class="peer-checked:bg-gray-900 peer-checked:text-white inline-block px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 text-gray-600 hover:border-gray-400 transition-colors">
-            <%= label %>
-          </span>
-        </label>
-      <% end %>
-    </div>
-
-    <%= f.text_field :title,
-        placeholder: "What did you do?",
-        class: "w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent mb-3" %>
-
-    <%= f.text_area :body,
-        placeholder: "More detail (optional)",
-        rows: 3,
-        class: "w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent mb-3 resize-none" %>
-
-    <div class="flex flex-col sm:flex-row gap-3 mb-4">
-      <%= f.url_field :url,
-          placeholder: "Link (optional)",
-          class: "flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent" %>
-      <%= f.datetime_local_field :occurred_at,
-          value: Time.current.strftime("%Y-%m-%dT%H:%M"),
-          class: "border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent" %>
-    </div>
-
-    <%= f.submit "Post entry",
-        class: "bg-gray-900 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors cursor-pointer" %>
-  <% end %>
-</div>
-
-<!-- Timeline -->
-<div class="mb-6">
-  <h2 class="text-sm font-semibold text-gray-700 mb-4">Your timeline (<%= @entries.size %>)</h2>
-
-  <% if @entries.empty? %>
-    <div class="text-center py-12 text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl">
-      Nothing here yet — post your first update above.
-    </div>
-  <% else %>
-    <div class="border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden">
-      <% @entries.each do |entry| %>
-        <div class="group flex gap-4 p-4 hover:bg-gray-50 transition-colors">
-          <div class="shrink-0 mt-0.5">
-            <%= render "profiles/entry_icon", type: entry.entry_type %>
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-0.5">
-                  <%= render "profiles/entry_badge", type: entry.entry_type, source: entry.source %>
-                  <% if entry.repo_name.present? %>
-                    <span class="text-xs text-gray-400 truncate"><%= entry.repo_name %></span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <%= render "profiles/entry_badge", type: entry.entry_type, source: entry.source %>
+                    <% if entry.repo_name.present? %>
+                      <span class="text-xs text-gray-400 truncate"><%= entry.repo_name.split("/").last %></span>
+                    <% end %>
+                  </div>
+                  <p class="text-sm font-medium text-gray-900"><%= entry.title %></p>
+                  <% if entry.body.present? %>
+                    <p class="text-sm text-gray-500 mt-0.5 line-clamp-2"><%= entry.body %></p>
                   <% end %>
                 </div>
-                <p class="text-sm font-medium text-gray-900"><%= entry.title %></p>
-                <% if entry.body.present? %>
-                  <p class="text-sm text-gray-500 mt-0.5 line-clamp-2"><%= entry.body %></p>
-                <% end %>
+                <div class="flex items-center gap-2 shrink-0">
+                  <time class="text-xs text-gray-400"><%= entry.occurred_at.strftime("%-d %b %Y") %></time>
+                  <%= button_to entry_path(entry), method: :patch, params: { hidden: true },
+                      class: "text-gray-300 hover:text-gray-600 transition-colors opacity-0 group-hover:opacity-100 bg-transparent border-0 cursor-pointer p-0",
+                      title: "Hide from timeline" do %>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>
+                    </svg>
+                  <% end %>
+                  <% if entry.source == "manual" %>
+                    <%= button_to entry_path(entry), method: :delete,
+                        data: { turbo_confirm: "Permanently delete this entry?" },
+                        class: "text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 bg-transparent border-0 cursor-pointer p-0" do %>
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                      </svg>
+                    <% end %>
+                  <% end %>
+                </div>
               </div>
-              <div class="flex items-center gap-2 shrink-0">
-                <time class="text-xs text-gray-400"><%= entry.occurred_at.strftime("%-d %b %Y") %></time>
-                <%= button_to entry_path(entry), method: :patch, params: { hidden: true },
-                    class: "text-gray-300 hover:text-gray-600 transition-colors opacity-0 group-hover:opacity-100 bg-transparent border-0 cursor-pointer p-0",
-                    title: "Hide from timeline" do %>
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>
-                  </svg>
-                <% end %>
-                <% if entry.source == "manual" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Hidden panel -->
+  <% if @hidden_entries.any? %>
+    <div data-tabs-target="panel" data-tabs-panel="hidden" class="hidden">
+      <div class="border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden">
+        <% @hidden_entries.each do |entry| %>
+          <div class="group flex gap-4 p-4 hover:bg-gray-50 transition-colors">
+            <div class="shrink-0 mt-0.5">
+              <%= render "profiles/entry_icon", type: entry.entry_type %>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <%= render "profiles/entry_badge", type: entry.entry_type, source: entry.source %>
+                    <% if entry.repo_name.present? %>
+                      <span class="text-xs text-gray-400 truncate"><%= entry.repo_name.split("/").last %></span>
+                    <% end %>
+                  </div>
+                  <p class="text-sm font-medium text-gray-900"><%= entry.title %></p>
+                  <% if entry.body.present? %>
+                    <p class="text-sm text-gray-500 mt-0.5 line-clamp-2"><%= entry.body %></p>
+                  <% end %>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <time class="text-xs text-gray-400"><%= entry.occurred_at.strftime("%-d %b %Y") %></time>
+                  <%= button_to entry_path(entry), method: :patch, params: { hidden: false },
+                      class: "text-xs text-gray-500 hover:text-gray-900 bg-white border border-gray-200 px-2 py-1 rounded transition-colors" do %>
+                    Restore
+                  <% end %>
                   <%= button_to entry_path(entry), method: :delete,
                       data: { turbo_confirm: "Permanently delete this entry?" },
-                      class: "text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 bg-transparent border-0 cursor-pointer p-0" do %>
+                      class: "text-gray-300 hover:text-red-500 transition-colors bg-transparent border-0 cursor-pointer p-0" do %>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
                     </svg>
                   <% end %>
-                <% end %>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
     </div>
   <% end %>
 </div>
-
-<!-- Hidden entries -->
-<% if @hidden_entries.any? %>
-  <div>
-    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
-      Hidden (<%= @hidden_entries.size %>)
-    </h2>
-    <div class="border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden">
-      <% @hidden_entries.each do |entry| %>
-        <div class="group flex gap-4 p-4 bg-gray-50 hover:bg-gray-100 transition-colors opacity-60 hover:opacity-100">
-          <div class="shrink-0 mt-0.5">
-            <%= render "profiles/entry_icon", type: entry.entry_type %>
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-gray-700"><%= entry.title %></p>
-                <% if entry.repo_name.present? %>
-                  <p class="text-xs text-gray-400 mt-0.5"><%= entry.repo_name %></p>
-                <% end %>
-              </div>
-              <div class="flex items-center gap-2 shrink-0">
-                <time class="text-xs text-gray-400"><%= entry.occurred_at.strftime("%-d %b %Y") %></time>
-                <%= button_to entry_path(entry), method: :patch, params: { hidden: false },
-                    class: "text-xs text-gray-500 hover:text-gray-900 bg-white border border-gray-200 px-2 py-1 rounded transition-colors",
-                    title: "Restore to timeline" do %>
-                  Restore
-                <% end %>
-                <%= button_to entry_path(entry), method: :delete,
-                    data: { turbo_confirm: "Permanently delete this entry?" },
-                    class: "text-gray-300 hover:text-red-500 transition-colors bg-transparent border-0 cursor-pointer p-0" do %>
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.241-2.09-2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
-                  </svg>
-                <% end %>
-              </div>
-            </div>
-          </div>
-        </div>
-      <% end %>
-    </div>
-  </div>
-<% end %>

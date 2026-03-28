@@ -2,6 +2,8 @@ class SettingsController < ApplicationController
   before_action :require_authentication
 
   def show
+    @github_repos     = current_user.github_repos.order(:name)
+    @last_github_sync = current_user.last_synced_at(source: :github)
   end
 
   def update
