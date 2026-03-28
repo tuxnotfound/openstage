@@ -6,6 +6,10 @@
     <% if content_for?(:meta_description) %>
       <meta name="description" content="<%= yield(:meta_description) %>">
     <% end %>
+    <%= yield :head %>
+    <% if ENV["GOOGLE_SITE_VERIFICATION"].present? %>
+      <meta name="google-site-verification" content="<%= ENV["GOOGLE_SITE_VERIFICATION"] %>" />
+    <% end %>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>

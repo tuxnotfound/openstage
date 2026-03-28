@@ -31,6 +31,10 @@ Rails.application.routes.draw do
   # Health check
   get "up" => "rails/health#show", as: :rails_health_check
 
+  # SEO
+  get "/sitemap.xml", to: "sitemaps#show", defaults: { format: :xml }
+  get "/og/:username", to: "og_images#show", as: :og_image
+
   # Public profiles — must be last
   get "/:username", to: "profiles#show", as: :profile, constraints: { username: /[a-zA-Z0-9_-]+/ }
 end

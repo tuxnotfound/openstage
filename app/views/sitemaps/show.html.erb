@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc><%= root_url %></loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <% @users.each do |user| %>
+  <url>
+    <loc><%= profile_url(user.username) %></loc>
+    <lastmod><%= (@last_entry_at[user.id] || user.created_at).utc.iso8601 %></lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <% end %>
+</urlset>
