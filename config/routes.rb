@@ -20,7 +20,7 @@ Rails.application.routes.draw do
   resources :github_repos, only: [ :update ]
 
   # Entries
-  resources :entries, only: [ :create, :update, :destroy ]
+  resources :entries, only: [ :create, :edit, :update, :destroy ]
 
   # Settings
   get "/settings", to: "settings#show",            as: :settings

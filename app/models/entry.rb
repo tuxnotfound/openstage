@@ -25,4 +25,5 @@ class Entry < ApplicationRecord
 
   scope :visible, -> { where(hidden: false) }
   scope :chronological, -> { order(occurred_at: :desc) }
+  scope :pinned_entries, -> { where(pinned: true) }
 end
