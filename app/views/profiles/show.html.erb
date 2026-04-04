@@ -14,7 +14,7 @@
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="<%= @user.display_name %> (@<%= @user.username %>) on Openstage" />
   <meta name="twitter:description" content="<%= meta_desc %>" />
-  <meta name="twitter:image"       content="<%= @user.avatar_url %>" />
+  <meta name="twitter:image"       content="<%= og_image_url(@user.username) %>" />
 
   <script type="application/ld+json">
     <%= {
