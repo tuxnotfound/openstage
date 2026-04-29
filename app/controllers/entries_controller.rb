@@ -22,7 +22,24 @@ class EntriesController < ApplicationController
       @entry.update!(hidden: ActiveModel::Type::Boolean.new.cast(params[:hidden]))
       redirect_to dashboard_path
     elsif params.key?(:pinned)
-      @entry.update!(pinned: ActiveModel::Type::Boolean.new.cast(params[:pinned]))
+      pinning = ActiveModel::Type::Boolean.new.cast(params[:pinned])
+      if pinning && !current_user.pro?
+        redirect_to dashboard_path, alert: "Pinning entries is a Pro feature."
+        return
+      end
+      if pinning && !current_user.can_pin?
+        redirect_to dashboard_path, alert: "You can pin up to 3 entries."
+        return
+      end
+      @entry.update!(pinned: pinning)
+      redirect_to dashboard_path
+    elsif params.key?(:visibility)
+      visibility = params[:visibility]
+      if visibility == "private" && !current_user.can_set_private?
+        redirect_to dashboard_path, alert: "Private entries are a Pro feature."
+        return
+      end
+      @entry.update!(visibility: visibility == "private" ? :private_entry : :public_entry)
       redirect_to dashboard_path
     else
       if @entry.manual? && @entry.update(entry_params)

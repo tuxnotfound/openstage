@@ -4,6 +4,7 @@ class User < ApplicationRecord
   has_many :entries, dependent: :destroy
   has_many :github_repos, dependent: :destroy
   has_many :sync_logs, dependent: :destroy
+  has_many :profile_views, dependent: :destroy
 
   scope :active, -> { where(deleted_at: nil) }
 
@@ -44,6 +45,18 @@ class User < ApplicationRecord
 
   def last_synced_at(source:)
     sync_logs.where(source: source, status: :success).maximum(:ran_at)
+  end
+
+  def pro?
+    pro
+  end
+
+  def can_pin?
+    pro? && entries.pinned_entries.count < 3
+  end
+
+  def can_set_private?
+    pro?
   end
 
   private

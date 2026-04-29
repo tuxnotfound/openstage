@@ -21,9 +21,15 @@ class Entry < ApplicationRecord
   validates :source, presence: true
   validates :title, presence: true
   validates :occurred_at, presence: true
+  enum :visibility, {
+    public_entry: "public",
+    private_entry: "private"
+  }, default: :public_entry
+
   validates :external_id, uniqueness: { scope: :user_id }, allow_nil: true
 
   scope :visible, -> { where(hidden: false) }
+  scope :publicly_visible, -> { visible.where(visibility: :public_entry) }
   scope :chronological, -> { order(occurred_at: :desc) }
   scope :pinned_entries, -> { where(pinned: true) }
 end

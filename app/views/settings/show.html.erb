@@ -18,6 +18,12 @@
               class="px-4 py-2 text-sm font-medium transition-colors data-[active=true]:text-gray-900 data-[active=true]:border-b-2 data-[active=true]:border-gray-900 data-[active=true]:-mb-px data-[active=false]:text-gray-500 data-[active=false]:hover:text-gray-900">
         Integrations
       </button>
+      <button data-tabs-target="tab"
+              data-tabs-tab="billing"
+              data-action="click->tabs#show"
+              class="px-4 py-2 text-sm font-medium transition-colors data-[active=true]:text-gray-900 data-[active=true]:border-b-2 data-[active=true]:border-gray-900 data-[active=true]:-mb-px data-[active=false]:text-gray-500 data-[active=false]:hover:text-gray-900">
+        Billing
+      </button>
     </div>
 
     <!-- Profile tab -->
@@ -188,6 +194,87 @@
       </section>
       <% end %>
 
+    </div>
+
+    <!-- Billing tab -->
+    <div data-tabs-target="panel" data-tabs-panel="billing" class="hidden">
+      <section>
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Plan</h2>
+        <div class="bg-white border border-gray-200 rounded-xl p-6">
+          <% if current_user.pro? %>
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="flex items-center gap-2">
+                  <p class="text-sm font-medium text-gray-900">Openstage Pro</p>
+                  <span class="inline-flex items-center gap-1 text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">✦ Active</span>
+                </div>
+                <p class="text-xs text-gray-400 mt-1">
+                  Pro since <%= current_user.pro_since&.strftime("%B %-d, %Y") %>
+                  <% if current_user.stripe_subscription_id.present? %>
+                    · Monthly
+                  <% else %>
+                    · Lifetime
+                  <% end %>
+                </p>
+              </div>
+              <% if current_user.stripe_customer_id.present? %>
+                <%= link_to "Manage billing", billing_portal_path,
+                    data: { turbo: false },
+                    class: "text-sm text-gray-500 hover:text-gray-900 border border-gray-200 px-4 py-2 rounded-lg transition-colors" %>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-900">Free plan</p>
+                <p class="text-xs text-gray-400 mt-1">Upgrade to unlock analytics, private entries, and pins.</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 mt-4">
+              <%= button_to "Monthly — $7/mo", checkout_path(plan: "monthly"), method: :post,
+                  form: { data: { turbo: false } },
+                  class: "text-xs bg-gray-900 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors cursor-pointer" %>
+              <%= button_to "Lifetime — $49", checkout_path(plan: "lifetime"), method: :post,
+                  form: { data: { turbo: false } },
+                  class: "text-xs bg-amber-400 text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-amber-300 transition-colors cursor-pointer" %>
+            </div>
+          <% end %>
+        </div>
+      </section>
+
+      <% if current_user.pro? %>
+        <section class="mt-8">
+          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">What's included</h2>
+          <div class="bg-white border border-gray-200 rounded-xl p-6">
+            <ul class="space-y-2 text-sm text-gray-700">
+              <li class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+                Profile analytics (views, referrers)
+              </li>
+              <li class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+                Private entries
+              </li>
+              <li class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+                Pin up to 3 entries
+              </li>
+              <li class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+                Pro badge on profile
+              </li>
+            </ul>
+          </div>
+        </section>
+      <% end %>
     </div>
   </div>
 </div>

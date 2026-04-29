@@ -22,6 +22,13 @@ Rails.application.routes.draw do
   # Entries
   resources :entries, only: [ :create, :edit, :update, :destroy ]
 
+  # Checkout / Billing
+  post "/checkout", to: "checkouts#create", as: :checkout
+  get "/billing", to: "checkouts#billing_portal", as: :billing_portal
+
+  # Stripe webhook
+  post "/webhooks/stripe", to: "webhooks#stripe", as: :stripe_webhook
+
   # Settings
   get "/settings", to: "settings#show",            as: :settings
   patch "/settings", to: "settings#update"
