@@ -23,7 +23,7 @@ class OgImageGenerator
   def generate
     out = tempfile(".png")
 
-    MiniMagick::Tool::Convert.new do |c|
+    MiniMagick.convert do |c|
       background(c)
       avatar(c)
       accent_bar(c)
