@@ -19,7 +19,7 @@ RSpec.describe "Dashboard", type: :request do
 
         expect(response).to have_http_status(:success)
         expect(response.body).to include("README badge")
-        expect(response.body).to include("/badge/builder.svg")
+        expect(response.body).to include("/badge/builder")
       end
     end
   end

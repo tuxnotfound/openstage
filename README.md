@@ -6,18 +6,22 @@ Openstage is a Rails app for building in public with a shareable profile timelin
 
 Openstage provides a live SVG badge per user at:
 
-`https://openstage.dev/badge/:username.svg`
+`https://openstage.dev/badge/:username`
+
+Rendered example:
+
+[![openstage](https://openstage.dev/badge/tuxnotfound)](https://openstage.dev/tuxnotfound)
 
 Use this markdown in your GitHub README:
 
 ```md
-[![openstage](https://openstage.dev/badge/YOUR_USERNAME.svg)](https://openstage.dev/YOUR_USERNAME)
+[![openstage](https://openstage.dev/badge/YOUR_USERNAME)](https://openstage.dev/YOUR_USERNAME)
 ```
 
 Example:
 
 ```md
-[![openstage](https://openstage.dev/badge/tuxnotfound.svg)](https://openstage.dev/tuxnotfound)
+[![openstage](https://openstage.dev/badge/tuxnotfound)](https://openstage.dev/tuxnotfound)
 ```
 
 The badge currently shows live public stats:

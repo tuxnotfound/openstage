@@ -1,14 +1,14 @@
 require "rails_helper"
 
 RSpec.describe "Badges", type: :request do
-  describe "GET /badge/:username.svg" do
+  describe "GET /badge/:username" do
     let!(:user) { create(:user, username: "builder") }
 
-    it "returns an SVG badge for active users" do
+    it "returns an SVG badge for active users without requiring the extension" do
       create(:entry, user: user, entry_type: "shipped", source: "github", occurred_at: 2.days.ago)
       create(:entry, user: user, entry_type: "note", source: "manual", occurred_at: 1.day.ago)
 
-      get "/badge/builder.svg"
+      get "/badge/builder"
 
       expect(response).to have_http_status(:ok)
       expect(response.media_type).to eq("image/svg+xml")
@@ -16,8 +16,15 @@ RSpec.describe "Badges", type: :request do
       expect(response.body).to include("1 commits | 2 entries")
     end
 
+    it "still supports the .svg path" do
+      get "/badge/builder.svg"
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("image/svg+xml")
+    end
+
     it "returns 404 for missing users" do
-      get "/badge/ghost.svg"
+      get "/badge/ghost"
       expect(response).to have_http_status(:not_found)
     end
   end
