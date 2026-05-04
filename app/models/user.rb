@@ -59,6 +59,42 @@ class User < ApplicationRecord
     pro?
   end
 
+  def public_entries_count
+    entries.publicly_visible.count
+  end
+
+  def public_milestones_count
+    entries.publicly_visible.where(entry_type: :milestone).count
+  end
+
+  def public_recent_commits_count(window: 30.days)
+    entries.publicly_visible.where(source: :github, entry_type: :shipped, occurred_at: window.ago..).count
+  end
+
+  def public_activity_streak
+    activity_days = entries.publicly_visible
+                         .where.not(occurred_at: nil)
+                         .group("DATE(occurred_at AT TIME ZONE 'UTC')")
+                         .count
+                         .keys
+                         .map(&:to_date)
+                         .sort
+
+    return 0 if activity_days.empty?
+
+    streak = 1
+    current_day = activity_days.last
+
+    activity_days[0...-1].reverse_each do |day|
+      break unless day == current_day - 1.day
+
+      streak += 1
+      current_day = day
+    end
+
+    streak
+  end
+
   private
 
   def username_change_cooldown

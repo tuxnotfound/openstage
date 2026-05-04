@@ -7,26 +7,21 @@ class OgImagesController < ApplicationController
     user = User.active.find_by(username: params[:username])
     return head :not_found unless user
 
-    entries_count = user.entries.visible.count
-    repos_count = user.github_repos.included_repos.count
-    milestones_count = user.entries.visible.where(entry_type: :milestone).count
+    metrics = og_metrics_for(user)
 
     cache_key = [
       "og-image",
       user.id,
       user.updated_at.to_i,
-      entries_count,
-      repos_count,
-      milestones_count
+      metrics[:entries_count],
+      metrics[:repos_count],
+      metrics[:milestones_count],
+      metrics[:recent_commits_count],
+      metrics[:streak_count]
     ].join(":")
 
     png = Rails.cache.fetch(cache_key, expires_in: 6.hours, race_condition_ttl: 10.seconds) do
-      OgImageGenerator.call(
-        user,
-        entries_count: entries_count,
-        repos_count: repos_count,
-        milestones_count: milestones_count
-      )
+      OgImageGenerator.call(user, **metrics)
     end
 
     expires_in 1.hour, public: true
@@ -35,5 +30,17 @@ class OgImagesController < ApplicationController
     Rails.logger.error("[OgImagesController] OG generation failed for username=#{params[:username]}: #{e.class}: #{e.message}")
     expires_in 10.minutes, public: true
     send_data FALLBACK_PNG, type: "image/png", disposition: "inline"
+  end
+
+  private
+
+  def og_metrics_for(user)
+    {
+      entries_count: user.public_entries_count,
+      repos_count: user.github_repos.included_repos.count,
+      milestones_count: user.public_milestones_count,
+      recent_commits_count: user.public_recent_commits_count,
+      streak_count: user.public_activity_streak
+    }
   end
 end
