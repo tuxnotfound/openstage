@@ -48,6 +48,7 @@ Rails.application.routes.draw do
   # SEO
   get "/sitemap.xml", to: "sitemaps#show", defaults: { format: :xml }
   get "/og/:username", to: "og_images#show", as: :og_image
+  get "/badge/:username.svg", to: "badges#show", as: :profile_badge, defaults: { format: :svg }
 
   # Public profiles — must be last
   get "/:username", to: "profiles#show", as: :profile, constraints: { username: /[a-zA-Z0-9_-]+/ }

@@ -71,6 +71,10 @@ class User < ApplicationRecord
     entries.publicly_visible.where(source: :github, entry_type: :shipped, occurred_at: window.ago..).count
   end
 
+  def public_github_commits_count
+    entries.publicly_visible.where(source: :github, entry_type: :shipped).count
+  end
+
   def public_activity_streak
     activity_days = entries.publicly_visible
                          .where.not(occurred_at: nil)

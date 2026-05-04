@@ -9,6 +9,13 @@ RSpec.describe "Profiles", type: :request do
         get "/testuser"
         expect(response).to have_http_status(:success)
       end
+
+      it "shows README badge snippet" do
+        get "/testuser"
+        expect(response.body).to include("README badge")
+        expect(response.body).to include("[![openstage](")
+        expect(response.body).to include("/badge/testuser.svg")
+      end
     end
 
     context "when user does not exist" do
