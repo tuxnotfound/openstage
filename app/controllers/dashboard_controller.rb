@@ -15,6 +15,7 @@ class DashboardController < ApplicationController
     }
 
     @sync_logs = current_user.sync_logs.order(ran_at: :desc).limit(5)
+    @badge_markdown = "[![openstage](#{profile_badge_url(current_user.username)})](#{profile_url(current_user.username)})"
 
     if current_user.pro?
       @analytics = {

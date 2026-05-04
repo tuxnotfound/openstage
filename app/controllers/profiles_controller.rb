@@ -22,7 +22,6 @@ class ProfilesController < ApplicationController
     @total_entries = @user.entries.publicly_visible.count
     @repos_synced  = @user.github_repos.included_repos.count
     @milestones    = @user.entries.publicly_visible.where(entry_type: :milestone).count
-    @badge_markdown = "[![openstage](#{profile_badge_url(@user.username)})](#{profile_url(@user.username)})"
 
     start_date = 52.weeks.ago.to_date
     raw = @user.entries.publicly_visible

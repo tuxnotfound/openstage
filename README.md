@@ -1,24 +1,37 @@
-# README
+# Openstage
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+Openstage is a Rails app for building in public with a shareable profile timeline.
 
-Things you may want to cover:
+## README Badge
 
-* Ruby version
+Openstage provides a live SVG badge per user at:
 
-* System dependencies
+`https://openstage.dev/badge/:username.svg`
 
-* Configuration
+Use this markdown in your GitHub README:
 
-* Database creation
+```md
+[![openstage](https://openstage.dev/badge/YOUR_USERNAME.svg)](https://openstage.dev/YOUR_USERNAME)
+```
 
-* Database initialization
+Example:
 
-* How to run the test suite
+```md
+[![openstage](https://openstage.dev/badge/tuxnotfound.svg)](https://openstage.dev/tuxnotfound)
+```
 
-* Services (job queues, cache servers, search engines, etc.)
+The badge currently shows live public stats:
+- GitHub commits synced to Openstage
+- Total public entries
 
-* Deployment instructions
+In the product, users can copy this snippet from the Dashboard under the `README badge` section.
 
-* ...
+## Development
+
+Basic Rails commands:
+
+```bash
+bin/setup
+bin/dev
+bundle exec rspec
+```

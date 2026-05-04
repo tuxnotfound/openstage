@@ -5,6 +5,6 @@ class HomeController < ApplicationController
                           .merge(User.active)
                           .includes(:user)
                           .chronological
-                          .limit(20)
+                          .limit(5)
   end
 end

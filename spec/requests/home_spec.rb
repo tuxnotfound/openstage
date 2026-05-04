@@ -34,5 +34,27 @@ RSpec.describe "Home", type: :request do
       expect(response.body).not_to include("Private entry")
       expect(response.body).not_to include("Deleted user entry")
     end
+
+    it "shows only the latest 5 public entries" do
+      user = create(:user, username: "limit_user")
+
+      7.times do |index|
+        create(
+          :entry,
+          user: user,
+          title: "Entry #{index + 1}",
+          entry_type: "note",
+          source: "manual",
+          occurred_at: (index + 1).hours.ago
+        )
+      end
+
+      get "/"
+
+      expect(response.body).to include("Entry 1")
+      expect(response.body).to include("Entry 5")
+      expect(response.body).not_to include("Entry 6")
+      expect(response.body).not_to include("Entry 7")
+    end
   end
 end

@@ -4,9 +4,9 @@ require "open-uri"
 class OgImageGenerator
   CARD_W      = 1200
   CARD_H      = 630
-  AVATAR_SIZE = 132
+  AVATAR_SIZE = 136
   AVATAR_X    = 84
-  AVATAR_Y    = 96
+  AVATAR_Y    = 112
 
   def self.call(user, entries_count:, repos_count:, milestones_count:, recent_commits_count:, streak_count:)
     new(user, entries_count, repos_count, milestones_count, recent_commits_count, streak_count).generate
@@ -27,16 +27,15 @@ class OgImageGenerator
 
     MiniMagick.convert do |c|
       background(c)
-      background_glow(c)
-      panel(c)
+      card(c)
+      card_top_rule(c)
       avatar(c)
-      accent_orb(c)
       eyebrow_text(c)
       name_text(c)
       username_text(c)
       building_since_text(c) if @user.building_since.present?
       bio_text(c) if @user.bio.present?
-      stat_cards(c)
+      stat_blocks(c)
       footer_text(c)
       branding_text(c)
       c << out.path
@@ -51,21 +50,19 @@ class OgImageGenerator
 
   def background(c)
     c.size "#{CARD_W}x#{CARD_H}"
-    c.xc "#0b1120"
+    c.xc "#f3f4f6"
   end
 
-  def background_glow(c)
-    c.fill "#15254a"
-    c.draw "circle 1060,110 1180,110"
-    c.fill "#0f766e"
-    c.draw "circle 180,620 340,620"
-  end
-
-  def panel(c)
-    c.fill "#111c34"
-    c.stroke "#334155"
+  def card(c)
+    c.fill "#ffffff"
+    c.stroke "#e5e7eb"
     c.strokewidth 2
-    c.draw "roundrectangle 46,42 1154,588 28,28"
+    c.draw "roundrectangle 40,36 1160,594 24,24"
+  end
+
+  def card_top_rule(c)
+    c.fill "#111827"
+    c.draw "rectangle 64,76 1136,80"
   end
 
   def avatar(c)
@@ -104,8 +101,8 @@ class OgImageGenerator
     c.composite
 
     c.fill "none"
-    c.stroke "#f59e0b"
-    c.strokewidth 4
+    c.stroke "#d1d5db"
+    c.strokewidth 3
     c.draw "circle #{AVATAR_X + (AVATAR_SIZE / 2)},#{AVATAR_Y + (AVATAR_SIZE / 2)} #{AVATAR_X + (AVATAR_SIZE / 2)},#{AVATAR_Y + 4}"
   end
 
@@ -122,98 +119,93 @@ class OgImageGenerator
     nil
   end
 
-  def accent_orb(c)
-    c.fill "#f97316"
-    c.draw "circle 1080,132 1110,132"
-  end
-
   def eyebrow_text(c)
-    c.fill "#f59e0b"
-    c.font "Liberation-Sans-Bold"
-    c.pointsize "20"
+    c.fill "#6b7280"
+    c.font "Liberation-Sans"
+    c.pointsize "19"
     c.gravity "NorthWest"
-    c.annotate "+276+116", "BUILDING IN PUBLIC"
+    c.annotate "+280+118", "BUILDING IN PUBLIC"
   end
 
   def name_text(c)
-    c.fill "#f8fafc"
+    c.fill "#111827"
     c.font "Liberation-Sans-Bold"
-    c.pointsize "54"
+    c.pointsize "56"
     c.gravity "NorthWest"
-    c.annotate "+276+182", escape(@user.display_name.truncate(24))
+    c.annotate "+276+186", escape(@user.display_name.truncate(24))
   end
 
   def username_text(c)
-    c.fill "#94a3b8"
+    c.fill "#6b7280"
     c.font "Liberation-Mono"
-    c.pointsize "26"
+    c.pointsize "24"
     c.gravity "NorthWest"
-    c.annotate "+278+228", "@#{escape(@user.username)}  ·  github.com/#{escape(@user.github_username)}"
+    c.annotate "+278+232", "@#{escape(@user.username)}  ·  github.com/#{escape(@user.github_username)}"
   end
 
   def building_since_text(c)
-    c.fill "#94a3b8"
+    c.fill "#6b7280"
     c.font "Liberation-Sans"
-    c.pointsize "22"
+    c.pointsize "21"
     c.gravity "NorthWest"
-    c.annotate "+278+270", "Building since #{@user.building_since.strftime('%B %Y')}"
+    c.annotate "+278+272", "Building since #{@user.building_since.strftime('%B %Y')}"
   end
 
   def bio_text(c)
-    c.fill "#cbd5e1"
+    c.fill "#374151"
     c.font "Liberation-Sans"
     c.pointsize "22"
     c.gravity "NorthWest"
-    y = @user.building_since.present? ? 314 : 270
+    y = @user.building_since.present? ? 316 : 272
     c.annotate "+278+#{y}", escape(@user.bio.truncate(74))
   end
 
-  def stat_cards(c)
+  def stat_blocks(c)
     card_specs.each do |card|
       draw_stat_card(c, **card)
     end
   end
 
-  def draw_stat_card(c, x:, y:, label:, value:, accent:)
-    c.fill "#17233d"
-    c.stroke accent
+  def draw_stat_card(c, x:, y:, label:, value:)
+    c.fill "#f9fafb"
+    c.stroke "#e5e7eb"
     c.strokewidth 2
-    c.draw "roundrectangle #{x},#{y} #{x + 228},#{y + 124} 20,20"
+    c.draw "roundrectangle #{x},#{y} #{x + 228},#{y + 124} 16,16"
 
-    c.fill accent
-    c.font "Liberation-Sans-Bold"
+    c.fill "#6b7280"
+    c.font "Liberation-Sans"
     c.pointsize "18"
     c.gravity "NorthWest"
     c.annotate "+#{x + 20}+#{y + 34}", label.upcase
 
-    c.fill "#f8fafc"
+    c.fill "#111827"
     c.font "Liberation-Sans-Bold"
-    c.pointsize "42"
+    c.pointsize "44"
     c.annotate "+#{x + 20}+#{y + 86}", value.to_s
   end
 
   def footer_text(c)
-    c.fill "#94a3b8"
+    c.fill "#6b7280"
     c.font "Liberation-Sans"
-    c.pointsize "24"
+    c.pointsize "22"
     c.gravity "NorthWest"
-    c.annotate "+84+534", "#{@repos_count} repos synced · #{@milestones_count} milestones shipped"
+    c.annotate "+84+538", "#{@repos_count} repos synced · #{@milestones_count} milestones"
   end
 
   def branding_text(c)
     c.gravity "SouthEast"
-    c.fill "#f8fafc"
-    c.font "Liberation-Sans-Bold"
-    c.pointsize "22"
+    c.fill "#111827"
+    c.font "Liberation-Sans"
+    c.pointsize "20"
     c.annotate "+72+40", "openstage.dev"
   end
 
   def card_specs
     [
-      { x: 84, y: 374, label: "Recent commits", value: @recent_commits_count, accent: "#38bdf8" },
-      { x: 332, y: 374, label: "Entries", value: @entries_count, accent: "#f59e0b" },
-      { x: 580, y: 374, label: "Streak", value: @streak_count, accent: "#34d399" },
-      { x: 828, y: 374, label: "Milestones", value: @milestones_count, accent: "#f97316" }
+      { x: 84, y: 382, label: "Recent commits", value: @recent_commits_count },
+      { x: 332, y: 382, label: "Entries", value: @entries_count },
+      { x: 580, y: 382, label: "Streak", value: @streak_count },
+      { x: 828, y: 382, label: "Milestones", value: @milestones_count }
     ]
   end
 
