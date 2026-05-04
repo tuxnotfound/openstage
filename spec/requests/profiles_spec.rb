@@ -16,6 +16,20 @@ RSpec.describe "Profiles", type: :request do
         expect(response.body).to include("[![openstage](")
         expect(response.body).to include("/badge/testuser.svg")
       end
+
+      it "shows Powered by Openstage footer for free profiles" do
+        get "/testuser"
+        expect(response.body).to include("Powered by Openstage")
+      end
+    end
+
+    context "when user is pro" do
+      let!(:user) { create(:user, username: "paidbuilder", pro: true) }
+
+      it "does not show Powered by Openstage footer" do
+        get "/paidbuilder"
+        expect(response.body).not_to include("Powered by Openstage")
+      end
     end
 
     context "when user does not exist" do
