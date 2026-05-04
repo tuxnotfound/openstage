@@ -1,12 +1,34 @@
 require "mini_magick"
 require "open-uri"
 
+# Generates a 1200×630 OG card styled to match the website:
+# white background, gray-900 text, gray-200 dividers, gray-400 muted labels.
 class OgImageGenerator
-  CARD_W      = 1200
-  CARD_H      = 630
-  AVATAR_SIZE = 136
-  AVATAR_X    = 84
-  AVATAR_Y    = 112
+  W = 1200
+  H = 630
+
+  # Matches Tailwind classes used in the app
+  BG         = "#ffffff"   # white
+  PAGE_BG    = "#f9fafb"   # gray-50 (subtle outer fill)
+  BORDER     = "#e5e7eb"   # gray-200
+  TEXT_DARK  = "#111827"   # gray-900
+  TEXT_MID   = "#6b7280"   # gray-500
+  TEXT_MUTED = "#9ca3af"   # gray-400
+  RING       = "#f3f4f6"   # gray-100 (avatar ring)
+  BRAND      = "#9ca3af"   # gray-400
+
+  # Card insets
+  CX = 44   # card left/right inset
+  CY = 32   # card top/bottom inset  → card: y=32 to y=598
+  CR = 20   # corner radius
+
+  # Avatar — smaller so top text has a safe top margin
+  AV_X = 90    # avatar centre x
+  AV_Y = 178   # avatar centre y
+  AV_R = 56    # avatar radius (was 72)
+
+  # Text column start
+  TX = 196
 
   def self.call(user, entries_count:, repos_count:, milestones_count:, recent_commits_count:, streak_count:)
     new(user, entries_count, repos_count, milestones_count, recent_commits_count, streak_count).generate
@@ -26,58 +48,129 @@ class OgImageGenerator
     out = tempfile(".png")
 
     MiniMagick.convert do |c|
-      background(c)
-      card(c)
-      card_top_rule(c)
-      avatar(c)
-      eyebrow_text(c)
-      name_text(c)
-      username_text(c)
-      building_since_text(c) if @user.building_since.present?
-      bio_text(c) if @user.bio.present?
-      stat_blocks(c)
-      footer_text(c)
-      branding_text(c)
+      # Page background
+      c.size "#{W}x#{H}"
+      c.xc PAGE_BG
+
+      # White card
+      c.fill BG
+      c.stroke BORDER
+      c.strokewidth "2"
+      c.draw "roundrectangle #{CX},#{CY} #{W - CX},#{H - CY} #{CR},#{CR}"
+
+      # Avatar (circle-cropped)
+      c.stroke "none"
+      draw_avatar(c)
+
+      # Avatar ring
+      c.fill "none"
+      c.stroke RING
+      c.strokewidth "5"
+      c.draw "circle #{AV_X},#{AV_Y} #{AV_X},#{AV_Y - AV_R - 3}"
+
+      # Reset stroke before text
+      c.stroke "none"
+      c.gravity "NorthWest"
+
+      # Name — baseline y=108 → cap-top ≈ y=64 (32px inside card: safe on Linux)
+      c.fill TEXT_DARK
+      c.font font_bold
+      c.pointsize "52"
+      c.annotate "+#{TX}+108", esc(@user.display_name.to_s.truncate(22))
+
+      # @handle  ·  github
+      c.fill TEXT_MUTED
+      c.font font_mono
+      c.pointsize "20"
+      c.annotate "+#{TX}+168", esc("@#{@user.username}  ·  github.com/#{@user.github_username}")
+
+      sub_y = 200
+      if @user.building_since.present?
+        c.fill TEXT_MID
+        c.font font_regular
+        c.pointsize "18"
+        c.annotate "+#{TX}+#{sub_y}", "Building since #{@user.building_since.strftime('%B %Y')}"
+        sub_y += 30
+      end
+
+      if @user.bio.present?
+        c.fill TEXT_MID
+        c.font font_regular
+        c.pointsize "19"
+        c.annotate "+#{TX}+#{sub_y}", esc(@user.bio.truncate(66))
+      end
+
+      # Horizontal divider — pulled up to y=262 (compact gap after bio)
+      c.fill BORDER
+      c.draw "rectangle #{CX + 20},262 #{W - CX - 20},264"
+
+      # Stats (4 columns)
+      draw_stats(c)
+
+      # branding — bottom right inside card
+      c.gravity "SouthEast"
+      c.fill TEXT_MUTED
+      c.font font_regular
+      c.pointsize "19"
+      c.annotate "+#{CX + 20}+#{CY + 20}", "openstage.dev"
+
       c << out.path
     end
 
     File.binread(out.path)
   ensure
-    @tempfiles.each { |file| file.close; file.unlink rescue nil }
+    @tempfiles.each { |f| f.close; f.unlink rescue nil }
   end
 
   private
 
-  def background(c)
-    c.size "#{CARD_W}x#{CARD_H}"
-    c.xc "#f3f4f6"
+  # 4 evenly spaced stat columns
+  COL_START = 74
+  COL_W     = 268
+
+  def draw_stats(c)
+    labels = %w[ENTRIES COMMITS STREAK MILESTONES]
+    values = [@entries_count, @recent_commits_count, @streak_count, @milestones_count]
+
+    labels.each_with_index do |label, i|
+      x = COL_START + (i * COL_W)
+
+      # Vertical separator (not before first)
+      if i > 0
+        c.fill BORDER
+        c.draw "rectangle #{x - 1},270 #{x + 1},#{H - CY - 40}"
+      end
+
+      # Stat number — 60pt (was 72), baseline y=352 → cap-top ≈ y=301 (safe)
+      c.gravity "NorthWest"
+      c.fill TEXT_DARK
+      c.font font_bold
+      c.pointsize "60"
+      c.annotate "+#{x + 16}+340", values[i].to_s
+
+      # Label — uppercase, gray-400, tight below number
+      c.fill TEXT_MUTED
+      c.font font_regular
+      c.pointsize "15"
+      c.annotate "+#{x + 18}+414", label
+    end
   end
 
-  def card(c)
-    c.fill "#ffffff"
-    c.stroke "#e5e7eb"
-    c.strokewidth 2
-    c.draw "roundrectangle 40,36 1160,594 24,24"
-  end
-
-  def card_top_rule(c)
-    c.fill "#111827"
-    c.draw "rectangle 64,76 1136,80"
-  end
-
-  def avatar(c)
+  def draw_avatar(c)
     path = download_avatar
     return unless path
 
+    size = AV_R * 2
+
     c << "("
     c << path
-    c.resize "#{AVATAR_SIZE}x#{AVATAR_SIZE}^"
+    c.resize "#{size}x#{size}^"
     c.gravity "Center"
-    c.extent "#{AVATAR_SIZE}x#{AVATAR_SIZE}"
+    c.extent "#{size}x#{size}"
     c << "("
     c << "+clone"
     c.alpha "extract"
-    c.draw "fill black polygon 0,0 0,#{AVATAR_SIZE} #{AVATAR_SIZE / 2},#{AVATAR_SIZE} fill white circle #{AVATAR_SIZE / 2},#{AVATAR_SIZE / 2} #{AVATAR_SIZE / 2},0"
+    c.draw "fill black polygon 0,0 0,#{size} #{size / 2},#{size} fill white circle #{size / 2},#{size / 2} #{size / 2},0"
     c << "("
     c << "+clone"
     c.flip
@@ -96,14 +189,9 @@ class OgImageGenerator
     c.composite
     c << ")"
     c.gravity "NorthWest"
-    c.geometry "+#{AVATAR_X}+#{AVATAR_Y}"
+    c.geometry "+#{AV_X - AV_R}+#{AV_Y - AV_R}"
     c.compose "Over"
     c.composite
-
-    c.fill "none"
-    c.stroke "#d1d5db"
-    c.strokewidth 3
-    c.draw "circle #{AVATAR_X + (AVATAR_SIZE / 2)},#{AVATAR_Y + (AVATAR_SIZE / 2)} #{AVATAR_X + (AVATAR_SIZE / 2)},#{AVATAR_Y + 4}"
   end
 
   def download_avatar
@@ -119,97 +207,24 @@ class OgImageGenerator
     nil
   end
 
-  def eyebrow_text(c)
-    c.fill "#6b7280"
-    c.font "Liberation-Sans"
-    c.pointsize "19"
-    c.gravity "NorthWest"
-    c.annotate "+280+118", "BUILDING IN PUBLIC"
+  def font_regular
+    @font_regular ||= detect_font(%w[Liberation-Sans FreeSans DejaVu-Sans Helvetica Arial])
   end
 
-  def name_text(c)
-    c.fill "#111827"
-    c.font "Liberation-Sans-Bold"
-    c.pointsize "56"
-    c.gravity "NorthWest"
-    c.annotate "+276+186", escape(@user.display_name.truncate(24))
+  def font_bold
+    @font_bold ||= detect_font(%w[Liberation-Sans-Bold FreeSans-Bold DejaVu-Sans-Bold Helvetica-Bold Arial-Bold])
   end
 
-  def username_text(c)
-    c.fill "#6b7280"
-    c.font "Liberation-Mono"
-    c.pointsize "24"
-    c.gravity "NorthWest"
-    c.annotate "+278+232", "@#{escape(@user.username)}  ·  github.com/#{escape(@user.github_username)}"
+  def font_mono
+    @font_mono ||= detect_font(%w[Liberation-Mono FreeMono DejaVu-Sans-Mono Courier-New Courier])
   end
 
-  def building_since_text(c)
-    c.fill "#6b7280"
-    c.font "Liberation-Sans"
-    c.pointsize "21"
-    c.gravity "NorthWest"
-    c.annotate "+278+272", "Building since #{@user.building_since.strftime('%B %Y')}"
+  def detect_font(candidates)
+    @available_fonts ||= `convert -list font 2>/dev/null`
+    candidates.find { |f| @available_fonts.include?(f) } || "Helvetica"
   end
 
-  def bio_text(c)
-    c.fill "#374151"
-    c.font "Liberation-Sans"
-    c.pointsize "22"
-    c.gravity "NorthWest"
-    y = @user.building_since.present? ? 316 : 272
-    c.annotate "+278+#{y}", escape(@user.bio.truncate(74))
-  end
-
-  def stat_blocks(c)
-    card_specs.each do |card|
-      draw_stat_card(c, **card)
-    end
-  end
-
-  def draw_stat_card(c, x:, y:, label:, value:)
-    c.fill "#f9fafb"
-    c.stroke "#e5e7eb"
-    c.strokewidth 2
-    c.draw "roundrectangle #{x},#{y} #{x + 228},#{y + 124} 16,16"
-
-    c.fill "#6b7280"
-    c.font "Liberation-Sans"
-    c.pointsize "18"
-    c.gravity "NorthWest"
-    c.annotate "+#{x + 20}+#{y + 34}", label.upcase
-
-    c.fill "#111827"
-    c.font "Liberation-Sans-Bold"
-    c.pointsize "44"
-    c.annotate "+#{x + 20}+#{y + 86}", value.to_s
-  end
-
-  def footer_text(c)
-    c.fill "#6b7280"
-    c.font "Liberation-Sans"
-    c.pointsize "22"
-    c.gravity "NorthWest"
-    c.annotate "+84+538", "#{@repos_count} repos synced · #{@milestones_count} milestones"
-  end
-
-  def branding_text(c)
-    c.gravity "SouthEast"
-    c.fill "#111827"
-    c.font "Liberation-Sans"
-    c.pointsize "20"
-    c.annotate "+72+40", "openstage.dev"
-  end
-
-  def card_specs
-    [
-      { x: 84, y: 382, label: "Recent commits", value: @recent_commits_count },
-      { x: 332, y: 382, label: "Entries", value: @entries_count },
-      { x: 580, y: 382, label: "Streak", value: @streak_count },
-      { x: 828, y: 382, label: "Milestones", value: @milestones_count }
-    ]
-  end
-
-  def escape(text)
+  def esc(text)
     text.to_s.gsub("%", "%%")
   end
 
@@ -220,3 +235,4 @@ class OgImageGenerator
     file
   end
 end
+

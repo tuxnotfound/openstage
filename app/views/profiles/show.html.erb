@@ -9,12 +9,12 @@
   <meta property="og:title"       content="<%= @user.display_name %> (@<%= @user.username %>) on Openstage" />
   <meta property="og:description" content="<%= meta_desc %>" />
   <meta property="og:url"         content="<%= profile_url(@user.username) %>" />
-  <meta property="og:image"       content="<%= og_image_url(@user.username) %>" />
+  <meta property="og:image"       content="<%= og_image_url(@user.username) %>?v=3" />
 
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="<%= @user.display_name %> (@<%= @user.username %>) on Openstage" />
   <meta name="twitter:description" content="<%= meta_desc %>" />
-  <meta name="twitter:image"       content="<%= og_image_url(@user.username) %>" />
+  <meta name="twitter:image"       content="<%= og_image_url(@user.username) %>?v=3" />
 
   <script type="application/ld+json">
     <%= {
