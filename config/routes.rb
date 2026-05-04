@@ -38,6 +38,13 @@ Rails.application.routes.draw do
   # Health check
   get "up" => "rails/health#show", as: :rails_health_check
 
+  # Common scanner targets: return 404 without raising routing exceptions.
+  match "/wp-admin/*path", to: ->(_env) { [ 404, { "Content-Type" => "text/plain" }, [ "Not Found" ] ] }, via: :all
+  match "/xmlrpc.php", to: ->(_env) { [ 404, { "Content-Type" => "text/plain" }, [ "Not Found" ] ] }, via: :all
+
+  # Some crawlers request favicon.png; avoid hitting profile lookup.
+  get "/favicon.png", to: redirect("/favicon.ico", status: 301)
+
   # SEO
   get "/sitemap.xml", to: "sitemaps#show", defaults: { format: :xml }
   get "/og/:username", to: "og_images#show", as: :og_image

@@ -47,6 +47,7 @@ gem "solid_queue"
 
 # GitHub API
 gem "octokit", "~> 7.0"
+gem "faraday-retry"
 
 # Pagination
 gem "kaminari"
