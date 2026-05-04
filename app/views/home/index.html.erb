@@ -15,3 +15,35 @@
     See it live: <%= link_to "@tuxnotfound", "/tuxnotfound", class: "text-gray-600 underline hover:text-gray-900" %>
   </p>
 </div>
+
+<% if @recent_entries.any? %>
+  <section class="max-w-3xl mx-auto px-4 pb-20" aria-label="Recent public activity">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-gray-900">Live builder activity</h2>
+      <span class="text-xs text-gray-400 uppercase tracking-wide">Public profiles</span>
+    </div>
+
+    <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+      <% @recent_entries.each do |entry| %>
+        <article class="px-4 py-3 border-b border-gray-100 last:border-0">
+          <div class="flex items-start gap-3">
+            <img src="<%= entry.user.avatar_url %>"
+                 alt="<%= entry.user.display_name %>"
+                 class="w-8 h-8 rounded-full ring-1 ring-gray-200 shrink-0" />
+
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                <%= link_to entry.user.display_name, profile_path(entry.user.username), class: "font-medium text-gray-900 hover:underline" %>
+                <span class="text-gray-400">@<%= entry.user.username %></span>
+                <span class="text-gray-300">•</span>
+                <time datetime="<%= entry.occurred_at.iso8601 %>" class="text-gray-500"><%= time_ago_in_words(entry.occurred_at) %> ago</time>
+              </div>
+
+              <p class="mt-1 text-sm text-gray-700"><%= entry.title %></p>
+            </div>
+          </div>
+        </article>
+      <% end %>
+    </div>
+  </section>
+<% end %>
