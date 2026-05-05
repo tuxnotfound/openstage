@@ -6,6 +6,7 @@ export default class extends Controller {
   connect() {
     this.loading = false
     this.hasScrolled = false
+    this.canTrigger = true
     this.isIntersecting = false
     if (!this.hasSentinelTarget || !this.hasLinkTarget) return
 
@@ -16,7 +17,15 @@ export default class extends Controller {
       (entries) => {
         entries.forEach((entry) => {
           this.isIntersecting = entry.isIntersecting
-          if (entry.isIntersecting && this.hasScrolled) this.loadMore()
+          if (!entry.isIntersecting) {
+            this.canTrigger = true
+            return
+          }
+
+          if (this.hasScrolled && this.canTrigger) {
+            this.canTrigger = false
+            this.loadMore()
+          }
         })
       },
       { rootMargin: "220px 0px" }
@@ -31,10 +40,12 @@ export default class extends Controller {
   }
 
   handleScroll() {
-    if (this.hasScrolled || window.scrollY <= 0) return
+    if (window.scrollY > 80) this.hasScrolled = true
 
-    this.hasScrolled = true
-    if (this.isIntersecting) this.loadMore()
+    if (this.hasScrolled && this.isIntersecting && this.canTrigger) {
+      this.canTrigger = false
+      this.loadMore()
+    }
   }
 
   loadMore() {
