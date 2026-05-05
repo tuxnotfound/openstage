@@ -5,12 +5,18 @@ export default class extends Controller {
 
   connect() {
     this.loading = false
+    this.hasScrolled = false
+    this.isIntersecting = false
     if (!this.hasSentinelTarget || !this.hasLinkTarget) return
+
+    this.handleScroll = this.handleScroll.bind(this)
+    window.addEventListener("scroll", this.handleScroll, { passive: true })
 
     this.observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) this.loadMore()
+          this.isIntersecting = entry.isIntersecting
+          if (entry.isIntersecting && this.hasScrolled) this.loadMore()
         })
       },
       { rootMargin: "220px 0px" }
@@ -21,6 +27,14 @@ export default class extends Controller {
 
   disconnect() {
     if (this.observer) this.observer.disconnect()
+    window.removeEventListener("scroll", this.handleScroll)
+  }
+
+  handleScroll() {
+    if (this.hasScrolled || window.scrollY <= 0) return
+
+    this.hasScrolled = true
+    if (this.isIntersecting) this.loadMore()
   }
 
   loadMore() {
