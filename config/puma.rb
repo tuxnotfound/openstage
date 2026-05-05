@@ -23,6 +23,15 @@ if rails_env == "production"
   worker_count = Integer(ENV.fetch("WEB_CONCURRENCY") { 1 })
   if worker_count > 1
     workers worker_count
+    preload_app!
+
+    before_fork do
+      ActiveRecord::Base.connection_pool.disconnect! if defined?(ActiveRecord::Base)
+    end
+
+    on_worker_boot do
+      ActiveRecord::Base.establish_connection if defined?(ActiveRecord::Base)
+    end
   else
     preload_app!
   end
