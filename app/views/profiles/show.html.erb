@@ -104,6 +104,12 @@
     <div class="text-2xl font-bold text-gray-900"><%= @milestones %></div>
     <div class="text-xs text-gray-400 uppercase tracking-wide mt-0.5">milestones</div>
   </div>
+  <% if @streak > 0 %>
+    <div>
+      <div class="text-2xl font-bold text-gray-900">🔥 <%= @streak %></div>
+      <div class="text-xs text-gray-400 uppercase tracking-wide mt-0.5">day streak</div>
+    </div>
+  <% end %>
 </div>
 
 <!-- Activity heatmap -->

@@ -45,5 +45,10 @@ class DashboardController < ApplicationController
     end
 
     @show_pro_activated = params[:pro] == "activated"
+
+    @streak      = current_user.current_streak
+    @logged_today = current_user.entries.visible
+                                .where(occurred_at: Date.current.all_day)
+                                .exists?
   end
 end

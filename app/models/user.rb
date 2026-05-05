@@ -100,6 +100,31 @@ class User < ApplicationRecord
     streak
   end
 
+  # Consecutive calendar days (UTC) with at least one non-hidden entry.
+  # Includes private entries — counts all activity, any type, any source.
+  # Returns 0 if today *and* yesterday both have no entries.
+  def current_streak
+    today = Date.current
+
+    dated = entries.visible
+                   .where.not(occurred_at: nil)
+                   .group("DATE(occurred_at AT TIME ZONE 'UTC')")
+                   .count
+                   .keys
+                   .map(&:to_date)
+                   .to_set
+
+    return 0 unless dated.include?(today) || dated.include?(today - 1.day)
+
+    check = dated.include?(today) ? today : today - 1.day
+    streak = 0
+    while dated.include?(check)
+      streak += 1
+      check -= 1.day
+    end
+    streak
+  end
+
   private
 
   def username_change_cooldown

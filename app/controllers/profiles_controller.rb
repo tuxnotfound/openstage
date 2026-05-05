@@ -22,6 +22,7 @@ class ProfilesController < ApplicationController
     @total_entries = @user.entries.publicly_visible.count
     @repos_synced  = @user.github_repos.included_repos.count
     @milestones    = @user.entries.publicly_visible.where(entry_type: :milestone).count
+    @streak        = @user.current_streak
 
     start_date = 52.weeks.ago.to_date
     raw = @user.entries.publicly_visible
