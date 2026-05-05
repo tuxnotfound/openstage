@@ -16,34 +16,68 @@
   </p>
 </div>
 
-<% if @recent_entries.any? %>
-  <section class="max-w-3xl mx-auto px-4 pb-20" aria-label="Recent public activity">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-semibold text-gray-900">Live builder activity</h2>
-      <span class="text-xs text-gray-400 uppercase tracking-wide">Public profiles</span>
+<section class="max-w-3xl mx-auto px-4 pb-20" aria-label="Recent public activity">
+  <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
+    <div>
+      <h2 class="text-lg font-semibold text-gray-900">Live public feed</h2>
+      <p class="text-sm text-gray-500 mt-0.5">Recent entries from builders across Openstage.</p>
     </div>
+    <span class="text-xs text-gray-400 uppercase tracking-wide">20 per page</span>
+  </div>
 
+  <div class="flex flex-wrap gap-1.5 mb-4" aria-label="Entry type filters">
+    <% [[nil, "All"], ["shipped", "Shipped"], ["milestone", "Milestone"], ["note", "Note"], ["link", "Link"], ["released", "Released"], ["posted", "Posted"]].each do |value, label| %>
+      <% active = @type_filter == value %>
+      <%= link_to label,
+          root_path(type: value.presence),
+          class: "px-2.5 py-1 rounded-full text-xs font-medium transition-colors #{active ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300'}" %>
+    <% end %>
+  </div>
+
+  <% if @recent_entries.any? %>
     <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden">
       <% @recent_entries.each do |entry| %>
         <article class="px-4 py-3 border-b border-gray-100 last:border-0">
-          <div class="flex items-start gap-3">
-            <img src="<%= entry.user.avatar_url %>"
-                 alt="<%= entry.user.display_name %>"
-                 class="w-8 h-8 rounded-full ring-1 ring-gray-200 shrink-0" />
+          <a href="<%= profile_path(entry.user.username) %>" class="block hover:bg-gray-50 -mx-2 px-2 py-1 rounded-lg transition-colors">
+            <div class="flex items-start gap-3">
+              <img src="<%= entry.user.avatar_url %>"
+                   alt="<%= entry.user.display_name %>"
+                   class="w-9 h-9 rounded-full ring-1 ring-gray-200 shrink-0" />
 
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                <%= link_to entry.user.display_name, profile_path(entry.user.username), class: "font-medium text-gray-900 hover:underline" %>
-                <span class="text-gray-400">@<%= entry.user.username %></span>
-                <span class="text-gray-300">•</span>
-                <time datetime="<%= entry.occurred_at.iso8601 %>" class="text-gray-500"><%= time_ago_in_words(entry.occurred_at) %> ago</time>
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                  <span class="font-medium text-gray-900">@<%= entry.user.username %></span>
+                  <%= render "profiles/entry_badge", type: entry.entry_type, source: nil %>
+                  <span class="text-gray-300">•</span>
+                  <time datetime="<%= entry.occurred_at.iso8601 %>" class="text-gray-500"><%= time_ago_in_words(entry.occurred_at) %> ago</time>
+                </div>
+                <p class="mt-1 text-sm text-gray-700"><%= entry.title %></p>
               </div>
-
-              <p class="mt-1 text-sm text-gray-700"><%= entry.title %></p>
             </div>
-          </div>
+          </a>
         </article>
       <% end %>
     </div>
-  </section>
-<% end %>
+
+    <div class="mt-4 flex items-center justify-between">
+      <div>
+        <% if @recent_entries.prev_page %>
+          <%= link_to "Newer",
+              root_path(page: @recent_entries.prev_page, type: @type_filter.presence),
+              class: "text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg px-4 py-2 inline-block transition-colors" %>
+        <% end %>
+      </div>
+      <div>
+        <% if @recent_entries.next_page %>
+          <%= link_to "Older",
+              root_path(page: @recent_entries.next_page, type: @type_filter.presence),
+              class: "text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg px-4 py-2 inline-block transition-colors" %>
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <div class="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-12 text-center">
+      <p class="text-sm text-gray-500">No public activity yet.</p>
+    </div>
+  <% end %>
+</section>
