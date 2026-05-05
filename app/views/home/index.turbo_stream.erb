@@ -4,7 +4,7 @@
 
 <% if @recent_entries.next_page %>
   <%= turbo_stream.replace "load-more" do %>
-    <%= render "home/load_more", entries: @recent_entries, type_filter: @type_filter %>
+    <%= render "home/load_more", entries: @recent_entries %>
   <% end %>
 <% else %>
   <%= turbo_stream.remove "load-more" %>

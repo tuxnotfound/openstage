@@ -1,7 +1,7 @@
 <% if entries.next_page %>
   <div id="load-more" class="mt-4 text-center" data-controller="infinite-scroll" data-infinite-scroll-target="sentinel">
     <%= link_to "Load more",
-        root_path(page: entries.next_page, type: type_filter.presence),
+        root_path(page: entries.next_page),
         class: "text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg px-4 py-2 inline-block transition-colors",
         data: { turbo_stream: true, infinite_scroll_target: "link" } %>
   </div>
