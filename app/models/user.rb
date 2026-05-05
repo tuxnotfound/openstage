@@ -5,6 +5,7 @@ class User < ApplicationRecord
   has_many :github_repos, dependent: :destroy
   has_many :sync_logs, dependent: :destroy
   has_many :profile_views, dependent: :destroy
+  has_many :entry_clicks, dependent: :destroy
 
   scope :active, -> { where(deleted_at: nil) }
 

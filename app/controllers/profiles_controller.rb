@@ -42,12 +42,15 @@ class ProfilesController < ApplicationController
     return if current_user == @user
 
     referrer = request.referer.present? ? URI.parse(request.referer).host : nil rescue nil
-    ip_hash = Digest::SHA256.hexdigest("#{request.remote_ip}#{Date.current}")
+    ip_hash  = Digest::SHA256.hexdigest("#{request.remote_ip}#{Date.current}")
+    # CF-IPCountry is set by Cloudflare (e.g. "US", "GB"). nil on non-CF setups.
+    country  = request.headers["CF-IPCountry"].presence
 
     @user.profile_views.create!(
       viewed_at: Time.current,
-      referrer: referrer,
-      ip_hash: ip_hash
+      referrer:  referrer,
+      ip_hash:   ip_hash,
+      country:   country
     )
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_04_15_175356) do
+ActiveRecord::Schema[7.1].define(version: 2026_05_05_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -33,6 +33,19 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_15_175356) do
     t.index ["user_id", "occurred_at"], name: "index_entries_on_user_id_and_occurred_at"
     t.index ["user_id", "pinned"], name: "index_entries_on_user_id_and_pinned"
     t.index ["user_id"], name: "index_entries_on_user_id"
+  end
+
+  create_table "entry_clicks", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "entry_id", null: false
+    t.string "ip_hash"
+    t.datetime "clicked_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entry_id", "clicked_at"], name: "index_entry_clicks_on_entry_id_and_clicked_at"
+    t.index ["entry_id"], name: "index_entry_clicks_on_entry_id"
+    t.index ["user_id", "clicked_at"], name: "index_entry_clicks_on_user_id_and_clicked_at"
+    t.index ["user_id"], name: "index_entry_clicks_on_user_id"
   end
 
   create_table "github_repos", force: :cascade do |t|
@@ -58,6 +71,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_15_175356) do
     t.string "ip_hash"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "country"
+    t.index ["user_id", "country"], name: "index_profile_views_on_user_id_and_country"
     t.index ["user_id", "viewed_at"], name: "index_profile_views_on_user_id_and_viewed_at"
     t.index ["user_id"], name: "index_profile_views_on_user_id"
   end
@@ -219,6 +234,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_15_175356) do
   end
 
   add_foreign_key "entries", "users"
+  add_foreign_key "entry_clicks", "entries"
+  add_foreign_key "entry_clicks", "users"
   add_foreign_key "github_repos", "users"
   add_foreign_key "profile_views", "users"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

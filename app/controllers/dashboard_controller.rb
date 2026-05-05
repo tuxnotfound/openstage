@@ -17,12 +17,31 @@ class DashboardController < ApplicationController
     @sync_logs = current_user.sync_logs.order(ran_at: :desc).limit(5)
     @badge_markdown = "[![openstage](#{profile_badge_url(current_user.username)})](#{profile_url(current_user.username)})"
 
+    # Analytics — free tier gets sparkline + unique visitors; Pro gets the full breakdown.
+    views = current_user.profile_views
+    @analytics = {
+      total_views:  views.count,
+      unique_7d:    views.unique_visitor_count(since: 7.days.ago),
+      sparkline_7d: views.daily_counts(days: 7)
+    }
+
     if current_user.pro?
-      @analytics = {
-        total_views:   current_user.profile_views.count,
-        views_this_week: current_user.profile_views.this_week.count,
-        top_referrers: current_user.profile_views.top_referrers(limit: 5)
-      }
+      top_entry_counts  = current_user.entry_clicks
+                            .group(:entry_id)
+                            .order("count_all DESC")
+                            .limit(5)
+                            .count
+      top_entries_by_id = Entry.where(id: top_entry_counts.keys).index_by(&:id)
+
+      @analytics.merge!(
+        sparkline_30d: views.daily_counts(days: 30),
+        last_visited:  views.maximum(:viewed_at),
+        top_countries: views.top_countries,
+        top_referrers: views.top_referrers(limit: 5),
+        top_entries:   top_entry_counts.filter_map { |id, count|
+                         [top_entries_by_id[id], count] if top_entries_by_id[id]
+                       }
+      )
     end
 
     @show_pro_activated = params[:pro] == "activated"
