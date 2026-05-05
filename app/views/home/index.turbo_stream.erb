@@ -1,0 +1,11 @@
+<%= turbo_stream.append "feed-entries" do %>
+  <%= render partial: "home/feed_entry", collection: @recent_entries, as: :entry %>
+<% end %>
+
+<% if @recent_entries.next_page %>
+  <%= turbo_stream.replace "load-more" do %>
+    <%= render "home/load_more", entries: @recent_entries, type_filter: @type_filter %>
+  <% end %>
+<% else %>
+  <%= turbo_stream.remove "load-more" %>
+<% end %>

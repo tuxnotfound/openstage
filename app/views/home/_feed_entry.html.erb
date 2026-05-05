@@ -1,0 +1,19 @@
+<article class="px-4 py-3 border-b border-gray-100 last:border-0">
+  <a href="<%= profile_path(entry.user.username) %>" class="block hover:bg-gray-50 -mx-2 px-2 py-1 rounded-lg transition-colors">
+    <div class="flex items-start gap-3">
+      <img src="<%= entry.user.avatar_url %>"
+           alt="<%= entry.user.display_name %>"
+           class="w-9 h-9 rounded-full ring-1 ring-gray-200 shrink-0" />
+
+      <div class="min-w-0 flex-1">
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+          <span class="font-medium text-gray-900">@<%= entry.user.username %></span>
+          <%= render "profiles/entry_badge", type: entry.entry_type, source: nil %>
+          <span class="text-gray-300">•</span>
+          <time datetime="<%= entry.occurred_at.iso8601 %>" class="text-gray-500"><%= time_ago_in_words(entry.occurred_at) %> ago</time>
+        </div>
+        <p class="mt-1 text-sm text-gray-700"><%= entry.title %></p>
+      </div>
+    </div>
+  </a>
+</article>
