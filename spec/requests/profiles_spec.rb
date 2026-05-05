@@ -32,9 +32,11 @@ RSpec.describe "Profiles", type: :request do
     end
 
     context "when user does not exist" do
-      it "returns 404" do
+      it "shows the claim page" do
         get "/nobody_here_xyz"
-        expect(response).to have_http_status(:not_found)
+        expect(response).to have_http_status(:success)
+        expect(response.body).to include("@nobody_here_xyz isn't on Openstage yet")
+        expect(response.body).to include("@nobody_here_xyz is available")
       end
     end
 

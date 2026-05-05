@@ -2,7 +2,9 @@ class ProfilesController < ApplicationController
   def show
     @user = User.active.find_by(username: params[:username])
     unless @user
-      render file: Rails.root.join("public/404.html"), status: :not_found, layout: false
+      @claimed_username = params[:username]
+      session[:claimed_username] = @claimed_username
+      render :claim
       return
     end
 

@@ -22,6 +22,22 @@ RSpec.describe "Sessions", type: :request do
         get "/auth/github/callback"
         expect(response).to redirect_to(new_username_path)
       end
+
+      it "prefills pending username from claimed profile" do
+        OmniAuth.config.mock_auth[:github] = OmniAuth::AuthHash.new(
+          uid: "brand_new_uid_claim_1000",
+          info: { nickname: "newgithubuser", name: "New User", image: "https://avatars.example.com/u/100" },
+          credentials: { token: "gho_claim_token" }
+        )
+
+        get "/nobody_here_xyz"
+        get "/auth/github/callback"
+
+        expect(response).to redirect_to(new_username_path)
+        pending_user = session[:pending_user]
+        proposed_username = pending_user["proposed_username"] || pending_user[:proposed_username]
+        expect(proposed_username).to eq("nobody_here_xyz")
+      end
     end
   end
 

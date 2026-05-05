@@ -2,6 +2,7 @@ class SessionsController < ApplicationController
   def create
     auth = request.env["omniauth.auth"]
     user = User.from_github_omniauth(auth)
+    claimed_username = session.delete(:claimed_username).presence
 
     if user.new_record?
       # New user — pre-fill username but require confirmation
@@ -11,7 +12,7 @@ class SessionsController < ApplicationController
         github_access_token: user.github_access_token,
         display_name: user.display_name,
         avatar_url: user.avatar_url,
-        proposed_username: user.username
+        proposed_username: claimed_username || user.username
       }
       redirect_to new_username_path
     elsif user.save
