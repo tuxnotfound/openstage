@@ -27,7 +27,7 @@ class SessionsController < ApplicationController
 
   def destroy
     session.delete(:user_id)
-    redirect_to root_path, notice: "You've been signed out."
+    redirect_to root_path, status: :see_other, notice: "You've been signed out."
   end
 
   def failure
