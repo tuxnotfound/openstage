@@ -6,7 +6,7 @@ module ApplicationHelper
     when 4..9 then "⚡"
     else
       fires = [streak / 10, 3].min
-      "🔥" * fires
+      streak >= 30 ? "🔥" * 3 + "🚀" : "🔥" * fires
     end
   end
 end
