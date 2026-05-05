@@ -1,0 +1,114 @@
+<%
+  is_pro       = current_user.pro?
+  sparkline    = is_pro ? @analytics[:sparkline_30d] : @analytics[:sparkline_7d]
+  days_label   = is_pro ? 30 : 7
+  bar_w        = is_pro ? 5 : 8
+  bar_gap      = is_pro ? 2 : 3
+  bar_h        = 32
+  svg_w        = sparkline.size * bar_w + (sparkline.size - 1) * bar_gap
+  sp_max       = sparkline.values.max.to_f
+  sp_max       = 1.0 if sp_max == 0
+%>
+
+<div class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Profile Views</h2>
+    <% if is_pro && @analytics[:last_visited] %>
+      <span class="text-xs text-gray-400">Last visit <%= time_ago_in_words(@analytics[:last_visited]) %> ago</span>
+    <% end %>
+  </div>
+
+  <!-- Sparkline bar chart -->
+  <div class="mb-4">
+    <svg width="<%= svg_w %>" height="<%= bar_h %>" viewBox="0 0 <%= svg_w %> <%= bar_h %>" aria-hidden="true" class="block">
+      <% sparkline.each_with_index do |(date, count), i| %>
+        <% h = [((count / sp_max) * bar_h).round, 2].max %>
+        <rect
+          x="<%= i * (bar_w + bar_gap) %>"
+          y="<%= bar_h - h %>"
+          width="<%= bar_w %>"
+          height="<%= h %>"
+          rx="1"
+          fill="<%= count > 0 ? '#6366f1' : '#e5e7eb' %>"
+        />
+      <% end %>
+    </svg>
+    <p class="text-xs text-gray-400 mt-1.5">Last <%= days_label %> days</p>
+  </div>
+
+  <!-- Top-level stats -->
+  <div class="flex gap-6">
+    <div>
+      <div class="text-xl font-bold text-gray-900"><%= @analytics[:total_views] %></div>
+      <div class="text-xs text-gray-400 mt-0.5">Total views</div>
+    </div>
+    <div>
+      <div class="text-xl font-bold text-gray-900"><%= @analytics[:unique_7d] %></div>
+      <div class="text-xs text-gray-400 mt-0.5">Unique visitors (7d)</div>
+    </div>
+  </div>
+
+  <% if is_pro %>
+    <%# Pro breakdown: entry clicks, countries, referrers %>
+    <% has_detail = @analytics[:top_entries].any? || @analytics[:top_countries].any? || @analytics[:top_referrers].any? %>
+    <% if has_detail %>
+      <div class="mt-5 pt-4 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+        <!-- Entry clicks -->
+        <% if @analytics[:top_entries].any? %>
+          <div>
+            <h3 class="text-xs font-medium text-gray-500 mb-2">Entry clicks</h3>
+            <div class="space-y-1.5">
+              <% @analytics[:top_entries].each do |entry, count| %>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-700 truncate max-w-[180px]" title="<%= entry.title %>"><%= entry.title %></span>
+                  <span class="text-gray-400 shrink-0 ml-3"><%= count %></span>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Countries + referrers stacked in right column -->
+        <div class="space-y-4">
+          <% if @analytics[:top_countries].any? %>
+            <div>
+              <h3 class="text-xs font-medium text-gray-500 mb-2">Top countries</h3>
+              <div class="space-y-1.5">
+                <% @analytics[:top_countries].each do |country, count| %>
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-700"><%= country %></span>
+                    <span class="text-gray-400"><%= count %></span>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+
+          <% if @analytics[:top_referrers].any? %>
+            <div>
+              <h3 class="text-xs font-medium text-gray-500 mb-2">Top referrers</h3>
+              <div class="space-y-1.5">
+                <% @analytics[:top_referrers].each do |referrer, count| %>
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-700 truncate max-w-[180px]"><%= referrer %></span>
+                    <span class="text-gray-400 shrink-0 ml-3"><%= count %></span>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+      </div>
+    <% else %>
+      <p class="mt-4 text-xs text-gray-400">Analytics will populate as people visit your profile and click your entries.</p>
+    <% end %>
+
+  <% else %>
+    <%# Free tier: teaser for Pro features %>
+    <div class="mt-4 pt-4 border-t border-gray-100">
+      <p class="text-xs text-gray-500">Upgrade to Pro for the 30-day chart, entry clicks, country breakdown, and referrers.</p>
+    </div>
+  <% end %>
+</div>
