@@ -9,10 +9,21 @@
 
 <!-- Header -->
 <div class="flex items-center justify-between mb-6">
-  <div class="flex items-center gap-3">
-    <h1 class="text-2xl font-bold">Dashboard</h1>
-    <% if current_user.pro? %>
-      <span class="inline-flex items-center gap-1 text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">✦ Pro</span>
+  <div>
+    <div class="flex items-center gap-3">
+      <h1 class="text-2xl font-bold">Dashboard</h1>
+      <% if current_user.pro? %>
+        <span class="inline-flex items-center gap-1 text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">✦ Pro</span>
+      <% end %>
+    </div>
+    <% if @streak > 0 %>
+      <div class="flex items-center gap-1.5 mt-1 text-sm text-gray-500">
+        <span><%= streak_emoji(@streak) %></span>
+        <span class="font-medium text-gray-700"><%= @streak %>-day streak</span>
+        <% unless @logged_today %>
+          <span class="text-amber-500 text-xs">· Log something to keep it alive</span>
+        <% end %>
+      </div>
     <% end %>
   </div>
   <div class="flex items-center gap-4">
@@ -70,20 +81,7 @@
   </div>
 </div>
 
-<!-- Streak -->
-<% if @streak > 0 %>
-  <div class="bg-white border border-gray-200 rounded-xl px-5 py-4 mb-6 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <span class="text-2xl">🔥</span>
-      <div>
-        <div class="text-sm font-semibold text-gray-900"><%= @streak %>-day streak</div>
-        <% unless @logged_today %>
-          <div class="text-xs text-amber-600 mt-0.5">Log something to keep your streak alive</div>
-        <% end %>
-      </div>
-    </div>
-  </div>
-<% end %>
+
 
 <div class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
   <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">README badge</div>
