@@ -14,12 +14,12 @@ RSpec.describe "Dashboard", type: :request do
 
       before { sign_in_as(user) }
 
-      it "shows the README badge snippet" do
+      it "does not show README badge snippet" do
         get "/dashboard"
 
         expect(response).to have_http_status(:success)
-        expect(response.body).to include("README badge")
-        expect(response.body).to include("/badge/builder")
+        expect(response.body).not_to include("README badge")
+        expect(response.body).not_to include("/badge/builder")
       end
     end
   end

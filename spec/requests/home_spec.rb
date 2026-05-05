@@ -13,7 +13,7 @@ RSpec.describe "Home", type: :request do
 
       get "/"
 
-      expect(response.body).to include("Live builder activity")
+      expect(response.body).to include("Live public feed")
       expect(response.body).to include(entry.title)
       expect(response.body).to include("@alice")
     end

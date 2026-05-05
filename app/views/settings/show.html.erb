@@ -194,6 +194,26 @@
       </section>
       <% end %>
 
+      <!-- README badge -->
+      <section class="mt-10">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">README badge</h2>
+        <div class="bg-white border border-gray-200 rounded-xl p-5">
+          <p class="text-sm text-gray-600 mb-3">Drop this in your README.md to show your live Openstage stats.</p>
+          <div class="flex items-center gap-2">
+            <input id="settings-readme-badge-snippet"
+                   type="text"
+                   value="<%= @badge_markdown %>"
+                   readonly
+                   class="w-full text-xs font-mono text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2" />
+            <button type="button"
+                    class="shrink-0 text-xs font-medium px-3 py-2 rounded-lg border border-gray-200 text-gray-700 hover:text-gray-900 hover:border-gray-300"
+                    onclick="navigator.clipboard.writeText(document.getElementById('settings-readme-badge-snippet').value)">
+              Copy
+            </button>
+          </div>
+        </div>
+      </section>
+
     </div>
 
     <!-- Billing tab -->
