@@ -10,7 +10,8 @@ RSpec.describe GithubSyncJob, type: :job do
       full_name: "tuxnotfound/myapp",
       description: "My Rails app",
       html_url: "https://github.com/tuxnotfound/myapp",
-      default_branch: "main"
+      default_branch: "main",
+      private: false
     )
   end
 
@@ -31,7 +32,7 @@ RSpec.describe GithubSyncJob, type: :job do
 
   before do
     allow(Octokit::Client).to receive(:new).and_return(client)
-    allow(client).to receive(:repos).and_return([ repo_double ])
+    allow(client).to receive(:repositories).and_return([ repo_double ])
     allow(client).to receive(:commits).and_return([ commit_double ])
   end
 
@@ -47,6 +48,14 @@ RSpec.describe GithubSyncJob, type: :job do
       expect(entry.source).to eq("github")
       expect(entry.external_id).to eq("abc123def456")
       expect(entry.title).to eq("Add feature X")
+      expect(entry.url).to eq("https://github.com/tuxnotfound/myapp/commit/abc123def456")
+    end
+
+    it "does not store commit URL for private repos" do
+      allow(repo_double).to receive(:private).and_return(true)
+
+      described_class.new.perform(user.id)
+      expect(Entry.last.url).to be_nil
     end
 
     it "creates a SyncLog with success status" do
@@ -68,7 +77,7 @@ RSpec.describe GithubSyncJob, type: :job do
     end
 
     context "when GitHub API raises an error" do
-      before { allow(client).to receive(:repos).and_raise(Octokit::Unauthorized) }
+      before { allow(client).to receive(:repositories).and_raise(Octokit::Unauthorized) }
 
       it "records a failed SyncLog and re-raises" do
         expect { described_class.new.perform(user.id) }.to raise_error(Octokit::Unauthorized)

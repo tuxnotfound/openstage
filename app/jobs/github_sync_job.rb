@@ -13,13 +13,14 @@ class GithubSyncJob < ApplicationJob
     entries_added = 0
 
     begin
-      repos = client.repos(user.github_username, type: "public")
+      # Owner repos include both public and private repositories for this user.
+      repos = client.repositories(type: "owner")
 
       repos.each do |repo_data|
         repo = sync_repo(user, repo_data)
         next unless repo.included?
 
-        entries_added += sync_commits(client, user, repo)
+        entries_added += sync_commits(client, user, repo, private_repo: repo_data.private)
         repo.update!(last_synced_at: Time.current)
       end
 
@@ -49,7 +50,7 @@ class GithubSyncJob < ApplicationJob
     repo
   end
 
-  def sync_commits(client, user, repo)
+  def sync_commits(client, user, repo, private_repo: false)
     since = repo.last_synced_at || INITIAL_SYNC_WINDOW.ago
     added = 0
 
@@ -68,7 +69,8 @@ class GithubSyncJob < ApplicationJob
           source: :github,
           title: commit.commit.message.split("\n").first.truncate(200),
           occurred_at: commit.commit.author.date,
-          url: commit.html_url,
+          # Never expose commit links for private repositories.
+          url: private_repo ? nil : commit.html_url,
           repo_name: repo.full_name
         )
         entry.save!
