@@ -49,6 +49,8 @@ Rails.application.routes.draw do
   get "/sitemap.xml", to: "sitemaps#show", defaults: { format: :xml }
   get "/og/:username", to: "og_images#show", as: :og_image
   get "/badge/:username", to: "badges#show", as: :profile_badge, defaults: { format: :svg }
+  get "/embed/:username/preview", to: "embeds#preview", as: :profile_embed_preview
+  get "/embed/:username.js", to: "embeds#show", as: :profile_embed, defaults: { format: :js }
   get "/e/:id/out", to: "entry_clicks#show", as: :entry_click_out
 
   # Public profiles — must be last

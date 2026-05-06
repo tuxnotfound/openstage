@@ -17,6 +17,24 @@ RSpec.describe "Settings", type: :request do
         get settings_path
         expect(response).to have_http_status(:ok)
       end
+
+      it "shows the embed widget script snippet" do
+        sign_in_as(user)
+        get settings_path
+
+        expect(response.body).to include("Embed widget")
+        expect(response.body).to include("/embed/#{user.username}.js")
+      end
+
+      it "shows a note about hidden private repo commit URLs" do
+        create(:github_repo, user: user)
+
+        sign_in_as(user)
+        get settings_path
+
+        expect(response.body).to include("Private repo commits can still appear as shipped entries")
+        expect(response.body).to include("their commit URLs are hidden on your public profile")
+      end
     end
   end
 

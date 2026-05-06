@@ -5,6 +5,7 @@ class SettingsController < ApplicationController
     @github_repos     = current_user.github_repos.order(:name)
     @last_github_sync = current_user.last_synced_at(source: :github)
     @badge_markdown   = "[![openstage](#{profile_badge_url(current_user.username)})](#{profile_url(current_user.username)})"
+    @embed_script_tag = "<script src=\"#{profile_embed_url(current_user.username)}\"></script>"
   end
 
   def update

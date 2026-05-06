@@ -1,0 +1,17 @@
+<% content_for :title, "Embed preview for @#{@username} — Openstage" %>
+<% content_for :minimal_page, true %>
+
+<section class="min-h-[70vh] flex items-center justify-center px-4">
+  <div class="w-full max-w-2xl">
+    <p class="text-xs text-gray-500 mb-4">Embed preview for @<%= @username %></p>
+
+    <div class="rounded-xl border border-gray-200 bg-white p-5">
+      <script src="<%= @script_src %>"></script>
+    </div>
+
+    <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+      <p class="text-xs text-gray-500 mb-2">Script</p>
+      <code class="block text-xs text-gray-700 break-all">&lt;script src="<%= @script_src %>"&gt;&lt;/script&gt;</code>
+    </div>
+  </div>
+</section>
