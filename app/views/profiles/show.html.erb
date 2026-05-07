@@ -52,6 +52,7 @@
         <span class="inline-flex items-center gap-1 text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">✦ Pro</span>
       <% end %>
       <span class="text-gray-400 text-sm font-mono">@<%= @user.username %></span>
+      <%= render "profiles/follow_button", user: @user, follow: @follow %>
     </div>
 
     <% if @user.bio.present? %>
@@ -110,6 +111,14 @@
       <div class="text-xs text-gray-400 uppercase tracking-wide mt-0.5">day streak</div>
     </div>
   <% end %>
+  <a href="<%= profile_followers_path(@user.username) %>" class="hover:opacity-70 transition-opacity">
+    <div class="text-2xl font-bold text-gray-900"><%= @followers_count %></div>
+    <div class="text-xs text-gray-400 uppercase tracking-wide mt-0.5">followers</div>
+  </a>
+  <a href="<%= profile_following_path(@user.username) %>" class="hover:opacity-70 transition-opacity">
+    <div class="text-2xl font-bold text-gray-900"><%= @following_count %></div>
+    <div class="text-xs text-gray-400 uppercase tracking-wide mt-0.5">following</div>
+  </a>
 </div>
 
 <!-- Activity heatmap -->

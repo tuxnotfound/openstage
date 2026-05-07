@@ -25,6 +25,9 @@ class ProfilesController < ApplicationController
     @repos_synced  = @user.github_repos.included_repos.count
     @milestones    = @user.entries.publicly_visible.where(entry_type: :milestone).count
     @streak        = @user.current_streak
+    @followers_count = @user.followers.merge(User.active).count
+    @following_count = @user.following.merge(User.active).count
+    @follow = current_user ? current_user.follows_as_follower.find_by(followee: @user) : nil
 
     start_date = 52.weeks.ago.to_date
     raw = @user.entries.publicly_visible
@@ -37,6 +40,18 @@ class ProfilesController < ApplicationController
       format.html
       format.turbo_stream
     end
+  end
+
+  def followers
+    @user = User.active.find_by!(username: params[:username])
+    @users = @user.followers.merge(User.active).order("follows.created_at DESC")
+    @follows_map = current_user ? current_user.follows_as_follower.where(followee: @users).index_by(&:followee_id) : {}
+  end
+
+  def following
+    @user = User.active.find_by!(username: params[:username])
+    @users = @user.following.merge(User.active).order("follows.created_at DESC")
+    @follows_map = current_user ? current_user.follows_as_follower.where(followee: @users).index_by(&:followee_id) : {}
   end
 
   private

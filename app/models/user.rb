@@ -7,6 +7,11 @@ class User < ApplicationRecord
   has_many :profile_views, dependent: :destroy
   has_many :entry_clicks, dependent: :destroy
 
+  has_many :follows_as_follower, class_name: "Follow", foreign_key: :follower_id, dependent: :destroy
+  has_many :follows_as_followee, class_name: "Follow", foreign_key: :followee_id, dependent: :destroy
+  has_many :following, through: :follows_as_follower, source: :followee
+  has_many :followers, through: :follows_as_followee, source: :follower
+
   scope :active, -> { where(deleted_at: nil) }
 
   validates :github_uid, presence: true, uniqueness: true

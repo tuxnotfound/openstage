@@ -1,0 +1,33 @@
+<% content_for :title, "Feed — Openstage" %>
+
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Feed</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Updates from builders you follow</p>
+  </div>
+</div>
+
+<% if @following_count == 0 %>
+  <div class="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-16 text-center">
+    <p class="text-gray-500 text-sm mb-3">You're not following anyone yet.</p>
+    <%= link_to "Find builders on the homepage →", root_path, class: "text-sm text-gray-900 font-medium hover:underline" %>
+  </div>
+<% elsif @entries.empty? %>
+  <div class="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-16 text-center">
+    <p class="text-gray-500 text-sm">The builders you follow haven't posted anything yet.</p>
+  </div>
+<% else %>
+  <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+    <div id="feed-entries">
+      <%= render partial: "home/feed_entry", collection: @entries, as: :entry %>
+    </div>
+  </div>
+
+  <% if @entries.next_page %>
+    <div class="mt-6 text-center">
+      <%= link_to "Load more",
+          feed_path(page: @entries.next_page),
+          class: "text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg px-5 py-2.5 inline-block transition-colors" %>
+    </div>
+  <% end %>
+<% end %>

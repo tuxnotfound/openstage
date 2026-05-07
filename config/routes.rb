@@ -29,6 +29,12 @@ Rails.application.routes.draw do
   # Stripe webhook
   post "/webhooks/stripe", to: "webhooks#stripe", as: :stripe_webhook
 
+  # Follows
+  resources :follows, only: [ :create, :destroy ]
+
+  # Personal feed
+  get "/feed", to: "feed#index", as: :feed
+
   # Settings
   get "/settings", to: "settings#show",            as: :settings
   patch "/settings", to: "settings#update"
@@ -54,5 +60,7 @@ Rails.application.routes.draw do
   get "/e/:id/out", to: "entry_clicks#show", as: :entry_click_out
 
   # Public profiles — must be last
+  get "/:username/followers", to: "profiles#followers", as: :profile_followers, constraints: { username: /[a-zA-Z0-9_-]+/ }
+  get "/:username/following", to: "profiles#following", as: :profile_following, constraints: { username: /[a-zA-Z0-9_-]+/ }
   get "/:username", to: "profiles#show", as: :profile, constraints: { username: /[a-zA-Z0-9_-]+/ }
 end

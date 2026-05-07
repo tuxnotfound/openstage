@@ -50,5 +50,7 @@ class DashboardController < ApplicationController
     @logged_today = current_user.entries.visible
                                 .where(occurred_at: Date.current.all_day)
                                 .exists?
+
+    @following_count = current_user.following.merge(User.active).count
   end
 end

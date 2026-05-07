@@ -1,0 +1,23 @@
+<div id="follow-button-<%= user.id %>">
+  <% if user_signed_in? && current_user != user %>
+    <% if follow %>
+      <%= button_to "Following",
+          follow_path(follow),
+          method: :delete,
+          data: { turbo_stream: true },
+          class: "text-xs font-medium border border-gray-300 text-gray-700 px-4 py-1.5 rounded-full hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors cursor-pointer" %>
+    <% else %>
+      <%= button_to "Follow",
+          follows_path(followee_id: user.id),
+          method: :post,
+          data: { turbo_stream: true },
+          class: "text-xs font-medium bg-gray-900 text-white px-4 py-1.5 rounded-full hover:bg-gray-700 transition-colors cursor-pointer" %>
+    <% end %>
+  <% elsif !user_signed_in? %>
+    <%= button_to "Follow",
+        "/auth/github",
+        method: :post,
+        data: { turbo: false },
+        class: "text-xs font-medium bg-gray-900 text-white px-4 py-1.5 rounded-full hover:bg-gray-700 transition-colors cursor-pointer" %>
+  <% end %>
+</div>
