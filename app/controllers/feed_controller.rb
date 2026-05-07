@@ -12,5 +12,11 @@ class FeedController < ApplicationController
                     .page(params[:page])
                     .per(25)
     @following_count = following_ids.size
+
+    excluded_ids = following_ids + [ current_user.id ]
+    @suggested_users = User.active
+                           .where.not(id: excluded_ids)
+                           .order("RANDOM()")
+                           .limit(5)
   end
 end
