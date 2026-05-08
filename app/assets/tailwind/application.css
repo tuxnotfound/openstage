@@ -1,1 +1,11 @@
 @import "tailwindcss";
+
+@keyframes entry-highlight {
+  0%   { background-color: theme(colors.yellow.100); }
+  100% { background-color: transparent; }
+}
+
+[id^="entry-"]:target {
+  animation: entry-highlight 2s ease-out forwards;
+  border-radius: theme(borderRadius.lg);
+}
