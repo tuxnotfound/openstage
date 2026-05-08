@@ -214,7 +214,7 @@
       <div class="border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden">
         <% @entries.each do |entry| %>
           <%= turbo_frame_tag dom_id(entry) do %>
-            <div class="group flex gap-4 p-4 hover:bg-gray-50 transition-colors">
+            <div id="entry-<%= entry.id %>" class="group flex gap-4 p-4 hover:bg-gray-50 transition-colors">
               <div class="shrink-0 mt-0.5">
                 <%= render "profiles/entry_icon", type: entry.entry_type %>
               </div>
@@ -248,7 +248,22 @@
                 </div>
 
                 <!-- Action buttons: bottom-right, visible on hover -->
+                <% _long_url = profile_url(username: current_user.username) + "#entry-#{entry.id}" %>
+                <% _short_url = tinyurl_for(_long_url) %>
+                <% _tweet_parts = [entry.title] %>
+                <% _tweet_parts << entry.body.truncate(100) if entry.body.present? %>
+                <% _tweet_parts << _short_url %>
+                <% _share_href = "https://twitter.com/intent/tweet?text=#{CGI.escape(_tweet_parts.join("\n\n"))}" %>
                 <div class="flex justify-end items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <!-- Share on X -->
+                  <a href="<%= _share_href %>" target="_blank" rel="noopener"
+                     title="Share on X"
+                     class="text-gray-300 hover:text-gray-600 transition-colors">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                  </a>
+
                   <!-- Pin (Pro only) -->
                   <% if current_user.pro? %>
                     <%= button_to entry_path(entry), method: :patch,
