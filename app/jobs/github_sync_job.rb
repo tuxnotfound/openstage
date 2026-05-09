@@ -50,8 +50,14 @@ class GithubSyncJob < ApplicationJob
     repo
   end
 
+  # Overlap window when computing `since` from last_synced_at. GitHub's
+  # `since` filter uses committer date, not push date, so commits pushed
+  # late (after their committer date) are otherwise missed forever.
+  # Dedup via external_id makes the overlap free.
+  SINCE_OVERLAP = 1.day
+
   def sync_commits(client, user, repo, private_repo: false)
-    since = repo.last_synced_at || INITIAL_SYNC_WINDOW.ago
+    since = repo.last_synced_at ? repo.last_synced_at - SINCE_OVERLAP : INITIAL_SYNC_WINDOW.ago
     added = 0
 
     commits = client.commits(repo.full_name, repo.default_branch, since: since.iso8601)
