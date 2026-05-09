@@ -50,5 +50,13 @@
     <main class="max-w-4xl mx-auto px-4 py-8">
       <%= yield %>
     </main>
+
+    <% unless content_for?(:minimal_page) %>
+      <footer class="max-w-4xl mx-auto px-4 py-8 text-center text-xs text-gray-400">
+        got thoughts? we'd love to hear them —
+        <a href="mailto:tuxnotfound@cioga.eu" class="text-gray-500 hover:text-gray-700 underline">tuxnotfound@cioga.eu</a>
+        <div class="italic mt-1">(feedback, bugs, or just say hi)</div>
+      </footer>
+    <% end %>
   </body>
 </html>
