@@ -4,9 +4,16 @@ class GithubSyncJob < ApplicationJob
   # How far back to fetch on the very first sync for a repo.
   INITIAL_SYNC_WINDOW = 3.months
 
+  # Overlap window when computing `since` from last_synced_at. GitHub's
+  # `since` filter uses committer date, not push date, so commits pushed
+  # late (after their committer date) are otherwise missed forever.
+  # Dedup via external_id makes the overlap free.
+  SINCE_OVERLAP = 1.day
+
   def perform(user_id)
     user = User.find_by(id: user_id)
-    return unless user
+    return unless user && user.github_access_token.present?
+
     client = Octokit::Client.new(access_token: user.github_access_token, auto_paginate: true)
 
     log = SyncLog.create!(user: user, source: :github, status: :running, ran_at: Time.current)
@@ -20,13 +27,18 @@ class GithubSyncJob < ApplicationJob
         repo = sync_repo(user, repo_data)
         next unless repo.included?
 
-        entries_added += sync_commits(client, user, repo, private_repo: repo_data.private)
-        repo.update!(last_synced_at: Time.current)
+        begin
+          entries_added += sync_commits(client, user, repo, private_repo: repo_data.private)
+          repo.update!(last_synced_at: Time.current)
+        rescue Octokit::Error => e
+          # Per-repo failure must not advance the watermark, or commits in the
+          # gap are lost forever. Other repos continue to sync.
+          Rails.logger.warn "[GithubSyncJob] skipping #{repo.full_name}: #{e.message}"
+        end
       end
 
       log.update!(status: :success, entries_added: entries_added)
       Rails.logger.info "[GithubSyncJob] user=#{user.username} repos=#{repos.size} entries_added=#{entries_added}"
-      GithubSyncJob.set(wait: 2.hours).perform_later(user_id)
     rescue => e
       log.update!(status: :failed, error_message: e.message)
       Rails.logger.error "[GithubSyncJob] user=#{user.username} error=#{e.message}"
@@ -50,12 +62,6 @@ class GithubSyncJob < ApplicationJob
     repo
   end
 
-  # Overlap window when computing `since` from last_synced_at. GitHub's
-  # `since` filter uses committer date, not push date, so commits pushed
-  # late (after their committer date) are otherwise missed forever.
-  # Dedup via external_id makes the overlap free.
-  SINCE_OVERLAP = 1.day
-
   def sync_commits(client, user, repo, private_repo: false)
     since = repo.last_synced_at ? repo.last_synced_at - SINCE_OVERLAP : INITIAL_SYNC_WINDOW.ago
     added = 0
@@ -63,8 +69,7 @@ class GithubSyncJob < ApplicationJob
     commits = client.commits(repo.full_name, repo.default_branch, since: since.iso8601)
 
     commits.each do |commit|
-      # Only include commits authored by this user
-      next unless commit.author&.login&.downcase == user.github_username.downcase
+      next unless authored_by?(commit, user)
 
       begin
         entry = Entry.find_or_initialize_by(user: user, external_id: commit.sha)
@@ -82,14 +87,26 @@ class GithubSyncJob < ApplicationJob
         entry.save!
         added += 1
       rescue ActiveRecord::RecordNotUnique
-        # Race condition — another job already inserted this commit. Safe to skip.
         next
       end
     end
 
     added
-  rescue Octokit::Error => e
-    Rails.logger.warn "[GithubSyncJob] skipping #{repo.full_name}: #{e.message}"
-    0
+  end
+
+  # GitHub returns `commit.author = nil` whenever the committer email isn't
+  # tied to a verified account, which silently dropped legitimate commits.
+  # Fall back to matching the GitHub-issued noreply email pattern.
+  def authored_by?(commit, user)
+    username = user.github_username.to_s.downcase
+    return false if username.empty?
+
+    login = commit.author&.login&.downcase
+    return true if login == username
+
+    email = commit.commit&.author&.email.to_s.downcase
+    return false if email.empty?
+
+    email.match?(/\A(?:\d+\+)?#{Regexp.escape(username)}@users\.noreply\.github\.com\z/)
   end
 end

@@ -16,7 +16,7 @@ RSpec.describe GithubSyncJob, type: :job do
   end
 
   let(:commit_author_double) { double(login: "tuxnotfound") }
-  let(:commit_git_author_double) { double(date: 1.day.ago) }
+  let(:commit_git_author_double) { double(date: 1.day.ago, email: "tuxnotfound@example.com") }
   let(:commit_commit_double) { double(message: "Add feature X\n\nMore details", author: commit_git_author_double) }
 
   let(:commit_double) do
@@ -73,7 +73,27 @@ RSpec.describe GithubSyncJob, type: :job do
     it "skips commits not authored by the user" do
       other_author = double(login: "someoneelse")
       allow(commit_double).to receive(:author).and_return(other_author)
+      allow(commit_git_author_double).to receive(:email).and_return("someoneelse@example.com")
       expect { described_class.new.perform(user.id) }.not_to change(Entry, :count)
+    end
+
+    it "includes commits when author is nil but committer uses the GitHub noreply email" do
+      allow(commit_double).to receive(:author).and_return(nil)
+      allow(commit_git_author_double).to receive(:email).and_return("12345+TuxNotFound@users.noreply.github.com")
+      expect { described_class.new.perform(user.id) }.to change(Entry, :count).by(1)
+    end
+
+    it "does not advance last_synced_at when a repo's commits endpoint errors" do
+      described_class.new.perform(user.id)
+      first_synced_at = GithubRepo.last.last_synced_at
+
+      allow(client).to receive(:commits).and_raise(Octokit::ServerError.new)
+
+      expect {
+        travel_to(2.hours.from_now) { described_class.new.perform(user.id) }
+      }.not_to(change { GithubRepo.last.reload.last_synced_at })
+
+      expect(GithubRepo.last.last_synced_at).to be_within(1.second).of(first_synced_at)
     end
 
     context "when GitHub API raises an error" do
