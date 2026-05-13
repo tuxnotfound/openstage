@@ -29,6 +29,9 @@ Rails.application.routes.draw do
   # Stripe webhook
   post "/webhooks/stripe", to: "webhooks#stripe", as: :stripe_webhook
 
+  # Global feed
+  get "/feed", to: "feed#index", as: :feed
+
   # Settings
   get "/settings", to: "settings#show",            as: :settings
   patch "/settings", to: "settings#update"
