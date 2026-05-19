@@ -16,11 +16,5 @@
     </div>
   </div>
 
-  <% if @entries.next_page %>
-    <div class="mt-6 text-center">
-      <%= link_to "Load more",
-          feed_path(page: @entries.next_page),
-          class: "text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg px-5 py-2.5 inline-block transition-colors" %>
-    </div>
-  <% end %>
+  <%= render "feed/load_more", entries: @entries %>
 <% end %>
