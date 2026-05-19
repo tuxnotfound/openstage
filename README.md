@@ -1,3 +1,5 @@
+[![openstage](https://openstage.dev/badge/tuxnotfound)](https://openstage.dev/tuxnotfound)
+
 # Openstage
 
 Openstage is a Rails app for building in public with a shareable profile timeline.
