@@ -50,12 +50,19 @@ class GithubSyncJob < ApplicationJob
 
   def sync_repo(user, repo_data)
     repo = GithubRepo.find_or_initialize_by(user: user, github_repo_id: repo_data.id)
+    new_branch = repo_data.default_branch || "main"
+
+    # A default-branch rename invalidates last_synced_at: the watermark was set
+    # against the old branch, and commits on the new branch may predate it, so
+    # a normal sync would miss them. Reset to force INITIAL_SYNC_WINDOW.
+    repo.last_synced_at = nil if repo.persisted? && repo.default_branch != new_branch
+
     repo.assign_attributes(
       name: repo_data.name,
       full_name: repo_data.full_name,
       description: repo_data.description,
       url: repo_data.html_url,
-      default_branch: repo_data.default_branch || "main"
+      default_branch: new_branch
     )
     repo.included = true if repo.new_record?
     repo.save!

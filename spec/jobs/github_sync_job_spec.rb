@@ -83,6 +83,41 @@ RSpec.describe GithubSyncJob, type: :job do
       expect { described_class.new.perform(user.id) }.to change(Entry, :count).by(1)
     end
 
+    it "rescans from INITIAL_SYNC_WINDOW when the repo's default branch changes" do
+      described_class.new.perform(user.id)
+      initial_synced = GithubRepo.last.last_synced_at
+
+      allow(repo_double).to receive(:default_branch).and_return("trunk")
+
+      captured_since = nil
+      allow(client).to receive(:commits) do |_full_name, _branch, opts|
+        captured_since = Time.parse(opts[:since])
+        []
+      end
+
+      travel_to(2.hours.from_now) { described_class.new.perform(user.id) }
+
+      # Without the reset, since would be ~initial_synced - SINCE_OVERLAP.
+      # With the reset, since is ~INITIAL_SYNC_WINDOW.ago — far older.
+      expect(captured_since).to be < (initial_synced - 1.week)
+    end
+
+    it "does not reset last_synced_at when the default branch is unchanged" do
+      described_class.new.perform(user.id)
+      initial_synced = GithubRepo.last.last_synced_at
+
+      captured_since = nil
+      allow(client).to receive(:commits) do |_full_name, _branch, opts|
+        captured_since = Time.parse(opts[:since])
+        []
+      end
+
+      travel_to(2.hours.from_now) { described_class.new.perform(user.id) }
+
+      # Normal sync: since is last_synced_at - 1.day, not the wide window.
+      expect(captured_since).to be_within(2.seconds).of(initial_synced - 1.day)
+    end
+
     it "does not advance last_synced_at when a repo's commits endpoint errors" do
       described_class.new.perform(user.id)
       first_synced_at = GithubRepo.last.last_synced_at
