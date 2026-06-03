@@ -34,6 +34,8 @@ RSpec.describe GithubSyncJob, type: :job do
     allow(Octokit::Client).to receive(:new).and_return(client)
     allow(client).to receive(:repositories).and_return([ repo_double ])
     allow(client).to receive(:commits).and_return([ commit_double ])
+    # Single-page stub: no :next rel means each_page yields once and stops.
+    allow(client).to receive(:last_response).and_return(double(rels: {}))
   end
 
   describe "#perform" do
