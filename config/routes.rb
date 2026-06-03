@@ -13,6 +13,9 @@ Rails.application.routes.draw do
   # Dashboard
   get "/dashboard", to: "dashboard#index"
 
+  # Analytics (Pro)
+  get "/analytics", to: "analytics#index", as: :analytics
+
   # Sync triggers
   post "/sync/github", to: "syncs#github", as: :sync_github
 

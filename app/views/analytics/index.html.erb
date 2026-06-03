@@ -1,0 +1,266 @@
+<% content_for :title, "Analytics — Openstage" %>
+
+<!-- Header -->
+<div class="flex items-center justify-between mb-6">
+  <div class="flex items-center gap-3">
+    <h1 class="text-2xl font-bold">Analytics</h1>
+    <span class="inline-flex items-center gap-1 text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">✦ Pro</span>
+  </div>
+  <%= link_to "← Dashboard", dashboard_path, class: "text-sm text-gray-400 hover:text-gray-900 transition-colors" %>
+</div>
+
+<!-- Range selector -->
+<div class="flex items-center gap-1 mb-6">
+  <% AnalyticsController::RANGES.each do |key, cfg| %>
+    <% active = key == @range_key %>
+    <%= link_to cfg[:label], analytics_path(range: key),
+        class: "px-3 py-1.5 text-xs font-medium rounded-full transition-colors #{active ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400'}" %>
+  <% end %>
+</div>
+
+<!-- Profile views section -->
+<section class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-sm font-semibold text-gray-700">Profile views</h2>
+    <% if @views[:last_visited] %>
+      <span class="text-xs text-gray-400">Last visit <%= time_ago_in_words(@views[:last_visited]) %> ago</span>
+    <% end %>
+  </div>
+
+  <!-- Top-line stats -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
+    <div>
+      <div class="text-2xl font-bold text-gray-900"><%= @views[:total] %></div>
+      <div class="text-xs text-gray-400 mt-0.5">Total views · <%= @range_label %></div>
+    </div>
+    <div>
+      <div class="text-2xl font-bold text-gray-900"><%= @views[:unique] %></div>
+      <div class="text-xs text-gray-400 mt-0.5">Unique visitors</div>
+    </div>
+    <div>
+      <% avg = @views[:daily].values.sum.to_f / [ @views[:daily].size, 1 ].max %>
+      <div class="text-2xl font-bold text-gray-900"><%= avg.round(1) %></div>
+      <div class="text-xs text-gray-400 mt-0.5">Avg views / day</div>
+    </div>
+  </div>
+
+  <!-- Big daily chart -->
+  <%
+    daily       = @views[:daily]
+    chart_h     = 140
+    chart_count = daily.size
+    max_count   = daily.values.max.to_f
+    max_count   = 1.0 if max_count == 0
+  %>
+  <% if chart_count > 0 %>
+    <div class="border border-gray-100 rounded-lg p-4">
+      <svg viewBox="0 0 <%= chart_count %> <%= chart_h %>" preserveAspectRatio="none" class="block w-full" style="height: <%= chart_h %>px" aria-label="Daily profile views">
+        <% daily.each_with_index do |(date, count), i| %>
+          <% h = [ ((count / max_count) * (chart_h - 4)).round, count > 0 ? 2 : 1 ].max %>
+          <rect
+            x="<%= i + 0.1 %>"
+            y="<%= chart_h - h %>"
+            width="0.8"
+            height="<%= h %>"
+            fill="<%= count > 0 ? '#6366f1' : '#e5e7eb' %>"
+          >
+            <title><%= date %> — <%= count %> view<%= 's' if count != 1 %></title>
+          </rect>
+        <% end %>
+      </svg>
+      <div class="flex justify-between text-[10px] text-gray-400 mt-2">
+        <span><%= Date.parse(daily.keys.first).strftime("%-d %b") %></span>
+        <span><%= Date.parse(daily.keys.last).strftime("%-d %b") %></span>
+      </div>
+    </div>
+  <% end %>
+</section>
+
+<!-- Countries + referrers -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+  <section class="bg-white border border-gray-200 rounded-xl p-5">
+    <h2 class="text-sm font-semibold text-gray-700 mb-3">Top countries</h2>
+    <% if @views[:top_countries].any? %>
+      <% max = @views[:top_countries].values.max.to_f %>
+      <div class="space-y-2">
+        <% @views[:top_countries].each do |country, count| %>
+          <div>
+            <div class="flex items-center justify-between text-sm mb-0.5">
+              <span class="text-gray-700"><%= country %></span>
+              <span class="text-gray-400"><%= count %></span>
+            </div>
+            <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div class="h-full bg-indigo-500" style="width: <%= ((count / max) * 100).round %>%"></div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-xs text-gray-400">No country data yet in this range.</p>
+    <% end %>
+  </section>
+
+  <section class="bg-white border border-gray-200 rounded-xl p-5">
+    <h2 class="text-sm font-semibold text-gray-700 mb-3">Top referrers</h2>
+    <% if @views[:top_referrers].any? %>
+      <% max = @views[:top_referrers].values.max.to_f %>
+      <div class="space-y-2">
+        <% @views[:top_referrers].each do |referrer, count| %>
+          <div>
+            <div class="flex items-center justify-between text-sm mb-0.5">
+              <span class="text-gray-700 truncate max-w-[260px]" title="<%= referrer %>"><%= referrer %></span>
+              <span class="text-gray-400 shrink-0 ml-3"><%= count %></span>
+            </div>
+            <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div class="h-full bg-indigo-500" style="width: <%= ((count / max) * 100).round %>%"></div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-xs text-gray-400">No referrer data yet in this range.</p>
+    <% end %>
+  </section>
+</div>
+
+<!-- Entry clicks leaderboard -->
+<section class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-sm font-semibold text-gray-700">Entry clicks</h2>
+    <span class="text-xs text-gray-400"><%= @entry_clicks[:total] %> total · <%= @range_label %></span>
+  </div>
+
+  <% if @entry_clicks[:leaderboard].any? %>
+    <% max_clicks = @entry_clicks[:leaderboard].map { |_, c, _| c }.max.to_f %>
+    <div class="divide-y divide-gray-100">
+      <% @entry_clicks[:leaderboard].each do |entry, count, last_clicked| %>
+        <div class="py-2.5 first:pt-0 last:pb-0">
+          <div class="flex items-center justify-between gap-3 mb-1">
+            <div class="min-w-0">
+              <%= link_to entry.title,
+                  profile_path(username: current_user.username, anchor: "entry-#{entry.id}"),
+                  class: "text-sm text-gray-800 hover:text-gray-900 truncate block",
+                  title: entry.title %>
+              <div class="flex items-center gap-2 mt-0.5">
+                <span class="text-[10px] uppercase tracking-wide text-gray-400"><%= entry.entry_type.to_s.humanize %></span>
+                <% if last_clicked %>
+                  <span class="text-[10px] text-gray-400">· last click <%= time_ago_in_words(last_clicked) %> ago</span>
+                <% end %>
+              </div>
+            </div>
+            <span class="text-sm font-medium text-gray-700 shrink-0"><%= count %></span>
+          </div>
+          <div class="h-1 bg-gray-100 rounded-full overflow-hidden">
+            <div class="h-full bg-indigo-500" style="width: <%= ((count / max_clicks) * 100).round %>%"></div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-xs text-gray-400">No entry clicks yet in this range.</p>
+  <% end %>
+</section>
+
+<!-- Entries breakdown -->
+<section class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
+  <h2 class="text-sm font-semibold text-gray-700 mb-4">Entries — <%= @range_label %></h2>
+
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+    <div>
+      <div class="text-xl font-bold text-gray-900"><%= @entries_breakdown[:in_range] %></div>
+      <div class="text-xs text-gray-400 mt-0.5">In range</div>
+    </div>
+    <div>
+      <div class="text-xl font-bold text-gray-900"><%= @entries_breakdown[:visible] %></div>
+      <div class="text-xs text-gray-400 mt-0.5">Visible</div>
+    </div>
+    <div>
+      <div class="text-xl font-bold text-gray-900"><%= @entries_breakdown[:private_ct] %></div>
+      <div class="text-xs text-gray-400 mt-0.5">Private</div>
+    </div>
+    <div>
+      <div class="text-xl font-bold text-gray-900"><%= @entries_breakdown[:current_streak] %></div>
+      <div class="text-xs text-gray-400 mt-0.5">Current streak</div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <!-- By type -->
+    <div>
+      <h3 class="text-xs font-medium text-gray-500 mb-2">By type</h3>
+      <% if @entries_breakdown[:by_type].any? %>
+        <% type_max = @entries_breakdown[:by_type].values.max.to_f %>
+        <div class="space-y-2">
+          <% @entries_breakdown[:by_type].sort_by { |_, c| -c }.each do |type, count| %>
+            <div>
+              <div class="flex items-center justify-between text-sm mb-0.5">
+                <span class="text-gray-700 capitalize"><%= type.to_s.humanize %></span>
+                <span class="text-gray-400"><%= count %></span>
+              </div>
+              <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full bg-gray-700" style="width: <%= ((count / type_max) * 100).round %>%"></div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-xs text-gray-400">No entries yet in this range.</p>
+      <% end %>
+    </div>
+
+    <!-- By source -->
+    <div>
+      <h3 class="text-xs font-medium text-gray-500 mb-2">By source</h3>
+      <% if @entries_breakdown[:by_source].any? %>
+        <% source_max = @entries_breakdown[:by_source].values.max.to_f %>
+        <div class="space-y-2">
+          <% @entries_breakdown[:by_source].sort_by { |_, c| -c }.each do |source, count| %>
+            <div>
+              <div class="flex items-center justify-between text-sm mb-0.5">
+                <span class="text-gray-700 capitalize"><%= source.to_s.humanize %></span>
+                <span class="text-gray-400"><%= count %></span>
+              </div>
+              <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full bg-gray-700" style="width: <%= ((count / source_max) * 100).round %>%"></div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-xs text-gray-400">No entries yet in this range.</p>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Posting cadence (weekly bars) -->
+  <% weekly = @entries_breakdown[:weekly] %>
+  <% if weekly.any? && weekly.values.sum > 0 %>
+    <div class="mt-5 pt-4 border-t border-gray-100">
+      <h3 class="text-xs font-medium text-gray-500 mb-2">Posting cadence</h3>
+      <%
+        bar_h    = 60
+        bar_w    = 10
+        bar_gap  = 4
+        svg_w    = weekly.size * bar_w + (weekly.size - 1) * bar_gap
+        w_max    = weekly.values.max.to_f
+        w_max    = 1.0 if w_max == 0
+      %>
+      <svg width="<%= svg_w %>" height="<%= bar_h %>" viewBox="0 0 <%= svg_w %> <%= bar_h %>" class="block max-w-full">
+        <% weekly.each_with_index do |(week, count), i| %>
+          <% h = [ ((count / w_max) * bar_h).round, count > 0 ? 2 : 1 ].max %>
+          <rect
+            x="<%= i * (bar_w + bar_gap) %>"
+            y="<%= bar_h - h %>"
+            width="<%= bar_w %>"
+            height="<%= h %>"
+            rx="1"
+            fill="<%= count > 0 ? '#6366f1' : '#e5e7eb' %>"
+          >
+            <title>Week of <%= Date.parse(week).strftime("%-d %b") %> — <%= count %></title>
+          </rect>
+        <% end %>
+      </svg>
+      <p class="text-[10px] text-gray-400 mt-1.5">Entries per week</p>
+    </div>
+  <% end %>
+</section>
