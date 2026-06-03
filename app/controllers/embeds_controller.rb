@@ -13,6 +13,8 @@ class EmbedsController < ApplicationController
     user = User.active.find_by(username: params[:username])
     return head :not_found unless user
 
+    track_impression(user)
+
     latest_entry = user.entries.publicly_visible.chronological.first
 
     @embed_payload = {
@@ -28,5 +30,20 @@ class EmbedsController < ApplicationController
 
     expires_in 30.minutes, public: true
     render :show, formats: :js
+  end
+
+  private
+
+  def track_impression(user)
+    referrer = request.referer.present? ? (URI.parse(request.referer).host rescue nil) : nil
+    ip_hash  = Digest::SHA256.hexdigest("#{request.remote_ip}#{Date.current}")
+    user.badge_impressions.create!(
+      kind:      "embed",
+      viewed_at: Time.current,
+      referrer:  referrer,
+      ip_hash:   ip_hash
+    )
+  rescue ActiveRecord::ActiveRecordError
+    # Don't break embed rendering if impression tracking fails.
   end
 end

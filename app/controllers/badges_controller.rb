@@ -3,6 +3,8 @@ class BadgesController < ApplicationController
     user = User.active.find_by(username: params[:username])
     return head :not_found unless user
 
+    track_impression(user)
+
     entries_count = user.public_entries_count
     commits_count = user.public_github_commits_count
     message = "#{commits_count} commits | #{entries_count} entries"
@@ -16,6 +18,19 @@ class BadgesController < ApplicationController
   end
 
   private
+
+  def track_impression(user)
+    referrer = request.referer.present? ? (URI.parse(request.referer).host rescue nil) : nil
+    ip_hash  = Digest::SHA256.hexdigest("#{request.remote_ip}#{Date.current}")
+    user.badge_impressions.create!(
+      kind:      "badge",
+      viewed_at: Time.current,
+      referrer:  referrer,
+      ip_hash:   ip_hash
+    )
+  rescue ActiveRecord::ActiveRecordError
+    # Don't break badge rendering if impression tracking fails.
+  end
 
   def cache_key(user, entries_count, commits_count)
     ["profile-badge", user.id, user.updated_at.to_i, entries_count, commits_count].join(":")

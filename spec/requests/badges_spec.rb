@@ -27,5 +27,11 @@ RSpec.describe "Badges", type: :request do
       get "/badge/ghost"
       expect(response).to have_http_status(:not_found)
     end
+
+    it "records a badge impression on each request" do
+      expect {
+        get "/badge/builder"
+      }.to change { user.badge_impressions.where(kind: "badge").count }.by(1)
+    end
   end
 end

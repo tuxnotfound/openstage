@@ -16,6 +16,9 @@
     <%= link_to cfg[:label], analytics_path(range: key),
         class: "px-3 py-1.5 text-xs font-medium rounded-full transition-colors #{active ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400'}" %>
   <% end %>
+  <% if @deltas %>
+    <span class="ml-2 text-[10px] text-gray-400">vs prior <%= @range_label.downcase %></span>
+  <% end %>
 </div>
 
 <!-- Profile views section -->
@@ -30,11 +33,17 @@
   <!-- Top-line stats -->
   <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
     <div>
-      <div class="text-2xl font-bold text-gray-900"><%= @views[:total] %></div>
+      <div class="flex items-center">
+        <div class="text-2xl font-bold text-gray-900"><%= @views[:total] %></div>
+        <%= delta_badge(@deltas && @deltas[:views_total]) %>
+      </div>
       <div class="text-xs text-gray-400 mt-0.5">Total views · <%= @range_label %></div>
     </div>
     <div>
-      <div class="text-2xl font-bold text-gray-900"><%= @views[:unique] %></div>
+      <div class="flex items-center">
+        <div class="text-2xl font-bold text-gray-900"><%= @views[:unique] %></div>
+        <%= delta_badge(@deltas && @deltas[:views_unique]) %>
+      </div>
       <div class="text-xs text-gray-400 mt-0.5">Unique visitors</div>
     </div>
     <div>
@@ -76,8 +85,41 @@
   <% end %>
 </section>
 
-<!-- Countries + referrers -->
+<!-- Traffic sources + countries -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+  <section class="bg-white border border-gray-200 rounded-xl p-5">
+    <h2 class="text-sm font-semibold text-gray-700 mb-3">Traffic sources</h2>
+    <% if @views[:by_source].any? %>
+      <% src_max = @views[:by_source].values.max.to_f %>
+      <div class="space-y-2">
+        <% @views[:by_source].each do |source, count| %>
+          <div>
+            <div class="flex items-center justify-between text-sm mb-0.5">
+              <span class="text-gray-700"><%= source %></span>
+              <span class="text-gray-400"><%= count %></span>
+            </div>
+            <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div class="h-full bg-indigo-500" style="width: <%= ((count / src_max) * 100).round %>%"></div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      <details class="mt-3">
+        <summary class="text-xs text-gray-400 cursor-pointer hover:text-gray-700">Show raw referrers</summary>
+        <div class="mt-2 space-y-1.5">
+          <% @views[:top_referrers].each do |referrer, count| %>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-gray-500 truncate max-w-[260px]" title="<%= referrer %>"><%= referrer %></span>
+              <span class="text-gray-400 shrink-0 ml-3"><%= count %></span>
+            </div>
+          <% end %>
+        </div>
+      </details>
+    <% else %>
+      <p class="text-xs text-gray-400">No traffic data yet in this range.</p>
+    <% end %>
+  </section>
+
   <section class="bg-white border border-gray-200 rounded-xl p-5">
     <h2 class="text-sm font-semibold text-gray-700 mb-3">Top countries</h2>
     <% if @views[:top_countries].any? %>
@@ -99,41 +141,23 @@
       <p class="text-xs text-gray-400">No country data yet in this range.</p>
     <% end %>
   </section>
-
-  <section class="bg-white border border-gray-200 rounded-xl p-5">
-    <h2 class="text-sm font-semibold text-gray-700 mb-3">Top referrers</h2>
-    <% if @views[:top_referrers].any? %>
-      <% max = @views[:top_referrers].values.max.to_f %>
-      <div class="space-y-2">
-        <% @views[:top_referrers].each do |referrer, count| %>
-          <div>
-            <div class="flex items-center justify-between text-sm mb-0.5">
-              <span class="text-gray-700 truncate max-w-[260px]" title="<%= referrer %>"><%= referrer %></span>
-              <span class="text-gray-400 shrink-0 ml-3"><%= count %></span>
-            </div>
-            <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-              <div class="h-full bg-indigo-500" style="width: <%= ((count / max) * 100).round %>%"></div>
-            </div>
-          </div>
-        <% end %>
-      </div>
-    <% else %>
-      <p class="text-xs text-gray-400">No referrer data yet in this range.</p>
-    <% end %>
-  </section>
 </div>
 
 <!-- Entry clicks leaderboard -->
 <section class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
   <div class="flex items-center justify-between mb-4">
     <h2 class="text-sm font-semibold text-gray-700">Entry clicks</h2>
-    <span class="text-xs text-gray-400"><%= @entry_clicks[:total] %> total · <%= @range_label %></span>
+    <div class="flex items-center">
+      <span class="text-xs text-gray-400"><%= @entry_clicks[:total] %> total · <%= @range_label %></span>
+      <%= delta_badge(@deltas && @deltas[:clicks_total]) %>
+    </div>
   </div>
 
   <% if @entry_clicks[:leaderboard].any? %>
-    <% max_clicks = @entry_clicks[:leaderboard].map { |_, c, _| c }.max.to_f %>
+    <% max_clicks = @entry_clicks[:leaderboard].map { |row| row[:clicks] }.max.to_f %>
     <div class="divide-y divide-gray-100">
-      <% @entry_clicks[:leaderboard].each do |entry, count, last_clicked| %>
+      <% @entry_clicks[:leaderboard].each do |row| %>
+        <% entry = row[:entry] %>
         <div class="py-2.5 first:pt-0 last:pb-0">
           <div class="flex items-center justify-between gap-3 mb-1">
             <div class="min-w-0">
@@ -141,17 +165,24 @@
                   profile_path(username: current_user.username, anchor: "entry-#{entry.id}"),
                   class: "text-sm text-gray-800 hover:text-gray-900 truncate block",
                   title: entry.title %>
-              <div class="flex items-center gap-2 mt-0.5">
+              <div class="flex items-center gap-2 mt-0.5 flex-wrap">
                 <span class="text-[10px] uppercase tracking-wide text-gray-400"><%= entry.entry_type.to_s.humanize %></span>
-                <% if last_clicked %>
-                  <span class="text-[10px] text-gray-400">· last click <%= time_ago_in_words(last_clicked) %> ago</span>
+                <% if row[:click_rate] %>
+                  <span class="text-[10px] text-indigo-600 font-medium" title="<%= row[:clicks] %> clicks over <%= row[:views_since] %> views since publish">
+                    · <%= row[:click_rate] %>% click rate
+                  </span>
+                <% elsif row[:views_since] < 10 %>
+                  <span class="text-[10px] text-gray-400" title="Need at least 10 profile views since publish to compute a click rate">· rate pending</span>
+                <% end %>
+                <% if row[:last_clicked] %>
+                  <span class="text-[10px] text-gray-400">· last click <%= time_ago_in_words(row[:last_clicked]) %> ago</span>
                 <% end %>
               </div>
             </div>
-            <span class="text-sm font-medium text-gray-700 shrink-0"><%= count %></span>
+            <span class="text-sm font-medium text-gray-700 shrink-0"><%= row[:clicks] %></span>
           </div>
           <div class="h-1 bg-gray-100 rounded-full overflow-hidden">
-            <div class="h-full bg-indigo-500" style="width: <%= ((count / max_clicks) * 100).round %>%"></div>
+            <div class="h-full bg-indigo-500" style="width: <%= ((row[:clicks] / max_clicks) * 100).round %>%"></div>
           </div>
         </div>
       <% end %>
@@ -161,14 +192,71 @@
   <% end %>
 </section>
 
+<!-- Badge & embed impressions -->
+<section class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-sm font-semibold text-gray-700">Badge &amp; embed reach</h2>
+    <span class="text-xs text-gray-400"><%= @range_label %></span>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div class="border border-gray-100 rounded-lg p-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-medium text-gray-500">README badge</span>
+        <% if @badge_stats[:badge_last_seen] %>
+          <span class="text-[10px] text-gray-400">last seen <%= time_ago_in_words(@badge_stats[:badge_last_seen]) %> ago</span>
+        <% end %>
+      </div>
+      <div class="flex items-baseline gap-4">
+        <div>
+          <div class="text-2xl font-bold text-gray-900"><%= @badge_stats[:badge_total] %></div>
+          <div class="text-[10px] text-gray-400 mt-0.5">impressions</div>
+        </div>
+        <div>
+          <div class="text-lg font-semibold text-gray-700"><%= @badge_stats[:badge_unique] %></div>
+          <div class="text-[10px] text-gray-400 mt-0.5">unique viewers</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="border border-gray-100 rounded-lg p-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-medium text-gray-500">Embed widget</span>
+        <% if @badge_stats[:embed_last_seen] %>
+          <span class="text-[10px] text-gray-400">last seen <%= time_ago_in_words(@badge_stats[:embed_last_seen]) %> ago</span>
+        <% end %>
+      </div>
+      <div class="flex items-baseline gap-4">
+        <div>
+          <div class="text-2xl font-bold text-gray-900"><%= @badge_stats[:embed_total] %></div>
+          <div class="text-[10px] text-gray-400 mt-0.5">impressions</div>
+        </div>
+        <div>
+          <div class="text-lg font-semibold text-gray-700"><%= @badge_stats[:embed_unique] %></div>
+          <div class="text-[10px] text-gray-400 mt-0.5">unique viewers</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="text-[10px] text-gray-400 mt-3">
+    Note: GitHub proxies README badges through its image cache (camo), so badge impressions are undercounted — treat as a directional signal of badge reach.
+  </p>
+</section>
+
 <!-- Entries breakdown -->
 <section class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
-  <h2 class="text-sm font-semibold text-gray-700 mb-4">Entries — <%= @range_label %></h2>
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-sm font-semibold text-gray-700">Entries — <%= @range_label %></h2>
+  </div>
 
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
     <div>
-      <div class="text-xl font-bold text-gray-900"><%= @entries_breakdown[:in_range] %></div>
-      <div class="text-xs text-gray-400 mt-0.5">In range</div>
+      <div class="flex items-center">
+        <div class="text-xl font-bold text-gray-900"><%= @entries_breakdown[:in_range] %></div>
+        <%= delta_badge(@deltas && @deltas[:entries_total]) %>
+      </div>
+      <div class="text-xs text-gray-400 mt-0.5">Posted</div>
     </div>
     <div>
       <div class="text-xl font-bold text-gray-900"><%= @entries_breakdown[:visible] %></div>
@@ -184,7 +272,56 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+  <!-- 12-week activity heatmap -->
+  <%
+    heatmap = @entries_breakdown[:heatmap]
+    heatmap_max = heatmap.values.max.to_i
+    dates = heatmap.keys.map { |k| Date.parse(k) }
+    # Group dates into weeks (columns) — start each week on Monday.
+    columns = dates.group_by { |d| d.beginning_of_week }.sort.to_h
+    cell      = 12
+    cell_gap  = 3
+    heatmap_w = columns.size * (cell + cell_gap)
+    heatmap_h = 7 * (cell + cell_gap)
+  %>
+  <% if heatmap.any? %>
+    <div class="mt-2 pt-4 border-t border-gray-100">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-xs font-medium text-gray-500">Activity · last <%= AnalyticsController::HEATMAP_WEEKS %> weeks</h3>
+        <div class="flex items-center gap-1 text-[10px] text-gray-400">
+          <span>less</span>
+          <% [0, 1, 2, 3, 4].each do |lvl| %>
+            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:<%= heatmap_fill(lvl) %>"></span>
+          <% end %>
+          <span>more</span>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <svg width="<%= heatmap_w %>" height="<%= heatmap_h %>" viewBox="0 0 <%= heatmap_w %> <%= heatmap_h %>" aria-label="Activity heatmap">
+          <% columns.each_with_index do |(week_start, week_dates), col_i| %>
+            <% (0..6).each do |day_offset| %>
+              <% date = week_start + day_offset %>
+              <% count = heatmap[date.to_s] %>
+              <% next if count.nil? %>
+              <% lvl = heatmap_level(count, heatmap_max) %>
+              <rect
+                x="<%= col_i * (cell + cell_gap) %>"
+                y="<%= day_offset * (cell + cell_gap) %>"
+                width="<%= cell %>"
+                height="<%= cell %>"
+                rx="2"
+                fill="<%= heatmap_fill(lvl) %>"
+              >
+                <title><%= date.strftime("%-d %b %Y") %> — <%= count %> entr<%= count == 1 ? 'y' : 'ies' %></title>
+              </rect>
+            <% end %>
+          <% end %>
+        </svg>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5 pt-4 border-t border-gray-100">
     <!-- By type -->
     <div>
       <h3 class="text-xs font-medium text-gray-500 mb-2">By type</h3>

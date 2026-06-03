@@ -38,5 +38,11 @@ RSpec.describe "Embeds", type: :request do
       get "/embed/ghost.js"
       expect(response).to have_http_status(:not_found)
     end
+
+    it "records an embed impression on each request" do
+      expect {
+        get "/embed/builder.js"
+      }.to change { user.badge_impressions.where(kind: "embed").count }.by(1)
+    end
   end
 end

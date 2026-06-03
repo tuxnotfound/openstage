@@ -6,6 +6,7 @@ class User < ApplicationRecord
   has_many :sync_logs, dependent: :destroy
   has_many :profile_views, dependent: :destroy
   has_many :entry_clicks, dependent: :destroy
+  has_many :badge_impressions, dependent: :destroy
 
   scope :active, -> { where(deleted_at: nil) }
 

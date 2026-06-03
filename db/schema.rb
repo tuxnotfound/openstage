@@ -10,9 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_05_05_000002) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_03_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "badge_impressions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "kind", null: false
+    t.datetime "viewed_at", null: false
+    t.string "referrer"
+    t.string "ip_hash"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "kind", "viewed_at"], name: "index_badge_impressions_on_user_id_and_kind_and_viewed_at"
+    t.index ["user_id"], name: "index_badge_impressions_on_user_id"
+  end
 
   create_table "entries", force: :cascade do |t|
     t.bigint "user_id", null: false
@@ -46,6 +58,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_05_05_000002) do
     t.index ["entry_id"], name: "index_entry_clicks_on_entry_id"
     t.index ["user_id", "clicked_at"], name: "index_entry_clicks_on_user_id_and_clicked_at"
     t.index ["user_id"], name: "index_entry_clicks_on_user_id"
+  end
+
+  create_table "follows", force: :cascade do |t|
+    t.bigint "follower_id", null: false
+    t.bigint "followee_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["followee_id"], name: "index_follows_on_followee_id"
+    t.index ["follower_id", "followee_id"], name: "index_follows_on_follower_id_and_followee_id", unique: true
   end
 
   create_table "github_repos", force: :cascade do |t|
@@ -233,9 +254,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_05_05_000002) do
     t.index ["username"], name: "index_users_on_username", unique: true
   end
 
+  add_foreign_key "badge_impressions", "users"
   add_foreign_key "entries", "users"
   add_foreign_key "entry_clicks", "entries"
   add_foreign_key "entry_clicks", "users"
+  add_foreign_key "follows", "users", column: "followee_id"
+  add_foreign_key "follows", "users", column: "follower_id"
   add_foreign_key "github_repos", "users"
   add_foreign_key "profile_views", "users"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
