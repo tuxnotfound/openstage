@@ -1,0 +1,28 @@
+<% entry = row[:entry] %>
+<div class="py-2.5">
+  <div class="flex items-center justify-between gap-3 mb-1">
+    <div class="min-w-0">
+      <%= link_to entry.title,
+          profile_path(username: current_user.username, anchor: "entry-#{entry.id}"),
+          class: "text-sm text-gray-800 hover:text-gray-900 truncate block",
+          title: entry.title %>
+      <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+        <span class="text-[10px] uppercase tracking-wide text-gray-400"><%= entry.entry_type.to_s.humanize %></span>
+        <% if row[:click_rate] %>
+          <span class="text-[10px] text-indigo-600 font-medium" title="<%= row[:clicks] %> clicks over <%= row[:views_since] %> views since publish">
+            · <%= row[:click_rate] %>% click rate
+          </span>
+        <% elsif row[:views_since] < 10 %>
+          <span class="text-[10px] text-gray-400" title="Need at least 10 profile views since publish to compute a click rate">· rate pending</span>
+        <% end %>
+        <% if row[:last_clicked] %>
+          <span class="text-[10px] text-gray-400">· last click <%= time_ago_in_words(row[:last_clicked]) %> ago</span>
+        <% end %>
+      </div>
+    </div>
+    <span class="text-sm font-medium text-gray-700 shrink-0"><%= row[:clicks] %></span>
+  </div>
+  <div class="h-1 bg-gray-100 rounded-full overflow-hidden">
+    <div class="h-full bg-indigo-500" style="width: <%= ((row[:clicks] / max_clicks) * 100).round %>%"></div>
+  </div>
+</div>
