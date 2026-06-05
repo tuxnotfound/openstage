@@ -63,20 +63,37 @@
   %>
   <% if chart_count > 0 %>
     <div class="border border-gray-100 rounded-lg p-4">
-      <svg viewBox="0 0 <%= chart_count %> <%= chart_h %>" preserveAspectRatio="none" class="block w-full" style="height: <%= chart_h %>px" aria-label="Daily profile views">
-        <% daily.each_with_index do |(date, count), i| %>
-          <% h = [ ((count / max_count) * (chart_h - 4)).round, count > 0 ? 2 : 1 ].max %>
-          <rect
-            x="<%= i + 0.1 %>"
-            y="<%= chart_h - h %>"
-            width="0.8"
-            height="<%= h %>"
-            fill="<%= count > 0 ? '#6366f1' : '#e5e7eb' %>"
-          >
-            <title><%= date %> — <%= count %> view<%= 's' if count != 1 %></title>
-          </rect>
-        <% end %>
-      </svg>
+      <div class="relative" data-controller="chart-tooltip">
+        <svg viewBox="0 0 <%= chart_count %> <%= chart_h %>" preserveAspectRatio="none" class="block w-full" style="height: <%= chart_h %>px" aria-label="Daily profile views">
+          <% daily.each_with_index do |(date, count), i| %>
+            <% h = [ ((count / max_count) * (chart_h - 4)).round, count > 0 ? 2 : 1 ].max %>
+            <% pretty_date = Date.parse(date).strftime("%-d %b %Y") %>
+            <rect
+              x="<%= i + 0.1 %>"
+              y="<%= chart_h - h %>"
+              width="0.8"
+              height="<%= h %>"
+              fill="<%= count > 0 ? '#6366f1' : '#e5e7eb' %>"
+            >
+              <title><%= pretty_date %> — <%= count %> view<%= 's' if count != 1 %></title>
+            </rect>
+            <%# Full-column-width invisible overlay for easier hover targeting %>
+            <rect
+              x="<%= i %>"
+              y="0"
+              width="1"
+              height="<%= chart_h %>"
+              fill="transparent"
+              data-date="<%= pretty_date %>"
+              data-count="<%= count %>"
+              data-action="mouseenter->chart-tooltip#show mousemove->chart-tooltip#move mouseleave->chart-tooltip#hide"
+              style="cursor: pointer;"
+            />
+          <% end %>
+        </svg>
+        <div data-chart-tooltip-target="tooltip"
+             class="hidden absolute pointer-events-none bg-gray-900 text-white text-xs rounded-md px-2 py-1.5 shadow-lg whitespace-nowrap z-10"></div>
+      </div>
       <div class="flex justify-between text-[10px] text-gray-400 mt-2">
         <span><%= Date.parse(daily.keys.first).strftime("%-d %b") %></span>
         <span><%= Date.parse(daily.keys.last).strftime("%-d %b") %></span>
