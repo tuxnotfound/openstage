@@ -1,6 +1,59 @@
-<div class="flex flex-col items-center justify-center text-center py-24 px-4">
-  <h1 class="text-4xl font-bold text-gray-900 mb-3">Your build, in public. One link.</h1>
-  <p class="text-lg text-gray-500 mb-8">GitHub commits, milestones, and notes — one chronological timeline, automatically updated.</p>
+<% content_for :title, "Openstage — Your build, in public. One link." %>
+<% content_for :meta_description, "Openstage turns your GitHub commits, milestones, and notes into one automatically-updated build-in-public timeline. Claim your free builder profile and share it with a single link." %>
+
+<%
+  faqs = [
+    { q: "What is Openstage?",
+      a: "Openstage is a public profile page that aggregates your build-in-public activity — GitHub commits, milestones, and notes — into one chronological, automatically-updated timeline you can share with a single link." },
+    { q: "How does Openstage work?",
+      a: "Sign in with GitHub, claim your username, and Openstage syncs your public commit activity into a clean timeline. Add milestones and notes by hand to tell the full story. Your page lives at openstage.dev/your-username." },
+    { q: "Is Openstage free?",
+      a: "Yes. The timeline, GitHub sync, and public profile are free forever. Openstage Pro ($7/month or $49 one-time) adds profile analytics, private entries, pinned entries, and a Pro badge." },
+    { q: "Does Openstage post on my behalf or require Twitter?",
+      a: "No. Openstage only reads your public GitHub activity and shows the milestones and notes you add yourself. It never posts for you, and there are no likes or comments — it is a timeline, not a social network." },
+    { q: "Who is Openstage for?",
+      a: "Indie hackers, developers, and makers who build in public and want one link that tells the full story of what they are shipping." },
+    { q: "How do I share my Openstage profile?",
+      a: "Every profile has a clean URL (openstage.dev/username), an auto-generated social preview image, and an embeddable badge you can add to your website or GitHub README." }
+  ]
+%>
+
+<% content_for :head do %>
+  <script type="application/ld+json">
+    <%= {
+      "@context" => "https://schema.org",
+      "@type" => "SoftwareApplication",
+      "name" => "Openstage",
+      "applicationCategory" => "DeveloperApplication",
+      "operatingSystem" => "Web",
+      "url" => root_url,
+      "description" => SeoHelper::DEFAULT_DESCRIPTION,
+      "offers" => [
+        { "@type" => "Offer", "name" => "Free", "price" => "0", "priceCurrency" => "USD" },
+        { "@type" => "Offer", "name" => "Pro Monthly", "price" => "7", "priceCurrency" => "USD" },
+        { "@type" => "Offer", "name" => "Pro Lifetime", "price" => "49", "priceCurrency" => "USD" }
+      ]
+    }.to_json.html_safe %>
+  </script>
+  <script type="application/ld+json">
+    <%= {
+      "@context" => "https://schema.org",
+      "@type" => "FAQPage",
+      "mainEntity" => faqs.map { |f|
+        {
+          "@type" => "Question",
+          "name" => f[:q],
+          "acceptedAnswer" => { "@type" => "Answer", "text" => f[:a] }
+        }
+      }
+    }.to_json.html_safe %>
+  </script>
+<% end %>
+
+<!-- Hero -->
+<div class="flex flex-col items-center justify-center text-center pt-16 pb-12 px-4">
+  <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 mb-3 tracking-tight">Your build, in public. One link.</h1>
+  <p class="text-lg text-gray-500 mb-8 max-w-xl">GitHub commits, milestones, and notes — one chronological timeline, automatically updated.</p>
 
   <% unless user_signed_in? %>
     <%= button_to "/auth/github", method: :post, data: { turbo: false }, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer" do %>
@@ -12,11 +65,109 @@
   <% end %>
 
   <p class="mt-6 text-sm text-gray-400">
-    See it live: <%= link_to "@tuxnotfound", "/tuxnotfound", class: "text-gray-600 underline hover:text-gray-900" %>
+    See it live: <%= link_to "@tuxnotfound", profile_path("tuxnotfound"), class: "text-gray-600 underline hover:text-gray-900" %>
   </p>
 </div>
 
-<section class="max-w-3xl mx-auto px-4 pb-20" aria-label="Recent public activity">
+<!-- What is Openstage (definition — for search + AI answers) -->
+<section class="max-w-2xl mx-auto px-4 py-10 border-t border-gray-100" aria-labelledby="what-is">
+  <h2 id="what-is" class="text-lg font-semibold text-gray-900 mb-3">What is Openstage?</h2>
+  <p class="text-gray-600 leading-relaxed">
+    Openstage is a <strong>build-in-public profile</strong> for developers and indie hackers. It pulls your
+    public GitHub commits into a single chronological timeline and lets you add milestones, launches, and notes
+    by hand — so one link tells the full story of what you're building. No likes, no comments, no noise:
+    just your progress, automatically kept up to date.
+  </p>
+</section>
+
+<!-- How it works -->
+<section class="px-4 py-10 border-t border-gray-100" aria-labelledby="how">
+  <h2 id="how" class="text-lg font-semibold text-gray-900 mb-6 text-center">How it works</h2>
+  <ol class="grid sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
+    <li>
+      <div class="text-xs font-mono text-gray-400 mb-1">01</div>
+      <h3 class="font-medium text-gray-900">Sign in with GitHub</h3>
+      <p class="text-sm text-gray-500 mt-1">Connect in one click. Openstage only reads public activity and never posts on your behalf.</p>
+    </li>
+    <li>
+      <div class="text-xs font-mono text-gray-400 mb-1">02</div>
+      <h3 class="font-medium text-gray-900">Claim your link</h3>
+      <p class="text-sm text-gray-500 mt-1">Pick a username. Your page lives at <span class="font-mono text-gray-600">openstage.dev/you</span>.</p>
+    </li>
+    <li>
+      <div class="text-xs font-mono text-gray-400 mb-1">03</div>
+      <h3 class="font-medium text-gray-900">Build in public</h3>
+      <p class="text-sm text-gray-500 mt-1">Commits sync automatically. Add milestones and notes to tell the story behind the work.</p>
+    </li>
+  </ol>
+</section>
+
+<!-- Features -->
+<section class="px-4 py-10 border-t border-gray-100" aria-labelledby="features">
+  <h2 id="features" class="text-lg font-semibold text-gray-900 mb-6 text-center">Everything on one page</h2>
+  <div class="grid sm:grid-cols-2 gap-x-8 gap-y-6 max-w-3xl mx-auto text-sm">
+    <div>
+      <h3 class="font-medium text-gray-900">Automatic GitHub sync</h3>
+      <p class="text-gray-500 mt-1">Your public commits become timeline entries, grouped by repository.</p>
+    </div>
+    <div>
+      <h3 class="font-medium text-gray-900">Milestones &amp; notes</h3>
+      <p class="text-gray-500 mt-1">Add launches, wins, and lessons by hand to give your commits context.</p>
+    </div>
+    <div>
+      <h3 class="font-medium text-gray-900">Activity heatmap &amp; streak</h3>
+      <p class="text-gray-500 mt-1">A 52-week heatmap and day streak show momentum at a glance.</p>
+    </div>
+    <div>
+      <h3 class="font-medium text-gray-900">One shareable link</h3>
+      <p class="text-gray-500 mt-1">A clean URL, an auto-generated social card, and an embeddable badge for your README.</p>
+    </div>
+    <div>
+      <h3 class="font-medium text-gray-900">Filter by type or repo</h3>
+      <p class="text-gray-500 mt-1">Visitors can focus on shipped work, milestones, notes, or a single project.</p>
+    </div>
+    <div>
+      <h3 class="font-medium text-gray-900">Fast and quiet</h3>
+      <p class="text-gray-500 mt-1">Server-rendered, mobile-first, and free of social-network noise.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Comparison -->
+<section class="px-4 py-10 border-t border-gray-100" aria-labelledby="why">
+  <h2 id="why" class="text-lg font-semibold text-gray-900 mb-6 text-center">Why Openstage</h2>
+  <div class="max-w-3xl mx-auto overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="text-left text-gray-500">
+          <th class="py-2 pr-4 font-medium"></th>
+          <th class="py-2 px-3 font-semibold text-gray-900">Openstage</th>
+          <th class="py-2 px-3 font-medium">GitHub profile</th>
+          <th class="py-2 px-3 font-medium">Link-in-bio</th>
+        </tr>
+      </thead>
+      <tbody class="text-gray-600">
+        <% [
+          ["Shows what you're building over time", "Yes", "Commits only", "No"],
+          ["Auto-updates from GitHub", "Yes", "Yes", "No"],
+          ["Milestones, launches & notes", "Yes", "No", "Manual"],
+          ["One link that tells the story", "Yes", "No", "Links only"],
+          ["Built for building in public", "Yes", "No", "No"]
+        ].each do |row| %>
+          <tr class="border-t border-gray-100">
+            <td class="py-2.5 pr-4 text-gray-700"><%= row[0] %></td>
+            <td class="py-2.5 px-3 font-medium text-gray-900"><%= row[1] %></td>
+            <td class="py-2.5 px-3"><%= row[2] %></td>
+            <td class="py-2.5 px-3"><%= row[3] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Live public feed (kept: indexable, fresh content) -->
+<section class="max-w-3xl mx-auto px-4 py-10 border-t border-gray-100" aria-label="Recent public activity">
   <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
     <div>
       <h2 class="text-lg font-semibold text-gray-900">Live public feed</h2>
@@ -36,5 +187,29 @@
     <div class="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-12 text-center">
       <p class="text-sm text-gray-500">No public activity yet.</p>
     </div>
+  <% end %>
+</section>
+
+<!-- FAQ (visible content mirrors FAQPage schema above) -->
+<section class="max-w-2xl mx-auto px-4 py-10 border-t border-gray-100" aria-labelledby="faq">
+  <h2 id="faq" class="text-lg font-semibold text-gray-900 mb-5">Frequently asked questions</h2>
+  <div class="divide-y divide-gray-100">
+    <% faqs.each do |f| %>
+      <div class="py-4">
+        <h3 class="font-medium text-gray-900"><%= f[:q] %></h3>
+        <p class="text-sm text-gray-600 mt-1.5 leading-relaxed"><%= f[:a] %></p>
+      </div>
+    <% end %>
+  </div>
+</section>
+
+<!-- Final CTA -->
+<section class="px-4 py-12 border-t border-gray-100 text-center">
+  <h2 class="text-2xl font-bold text-gray-900 mb-2">Start your timeline</h2>
+  <p class="text-gray-500 mb-6">Free forever. <%= link_to "See pricing", pricing_path, class: "underline hover:text-gray-900" %> · <%= link_to "Read the story", about_path, class: "underline hover:text-gray-900" %></p>
+  <% unless user_signed_in? %>
+    <%= button_to "Sign in with GitHub", "/auth/github", method: :post, data: { turbo: false }, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer" %>
+  <% else %>
+    <%= link_to "Go to Dashboard", dashboard_path, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700" %>
   <% end %>
 </section>

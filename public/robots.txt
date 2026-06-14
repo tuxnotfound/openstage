@@ -1,9 +1,29 @@
+# Openstage robots.txt
+# AI assistants and search engines are explicitly welcome to crawl and cite
+# public pages. A structured summary for LLMs lives at /llms.txt.
+# The named AI agents below share the same ruleset as everyone else (*).
+
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: anthropic-ai
+User-agent: Claude-Web
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot-Extended
 User-agent: *
 Allow: /
 Disallow: /dashboard
 Disallow: /settings
 Disallow: /claim-username
+Disallow: /analytics
+Disallow: /billing
+Disallow: /checkout
+Disallow: /feed
 Disallow: /sync/
 Disallow: /auth/
+Disallow: /e/
 
 Sitemap: https://openstage.dev/sitemap.xml

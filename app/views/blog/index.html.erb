@@ -1,0 +1,46 @@
+<% content_for :title, "Blog — Openstage" %>
+<% content_for :meta_description, "Notes on building in public, shipping consistently, and getting the most out of your Openstage timeline." %>
+
+<% content_for :head do %>
+  <script type="application/ld+json">
+    <%= {
+      "@context" => "https://schema.org",
+      "@type" => "Blog",
+      "name" => "Openstage Blog",
+      "url" => blog_url,
+      "publisher" => { "@id" => "#{request.base_url}/#organization" },
+      "blogPost" => @posts.map { |post|
+        {
+          "@type" => "BlogPosting",
+          "headline" => post.title,
+          "description" => post.description,
+          "datePublished" => post.published_on.iso8601,
+          "url" => blog_post_url(post)
+        }
+      }
+    }.to_json.html_safe %>
+  </script>
+<% end %>
+
+<div class="max-w-2xl mx-auto px-4 py-10">
+  <header>
+    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Blog</h1>
+    <p class="text-lg text-gray-500 mt-3">Notes on building in public and shipping consistently.</p>
+  </header>
+
+  <div class="mt-10 divide-y divide-gray-100">
+    <% @posts.each do |post| %>
+      <article class="py-6">
+        <h2 class="text-xl font-semibold text-gray-900">
+          <%= link_to post.title, blog_post_path(post), class: "hover:text-gray-700" %>
+        </h2>
+        <div class="text-xs text-gray-400 mt-1">
+          <time datetime="<%= post.published_on.iso8601 %>"><%= post.published_on.strftime("%B %-d, %Y") %></time>
+          · <%= post.reading_minutes %> min read
+        </div>
+        <p class="text-gray-600 mt-2 leading-relaxed"><%= post.description %></p>
+        <%= link_to "Read more →", blog_post_path(post), class: "inline-block mt-3 text-sm text-gray-500 hover:text-gray-900" %>
+      </article>
+    <% end %>
+  </div>
+</div>

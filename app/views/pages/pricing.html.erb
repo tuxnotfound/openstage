@@ -1,0 +1,104 @@
+<% content_for :title, "Pricing — Openstage" %>
+<% content_for :meta_description, "Openstage is free forever for your public build-in-public timeline. Openstage Pro is $7/month or $49 one-time and adds analytics, private entries, pinned entries, and a Pro badge." %>
+
+<%
+  billing_faqs = [
+    { q: "Is there really a free plan?",
+      a: "Yes. Your public timeline, automatic GitHub sync, profile page, social preview card, and embeddable badge are free forever." },
+    { q: "What's the difference between Monthly and Lifetime?",
+      a: "Monthly is $7 per month. Lifetime is a single $49 payment that unlocks Openstage Pro permanently, with no recurring charge." },
+    { q: "Can I cancel anytime?",
+      a: "Yes. You can manage or cancel a monthly subscription from your Settings at any time, and Pro access continues until the end of the billing period." },
+    { q: "How do payments work?",
+      a: "Payments are handled securely by Stripe. Openstage never sees or stores your card details." }
+  ]
+%>
+
+<% content_for :head do %>
+  <script type="application/ld+json">
+    <%= {
+      "@context" => "https://schema.org",
+      "@type" => "FAQPage",
+      "mainEntity" => billing_faqs.map { |f|
+        { "@type" => "Question", "name" => f[:q], "acceptedAnswer" => { "@type" => "Answer", "text" => f[:a] } }
+      }
+    }.to_json.html_safe %>
+  </script>
+<% end %>
+
+<div class="max-w-3xl mx-auto px-4 py-10">
+  <header class="text-center">
+    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Simple pricing</h1>
+    <p class="text-lg text-gray-500 mt-3">Free to start. Upgrade when you want more.</p>
+  </header>
+
+  <div class="grid sm:grid-cols-2 gap-5 mt-10">
+    <!-- Free -->
+    <div class="border border-gray-200 rounded-2xl p-6 flex flex-col">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Free</h2>
+      <div class="mt-2 flex items-baseline gap-1">
+        <span class="text-3xl font-bold text-gray-900">$0</span>
+        <span class="text-sm text-gray-400">forever</span>
+      </div>
+      <ul class="mt-5 space-y-2 text-sm text-gray-600 flex-1">
+        <li class="flex gap-2"><span class="text-green-500">✓</span> Public build-in-public timeline</li>
+        <li class="flex gap-2"><span class="text-green-500">✓</span> Automatic GitHub commit sync</li>
+        <li class="flex gap-2"><span class="text-green-500">✓</span> Milestones &amp; notes</li>
+        <li class="flex gap-2"><span class="text-green-500">✓</span> Activity heatmap &amp; streak</li>
+        <li class="flex gap-2"><span class="text-green-500">✓</span> Social preview card &amp; embeddable badge</li>
+      </ul>
+      <% if user_signed_in? %>
+        <%= link_to "Go to dashboard", dashboard_path, class: "mt-6 text-center border border-gray-200 text-gray-700 px-4 py-2.5 rounded-lg text-sm font-medium hover:border-gray-300" %>
+      <% else %>
+        <%= button_to "Start free with GitHub", "/auth/github", method: :post, data: { turbo: false }, class: "mt-6 bg-gray-900 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer w-full" %>
+      <% end %>
+    </div>
+
+    <!-- Pro -->
+    <div class="border-2 border-gray-900 rounded-2xl p-6 flex flex-col relative">
+      <span class="absolute -top-3 left-6 bg-amber-400 text-gray-900 text-xs font-semibold px-2.5 py-0.5 rounded-full">Pro</span>
+      <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Pro</h2>
+      <div class="mt-2 flex items-baseline gap-1">
+        <span class="text-3xl font-bold text-gray-900">$7</span>
+        <span class="text-sm text-gray-400">/month</span>
+        <span class="text-sm text-gray-400 ml-2">or $49 once</span>
+      </div>
+      <ul class="mt-5 space-y-2 text-sm text-gray-600 flex-1">
+        <li class="flex gap-2"><span class="text-green-500">✓</span> <strong class="font-medium text-gray-900">Everything in Free</strong></li>
+        <li class="flex gap-2"><span class="text-green-500">✓</span> Profile analytics (views &amp; referrers)</li>
+        <li class="flex gap-2"><span class="text-green-500">✓</span> Private entries</li>
+        <li class="flex gap-2"><span class="text-green-500">✓</span> Pin up to 3 entries</li>
+        <li class="flex gap-2"><span class="text-green-500">✓</span> Pro badge on your profile</li>
+        <li class="flex gap-2"><span class="text-green-500">✓</span> Remove the Openstage badge</li>
+      </ul>
+
+      <div class="mt-6 space-y-2">
+        <% if user_signed_in? && current_user.pro? %>
+          <div class="text-center text-sm font-medium text-gray-900 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5">✦ You're on Pro</div>
+          <% if current_user.stripe_customer_id.present? %>
+            <%= link_to "Manage billing", billing_portal_path, data: { turbo: false }, class: "block text-center text-sm text-gray-500 hover:text-gray-900" %>
+          <% end %>
+        <% elsif user_signed_in? %>
+          <%= button_to "Go Pro — $7/mo", checkout_path(plan: "monthly"), method: :post, form: { data: { turbo: false } }, class: "bg-gray-900 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer w-full" %>
+          <%= button_to "Lifetime — $49", checkout_path(plan: "lifetime"), method: :post, form: { data: { turbo: false } }, class: "bg-amber-400 text-gray-900 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-amber-300 border-0 cursor-pointer w-full" %>
+        <% else %>
+          <%= button_to "Sign in to go Pro", "/auth/github", method: :post, data: { turbo: false }, class: "bg-gray-900 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer w-full" %>
+          <p class="text-center text-xs text-gray-400">Sign in free first, then upgrade anytime.</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Billing FAQ -->
+  <section class="mt-14" aria-labelledby="billing-faq">
+    <h2 id="billing-faq" class="text-lg font-semibold text-gray-900 mb-5 text-center">Billing questions</h2>
+    <div class="max-w-2xl mx-auto divide-y divide-gray-100">
+      <% billing_faqs.each do |f| %>
+        <div class="py-4">
+          <h3 class="font-medium text-gray-900"><%= f[:q] %></h3>
+          <p class="text-sm text-gray-600 mt-1.5 leading-relaxed"><%= f[:a] %></p>
+        </div>
+      <% end %>
+    </div>
+  </section>
+</div>

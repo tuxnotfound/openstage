@@ -1,0 +1,58 @@
+<% content_for :title, "About Openstage" %>
+<% content_for :meta_description, "Openstage is an independent build-in-public tool that turns your GitHub activity, milestones, and notes into one shareable timeline. Read why we built it and what it stands for." %>
+
+<% content_for :head do %>
+  <script type="application/ld+json">
+    <%= {
+      "@context" => "https://schema.org",
+      "@type" => "AboutPage",
+      "name" => "About Openstage",
+      "url" => about_url,
+      "description" => "Why Openstage exists and what it stands for.",
+      "publisher" => { "@id" => "#{request.base_url}/#organization" }
+    }.to_json.html_safe %>
+  </script>
+<% end %>
+
+<article class="max-w-2xl mx-auto px-4 py-10">
+  <h1 class="text-3xl font-bold text-gray-900 tracking-tight">About Openstage</h1>
+  <p class="text-lg text-gray-500 mt-3">One link that tells the full story of what you're building.</p>
+
+  <div class="mt-8 space-y-5 text-gray-600 leading-relaxed">
+    <p>
+      Building in public works — but the proof of it is scattered. Your commits live on GitHub, your launches
+      on a forum, your lessons in a thread that scrolls away by tomorrow. Anyone who wants to follow along has
+      to piece it together from five places, and most won't bother.
+    </p>
+    <p>
+      <strong>Openstage fixes that with a single link.</strong> It pulls your public GitHub commits into one
+      chronological timeline and lets you add milestones, launches, and notes by hand. The result is a living
+      page — at <span class="font-mono text-gray-800">openstage.dev/your-username</span> — that shows what you
+      shipped, when, and why, and keeps itself up to date.
+    </p>
+
+    <h2 class="text-xl font-semibold text-gray-900">What Openstage stands for</h2>
+    <ul class="space-y-2">
+      <li><strong>Fast by default.</strong> Server-rendered and mobile-first. Your content is the interface.</li>
+      <li><strong>No noise.</strong> No likes, no comments, no follower counts. It's a timeline, not a social network.</li>
+      <li><strong>Yours to share.</strong> A clean URL, an auto-generated preview card, and an embeddable badge for your site or README.</li>
+      <li><strong>Honest by design.</strong> Openstage only reads your public activity. It never posts on your behalf.</li>
+    </ul>
+
+    <h2 class="text-xl font-semibold text-gray-900">Who builds it</h2>
+    <p>
+      Openstage is a small, independent product built in public by
+      <a href="https://github.com/tuxnotfound" rel="noopener" class="text-gray-800 underline hover:text-gray-900">tuxnotfound</a>.
+      The best way to understand it is to watch it being built — the
+      <%= link_to "live demo profile", profile_path("tuxnotfound"), class: "text-gray-800 underline hover:text-gray-900" %>
+      is the product showing its own work.
+    </p>
+  </div>
+
+  <div class="mt-10 flex flex-wrap gap-3">
+    <% unless user_signed_in? %>
+      <%= button_to "Sign in with GitHub", "/auth/github", method: :post, data: { turbo: false }, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer" %>
+    <% end %>
+    <%= link_to "See pricing", pricing_path, class: "inline-flex items-center gap-2 border border-gray-200 text-gray-700 px-5 py-2.5 rounded-lg text-sm font-medium hover:border-gray-300" %>
+  </div>
+</article>

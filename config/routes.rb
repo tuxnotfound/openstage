@@ -51,6 +51,12 @@ Rails.application.routes.draw do
   # Some crawlers request favicon.png; avoid hitting profile lookup.
   get "/favicon.png", to: redirect("/favicon.ico", status: 301)
 
+  # Marketing / content pages
+  get "/about", to: "pages#about", as: :about
+  get "/pricing", to: "pages#pricing", as: :pricing
+  get "/blog", to: "blog#index", as: :blog
+  get "/blog/:slug", to: "blog#show", as: :blog_post
+
   # SEO
   get "/sitemap.xml", to: "sitemaps#show", defaults: { format: :xml }
   get "/og/:username", to: "og_images#show", as: :og_image
@@ -58,6 +64,9 @@ Rails.application.routes.draw do
   get "/embed/:username/preview", to: "embeds#preview", as: :profile_embed_preview
   get "/embed/:username.js", to: "embeds#show", as: :profile_embed, defaults: { format: :js }
   get "/e/:id/out", to: "entry_clicks#show", as: :entry_click_out
+
+  # GEO — structured summary for LLMs / AI search engines (llmstxt.org)
+  get "/llms.txt", to: "llms#show", as: :llms, defaults: { format: :text }
 
   # Public profiles — must be last
   get "/:username", to: "profiles#show", as: :profile, constraints: { username: /[a-zA-Z0-9_-]+/ }

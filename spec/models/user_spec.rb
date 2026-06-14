@@ -20,6 +20,13 @@ RSpec.describe User, type: :model do
       expect(build(:user, username: "pedro cioga")).not_to be_valid
       expect(build(:user, username: "pedro@cioga")).not_to be_valid
     end
+
+    it "rejects reserved usernames that collide with app routes" do
+      expect(build(:user, username: "pricing")).not_to be_valid
+      expect(build(:user, username: "About")).not_to be_valid
+      expect(build(:user, username: "blog")).not_to be_valid
+      expect(build(:user, username: "settings")).not_to be_valid
+    end
   end
 
   describe "#can_change_username?" do

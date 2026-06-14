@@ -1,6 +1,16 @@
 class User < ApplicationRecord
   USERNAME_CHANGE_COOLDOWN = 30.days
 
+  # Paths the app routes itself — must never be claimable as a profile username,
+  # or they would shadow (or be shadowed by) those routes.
+  RESERVED_USERNAMES = %w[
+    about pricing blog llms feed dashboard settings analytics billing checkout
+    sync auth og badge embed embeds claim claim-username sitemap robots favicon
+    webhooks sign_out signin signup login logout register admin api app www
+    help support docs terms privacy contact status new edit me root public
+    assets up entries github_repos e
+  ].freeze
+
   has_many :entries, dependent: :destroy
   has_many :github_repos, dependent: :destroy
   has_many :sync_logs, dependent: :destroy
@@ -15,6 +25,7 @@ class User < ApplicationRecord
                        format: { with: /\A[a-zA-Z0-9_-]+\z/, message: "only allows letters, numbers, hyphens, and underscores" },
                        length: { minimum: 2, maximum: 39 }
   validate :username_change_cooldown, if: :username_changed?
+  validate :username_not_reserved, if: :username_changed?
 
   before_save :track_username_change, if: -> { persisted? && will_save_change_to_username? }
 
@@ -131,6 +142,11 @@ class User < ApplicationRecord
   def username_change_cooldown
     return if username_changed_at.nil?
     errors.add(:username, "can only be changed once every 30 days") unless can_change_username?
+  end
+
+  def username_not_reserved
+    return if username.blank?
+    errors.add(:username, "is reserved") if RESERVED_USERNAMES.include?(username.downcase)
   end
 
   def track_username_change

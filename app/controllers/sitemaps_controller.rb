@@ -5,6 +5,7 @@ class SitemapsController < ApplicationController
                           .where(user: @users)
                           .group(:user_id)
                           .maximum(:occurred_at)
+    @posts = BlogPost.all
 
     render :show, formats: :xml, layout: false, content_type: "application/xml"
   end

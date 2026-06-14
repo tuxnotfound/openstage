@@ -15,6 +15,15 @@ RSpec.describe "Sitemaps", type: :request do
       expect(response.body).to include("<urlset")
     end
 
+    it "includes the marketing pages and blog posts" do
+      get "/sitemap.xml"
+
+      expect(response.body).to include(pricing_url)
+      expect(response.body).to include(about_url)
+      expect(response.body).to include(blog_url)
+      expect(response.body).to include(blog_post_url(BlogPost.all.first))
+    end
+
     it "does not include deleted users" do
       create(:user, username: "deleted_builder", deleted_at: Time.current)
 
