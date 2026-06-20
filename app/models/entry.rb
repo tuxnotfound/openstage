@@ -29,6 +29,10 @@ class Entry < ApplicationRecord
 
   validates :external_id, uniqueness: { scope: :user_id }, allow_nil: true
 
+  # Blank form submissions arrive as "" — nilify so they don't leak into the
+  # repo filter, which keys off `where.not(repo_name: nil)`.
+  normalizes :repo_name, with: ->(value) { value.strip.presence }
+
   scope :visible, -> { where(hidden: false) }
   scope :publicly_visible, -> { visible.where(visibility: :public_entry) }
   scope :chronological, -> { order(occurred_at: :desc) }

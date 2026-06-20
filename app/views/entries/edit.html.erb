@@ -27,7 +27,7 @@
           rows: 2,
           class: "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent mb-2 resize-none" %>
 
-      <div class="flex flex-col sm:flex-row gap-2 mb-3">
+      <div class="flex flex-col sm:flex-row gap-2 mb-2">
         <%= f.url_field :url,
             placeholder: "Link (optional)",
             class: "flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent" %>
@@ -35,6 +35,15 @@
             value: @entry.occurred_at.strftime("%Y-%m-%dT%H:%M"),
             class: "border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent" %>
       </div>
+
+      <% suggestions_id = "project-suggestions-#{@entry.id}" %>
+      <%= f.text_field :repo_name,
+          list: suggestions_id,
+          placeholder: "Project / repo (optional)",
+          class: "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent mb-3" %>
+      <datalist id="<%= suggestions_id %>">
+        <% current_user.project_names.each do |name| %><option value="<%= name %>"></option><% end %>
+      </datalist>
 
       <div class="flex items-center gap-2">
         <%= f.submit "Save",

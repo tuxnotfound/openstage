@@ -80,6 +80,13 @@ class User < ApplicationRecord
     entries.publicly_visible.where(entry_type: :milestone).count
   end
 
+  # Suggestions for tagging an entry with a project: synced repos plus any
+  # custom project names already used, so re-tagging collapses onto one filter.
+  def project_names
+    (github_repos.pluck(:full_name) +
+     entries.where.not(repo_name: nil).distinct.pluck(:repo_name)).uniq.sort
+  end
+
   def public_recent_commits_count(window: 30.days)
     entries.publicly_visible.where(source: :github, entry_type: :shipped, occurred_at: window.ago..).count
   end

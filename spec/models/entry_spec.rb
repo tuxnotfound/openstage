@@ -34,6 +34,18 @@ RSpec.describe Entry, type: :model do
     end
   end
 
+  describe "repo_name normalization" do
+    it "nilifies a blank repo_name" do
+      entry = create(:entry, user: user, repo_name: "   ")
+      expect(entry.repo_name).to be_nil
+    end
+
+    it "strips and keeps a present repo_name" do
+      entry = create(:entry, user: user, repo_name: "  user/repo  ")
+      expect(entry.repo_name).to eq("user/repo")
+    end
+  end
+
   describe "scopes" do
     it "visible excludes hidden entries" do
       create(:entry, user: user, hidden: false)

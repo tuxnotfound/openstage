@@ -79,6 +79,20 @@ RSpec.describe "Profiles", type: :request do
       end
     end
 
+    context "filtering by project (the whole story)" do
+      let!(:user) { create(:user, username: "builder") }
+      let!(:shipped) { create(:entry, user: user, entry_type: "shipped", source: "github", repo_name: "builder/openstage", occurred_at: 2.days.ago) }
+      let!(:note)    { create(:entry, user: user, entry_type: "note",    source: "manual", repo_name: "builder/openstage", occurred_at: 1.day.ago) }
+      let!(:other)   { create(:entry, user: user, entry_type: "note",    source: "manual", repo_name: "builder/other",     occurred_at: 1.day.ago) }
+
+      it "shows both shipped and manual entries for a project" do
+        get "/builder", params: { repo: "builder/openstage" }
+        expect(response.body).to include(shipped.title)
+        expect(response.body).to include(note.title)
+        expect(response.body).not_to include(other.title)
+      end
+    end
+
     context "pagination" do
       let!(:user) { create(:user, username: "prolific") }
 

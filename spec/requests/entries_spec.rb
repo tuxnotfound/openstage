@@ -44,6 +44,16 @@ RSpec.describe "Entries", type: :request do
         invalid = valid_params.deep_merge(entry: { title: "" })
         expect { post entries_path, params: invalid }.not_to change(Entry, :count)
       end
+
+      it "tags the entry with a project (repo_name)" do
+        post entries_path, params: valid_params.deep_merge(entry: { repo_name: "me/openstage" })
+        expect(Entry.last.repo_name).to eq("me/openstage")
+      end
+
+      it "leaves repo_name nil when the project field is blank" do
+        post entries_path, params: valid_params.deep_merge(entry: { repo_name: "" })
+        expect(Entry.last.repo_name).to be_nil
+      end
     end
   end
 
@@ -69,6 +79,12 @@ RSpec.describe "Entries", type: :request do
         entry.update!(hidden: true)
         patch entry_path(entry), params: { hidden: false }
         expect(entry.reload.hidden).to be false
+      end
+
+      it "reassigns the project on a manual entry" do
+        manual = create(:entry, user: user, source: "manual", entry_type: "note")
+        patch entry_path(manual), params: { entry: { entry_type: "note", title: manual.title, occurred_at: manual.occurred_at, repo_name: "me/openstage" } }
+        expect(manual.reload.repo_name).to eq("me/openstage")
       end
     end
   end

@@ -62,6 +62,6 @@ class EntriesController < ApplicationController
   end
 
   def entry_params
-    params.require(:entry).permit(:entry_type, :title, :body, :url, :occurred_at)
+    params.require(:entry).permit(:entry_type, :title, :body, :url, :occurred_at, :repo_name)
   end
 end
