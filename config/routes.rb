@@ -13,6 +13,9 @@ Rails.application.routes.draw do
   # Dashboard
   get "/dashboard", to: "dashboard#index"
 
+  # Owner-only deploy/migration diagnostics
+  get "/_deploy_check", to: "diagnostics#show"
+
   # Analytics (Pro)
   get "/analytics", to: "analytics#index", as: :analytics
 

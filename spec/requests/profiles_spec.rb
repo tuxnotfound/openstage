@@ -20,6 +20,19 @@ RSpec.describe "Profiles", type: :request do
         get "/testuser"
         expect(response.body).to include("Powered by Openstage")
       end
+
+      it "hides the Posted filter tab when the user has no posted entries" do
+        create(:entry, user: user, entry_type: "shipped")
+        get "/testuser"
+        expect(response.body).to include(">Shipped</a>")
+        expect(response.body).not_to include(">Posted</a>")
+      end
+
+      it "shows the Posted filter tab once the user has a posted entry" do
+        create(:entry, user: user, entry_type: "posted", source: "manual")
+        get "/testuser"
+        expect(response.body).to include(">Posted</a>")
+      end
     end
 
     context "when user is pro" do

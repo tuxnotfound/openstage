@@ -9,7 +9,6 @@ class CheckoutsController < ApplicationController
     end
 
     session_params = {
-      customer_email: current_user.github_username + "@users.noreply.github.com",
       metadata: { user_id: current_user.id },
       success_url: dashboard_url + "?pro=activated",
       cancel_url: dashboard_url

@@ -147,7 +147,9 @@
 <!-- Filter row: type tabs + repo dropdown -->
 <div class="flex items-center justify-between mt-6 border-b border-gray-100 gap-4">
   <div class="flex gap-1 overflow-x-auto">
-    <% [["all", "All"], ["shipped", "Shipped"], ["posted", "Posted"], ["milestone", "Milestones"], ["note", "Notes"]].each do |value, label| %>
+    <% type_tabs = [["all", "All"], ["shipped", "Shipped"], ["milestone", "Milestones"], ["note", "Notes"]] %>
+    <% type_tabs.insert(2, ["posted", "Posted"]) if @has_posted_entries %>
+    <% type_tabs.each do |value, label| %>
       <%= link_to label,
           profile_path(@user.username, filter: value == "all" ? nil : value, repo: @repo_filter),
           class: "px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors #{@filter == value ? 'text-gray-900 border-b-2 border-gray-900 -mb-px' : 'text-gray-500 hover:text-gray-900'}",
