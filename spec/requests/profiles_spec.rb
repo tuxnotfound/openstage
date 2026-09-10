@@ -21,6 +21,18 @@ RSpec.describe "Profiles", type: :request do
         expect(response.body).to include("Powered by Openstage")
       end
 
+      it "records a profile view for a real browser" do
+        expect {
+          get "/testuser", headers: { "HTTP_USER_AGENT" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" }
+        }.to change { user.profile_views.count }.by(1)
+      end
+
+      it "does not record a profile view for a crawler" do
+        expect {
+          get "/testuser", headers: { "HTTP_USER_AGENT" => "Mozilla/5.0 (compatible; ClaudeBot/1.0; +claudebot@anthropic.com)" }
+        }.not_to change { user.profile_views.count }
+      end
+
       it "hides the Posted filter tab when the user has no posted entries" do
         create(:entry, user: user, entry_type: "shipped")
         get "/testuser"

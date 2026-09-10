@@ -44,6 +44,7 @@ class ProfilesController < ApplicationController
 
   def track_profile_view
     return if current_user == @user
+    return if BotDetector.bot?(request.user_agent)
 
     referrer = request.referer.present? ? URI.parse(request.referer).host : nil rescue nil
     ip_hash  = Digest::SHA256.hexdigest("#{request.remote_ip}#{Date.current}")
