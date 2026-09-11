@@ -8,7 +8,7 @@ class User < ApplicationRecord
     sync auth og badge embed embeds claim claim-username sitemap robots favicon
     webhooks sign_out signin signup login logout register admin api app www
     help support docs terms privacy contact status new edit me root public
-    assets up entries github_repos e
+    assets up entries github_repos e recap _deploy_check
   ].freeze
 
   has_many :entries, dependent: :destroy

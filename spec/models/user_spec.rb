@@ -26,6 +26,8 @@ RSpec.describe User, type: :model do
       expect(build(:user, username: "About")).not_to be_valid
       expect(build(:user, username: "blog")).not_to be_valid
       expect(build(:user, username: "settings")).not_to be_valid
+      expect(build(:user, username: "recap")).not_to be_valid
+      expect(build(:user, username: "_deploy_check")).not_to be_valid
     end
   end
 
