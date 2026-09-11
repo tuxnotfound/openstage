@@ -15,7 +15,6 @@ class DashboardController < ApplicationController
     }
 
     @sync_logs = current_user.sync_logs.order(ran_at: :desc).limit(5)
-    @badge_markdown = "[![openstage](#{profile_badge_url(current_user.username)})](#{profile_url(current_user.username)})"
 
     # Analytics — free tier gets sparkline + unique visitors; Pro gets the full breakdown.
     views = current_user.profile_views

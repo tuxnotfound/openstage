@@ -8,18 +8,18 @@ module ApplicationHelper
     nil
   end
 
-  def tinyurl_for(url)
-    Rails.cache.fetch("tinyurl_v2:#{url.hash.abs}", expires_in: 30.days) do
-      response = Faraday.get("https://tinyurl.com/api-create.php") do |req|
-        req.params[:url] = url
-        req.options.timeout = 3
-      end
-      short = response.body.strip
-      raise unless short.match?(/\Ahttps?:\/\/tinyurl\.com/)
-      short
-    end
-  rescue
-    url
+  # Builds the X share intent locally. This replaced a tinyurl_for helper that
+  # called tinyurl.com from inside the dashboard's entry loop: its cache key was
+  # "tinyurl_v2:#{url.hash}", and Ruby seeds String#hash per process, so the key
+  # never repeated and the cache never hit. Every dashboard render made one
+  # 3-second-timeout HTTP call per entry. Shortening bought nothing anyway,
+  # since X wraps every link in t.co regardless.
+  def share_on_x_url(entry, user)
+    parts = [ entry.title ]
+    parts << entry.body.truncate(100) if entry.body.present?
+    parts << "#{profile_url(username: user.username)}#entry-#{entry.id}"
+
+    "https://twitter.com/intent/tweet?text=#{CGI.escape(parts.join("\n\n"))}"
   end
 
   def streak_emoji(streak)
