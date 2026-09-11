@@ -53,6 +53,30 @@ RSpec.describe GithubSyncJob, type: :job do
       expect(entry.url).to eq("https://github.com/tuxnotfound/myapp/commit/abc123def456")
     end
 
+    it "asks GitHub for every repo the user can push to, not only owned ones" do
+      expect(client).to receive(:repositories)
+        .with(hash_including(affiliation: "owner,collaborator,organization_member"))
+        .and_return([ repo_double ])
+
+      described_class.new.perform(user.id)
+    end
+
+    it "imports the user's own commits to a repo somebody else owns" do
+      allow(repo_double).to receive(:full_name).and_return("teammate/shared-project")
+      allow(repo_double).to receive(:name).and_return("shared-project")
+
+      expect { described_class.new.perform(user.id) }.to change(Entry, :count).by(1)
+      expect(Entry.last.repo_name).to eq("teammate/shared-project")
+    end
+
+    it "does not import a teammate's commits from that shared repo" do
+      allow(repo_double).to receive(:full_name).and_return("teammate/shared-project")
+      allow(commit_author_double).to receive(:login).and_return("teammate")
+      allow(commit_git_author_double).to receive(:email).and_return("teammate@example.com")
+
+      expect { described_class.new.perform(user.id) }.not_to change(Entry, :count)
+    end
+
     it "syncs nothing from a private repo until it is explicitly opted in" do
       allow(repo_double).to receive(:private).and_return(true)
 

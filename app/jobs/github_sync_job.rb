@@ -25,8 +25,15 @@ class GithubSyncJob < ApplicationJob
     repos_seen = 0
 
     begin
-      # Owner repos include both public and private repositories for this user.
-      fetch_repos = ->(page) { client.repositories(type: "owner", per_page: PER_PAGE, page: page) }
+      # Every repo the user can push to, not just the ones they own. `type: "owner"`
+      # silently dropped org repos and any shared project owned by a teammate,
+      # so a contributor's commits to it never appeared anywhere on Openstage.
+      # Only the user's own commits are imported (see authored_by?), so a shared
+      # repo shows each builder their own work. GitHub rejects `type` combined
+      # with `affiliation`, hence the replacement rather than an addition.
+      fetch_repos = lambda do |page|
+        client.repositories(affiliation: "owner,collaborator,organization_member", per_page: PER_PAGE, page: page)
+      end
 
       each_page(fetch_repos) do |repo_page|
         repos_seen += repo_page.size

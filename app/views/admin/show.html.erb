@@ -55,6 +55,24 @@
     </div>
   </section>
 
+  <!-- Repos with more than one builder -->
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Repos with more than one builder</h2>
+    <% if @shared_repos.any? %>
+      <div class="rounded-xl border border-gray-200 divide-y divide-gray-100">
+        <% @shared_repos.each do |repo, builders| %>
+          <div class="flex items-center justify-between px-4 py-2.5" data-shared-repo="<%= repo %>" data-builders="<%= builders %>">
+            <span class="text-sm text-gray-700 font-mono truncate"><%= repo %></span>
+            <span class="text-sm font-medium text-gray-900 shrink-0 ml-3"><%= pluralize(builders, "builder") %></span>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-sm text-gray-400 rounded-xl border border-gray-200 px-4 py-3">None yet.</p>
+    <% end %>
+    <p class="text-xs text-gray-400 mt-1.5">A second builder on a repo was recruited by a teammate, not by you. This is the earliest audience signal there is.</p>
+  </section>
+
   <!-- All time -->
   <section>
     <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">All time</h2>

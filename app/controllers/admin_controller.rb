@@ -31,6 +31,15 @@ class AdminController < ApplicationController
     @total_users    = User.active.count
     @total_entries  = Entry.publicly_visible.count
     @pro_users      = User.active.where(pro: true).count
+
+    # The earliest honest audience signal: a repo with more than one builder on
+    # it means someone was recruited by a teammate, not by the founder.
+    @shared_repos = Entry.where(source: :github)
+                         .where.not(repo_name: nil)
+                         .group(:repo_name)
+                         .having("COUNT(DISTINCT user_id) > 1")
+                         .count("DISTINCT user_id")
+                         .sort_by { |_repo, builders| -builders }
   end
 
   def test_email

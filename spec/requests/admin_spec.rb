@@ -78,6 +78,24 @@ RSpec.describe "Admin", type: :request do
         expect(response).to have_http_status(:not_found)
       end
 
+      it "surfaces repos that more than one builder commits to" do
+        a = create(:user, username: "alice")
+        b = create(:user, username: "bob")
+        create(:entry, user: a, source: "github", repo_name: "sydney/flood-risk")
+        create(:entry, user: b, source: "github", repo_name: "sydney/flood-risk")
+        create(:entry, user: a, source: "github", repo_name: "alice/solo")
+
+        get "/admin"
+
+        expect(response.body).to include('data-shared-repo="sydney/flood-risk" data-builders="2"')
+        expect(response.body).not_to include('data-shared-repo="alice/solo"')
+      end
+
+      it "says none yet when every repo has a single builder" do
+        get "/admin"
+        expect(response.body).to include("None yet.")
+      end
+
       it "is reachable from the nav" do
         get "/dashboard"
         expect(response.body).to include('href="/admin"')
