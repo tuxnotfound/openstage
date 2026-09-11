@@ -72,6 +72,23 @@ Rails.application.configure do
 
   config.action_mailer.perform_caching = false
 
+  # Delivery is inert until RESEND_API_KEY is set, so this is safe to ship
+  # before the domain finishes verifying. Setting the key is the whole of F1.
+  config.action_mailer.perform_deliveries   = ENV["RESEND_API_KEY"].present?
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.delivery_method       = :smtp
+  config.action_mailer.default_url_options   = {
+    host: ENV.fetch("MAIL_HOST", "openstage.dev"), protocol: "https"
+  }
+  config.action_mailer.smtp_settings = {
+    address:              "smtp.resend.com",
+    port:                 587,
+    user_name:            "resend",
+    password:             ENV["RESEND_API_KEY"],
+    authentication:       :plain,
+    enable_starttls_auto: true
+  }
+
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
   # config.action_mailer.raise_delivery_errors = false
