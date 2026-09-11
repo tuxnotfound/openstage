@@ -13,6 +13,7 @@ class DiagnosticsController < ApplicationController
       "users.email:     #{User.column_names.include?('email')}",
       "owner_uid_set:   #{ENV['OWNER_GITHUB_UID'].present?}",
       "mail_configured: #{ENV['RESEND_API_KEY'].present?} (from: #{ApplicationMailer.default[:from]})",
+      "leaked_private:  #{leaked_private_entries}",
       "unsafe_websites: #{format_list(unsafe_website_urls)}",
       "unsafe_entries:  #{unsafe_entry_urls}",
       "checked_at:      #{Time.current.iso8601}"
@@ -41,6 +42,13 @@ class DiagnosticsController < ApplicationController
         .where.not("website_url ~* ?", SAFE_URL_SQL)
         .pluck(:username, :website_url)
         .map { |username, url| "#{username}=#{url.truncate(40)}" }
+  end
+
+  # Public entries whose source repo is known to be private. Should be 0.
+  def leaked_private_entries
+    Entry.where(source: :github, repo_name: GithubRepo.where(private_repo: true).select(:full_name))
+         .where.not(visibility: :private_entry)
+         .count
   end
 
   def unsafe_entry_urls

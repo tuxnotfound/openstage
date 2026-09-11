@@ -5,10 +5,16 @@ class GithubReposController < ApplicationController
     @repo = current_user.github_repos.find(params[:id])
     @repo.update!(included: params[:included] == "true")
 
-    if @repo.included?
-      current_user.entries.where(source: :github, repo_name: @repo.full_name).update_all(hidden: false)
+    scope = current_user.entries.where(source: :github, repo_name: @repo.full_name)
+
+    if !@repo.included?
+      scope.update_all(hidden: true)
+    elsif @repo.private_repo?
+      # Un-hiding must never re-publish. Legacy rows from a private repo may
+      # still be visibility=public with a live commit URL.
+      scope.update_all(hidden: false, visibility: Entry.visibilities[:private_entry], url: nil)
     else
-      current_user.entries.where(source: :github, repo_name: @repo.full_name).update_all(hidden: true)
+      scope.update_all(hidden: false)
     end
 
     respond_to do |format|

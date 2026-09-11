@@ -21,6 +21,7 @@ class GithubSyncJob < ApplicationJob
     log = SyncLog.create!(user: user, source: :github, status: :running, ran_at: Time.current)
     entries_added = 0
     repos_seen = 0
+    public_repo_names = []
 
     begin
       # Owner repos include both public and private repositories for this user.
@@ -31,13 +32,18 @@ class GithubSyncJob < ApplicationJob
 
         repo_page.each do |repo_data|
           repo = sync_repo(user, repo_data)
+          public_repo_names << repo.full_name unless repo.private_repo?
+
+          # Heal leaked rows FIRST. This is a local UPDATE, so it must not sit
+          # behind the inclusion guard (private repos are excluded by default,
+          # which would make it unreachable for exactly the repos that need it)
+          # nor behind a network call that can fail.
+          privatize_existing_entries(user, repo)
+
           next unless repo.included?
 
           begin
             entries_added += sync_commits(client, user, repo, private_repo: repo_data.private)
-            # Self-healing: entries imported before private repos were handled
-            # are still public, so bring them in line on every sync.
-            privatize_existing_entries(user, repo) if repo_data.private
             repo.update!(last_synced_at: Time.current)
           rescue Octokit::Error => e
             # Per-repo failure must not advance the watermark, or commits in the
@@ -46,6 +52,13 @@ class GithubSyncJob < ApplicationJob
           end
         end
       end
+
+      # Allowlist sweep. Dropping the "repo" OAuth scope means a private repo
+      # can vanish from the listing entirely, so a blocklist keyed on repos we
+      # can still see would leave its old entries public forever. Anything we
+      # cannot positively confirm is public gets privatised. Only runs after a
+      # complete, successful walk, so a partial page never mass-privatises.
+      privatize_unconfirmed_entries(user, public_repo_names) if repos_seen.positive?
 
       log.update!(status: :success, entries_added: entries_added)
       Rails.logger.info "[GithubSyncJob] user=#{user.username} repos=#{repos_seen} entries_added=#{entries_added}"
@@ -61,12 +74,27 @@ class GithubSyncJob < ApplicationJob
   def privatize_existing_entries(user, repo)
     return 0 unless repo.private_repo?
 
-    leaked = user.entries
-                 .where(repo_name: repo.full_name, source: :github)
-                 .where.not(visibility: :private_entry)
+    # A rename or org transfer rewrites full_name, so entries imported under
+    # the old name would no longer match.
+    names = [ repo.full_name, repo.full_name_previously_was ].compact.uniq
 
-    count = leaked.update_all(visibility: "private", url: nil)
+    count = user.entries
+                .where(repo_name: names, source: :github)
+                .where.not(visibility: :private_entry)
+                .update_all(visibility: Entry.visibilities[:private_entry], url: nil)
+
     Rails.logger.warn "[GithubSyncJob] privatised #{count} leaked entries for #{repo.full_name}" if count.positive?
+    count
+  end
+
+  def privatize_unconfirmed_entries(user, public_repo_names)
+    count = user.entries
+                .where(source: :github)
+                .where.not(visibility: :private_entry)
+                .where.not(repo_name: public_repo_names)
+                .update_all(visibility: Entry.visibilities[:private_entry], url: nil)
+
+    Rails.logger.warn "[GithubSyncJob] privatised #{count} entries from unconfirmed repos" if count.positive?
     count
   end
 
@@ -88,8 +116,14 @@ class GithubSyncJob < ApplicationJob
       private_repo: !!repo_data.private
     )
     # Private repos are opt-out by default: nobody signs up expecting their
-    # private commit messages to be published.
-    repo.included = !repo_data.private if repo.new_record?
+    # private commit messages to be published. The false -> true transition is
+    # the moment we learn a repo is private; the old included:true default was
+    # never a consent, so re-default once. A genuine later opt-in survives,
+    # because the transition can only happen once.
+    newly_known_private = repo.private_repo? && (repo.new_record? || repo.private_repo_changed?)
+    repo.included = false if newly_known_private
+    repo.included = true if repo.new_record? && !repo.private_repo?
+
     repo.save!
     repo
   end

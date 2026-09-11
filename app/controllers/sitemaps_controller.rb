@@ -1,7 +1,9 @@
 class SitemapsController < ApplicationController
   def show
     @users = User.active.order(created_at: :asc)
-    @last_entry_at = Entry.visible
+    # publicly_visible: a lastmod derived from private entries would publish a
+    # dated signal of private activity that appears nowhere on the profile.
+    @last_entry_at = Entry.publicly_visible
                           .where(user: @users)
                           .group(:user_id)
                           .maximum(:occurred_at)

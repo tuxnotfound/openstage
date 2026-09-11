@@ -24,6 +24,17 @@ RSpec.describe GithubSyncJob, "private repository handling", type: :job do
       job.send(:sync_repo, user, repo_data(name: "secret", private: true))
       expect(repo.reload.included?).to be(true)
     end
+
+    it "re-defaults a repo to excluded the first time it is learned to be private" do
+      # The pre-fix state: synced before private_repo existed, so included:true
+      # was a default nobody chose.
+      legacy = create(:github_repo, user: user, github_repo_id: 42, name: "secret",
+                                    full_name: "tuxnotfound/secret", included: true, private_repo: false)
+
+      described_class.new.send(:sync_repo, user, repo_data(name: "secret", private: true).tap { |d| d.id = 42 })
+
+      expect(legacy.reload).to have_attributes(private_repo: true, included: false)
+    end
   end
 
   describe "leaked entries" do
@@ -37,6 +48,30 @@ RSpec.describe GithubSyncJob, "private repository handling", type: :job do
       leaked.reload
       expect(leaked.visibility).to eq("private_entry")
       expect(leaked.url).to be_nil
+    end
+
+    it "matches entries imported under the repo's previous name" do
+      job = described_class.new
+      job.send(:sync_repo, user, repo_data(name: "oldname", private: true).tap { |d| d.id = 77 })
+      stale = create(:entry, user: user, source: "github", repo_name: "tuxnotfound/oldname",
+                             visibility: "public", url: "https://github.com/x/y/commit/abc")
+
+      renamed = job.send(:sync_repo, user, repo_data(name: "newname", private: true).tap { |d| d.id = 77 })
+      job.send(:privatize_existing_entries, user, renamed)
+
+      expect(stale.reload.visibility).to eq("private_entry")
+    end
+
+    it "privatises entries from repos the listing can no longer confirm are public" do
+      vanished = create(:entry, user: user, source: "github", repo_name: "tuxnotfound/revoked",
+                                visibility: "public", url: "https://github.com/x/y/commit/abc")
+      kept = create(:entry, user: user, source: "github", repo_name: "tuxnotfound/open", visibility: "public")
+
+      described_class.new.send(:privatize_unconfirmed_entries, user, [ "tuxnotfound/open" ])
+
+      expect(vanished.reload.visibility).to eq("private_entry")
+      expect(vanished.url).to be_nil
+      expect(kept.reload.visibility).to eq("public_entry")
     end
 
     it "leaves public-repo entries alone" do

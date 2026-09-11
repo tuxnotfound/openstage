@@ -26,7 +26,10 @@ class ProfilesController < ApplicationController
     # Public repos only: counting private ones would disclose that they exist.
     @repos_synced  = @user.github_repos.included_repos.public_repos.count
     @milestones    = @user.entries.publicly_visible.where(entry_type: :milestone).count
-    @streak        = @user.current_streak
+    # public_activity_streak, not current_streak: the latter counts private
+    # entries, so the headline number would disclose private working days that
+    # the heatmap directly above it correctly omits.
+    @streak        = @user.public_activity_streak
 
     start_date = 52.weeks.ago.to_date
     raw = @user.entries.publicly_visible

@@ -62,7 +62,9 @@ RSpec.describe GithubSyncJob, type: :job do
 
     it "keeps an opted-in private repo's entries private and link-free" do
       allow(repo_double).to receive(:private).and_return(true)
-      create(:github_repo, user: user, github_repo_id: 123_456, full_name: "tuxnotfound/myapp", included: true)
+      # Already known private and deliberately opted in, so no re-default fires.
+      create(:github_repo, user: user, github_repo_id: 123_456, full_name: "tuxnotfound/myapp",
+                           included: true, private_repo: true)
 
       described_class.new.perform(user.id)
 
