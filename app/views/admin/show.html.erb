@@ -71,6 +71,14 @@
     </div>
   </section>
 
+  <!-- Email smoke test -->
+  <section class="pt-6 border-t border-gray-100">
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Email</h2>
+    <%= button_to "Send myself a test email", admin_test_email_path,
+          class: "px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer" %>
+    <p class="text-xs text-gray-400 mt-1.5">Delivery stays off until <code>RESEND_API_KEY</code> is set in Render.</p>
+  </section>
+
   <p class="text-xs text-gray-400">
     Gate 0 is Sep 21 &middot; Gate 1 Oct 12 &middot; Gate 2 Oct 26 &middot; Gate 3 Nov 15.
     See <code>control-tower/projects/openstage/REBIRTH_PLAN.md</code>.

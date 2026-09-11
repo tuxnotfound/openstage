@@ -18,6 +18,7 @@ Rails.application.routes.draw do
 
   # Owner-only funnel metrics; the gates are scored off this
   get "/admin", to: "admin#show", as: :admin
+  post "/admin/test_email", to: "admin#test_email", as: :admin_test_email
 
   # Recap picker (owner-only until C1 generalises it)
   get "/recap", to: "recaps#show", as: :recap

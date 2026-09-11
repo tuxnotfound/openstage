@@ -12,6 +12,7 @@ class DiagnosticsController < ApplicationController
       "pending:         #{(repo_versions - applied_versions).presence&.join(', ') || 'none'}",
       "users.email:     #{User.column_names.include?('email')}",
       "owner_uid_set:   #{ENV['OWNER_GITHUB_UID'].present?}",
+      "mail_configured: #{ENV['RESEND_API_KEY'].present?} (from: #{ApplicationMailer.default[:from]})",
       "unsafe_websites: #{format_list(unsafe_website_urls)}",
       "unsafe_entries:  #{unsafe_entry_urls}",
       "checked_at:      #{Time.current.iso8601}"

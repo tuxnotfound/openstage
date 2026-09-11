@@ -33,6 +33,20 @@ class AdminController < ApplicationController
     @pro_users      = User.active.where(pro: true).count
   end
 
+  def test_email
+    if current_user.email.blank?
+      return redirect_to(admin_path, alert: "Your account has no email yet. Sign out and back in to capture it from GitHub.")
+    end
+    unless ENV["RESEND_API_KEY"].present?
+      return redirect_to(admin_path, alert: "RESEND_API_KEY is not set, so delivery is still switched off.")
+    end
+
+    SystemMailer.test_email(current_user).deliver_now
+    redirect_to admin_path, notice: "Sent to #{current_user.email}. Check inbox and spam."
+  rescue StandardError => e
+    redirect_to admin_path, alert: "Delivery failed: #{e.class} - #{e.message.truncate(120)}"
+  end
+
   private
 
   # Mirrors ProfileView.daily_counts so the two charts read the same way.

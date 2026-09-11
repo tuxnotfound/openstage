@@ -49,6 +49,35 @@ RSpec.describe "Admin", type: :request do
         expect(response.body).to include('data-ref="unattributed"')
       end
 
+      it "refuses the test email while delivery is switched off" do
+        owner.update!(email: "me@example.com")
+
+        expect { post "/admin/test_email" }.not_to change { ActionMailer::Base.deliveries.count }
+        expect(flash[:alert]).to match(/RESEND_API_KEY/)
+      end
+
+      it "refuses the test email when the owner has no address" do
+        owner.update!(email: nil)
+
+        post "/admin/test_email"
+        expect(flash[:alert]).to match(/no email/i)
+      end
+
+      it "sends when a key is present" do
+        owner.update!(email: "me@example.com")
+        allow(ENV).to receive(:[]).and_call_original
+        allow(ENV).to receive(:[]).with("RESEND_API_KEY").and_return("re_test")
+
+        expect { post "/admin/test_email" }.to change { ActionMailer::Base.deliveries.count }.by(1)
+        expect(flash[:notice]).to match(/me@example\.com/)
+      end
+
+      it "404s the test email for a non-owner" do
+        sign_in_as(create(:user, github_username: "someone_else"))
+        post "/admin/test_email"
+        expect(response).to have_http_status(:not_found)
+      end
+
       it "is reachable from the nav" do
         get "/dashboard"
         expect(response.body).to include('href="/admin"')
