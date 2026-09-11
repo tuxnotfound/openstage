@@ -21,6 +21,13 @@ RSpec.describe "Profiles", type: :request do
         expect(response.body).to include("Powered by Openstage")
       end
 
+      it "never renders a javascript: website URL into the page" do
+        user.update_column(:website_url, "javascript:alert(document.cookie)")
+
+        get "/testuser"
+        expect(response.body).not_to include("javascript:alert")
+      end
+
       it "records a profile view for a real browser" do
         expect {
           get "/testuser", headers: { "HTTP_USER_AGENT" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" }

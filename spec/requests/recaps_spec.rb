@@ -20,10 +20,22 @@ RSpec.describe "Recaps", type: :request do
         get "/recap"
         expect(response).to have_http_status(:not_found)
       end
+
+      it "does not advertise the page in the nav" do
+        sign_in_as(create(:user, github_username: "someone_else", username: "someone"))
+        get "/dashboard"
+        expect(response.body).not_to include(">Recap<")
+      end
     end
 
     context "as the owner" do
       before { sign_in_as(owner) }
+
+      it "links the page from the nav" do
+        get "/dashboard"
+        expect(response.body).to include(">Recap<")
+        expect(response.body).to include('href="/recap"')
+      end
 
       it "renders the quiet-week state when there is nothing worth posting" do
         commit("a lone commit")

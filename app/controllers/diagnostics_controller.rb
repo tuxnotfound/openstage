@@ -17,7 +17,7 @@ class DiagnosticsController < ApplicationController
 
   # 404 rather than a redirect so the route is invisible to anyone but the owner.
   def require_owner
-    head :not_found unless current_user&.github_username == ENV.fetch("OWNER_GITHUB_USERNAME", "tuxnotfound")
+    head :not_found unless current_user&.owner?
   end
 
   def applied_versions

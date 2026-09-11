@@ -56,7 +56,13 @@ RSpec.describe "EntryClicks", type: :request do
     end
 
     context "when entry URL has a non-http scheme" do
-      let(:bad_entry) { create(:entry, user: owner, url: "javascript:alert(1)") }
+      # Entry now validates the scheme, so this row is forced past validation to
+      # prove the controller still guards rows written before that existed.
+      let(:bad_entry) do
+        entry = create(:entry, user: owner, url: "https://example.com")
+        entry.update_column(:url, "javascript:alert(1)")
+        entry
+      end
 
       it "redirects to root without recording a click" do
         expect {

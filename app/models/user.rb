@@ -24,6 +24,11 @@ class User < ApplicationRecord
   validates :username, presence: true, uniqueness: { case_sensitive: false },
                        format: { with: /\A[a-zA-Z0-9_-]+\z/, message: "only allows letters, numbers, hyphens, and underscores" },
                        length: { minimum: 2, maximum: 39 }
+
+  # website_url is rendered into an href on the public profile, so anything but
+  # http(s) is a script-injection vector (javascript:, data:).
+  validates :website_url, format: { with: %r{\Ahttps?://}i, message: "must start with http:// or https://" },
+                          allow_blank: true
   validate :username_change_cooldown, if: :username_changed?
   validate :username_not_reserved, if: :username_changed?
 
@@ -62,6 +67,22 @@ class User < ApplicationRecord
 
   def pro?
     pro
+  end
+
+  # Gates the owner-only surfaces (/recap, /_deploy_check). Temporary: C1 opens
+  # the recap picker to every user and this shrinks back to diagnostics.
+  #
+  # Prefers the immutable numeric GitHub id. github_username is rewritten from
+  # the OAuth nickname on every sign-in, and GitHub frees a login for
+  # re-registration when an account is renamed, so the handle alone would hand
+  # ownership to whoever claimed it next.
+  def owner?
+    if (uid = ENV["OWNER_GITHUB_UID"].presence)
+      return github_uid.to_s == uid
+    end
+
+    github_username.present? &&
+      github_username.casecmp?(ENV.fetch("OWNER_GITHUB_USERNAME", "tuxnotfound"))
   end
 
   def can_pin?

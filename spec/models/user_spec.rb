@@ -21,6 +21,35 @@ RSpec.describe User, type: :model do
       expect(build(:user, username: "pedro@cioga")).not_to be_valid
     end
 
+    it "rejects website URLs whose scheme could execute script" do
+      %w[javascript:alert(1) data:text/html;base64,PHNjcmlwdD4= vbscript:msgbox file:///etc/passwd].each do |bad|
+        expect(build(:user, website_url: bad)).not_to be_valid, "expected #{bad} to be rejected"
+      end
+    end
+
+    it "accepts ordinary web addresses and blanks" do
+      expect(build(:user, website_url: "https://example.com")).to be_valid
+      expect(build(:user, website_url: "http://example.com/path?a=b")).to be_valid
+      expect(build(:user, website_url: "")).to be_valid
+      expect(build(:user, website_url: nil)).to be_valid
+    end
+
+    it "prefers the immutable GitHub uid for ownership when one is configured" do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("OWNER_GITHUB_UID").and_return("270386083")
+
+      expect(build(:user, github_uid: "270386083", github_username: "anything")).to be_owner
+      expect(build(:user, github_uid: "999", github_username: "tuxnotfound")).not_to be_owner
+    end
+
+    it "recognises only the configured owner, case-insensitively" do
+      expect(build(:user, github_username: "tuxnotfound")).to be_owner
+      expect(build(:user, github_username: "TuxNotFound")).to be_owner
+      expect(build(:user, github_username: "someone_else")).not_to be_owner
+      expect(build(:user, github_username: nil)).not_to be_owner
+      expect(build(:user, github_username: "")).not_to be_owner
+    end
+
     it "rejects reserved usernames that collide with app routes" do
       expect(build(:user, username: "pricing")).not_to be_valid
       expect(build(:user, username: "About")).not_to be_valid

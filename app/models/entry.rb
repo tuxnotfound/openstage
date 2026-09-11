@@ -29,6 +29,11 @@ class Entry < ApplicationRecord
 
   validates :external_id, uniqueness: { scope: :user_id }, allow_nil: true
 
+  # url is rendered into hrefs on the dashboard and redirected to by
+  # EntryClicksController, so the scheme has to be safe at the source.
+  validates :url, format: { with: %r{\Ahttps?://}i, message: "must start with http:// or https://" },
+                  allow_blank: true
+
   # Blank form submissions arrive as "" — nilify so they don't leak into the
   # repo filter, which keys off `where.not(repo_name: nil)`.
   normalizes :repo_name, with: ->(value) { value.strip.presence }

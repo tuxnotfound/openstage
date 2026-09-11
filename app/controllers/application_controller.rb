@@ -3,11 +3,15 @@ class ApplicationController < ActionController::Base
 
   private
 
+  # defined? rather than ||= so the nil results cache too; otherwise every
+  # current_user call in a layout re-queries.
   def current_user
-    return nil unless session[:user_id]
-    user = User.find_by(id: session[:user_id])
-    return nil if user&.deleted?
-    @current_user ||= user
+    return @current_user if defined?(@current_user)
+
+    @current_user = begin
+      user = session[:user_id] && User.find_by(id: session[:user_id])
+      user unless user.nil? || user.deleted?
+    end
   end
 
   def user_signed_in?

@@ -54,6 +54,9 @@
           <div class="flex items-center gap-4 text-sm">
             <% if user_signed_in? %>
               <%= link_to "Dashboard", dashboard_path, class: "text-gray-600 hover:text-gray-900" %>
+              <% if current_user.owner? %>
+                <%= link_to "Recap", recap_path, class: "text-gray-900 font-medium hover:text-gray-600" %>
+              <% end %>
               <% if current_user.pro? %>
                 <%= link_to "Analytics", analytics_path, class: "text-gray-600 hover:text-gray-900" %>
               <% end %>

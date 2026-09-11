@@ -53,6 +53,6 @@ class RecapsController < ApplicationController
   end
 
   def require_owner
-    head :not_found unless current_user&.github_username == ENV.fetch("OWNER_GITHUB_USERNAME", "tuxnotfound")
+    head :not_found unless current_user&.owner?
   end
 end

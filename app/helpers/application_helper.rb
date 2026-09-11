@@ -1,4 +1,13 @@
 module ApplicationHelper
+  # Never emit a user-supplied URL into an href without checking the scheme.
+  # The model validates new input; this covers rows written before it existed.
+  def safe_external_url(value)
+    uri = URI.parse(value.to_s)
+    value if %w[http https].include?(uri.scheme)
+  rescue URI::InvalidURIError
+    nil
+  end
+
   def tinyurl_for(url)
     Rails.cache.fetch("tinyurl_v2:#{url.hash.abs}", expires_in: 30.days) do
       response = Faraday.get("https://tinyurl.com/api-create.php") do |req|
