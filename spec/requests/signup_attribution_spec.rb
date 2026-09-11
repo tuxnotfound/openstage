@@ -21,6 +21,11 @@ RSpec.describe "Signup attribution", type: :request do
       User::REFS.each { |ref| expect(User.normalize_ref(ref)).to eq(ref) }
     end
 
+    it "attributes the X bio link separately from recap posts" do
+      get "/", params: { ref: "bio" }
+      expect(session[:signup_ref]).to eq("bio")
+    end
+
     it "does not set a ref when none is given" do
       get "/"
       expect(session[:signup_ref]).to be_nil

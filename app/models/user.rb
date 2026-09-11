@@ -36,7 +36,9 @@ class User < ApplicationRecord
 
   # Where a signup came from, captured once at first touch. Anything else is
   # recorded as "direct" so the denominator is never silently incomplete.
-  REFS = %w[recap badge footer feed claim].freeze
+  # "bio" is the link in the founder's X profile, so reply-first presence on X
+  # is attributed separately from recap posts.
+  REFS = %w[recap badge footer feed claim bio].freeze
   DEFAULT_REF = "direct".freeze
 
   def self.normalize_ref(value)
