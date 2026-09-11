@@ -12,9 +12,9 @@ class RecapDraft
   MAX_COMMITS_PER_REPO = 5
   MAX_REPOS = 4
 
-  # Bluesky caps a post at 300 characters and X's free tier at 280, so a draft
-  # that ignores length is not postable on the surfaces we actually target.
-  DEFAULT_LIMIT = 300
+  # X's free tier caps a post at 280 characters and Bluesky at 300, so 280 is
+  # the one budget that is postable on both without a per-platform variant.
+  DEFAULT_LIMIT = 280
 
   # Progressively tighter (repos, commits-per-repo) pairs. The first combination
   # that fits the budget wins; if none do, we fall back to a counts-only summary.

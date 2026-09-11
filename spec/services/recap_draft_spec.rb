@@ -74,10 +74,10 @@ RSpec.describe RecapDraft do
       Array.new(9) { |r| Array.new(6) { |c| item("shipped", "a reasonably wordy commit message #{r}-#{c}", "me/repo#{r}") } }.flatten
     end
 
-    it "keeps a large week within the Bluesky limit" do
+    it "keeps a large week within the tightest platform limit" do
       draft = described_class.new(username: "me", items: noisy_items)
 
-      expect(draft.text.length).to be <= 300
+      expect(draft.text.length).to be <= 280
       expect(draft).to be_trimmed
     end
 
