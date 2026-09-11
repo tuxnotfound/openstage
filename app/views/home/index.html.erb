@@ -51,7 +51,7 @@
 <% end %>
 
 <!-- Hero -->
-<div class="flex flex-col items-center justify-center text-center pt-16 pb-12 px-4">
+<div class="flex flex-col items-center justify-center text-center pt-10 sm:pt-14 pb-8 px-4">
   <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 mb-3 tracking-tight">Your build, in public. One link.</h1>
   <p class="text-lg text-gray-500 mb-8 max-w-xl">GitHub commits, milestones, and notes — one chronological timeline, automatically updated.</p>
 
@@ -64,21 +64,41 @@
     <%= link_to "Go to Dashboard", dashboard_path, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700" %>
   <% end %>
 
-  <p class="mt-6 text-sm text-gray-400">
-    See it live: <%= link_to "@tuxnotfound", profile_path("tuxnotfound"), class: "text-gray-600 underline hover:text-gray-900" %>
-  </p>
+  <% if @demo_user && @demo_entries.any? %>
+    <div class="mt-10 w-full max-w-xl text-left">
+      <div class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div class="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
+          <img src="<%= @demo_user.avatar_url %>" alt="" class="w-9 h-9 rounded-full shrink-0">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-gray-900 truncate"><%= @demo_user.display_name %></p>
+            <p class="text-xs text-gray-400 font-mono truncate">openstage.dev/<%= @demo_user.username %></p>
+          </div>
+        </div>
+
+        <div class="divide-y divide-gray-100">
+          <% @demo_entries.each do |entry| %>
+            <div class="px-5 py-3">
+              <p class="text-sm text-gray-800 leading-snug"><%= truncate(entry.title, length: 90) %></p>
+              <p class="text-xs text-gray-400 mt-1">
+                <% if entry.repo_name.present? %><%= entry.repo_name.split("/").last %> &middot; <% end %>
+                <%= time_ago_in_words(entry.occurred_at) %> ago
+              </p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <p class="mt-3 text-center text-sm text-gray-400">
+        A real Openstage page &mdash;
+        <%= link_to "see the full timeline", profile_path(@demo_user.username), class: "text-gray-600 underline hover:text-gray-900" %>
+      </p>
+    </div>
+  <% end %>
 </div>
 
-<!-- What is Openstage (definition — for search + AI answers) -->
-<section class="max-w-2xl mx-auto px-4 py-10 border-t border-gray-100" aria-labelledby="what-is">
-  <h2 id="what-is" class="text-lg font-semibold text-gray-900 mb-3">What is Openstage?</h2>
-  <p class="text-gray-600 leading-relaxed">
-    Openstage is a <strong>build-in-public profile</strong> for developers and indie hackers. It pulls your
-    public GitHub commits into a single chronological timeline and lets you add milestones, launches, and notes
-    by hand — so one link tells the full story of what you're building. No likes, no comments, no noise:
-    just your progress, automatically kept up to date.
-  </p>
-</section>
+<%# "What is Openstage?" section removed: the artifact above the fold now shows
+    what prose was describing. The same definition still serves search and AI
+    answers verbatim via FAQ #1, the FAQPage JSON-LD, and the meta description. %>
 
 <!-- How it works -->
 <section class="px-4 py-10 border-t border-gray-100" aria-labelledby="how">
@@ -166,6 +186,37 @@
   </div>
 </section>
 
+<!-- Final CTA -->
+<section class="px-4 py-12 border-t border-gray-100 text-center">
+  <h2 class="text-2xl font-bold text-gray-900 mb-2">Start your timeline</h2>
+  <p class="text-gray-500 mb-6">Free forever. <%= link_to "See pricing", pricing_path, class: "underline hover:text-gray-900" %> · <%= link_to "Read the story", about_path, class: "underline hover:text-gray-900" %></p>
+  <% unless user_signed_in? %>
+    <%= button_to "Sign in with GitHub", "/auth/github", method: :post, data: { turbo: false }, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer" %>
+  <% else %>
+    <%= link_to "Go to Dashboard", dashboard_path, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700" %>
+  <% end %>
+</section>
+
+<!-- FAQ (visible content mirrors FAQPage schema above) -->
+<section class="max-w-2xl mx-auto px-4 py-10 border-t border-gray-100" aria-labelledby="faq">
+  <h2 id="faq" class="text-lg font-semibold text-gray-900 mb-5">Frequently asked questions</h2>
+  <%# Native <details>: collapsible, keyboard- and screen-reader-correct, no JS. %>
+  <div class="divide-y divide-gray-100">
+    <% faqs.each_with_index do |f, i| %>
+      <details class="group py-4" <%= "open" if i.zero? %>>
+        <summary class="flex items-start justify-between gap-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+          <h3 class="font-medium text-gray-900"><%= f[:q] %></h3>
+          <svg class="w-4 h-4 mt-0.5 shrink-0 text-gray-400 transition-transform group-open:rotate-90"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+          </svg>
+        </summary>
+        <p class="text-sm text-gray-600 mt-1.5 leading-relaxed"><%= f[:a] %></p>
+      </details>
+    <% end %>
+  </div>
+</section>
+
 <!-- Live public feed (kept: indexable, fresh content) -->
 <section class="max-w-3xl mx-auto px-4 py-10 border-t border-gray-100" aria-label="Recent public activity">
   <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
@@ -182,34 +233,12 @@
       </div>
     </div>
 
-    <%= render "home/load_more", entries: @recent_entries %>
+    <div class="mt-3 text-right">
+      <%= link_to "See all activity →", feed_path, class: "text-sm text-gray-500 hover:text-gray-900" %>
+    </div>
   <% else %>
     <div class="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-12 text-center">
       <p class="text-sm text-gray-500">No public activity yet.</p>
     </div>
-  <% end %>
-</section>
-
-<!-- FAQ (visible content mirrors FAQPage schema above) -->
-<section class="max-w-2xl mx-auto px-4 py-10 border-t border-gray-100" aria-labelledby="faq">
-  <h2 id="faq" class="text-lg font-semibold text-gray-900 mb-5">Frequently asked questions</h2>
-  <div class="divide-y divide-gray-100">
-    <% faqs.each do |f| %>
-      <div class="py-4">
-        <h3 class="font-medium text-gray-900"><%= f[:q] %></h3>
-        <p class="text-sm text-gray-600 mt-1.5 leading-relaxed"><%= f[:a] %></p>
-      </div>
-    <% end %>
-  </div>
-</section>
-
-<!-- Final CTA -->
-<section class="px-4 py-12 border-t border-gray-100 text-center">
-  <h2 class="text-2xl font-bold text-gray-900 mb-2">Start your timeline</h2>
-  <p class="text-gray-500 mb-6">Free forever. <%= link_to "See pricing", pricing_path, class: "underline hover:text-gray-900" %> · <%= link_to "Read the story", about_path, class: "underline hover:text-gray-900" %></p>
-  <% unless user_signed_in? %>
-    <%= button_to "Sign in with GitHub", "/auth/github", method: :post, data: { turbo: false }, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer" %>
-  <% else %>
-    <%= link_to "Go to Dashboard", dashboard_path, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700" %>
   <% end %>
 </section>
