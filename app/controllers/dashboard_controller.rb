@@ -1,8 +1,21 @@
 class DashboardController < ApplicationController
   before_action :require_authentication
 
+  PER_PAGE = 25
+
   def index
-    @entries          = current_user.entries.visible.chronological
+    # Paginated and searchable. This used to load every entry (178 for the
+    # owner), so acting on an old one meant scrolling the whole history.
+    @query       = params[:q].to_s.strip
+    @type_filter = params[:type].presence_in(Entry.entry_types.keys)
+
+    scope = current_user.entries.visible.chronological
+    scope = scope.where(entry_type: @type_filter) if @type_filter
+    scope = scope.search(@query) if @query.present?
+
+    @entries        = scope.page(params[:page]).per(PER_PAGE)
+    @filtered_count = scope.count
+    @timeline_count = current_user.entries.visible.count
     @hidden_entries   = current_user.entries.where(hidden: true).chronological
     @private_entries  = current_user.entries.visible.where(visibility: :private_entry).chronological
     @last_github_sync = current_user.last_synced_at(source: :github)
@@ -49,5 +62,10 @@ class DashboardController < ApplicationController
     @logged_today = current_user.entries.visible
                                 .where(occurred_at: Date.current.all_day)
                                 .exists?
+
+    respond_to do |format|
+      format.html
+      format.turbo_stream
+    end
   end
 end

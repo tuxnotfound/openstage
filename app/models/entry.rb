@@ -42,4 +42,11 @@ class Entry < ApplicationRecord
   scope :publicly_visible, -> { visible.where(visibility: :public_entry) }
   scope :chronological, -> { order(occurred_at: :desc) }
   scope :pinned_entries, -> { where(pinned: true) }
+
+  # Case-insensitive match across the fields a builder would actually remember:
+  # what it said, and which project it was.
+  scope :search, ->(term) {
+    pattern = "%#{sanitize_sql_like(term.to_s.strip)}%"
+    where("title ILIKE :q OR body ILIKE :q OR repo_name ILIKE :q", q: pattern)
+  }
 end
