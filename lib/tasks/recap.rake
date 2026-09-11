@@ -9,8 +9,8 @@ namespace :recap do
                   .where(occurred_at: days.days.ago..)
                   .chronological
 
-    draft = RecapDraft.new(username: user.username, items: entries, days: days,
-                           include_noise: RecapTaskOutput.noise?)
+    draft = RecapDraft.new(username: user.username, items: RecapDraft.from_entries(entries),
+                           days: days, include_noise: RecapTaskOutput.noise?)
     RecapTaskOutput.print(draft, picks: RecapTaskOutput.picks(args), window: "the last #{days} days")
   end
 

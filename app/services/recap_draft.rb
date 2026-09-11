@@ -47,6 +47,21 @@ class RecapDraft
   Item      = Struct.new(:entry_type, :title, :repo_name, :sha, :merge, keyword_init: true)
   Candidate = Struct.new(:index, :repo, :title, :noise, keyword_init: true)
 
+  # Entry records carry the commit SHA in external_id and no parent count, so
+  # merges coming from the database are caught by message alone. GitHub-sourced
+  # items built in lib/tasks/recap.rake set :merge structurally.
+  def self.from_entries(entries)
+    entries.map do |entry|
+      Item.new(
+        entry_type: entry.entry_type,
+        title:      entry.title,
+        repo_name:  entry.repo_name,
+        sha:        entry.external_id,
+        merge:      false
+      )
+    end
+  end
+
   attr_reader :username, :items, :period_end, :limit, :include_noise, :days
 
   def initialize(username:, items:, period_end: nil, limit: DEFAULT_LIMIT, include_noise: false, days: 7)
