@@ -11,6 +11,8 @@ class GithubSyncJob < ApplicationJob
   SINCE_OVERLAP = 1.day
 
   PER_PAGE = 100
+  # Backstop so a pagination bug can never loop indefinitely again.
+  MAX_PAGES = 20
 
   def perform(user_id)
     user = User.find_by(id: user_id)
@@ -24,9 +26,9 @@ class GithubSyncJob < ApplicationJob
 
     begin
       # Owner repos include both public and private repositories for this user.
-      first_page = client.repositories(type: "owner", per_page: PER_PAGE)
+      fetch_repos = ->(page) { client.repositories(type: "owner", per_page: PER_PAGE, page: page) }
 
-      each_page(client, first_page) do |repo_page|
+      each_page(fetch_repos) do |repo_page|
         repos_seen += repo_page.size
 
         repo_page.each do |repo_data|
@@ -108,9 +110,11 @@ class GithubSyncJob < ApplicationJob
     since = repo.last_synced_at ? repo.last_synced_at - SINCE_OVERLAP : INITIAL_SYNC_WINDOW.ago
     added = 0
 
-    first_page = client.commits(repo.full_name, repo.default_branch, since: since.iso8601, per_page: PER_PAGE)
+    fetch_commits = lambda do |page|
+      client.commits(repo.full_name, repo.default_branch, since: since.iso8601, per_page: PER_PAGE, page: page)
+    end
 
-    each_page(client, first_page) do |commit_page|
+    each_page(fetch_commits) do |commit_page|
       commit_page.each do |commit|
         next unless authored_by?(commit, user)
 
@@ -146,14 +150,21 @@ class GithubSyncJob < ApplicationJob
   # next_link is captured immediately after each fetch, *before* yielding,
   # because the caller's per-item processing may issue other API calls that
   # overwrite client.last_response.
-  def each_page(client, first_page)
-    page = first_page
-    next_link = client.last_response&.rels&.[](:next)
-    loop do
+  # Walks paginated results by explicit page number. The previous version
+  # followed rel links and re-read client.last_response afterwards, but Sawyer's
+  # link.get goes through the agent without updating last_response, so the
+  # next-link never advanced and a repo with more than one page looped forever.
+  # Dormant in practice only because a 2-hourly sync rarely sees 100+ commits;
+  # a first backfill on a busy repo would have hung the job.
+  #
+  # fetch receives a page number and returns that page.
+  def each_page(fetch)
+    (1..MAX_PAGES).each do |page_number|
+      page = fetch.call(page_number)
+      break if page.blank?
+
       yield page
-      break unless next_link
-      page = next_link.get.data
-      next_link = client.last_response&.rels&.[](:next)
+      break if page.size < PER_PAGE
     end
   end
 

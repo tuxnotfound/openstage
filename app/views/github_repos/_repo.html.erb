@@ -1,0 +1,31 @@
+<%# Single source of truth for a repo row: rendered both in Settings and by the
+    turbo_stream response, which previously had its own drifting copy. %>
+<%= turbo_frame_tag dom_id(repo) do %>
+  <div class="flex items-center justify-between px-5 py-3">
+    <div class="min-w-0 flex-1">
+      <p class="text-sm font-medium text-gray-800 truncate">
+        <%= repo.name %>
+        <% if repo.private_repo? %>
+          <span class="ml-1 text-xs font-normal px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">private</span>
+        <% end %>
+      </p>
+      <% if repo.private_repo? %>
+        <p class="text-xs <%= repo.included? ? "text-amber-700" : "text-gray-400" %>">
+          <% if repo.included? %>
+            Commit messages from this private repo are public on your profile. Code and commit links are not.
+          <% else %>
+            Excluded. Include it to publish its commit messages (your code stays private).
+          <% end %>
+        </p>
+      <% elsif repo.description.present? %>
+        <p class="text-xs text-gray-400 truncate"><%= repo.description %></p>
+      <% end %>
+    </div>
+
+    <%= button_to github_repo_path(repo), method: :patch,
+        params: { included: (!repo.included?).to_s },
+        class: "ml-4 shrink-0 text-xs px-3 py-1 rounded-full border transition-colors #{repo.included? ? 'border-green-300 text-green-700 bg-green-50 hover:bg-green-100' : 'border-gray-200 text-gray-400 bg-white hover:border-gray-400'}" do %>
+      <%= repo.included? ? "Included" : "Excluded" %>
+    <% end %>
+  </div>
+<% end %>

@@ -13,3 +13,9 @@
  *= require_tree .
  *= require_self
  */
+
+/* turbo-frame is display:inline by default, so frames used as list rows do not
+   receive divide-y borders or participate in block layout. */
+turbo-frame {
+  display: block;
+}
