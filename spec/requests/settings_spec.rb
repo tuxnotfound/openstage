@@ -26,14 +26,14 @@ RSpec.describe "Settings", type: :request do
         expect(response.body).to include("/embed/#{user.username}.js")
       end
 
-      it "says private repos are excluded by default and never published" do
+      it "explains that including a private repo publishes its commit messages" do
         create(:github_repo, user: user)
 
         sign_in_as(user)
         get settings_path
 
         expect(response.body).to include("Private repos are excluded by default")
-        expect(response.body).to include("never appear on your public profile")
+        expect(response.body).to include("your build is public while your code stays private")
       end
     end
   end

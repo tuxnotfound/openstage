@@ -39,10 +39,6 @@ class EntriesController < ApplicationController
         redirect_to dashboard_path, alert: "Private entries are a Pro feature."
         return
       end
-      if visibility == "public" && from_private_repo?(@entry)
-        redirect_to dashboard_path, alert: "This entry comes from a private repo, so it can't be made public."
-        return
-      end
       @entry.update!(visibility: visibility == "private" ? :private_entry : :public_entry)
       redirect_to dashboard_path
     else
@@ -60,11 +56,6 @@ class EntriesController < ApplicationController
   end
 
   private
-
-  def from_private_repo?(entry)
-    entry.repo_name.present? &&
-      current_user.github_repos.exists?(full_name: entry.repo_name, private_repo: true)
-  end
 
   def set_entry
     @entry = current_user.entries.find(params[:id])

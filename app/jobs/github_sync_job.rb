@@ -21,7 +21,6 @@ class GithubSyncJob < ApplicationJob
     log = SyncLog.create!(user: user, source: :github, status: :running, ran_at: Time.current)
     entries_added = 0
     repos_seen = 0
-    public_repo_names = []
 
     begin
       # Owner repos include both public and private repositories for this user.
@@ -32,14 +31,6 @@ class GithubSyncJob < ApplicationJob
 
         repo_page.each do |repo_data|
           repo = sync_repo(user, repo_data)
-          public_repo_names << repo.full_name unless repo.private_repo?
-
-          # Heal leaked rows FIRST. This is a local UPDATE, so it must not sit
-          # behind the inclusion guard (private repos are excluded by default,
-          # which would make it unreachable for exactly the repos that need it)
-          # nor behind a network call that can fail.
-          privatize_existing_entries(user, repo)
-
           next unless repo.included?
 
           begin
@@ -53,12 +44,9 @@ class GithubSyncJob < ApplicationJob
         end
       end
 
-      # Allowlist sweep. Dropping the "repo" OAuth scope means a private repo
-      # can vanish from the listing entirely, so a blocklist keyed on repos we
-      # can still see would leave its old entries public forever. Anything we
-      # cannot positively confirm is public gets privatised. Only runs after a
-      # complete, successful walk, so a partial page never mass-privatises.
-      privatize_unconfirmed_entries(user, public_repo_names) if repos_seen.positive?
+      # Runs off our own table, not the GitHub listing, so it still works after
+      # the "repo" scope is revoked and private repos vanish from the API.
+      hide_excluded_private_entries(user)
 
       log.update!(status: :success, entries_added: entries_added)
       Rails.logger.info "[GithubSyncJob] user=#{user.username} repos=#{repos_seen} entries_added=#{entries_added}"
@@ -71,30 +59,18 @@ class GithubSyncJob < ApplicationJob
 
   private
 
-  def privatize_existing_entries(user, repo)
-    return 0 unless repo.private_repo?
-
-    # A rename or org transfer rewrites full_name, so entries imported under
-    # the old name would no longer match.
-    names = [ repo.full_name, repo.full_name_previously_was ].compact.uniq
+  # A private repo the user has not opted into must not show its commits. This
+  # hides rather than forcing per-entry visibility: repo inclusion owns `hidden`,
+  # the user owns `visibility`. Opting the repo back in restores them.
+  def hide_excluded_private_entries(user)
+    names = user.github_repos.where(private_repo: true, included: false).pluck(:full_name)
+    return 0 if names.empty?
 
     count = user.entries
-                .where(repo_name: names, source: :github)
-                .where.not(visibility: :private_entry)
-                .update_all(visibility: Entry.visibilities[:private_entry], url: nil)
+                .where(source: :github, repo_name: names, hidden: false)
+                .update_all(hidden: true, url: nil)
 
-    Rails.logger.warn "[GithubSyncJob] privatised #{count} leaked entries for #{repo.full_name}" if count.positive?
-    count
-  end
-
-  def privatize_unconfirmed_entries(user, public_repo_names)
-    count = user.entries
-                .where(source: :github)
-                .where.not(visibility: :private_entry)
-                .where.not(repo_name: public_repo_names)
-                .update_all(visibility: Entry.visibilities[:private_entry], url: nil)
-
-    Rails.logger.warn "[GithubSyncJob] privatised #{count} entries from unconfirmed repos" if count.positive?
+    Rails.logger.warn "[GithubSyncJob] hid #{count} entries from excluded private repos" if count.positive?
     count
   end
 
@@ -149,10 +125,7 @@ class GithubSyncJob < ApplicationJob
             occurred_at: commit.commit.author.date,
             # Never expose commit links for private repositories.
             url: private_repo ? nil : commit.html_url,
-            repo_name: repo.full_name,
-            # Privacy of auto-imported data is never a paid feature: a private
-            # repo's entries are private regardless of the user's plan.
-            visibility: private_repo ? :private_entry : :public_entry
+            repo_name: repo.full_name
           )
           entry.save!
           added += 1

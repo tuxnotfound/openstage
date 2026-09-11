@@ -183,7 +183,13 @@
                     <% end %>
                   </p>
                   <% if repo.private_repo? %>
-                    <p class="text-xs text-gray-400">Entries from private repos stay private, whatever your plan.</p>
+                    <p class="text-xs <%= repo.included? ? "text-amber-700" : "text-gray-400" %>">
+                      <% if repo.included? %>
+                        Commit messages from this private repo are public on your profile. Code and commit links are not.
+                      <% else %>
+                        Excluded. Include it to publish its commit messages (your code stays private).
+                      <% end %>
+                    </p>
                   <% elsif repo.description.present? %>
                     <p class="text-xs text-gray-400 truncate"><%= repo.description %></p>
                   <% end %>
@@ -198,7 +204,7 @@
           <% end %>
         </div>
         <p class="text-xs text-gray-400 mt-2">Excluded repos won't contribute commits to your timeline.</p>
-        <p class="text-xs text-gray-400 mt-1">Private repos are excluded by default. If you include one, its commits are imported as private entries and never appear on your public profile.</p>
+        <p class="text-xs text-gray-400 mt-1">Private repos are excluded by default. Including one publishes its commit messages on your profile, so your build is public while your code stays private. Commit links are never shown for private repos.</p>
       </section>
       <% end %>
 

@@ -44,10 +44,11 @@ class DiagnosticsController < ApplicationController
         .map { |username, url| "#{username}=#{url.truncate(40)}" }
   end
 
-  # Public entries whose source repo is known to be private. Should be 0.
+  # Visible entries from private repos the user never opted into. Should be 0;
+  # an opted-in private repo is a deliberate choice and is not counted.
   def leaked_private_entries
-    Entry.where(source: :github, repo_name: GithubRepo.where(private_repo: true).select(:full_name))
-         .where.not(visibility: :private_entry)
+    Entry.where(source: :github, hidden: false)
+         .where(repo_name: GithubRepo.where(private_repo: true, included: false).select(:full_name))
          .count
   end
 

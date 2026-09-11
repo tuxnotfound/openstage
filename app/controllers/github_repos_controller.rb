@@ -10,9 +10,10 @@ class GithubReposController < ApplicationController
     if !@repo.included?
       scope.update_all(hidden: true)
     elsif @repo.private_repo?
-      # Un-hiding must never re-publish. Legacy rows from a private repo may
-      # still be visibility=public with a live commit URL.
-      scope.update_all(hidden: false, visibility: Entry.visibilities[:private_entry], url: nil)
+      # Including a private repo publishes its commit messages, which is the
+      # point of the opt-in. Commit URLs stay stripped: they 404 for visitors
+      # and only confirm the repo path.
+      scope.update_all(hidden: false, url: nil)
     else
       scope.update_all(hidden: false)
     end

@@ -14,19 +14,18 @@ namespace :privacy do
 
     puts "Privatising entries for: #{names.join(', ')}"
 
-    scope = Entry.where(source: :github, repo_name: names).where.not(visibility: :private_entry)
+    scope = Entry.where(source: :github, repo_name: names, hidden: false)
     affected = scope.group(:repo_name).count
-    count = scope.update_all(visibility: Entry.visibilities[:private_entry], url: nil)
+    count = scope.update_all(hidden: true, url: nil)
 
     affected.each { |repo, n| puts "  #{repo}: #{n}" }
     puts "Privatised #{count} #{'entry'.pluralize(count)}."
   end
 
-  desc "Report public entries whose repo is private, without changing anything"
+  desc "Report visible entries from private repos nobody opted into, without changing anything"
   task audit: :environment do
-    private_names = GithubRepo.where(private_repo: true).distinct.pluck(:full_name)
-    leaked = Entry.where(source: :github, repo_name: private_names)
-                  .where.not(visibility: :private_entry)
+    private_names = GithubRepo.where(private_repo: true, included: false).distinct.pluck(:full_name)
+    leaked = Entry.where(source: :github, repo_name: private_names, hidden: false)
                   .group(:repo_name).count
 
     if leaked.empty?

@@ -60,7 +60,7 @@ RSpec.describe GithubSyncJob, type: :job do
       expect(GithubRepo.last).to have_attributes(private_repo: true, included: false)
     end
 
-    it "keeps an opted-in private repo's entries private and link-free" do
+    it "publishes an opted-in private repo's commit messages but never its links" do
       allow(repo_double).to receive(:private).and_return(true)
       # Already known private and deliberately opted in, so no re-default fires.
       create(:github_repo, user: user, github_repo_id: 123_456, full_name: "tuxnotfound/myapp",
@@ -69,8 +69,10 @@ RSpec.describe GithubSyncJob, type: :job do
       described_class.new.perform(user.id)
 
       entry = Entry.last
+      expect(entry.title).to eq("Add feature X")
       expect(entry.url).to be_nil
-      expect(entry.visibility).to eq("private_entry")
+      expect(entry.visibility).to eq("public_entry")
+      expect(user.entries.publicly_visible).to include(entry)
     end
 
     it "creates a SyncLog with success status" do
