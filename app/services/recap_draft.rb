@@ -1,29 +1,25 @@
-# Builds a plain-text "here's what I shipped" post draft from a builder's own
-# entries. Deliberately unstyled: no emoji, no hashtags, no "shipped!" voice.
-# The audience punishes obviously templated posts, so this reads as a changelog
-# the user edits before posting, never as something auto-published.
+# Pre-fills a plain-text "here's what I shipped" post from a builder's own
+# entries without deciding what mattered. The skeleton (opening line, counts,
+# and the milestones/notes the user already flagged) is objective. Commits are
+# offered as numbered candidates the user picks from; nothing here ranks them,
+# because a "wip" commit can be the line that starts the conversation.
 #
-# The main text carries no link. The profile URL is offered as a suggested first
-# reply instead, which is how link-bearing posts stay visible on X in 2026.
+# The only filtering is merge commits and dependency-bump commits: tooling
+# output rather than the user's voice, hidden by default behind a toggle.
+# Reverts are NOT filtered - a revert is the user's own decision and is often
+# the most honest line of the week.
+#
+# Deliberately unstyled: no emoji, no hashtags. The post body carries no link;
+# the profile URL is offered as a suggested first reply, which is how
+# link-bearing posts stay visible on X.
 class RecapDraft
-  # Below this, a week has nothing worth posting and we say so rather than
-  # padding a thin post the user would be embarrassed to send.
+  # Below this many highlights + candidate commits a week has nothing worth
+  # posting and we say so rather than pad a thin post.
   MINIMUM_ITEMS = 3
-  MAX_COMMITS_PER_REPO = 5
-  MAX_REPOS = 4
 
   # X's free tier caps a post at 280 characters and Bluesky at 300, so 280 is
-  # the one budget that is postable on both without a per-platform variant.
+  # the one budget that posts to both. Used for the counter, never to truncate.
   DEFAULT_LIMIT = 280
-
-  # Progressively tighter (repos, commits-per-repo) pairs. The first combination
-  # that fits the budget wins; if none do, we fall back to a counts-only summary.
-  BUDGETS = [
-    [ MAX_REPOS, MAX_COMMITS_PER_REPO ], [ 3, 4 ], [ 3, 3 ],
-    [ 2, 3 ], [ 2, 2 ], [ 1, 3 ], [ 1, 2 ], [ 1, 1 ]
-  ].freeze
-
-  MAX_HIGHLIGHTS = 3
 
   COMMIT_TYPES = %w[shipped repo_created].freeze
 
@@ -33,40 +29,103 @@ class RecapDraft
     "What I worked on this week:"
   ].freeze
 
-  # Commits that are almost never worth reading in a recap. Counted and reported
-  # by the rake task, but NOT filtered out here: whether raw commit streams read
-  # as postable is exactly the question the first dogfood run has to answer.
-  NOISE = /\A(merge (branch|pull request|remote)|bump |chore\(deps\)|update dependencies|revert )/i
+  # Shapes that bots write. "bump X from A to B" is Dependabot's exact wording,
+  # which keeps a hand-written "Bump version to 1.2.0" out of the filter.
+  NOISE = /
+    \A(?:
+      merge\ (?:branch|pull\ request|remote|tag)\b
+      | (?:build|chore|fix|ci)\(deps(?:-dev)?\):
+      | bump\ \S+\ from\ \S+\ to\ \S+
+      | update\ dependenc(?:y|ies)\b
+      | \[dependabot\]
+    )
+  /xi
 
-  Item = Struct.new(:entry_type, :title, :repo_name, keyword_init: true)
+  # Squash-merge appends "(#123)" to the subject; GitHub wrote that, not the user.
+  PR_SUFFIX = /\s*\(#\d+\)\z/
 
-  attr_reader :username, :items, :period_end, :limit
+  Item      = Struct.new(:entry_type, :title, :repo_name, :sha, :merge, keyword_init: true)
+  Candidate = Struct.new(:index, :repo, :title, :noise, keyword_init: true)
 
-  def initialize(username:, items:, period_end: nil, limit: DEFAULT_LIMIT)
-    @username   = username
-    @items      = items.to_a
-    @period_end = period_end || Date.current
-    @limit      = limit
+  attr_reader :username, :items, :period_end, :limit, :include_noise, :days
+
+  def initialize(username:, items:, period_end: nil, limit: DEFAULT_LIMIT, include_noise: false, days: 7)
+    @username      = username
+    @items         = items.to_a
+    @period_end    = period_end || Date.current
+    @limit         = limit
+    @include_noise = include_noise
+    @days          = days
+  end
+
+  def highlights
+    @highlights ||= items.reject { |item| COMMIT_TYPES.include?(item.entry_type.to_s) }
+  end
+
+  def commits
+    @commits ||= items.select { |item| COMMIT_TYPES.include?(item.entry_type.to_s) }
+                      .uniq { |item| item.sha.presence || item.object_id }
+  end
+
+  def noise
+    @noise ||= all_candidates.select(&:noise)
+  end
+
+  # Numbered over the FULL commit pool so a given number means the same commit
+  # whether or not tooling commits are shown; hiding them just leaves gaps.
+  def all_candidates
+    @all_candidates ||= begin
+      grouped = commits.group_by { |item| short_repo(item.repo_name) }
+                       .sort_by { |repo, list| [ -list.size, repo ] }
+      grouped.flat_map { |_repo, list| list }
+             .each_with_index
+             .map do |item, i|
+               Candidate.new(
+                 index: i + 1,
+                 repo:  short_repo(item.repo_name),
+                 title: clean_title(item.title),
+                 noise: noise?(item)
+               )
+             end
+    end
+  end
+
+  def candidates
+    @candidates ||= include_noise ? all_candidates : all_candidates.reject(&:noise)
+  end
+
+  def candidates_by_repo
+    candidates.group_by(&:repo)
   end
 
   def quiet?
-    items.size < MINIMUM_ITEMS
+    highlights.size + candidates.size < MINIMUM_ITEMS
   end
 
-  def text
+  def skeleton
+    ([ counts_line ] + highlights.map { |item| "- #{clean_title(item.title)}" }).join("\n")
+  end
+
+  # picks are 1-based candidate indexes, rendered in the order the user typed
+  # them so they can tell the story chronologically. Unknown indexes are ignored.
+  def text(picks = [])
     return quiet_text if quiet?
 
-    BUDGETS.each do |max_repos, per_repo|
-      candidate = build(max_repos: max_repos, per_repo: per_repo)
-      return candidate if candidate.length <= limit
+    chosen = picks.filter_map { |i| candidates.find { |c| c.index == i } }.uniq
+    return skeleton if chosen.empty?
+
+    single_repo = candidates_by_repo.size == 1
+    blocks = chosen.group_by(&:repo).map do |repo, list|
+      lines = list.map { |c| "- #{c.title}" }
+      # The counts line already names the repo when there is only one.
+      single_repo ? lines.join("\n") : ([ repo ] + lines).join("\n")
     end
 
-    summary_text
+    ([ skeleton ] + blocks).join("\n\n")
   end
 
-  # True when the draft had to drop detail to fit the platform limit.
-  def trimmed?
-    !quiet? && text != build(max_repos: MAX_REPOS, per_repo: MAX_COMMITS_PER_REPO)
+  def remaining(picks = [])
+    limit - text(picks).length
   end
 
   def suggested_reply
@@ -77,76 +136,37 @@ class RecapDraft
     "#{ENV.fetch('APP_HOST', 'https://openstage.dev')}/#{username}"
   end
 
-  def highlights
-    @highlights ||= items.reject { |item| COMMIT_TYPES.include?(item.entry_type.to_s) }
-  end
-
-  def commits
-    @commits ||= items.select { |item| COMMIT_TYPES.include?(item.entry_type.to_s) }
-  end
-
-  # repo full names are noisy in a post; "owner/repo" reads better as "repo".
-  def commits_by_repo
-    @commits_by_repo ||= commits.group_by { |item| short_repo(item.repo_name) }
-                                .sort_by { |_repo, list| -list.size }
-  end
-
-  def noisy_commit_count
-    commits.count { |item| NOISE.match?(item.title.to_s) }
-  end
-
   private
 
-  def build(max_repos:, per_repo:)
-    sections = [ opening ]
-    sections << highlight_lines.join("\n") if highlights.any?
-    sections += repo_blocks(max_repos: max_repos, per_repo: per_repo)
-    sections.join("\n\n")
-  end
-
-  # Last resort when even one repo and one commit will not fit: state the shape
-  # of the week honestly rather than emitting a truncated, meaningless post.
-  def summary_text
-    parts = [ "#{opening.chomp(':')}: #{commits.size} #{'commit'.pluralize(commits.size)} " \
-              "across #{commits_by_repo.size} #{'repo'.pluralize(commits_by_repo.size)}." ]
-    parts += highlight_lines.first(1)
-    parts.join("\n")
+  def noise?(item)
+    return true if item.merge
+    NOISE.match?(item.title.to_s)
   end
 
   def opening
-    OPENINGS[period_end.cweek % OPENINGS.size]
+    return OPENINGS[period_end.cweek % OPENINGS.size] if days == 7
+    "Last #{days} days:"
+  end
+
+  def counts_line
+    return opening if candidates.empty?
+
+    repos = candidates_by_repo.keys
+    where = repos.size == 1 ? "in #{repos.first}" : "across #{repos.size} repos"
+    "#{opening} #{candidates.size} #{'commit'.pluralize(candidates.size)} #{where}."
   end
 
   def quiet_text
-    "Quiet week - #{items.size} #{'entry'.pluralize(items.size)} logged. " \
-      "Nothing here worth a post yet."
-  end
-
-  def highlight_lines
-    highlights.first(MAX_HIGHLIGHTS).map { |item| "- #{first_line(item.title)}" }
-  end
-
-  def repo_blocks(max_repos:, per_repo:)
-    shown = commits_by_repo.first(max_repos)
-    blocks = shown.map do |repo, list|
-      header = "#{repo} (#{list.size} #{'commit'.pluralize(list.size)})"
-      lines  = list.first(per_repo).map { |item| "- #{first_line(item.title)}" }
-      extra  = list.size - per_repo
-      lines << "- and #{extra} more" if extra.positive?
-      ([ header ] + lines).join("\n")
-    end
-
-    remaining = commits_by_repo.size - shown.size
-    blocks << "Plus smaller changes in #{remaining} other #{'repo'.pluralize(remaining)}." if remaining.positive?
-    blocks
+    total = highlights.size + candidates.size
+    "Quiet week - #{total} #{'entry'.pluralize(total)} logged. Nothing here worth a post yet."
   end
 
   def short_repo(repo_name)
     return "other" if repo_name.blank?
-    repo_name.to_s.split("/").last
+    repo_name.to_s.split("/").last.presence || "other"
   end
 
-  def first_line(title)
-    title.to_s.split("\n").first.to_s.strip
+  def clean_title(title)
+    title.to_s.lines.map(&:strip).find(&:present?).to_s.sub(PR_SUFFIX, "")
   end
 end
