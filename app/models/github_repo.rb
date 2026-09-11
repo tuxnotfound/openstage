@@ -6,4 +6,5 @@ class GithubRepo < ApplicationRecord
   validates :full_name, presence: true
 
   scope :included_repos, -> { where(included: true) }
+  scope :public_repos, -> { where(private_repo: false) }
 end

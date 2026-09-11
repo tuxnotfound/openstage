@@ -13,7 +13,11 @@ end
 
 Rails.application.config.middleware.use OmniAuth::Builder do
   provider :github, ENV.fetch("GITHUB_CLIENT_ID", nil), ENV.fetch("GITHUB_CLIENT_SECRET", nil),
-           scope: "user:email,repo",
+           # A public proof-of-work page needs no access to private repositories.
+           # Requesting "repo" asked for read AND write on every private repo,
+           # which is both a privacy hazard and the kind of thing a Show HN
+           # thread leads with. Public repos need no scope at all.
+           scope: "user:email",
            client_options: {
              auth_scheme: :request_body
            }

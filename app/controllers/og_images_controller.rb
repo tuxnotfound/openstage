@@ -37,7 +37,7 @@ class OgImagesController < ApplicationController
   def og_metrics_for(user)
     {
       entries_count: user.public_entries_count,
-      repos_count: user.github_repos.included_repos.count,
+      repos_count: user.github_repos.included_repos.public_repos.count,
       milestones_count: user.public_milestones_count,
       recent_commits_count: user.public_recent_commits_count,
       streak_count: user.public_activity_streak

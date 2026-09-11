@@ -176,8 +176,15 @@
             <%= turbo_frame_tag dom_id(repo) do %>
               <div class="flex items-center justify-between px-5 py-3">
                 <div class="min-w-0 flex-1">
-                  <p class="text-sm font-medium text-gray-800 truncate"><%= repo.name %></p>
-                  <% if repo.description.present? %>
+                  <p class="text-sm font-medium text-gray-800 truncate">
+                    <%= repo.name %>
+                    <% if repo.private_repo? %>
+                      <span class="ml-1 text-xs font-normal px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">private</span>
+                    <% end %>
+                  </p>
+                  <% if repo.private_repo? %>
+                    <p class="text-xs text-gray-400">Entries from private repos stay private, whatever your plan.</p>
+                  <% elsif repo.description.present? %>
                     <p class="text-xs text-gray-400 truncate"><%= repo.description %></p>
                   <% end %>
                 </div>

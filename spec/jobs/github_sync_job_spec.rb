@@ -53,11 +53,22 @@ RSpec.describe GithubSyncJob, type: :job do
       expect(entry.url).to eq("https://github.com/tuxnotfound/myapp/commit/abc123def456")
     end
 
-    it "does not store commit URL for private repos" do
+    it "syncs nothing from a private repo until it is explicitly opted in" do
       allow(repo_double).to receive(:private).and_return(true)
 
+      expect { described_class.new.perform(user.id) }.not_to change(Entry, :count)
+      expect(GithubRepo.last).to have_attributes(private_repo: true, included: false)
+    end
+
+    it "keeps an opted-in private repo's entries private and link-free" do
+      allow(repo_double).to receive(:private).and_return(true)
+      create(:github_repo, user: user, github_repo_id: 123_456, full_name: "tuxnotfound/myapp", included: true)
+
       described_class.new.perform(user.id)
-      expect(Entry.last.url).to be_nil
+
+      entry = Entry.last
+      expect(entry.url).to be_nil
+      expect(entry.visibility).to eq("private_entry")
     end
 
     it "creates a SyncLog with success status" do

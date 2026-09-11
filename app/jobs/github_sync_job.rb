@@ -35,6 +35,9 @@ class GithubSyncJob < ApplicationJob
 
           begin
             entries_added += sync_commits(client, user, repo, private_repo: repo_data.private)
+            # Self-healing: entries imported before private repos were handled
+            # are still public, so bring them in line on every sync.
+            privatize_existing_entries(user, repo) if repo_data.private
             repo.update!(last_synced_at: Time.current)
           rescue Octokit::Error => e
             # Per-repo failure must not advance the watermark, or commits in the
@@ -55,6 +58,18 @@ class GithubSyncJob < ApplicationJob
 
   private
 
+  def privatize_existing_entries(user, repo)
+    return 0 unless repo.private_repo?
+
+    leaked = user.entries
+                 .where(repo_name: repo.full_name, source: :github)
+                 .where.not(visibility: :private_entry)
+
+    count = leaked.update_all(visibility: "private", url: nil)
+    Rails.logger.warn "[GithubSyncJob] privatised #{count} leaked entries for #{repo.full_name}" if count.positive?
+    count
+  end
+
   def sync_repo(user, repo_data)
     repo = GithubRepo.find_or_initialize_by(user: user, github_repo_id: repo_data.id)
     new_branch = repo_data.default_branch || "main"
@@ -69,9 +84,12 @@ class GithubSyncJob < ApplicationJob
       full_name: repo_data.full_name,
       description: repo_data.description,
       url: repo_data.html_url,
-      default_branch: new_branch
+      default_branch: new_branch,
+      private_repo: !!repo_data.private
     )
-    repo.included = true if repo.new_record?
+    # Private repos are opt-out by default: nobody signs up expecting their
+    # private commit messages to be published.
+    repo.included = !repo_data.private if repo.new_record?
     repo.save!
     repo
   end
@@ -97,7 +115,10 @@ class GithubSyncJob < ApplicationJob
             occurred_at: commit.commit.author.date,
             # Never expose commit links for private repositories.
             url: private_repo ? nil : commit.html_url,
-            repo_name: repo.full_name
+            repo_name: repo.full_name,
+            # Privacy of auto-imported data is never a paid feature: a private
+            # repo's entries are private regardless of the user's plan.
+            visibility: private_repo ? :private_entry : :public_entry
           )
           entry.save!
           added += 1

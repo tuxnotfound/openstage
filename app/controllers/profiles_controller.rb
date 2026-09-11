@@ -23,7 +23,8 @@ class ProfilesController < ApplicationController
     @has_posted_entries = @user.entries.publicly_visible.posted.exists?
 
     @total_entries = @user.entries.publicly_visible.count
-    @repos_synced  = @user.github_repos.included_repos.count
+    # Public repos only: counting private ones would disclose that they exist.
+    @repos_synced  = @user.github_repos.included_repos.public_repos.count
     @milestones    = @user.entries.publicly_visible.where(entry_type: :milestone).count
     @streak        = @user.current_streak
 
