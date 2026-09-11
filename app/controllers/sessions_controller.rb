@@ -12,10 +12,12 @@ class SessionsController < ApplicationController
         github_access_token: user.github_access_token,
         display_name: user.display_name,
         avatar_url: user.avatar_url,
+        email: user.email,
         proposed_username: claimed_username || user.username
       }
       redirect_to new_username_path
     elsif user.save
+      session.delete(:signup_ref)
       session[:user_id] = user.id
       last_sync = user.last_synced_at(source: :github)
       GithubSyncJob.perform_later(user.id) if last_sync.nil? || last_sync < 2.hours.ago

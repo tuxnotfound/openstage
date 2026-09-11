@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_10_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_11_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -251,7 +251,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_10_000001) do
     t.string "stripe_subscription_id"
     t.datetime "pro_since"
     t.string "email"
+    t.string "signup_ref"
     t.index ["github_uid"], name: "index_users_on_github_uid", unique: true
+    t.index ["signup_ref"], name: "index_users_on_signup_ref"
     t.index ["username"], name: "index_users_on_username", unique: true
   end
 

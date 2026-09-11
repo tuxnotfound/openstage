@@ -1,0 +1,78 @@
+<% content_for :title, "Admin" %>
+
+<% peak = [ @signups_by_day.values.max, 1 ].max %>
+
+<div class="max-w-2xl mx-auto px-4 py-8 space-y-8">
+
+  <div>
+    <h1 class="text-2xl font-semibold text-gray-900">Admin</h1>
+    <p class="text-sm text-gray-500 mt-1">Last <%= AdminController::DAYS %> days. The numbers the gates are scored on, and nothing else.</p>
+  </div>
+
+  <!-- Gate numbers -->
+  <section class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <% [
+         [ "Signups", @cohort, "in window" ],
+         [ "Activated", @activated, "#{@cohort.zero? ? 0 : (100.0 * @activated / @cohort).round}% of signups" ],
+         [ "Recaps posted", @posted_recaps, "by #{pluralize(@posted_by_user, 'builder')}" ],
+         [ "With email", @with_email, "of #{@cohort} signups" ]
+       ].each do |label, value, sub| %>
+      <div class="rounded-xl border border-gray-200 px-4 py-3">
+        <p class="text-xs uppercase tracking-wide text-gray-400"><%= label %></p>
+        <p class="text-2xl font-semibold text-gray-900 mt-0.5"><%= value %></p>
+        <p class="text-xs text-gray-400 mt-0.5"><%= sub %></p>
+      </div>
+    <% end %>
+  </section>
+
+  <!-- Attribution -->
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Signups by first touch</h2>
+    <% if @signups_by_ref.any? %>
+      <div class="rounded-xl border border-gray-200 divide-y divide-gray-100">
+        <% @signups_by_ref.each do |ref, count| %>
+          <div class="flex items-center justify-between px-4 py-2.5" data-ref="<%= ref %>" data-count="<%= count %>">
+            <span class="text-sm text-gray-700"><%= ref %></span>
+            <span class="text-sm font-medium text-gray-900"><%= count %></span>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-sm text-gray-400 rounded-xl border border-gray-200 px-4 py-3">No signups in the window.</p>
+    <% end %>
+    <p class="text-xs text-gray-400 mt-1.5">Tagged links carry <code>?ref=</code>. Older rows predate the tagging and read as "unattributed".</p>
+  </section>
+
+  <!-- Signups per day -->
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Signups per day</h2>
+    <div class="flex items-end gap-0.5 h-16 rounded-xl border border-gray-200 px-3 py-2">
+      <% @signups_by_day.each do |date, count| %>
+        <div class="flex-1 bg-gray-200 rounded-sm <%= "bg-gray-900" if count.positive? %>"
+             style="height: <%= count.zero? ? 2 : (100.0 * count / peak).round %>%"
+             title="<%= date %>: <%= pluralize(count, 'signup') %>"></div>
+      <% end %>
+    </div>
+  </section>
+
+  <!-- All time -->
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">All time</h2>
+    <div class="rounded-xl border border-gray-200 divide-y divide-gray-100 text-sm">
+      <div class="flex items-center justify-between px-4 py-2.5">
+        <span class="text-gray-700">Builders</span><span class="font-medium text-gray-900"><%= @total_users %></span>
+      </div>
+      <div class="flex items-center justify-between px-4 py-2.5">
+        <span class="text-gray-700">Public entries</span><span class="font-medium text-gray-900"><%= @total_entries %></span>
+      </div>
+      <div class="flex items-center justify-between px-4 py-2.5">
+        <span class="text-gray-700">Pro</span><span class="font-medium text-gray-900"><%= @pro_users %></span>
+      </div>
+    </div>
+  </section>
+
+  <p class="text-xs text-gray-400">
+    Gate 0 is Sep 21 &middot; Gate 1 Oct 12 &middot; Gate 2 Oct 26 &middot; Gate 3 Nov 15.
+    See <code>control-tower/projects/openstage/REBIRTH_PLAN.md</code>.
+  </p>
+</div>

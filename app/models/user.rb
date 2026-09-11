@@ -34,6 +34,16 @@ class User < ApplicationRecord
 
   before_save :track_username_change, if: -> { persisted? && will_save_change_to_username? }
 
+  # Where a signup came from, captured once at first touch. Anything else is
+  # recorded as "direct" so the denominator is never silently incomplete.
+  REFS = %w[recap badge footer feed claim].freeze
+  DEFAULT_REF = "direct".freeze
+
+  def self.normalize_ref(value)
+    ref = value.to_s.downcase.strip
+    REFS.include?(ref) ? ref : DEFAULT_REF
+  end
+
   def self.from_github_omniauth(auth)
     user = find_or_initialize_by(github_uid: auth.uid)
     user.github_username = auth.info.nickname
@@ -41,6 +51,7 @@ class User < ApplicationRecord
     user.display_name ||= auth.info.name.presence || auth.info.nickname
     user.avatar_url ||= auth.info.image
     user.username ||= auth.info.nickname
+    user.email ||= auth.info.email.presence
     user
   end
 

@@ -163,7 +163,7 @@ RSpec.describe RecapDraft do
 
     it "keeps the profile link out of the body and offers it as a reply" do
       expect(draft.text([ 1, 2, 3 ])).not_to match(%r{https?://|openstage\.dev})
-      expect(draft.suggested_reply).to eq("Full timeline: https://openstage.dev/tuxnotfound")
+      expect(draft.suggested_reply).to eq("Full timeline: https://openstage.dev/tuxnotfound?ref=recap")
     end
 
     it "stays plain: no emoji and no hashtags" do

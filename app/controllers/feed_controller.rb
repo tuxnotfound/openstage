@@ -1,6 +1,6 @@
 class FeedController < ApplicationController
-  before_action :require_authentication
-
+  # Public: the homepage already renders this same feed to signed-out visitors,
+  # so the login wall only hid the one discovery surface from crawlers.
   def index
     @entries = Entry.publicly_visible
                     .joins(:user)

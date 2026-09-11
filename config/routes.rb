@@ -16,6 +16,9 @@ Rails.application.routes.draw do
   # Owner-only deploy/migration diagnostics
   get "/_deploy_check", to: "diagnostics#show"
 
+  # Owner-only funnel metrics; the gates are scored off this
+  get "/admin", to: "admin#show", as: :admin
+
   # Recap picker (owner-only until C1 generalises it)
   get "/recap", to: "recaps#show", as: :recap
   post "/recap/posted", to: "recaps#log_post", as: :recap_log_post

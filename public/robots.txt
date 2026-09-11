@@ -21,7 +21,6 @@ Disallow: /claim-username
 Disallow: /analytics
 Disallow: /billing
 Disallow: /checkout
-Disallow: /feed
 Disallow: /sync/
 Disallow: /auth/
 Disallow: /e/

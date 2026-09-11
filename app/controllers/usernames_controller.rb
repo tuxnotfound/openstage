@@ -13,7 +13,9 @@ class UsernamesController < ApplicationController
       github_access_token: pending["github_access_token"],
       display_name: pending["display_name"],
       avatar_url: pending["avatar_url"],
-      username: params[:username]
+      email: pending["email"],
+      username: params[:username],
+      signup_ref: User.normalize_ref(session[:signup_ref])
     )
 
     if user.save

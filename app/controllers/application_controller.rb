@@ -1,7 +1,18 @@
 class ApplicationController < ActionController::Base
   helper_method :current_user, :user_signed_in?
 
+  before_action :capture_first_touch_ref
+
   private
+
+  # First touch wins: a visitor who arrives from a recap link and signs up three
+  # pages later is still attributed to the recap.
+  def capture_first_touch_ref
+    return if session[:signup_ref].present?
+    return if params[:ref].blank?
+
+    session[:signup_ref] = User.normalize_ref(params[:ref])
+  end
 
   # defined? rather than ||= so the nil results cache too; otherwise every
   # current_user call in a layout re-queries.

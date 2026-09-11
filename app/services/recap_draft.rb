@@ -147,8 +147,10 @@ class RecapDraft
     "Full timeline: #{profile_url}"
   end
 
+  # Tagged so a signup arriving from a recap's first reply is attributable;
+  # without this the loop Bet 3 tests can never be distinguished from direct.
   def profile_url
-    "#{ENV.fetch('APP_HOST', 'https://openstage.dev')}/#{username}"
+    "#{ENV.fetch('APP_HOST', 'https://openstage.dev')}/#{username}?ref=recap"
   end
 
   private
