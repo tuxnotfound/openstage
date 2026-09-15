@@ -31,8 +31,13 @@ class GithubSyncJob < ApplicationJob
       # Only the user's own commits are imported (see authored_by?), so a shared
       # repo shows each builder their own work. GitHub rejects `type` combined
       # with `affiliation`, hence the replacement rather than an addition.
+      #
+      # The explicit nil matters: Octokit's signature is repositories(user = nil,
+      # options = {}), so a bare options hash lands in `user` and every option is
+      # dropped. GitHub then returns its default 30 repos, the short page ends
+      # pagination, and any repo past #30 by name silently never syncs.
       fetch_repos = lambda do |page|
-        client.repositories(affiliation: "owner,collaborator,organization_member", per_page: PER_PAGE, page: page)
+        client.repositories(nil, affiliation: "owner,collaborator,organization_member", per_page: PER_PAGE, page: page)
       end
 
       each_page(fetch_repos) do |repo_page|

@@ -55,7 +55,24 @@ RSpec.describe GithubSyncJob, type: :job do
 
     it "asks GitHub for every repo the user can push to, not only owned ones" do
       expect(client).to receive(:repositories)
-        .with(hash_including(affiliation: "owner,collaborator,organization_member"))
+        .with(nil, hash_including(affiliation: "owner,collaborator,organization_member"))
+        .and_return([ repo_double ])
+
+      described_class.new.perform(user.id)
+    end
+
+    # The double above only checks what we pass, which is how a bare options hash
+    # landing in Octokit's `user` argument went unnoticed. This runs the real
+    # Octokit#repositories and pins the request GitHub actually receives.
+    it "sends per_page, page and affiliation through to the GitHub request" do
+      allow(Octokit::Client).to receive(:new).and_call_original
+      real_client = Octokit::Client.new(access_token: "token")
+      allow(Octokit::Client).to receive(:new).and_return(real_client)
+      allow(real_client).to receive(:commits).and_return([])
+
+      expect(real_client).to receive(:paginate)
+        .with("user/repos", hash_including(affiliation: "owner,collaborator,organization_member",
+                                          per_page: GithubSyncJob::PER_PAGE, page: 1))
         .and_return([ repo_double ])
 
       described_class.new.perform(user.id)
