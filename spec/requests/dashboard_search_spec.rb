@@ -80,4 +80,29 @@ RSpec.describe "Dashboard search and paging", type: :request do
 
     expect(response.body).to include("q=findable")
   end
+
+  describe "Turbo requests" do
+    let(:turbo_accept) { { "Accept" => "text/vnd.turbo-stream.html, text/html, application/xhtml+xml" } }
+
+    # A Turbo form that redirects to the dashboard (Sync now, entry actions)
+    # follows the 302 with this Accept header. It used to get the Load more
+    # stream, so the flash waited for a refresh and page 1 was appended again.
+    it "renders the full page with its flash after a Turbo form redirects here" do
+      allow(GithubSyncJob).to receive(:perform_later)
+      post "/sync/github", headers: turbo_accept
+      follow_redirect!(headers: turbo_accept)
+
+      expect(response.media_type).to eq("text/html")
+      expect(response.body).to include("GitHub sync started")
+    end
+
+    it "still appends the next page for Load more" do
+      create_list(:entry, DashboardController::PER_PAGE + 2, user: user)
+
+      get "/dashboard", params: { page: 2 }, headers: turbo_accept
+
+      expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
+      expect(response.body).to include('turbo-stream action="append" target="dashboard-entries"')
+    end
+  end
 end

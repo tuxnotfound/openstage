@@ -65,7 +65,12 @@ class DashboardController < ApplicationController
 
     respond_to do |format|
       format.html
-      format.turbo_stream
+      # Only "Load more" (which always carries page) wants the append stream.
+      # Every Turbo form that redirects here (Sync now, entry create/edit/delete)
+      # also arrives accepting turbo_stream, because fetch keeps the Accept header
+      # across the redirect. Serving them the stream skipped the layout, so the
+      # flash only appeared on the next full load and page 1 was appended again.
+      format.turbo_stream if params[:page].present?
     end
   end
 end
