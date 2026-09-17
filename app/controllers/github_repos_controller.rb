@@ -3,7 +3,7 @@ class GithubReposController < ApplicationController
 
   def update
     @repo = current_user.github_repos.find(params[:id])
-    @repo.update!(included: params[:included] == "true")
+    @repo.update!(included: params[:included] == "true", included_chosen: true)
 
     scope = current_user.entries.where(source: :github, repo_name: @repo.full_name)
 

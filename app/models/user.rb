@@ -49,12 +49,37 @@ class User < ApplicationRecord
   def self.from_github_omniauth(auth)
     user = find_or_initialize_by(github_uid: auth.uid)
     user.github_username = auth.info.nickname
-    user.github_access_token = auth.credentials.token
+    user.adopt_github_token(auth.credentials.token, auth.extra&.scope)
     user.display_name ||= auth.info.name.presence || auth.info.nickname
     user.avatar_url ||= auth.info.image
     user.username ||= auth.info.nickname
     user.email ||= auth.info.email.presence
     user
+  end
+
+  # GitHub issues each token with the scopes of that sign-in request, not of
+  # the whole grant. Since C10 a plain sign-in asks only for user:email, so
+  # storing its token blindly drops the private-repo access the user gave
+  # through "Connect private repos" in Settings. Keep the broader token.
+  def adopt_github_token(token, scopes)
+    return if token.blank?
+    return if private_repo_access? && !self.class.scopes_include_repo?(scopes)
+
+    self.github_access_token = token
+    self.github_token_scopes = scopes.presence
+  end
+
+  def private_repo_access?
+    self.class.scopes_include_repo?(github_token_scopes)
+  end
+
+  # True right after a save that turned private-repo access on.
+  def gained_private_repo_access?
+    private_repo_access? && !self.class.scopes_include_repo?(github_token_scopes_before_last_save)
+  end
+
+  def self.scopes_include_repo?(scopes)
+    scopes.to_s.split(",").map(&:strip).include?("repo")
   end
 
   def soft_delete!

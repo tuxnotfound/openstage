@@ -23,8 +23,14 @@ class GithubSyncJob < ApplicationJob
     log = SyncLog.create!(user: user, source: :github, status: :running, ran_at: Time.current)
     entries_added = 0
     repos_seen = 0
+    listed_ids = []
+    skipped = []
 
     begin
+      # One header read. Keeps Settings honest about private-repo access
+      # without waiting for a sign-in; a revoked token raises here.
+      user.update_column(:github_token_scopes, client.scopes.join(","))
+
       # Every repo the user can push to, not just the ones they own. `type: "owner"`
       # silently dropped org repos and any shared project owned by a teammate,
       # so a contributor's commits to it never appeared anywhere on Openstage.
@@ -44,6 +50,7 @@ class GithubSyncJob < ApplicationJob
         repos_seen += repo_page.size
 
         repo_page.each do |repo_data|
+          listed_ids << repo_data.id
           repo = sync_repo(user, repo_data)
           next unless repo.included?
 
@@ -54,6 +61,7 @@ class GithubSyncJob < ApplicationJob
             # Per-repo failure must not advance the watermark, or commits in the
             # gap are lost forever. Other repos continue to sync.
             Rails.logger.warn "[GithubSyncJob] skipping #{repo.full_name}: #{e.message}"
+            skipped << repo.full_name
           end
         end
       end
@@ -62,9 +70,11 @@ class GithubSyncJob < ApplicationJob
       # the "repo" scope is revoked and private repos vanish from the API.
       hide_excluded_private_entries(user)
 
-      log.update!(status: :success, entries_added: entries_added)
+      log.update!(status: :success, entries_added: entries_added, error_message: sync_notes(user, listed_ids, skipped))
       Rails.logger.info "[GithubSyncJob] user=#{user.username} repos=#{repos_seen} entries_added=#{entries_added}"
     rescue => e
+      # A dead token must not stop the next sign-in from replacing it.
+      user.update_column(:github_token_scopes, nil) if e.is_a?(Octokit::Unauthorized)
       log.update!(status: :failed, error_message: e.message)
       Rails.logger.error "[GithubSyncJob] user=#{user.username} error=#{e.message}"
       raise
@@ -72,6 +82,21 @@ class GithubSyncJob < ApplicationJob
   end
 
   private
+
+  # A repo the user included but GitHub no longer lists (token without
+  # private-repo access, repo deleted or transferred) used to leave no trace:
+  # the run said success and nothing else. Same for a repo skipped on an API
+  # error. Shown on the dashboard's sync history.
+  def sync_notes(user, listed_ids, skipped)
+    missing = user.github_repos.included_repos.where.not(github_repo_id: listed_ids).pluck(:full_name)
+    notes = []
+    if missing.any?
+      why = user.private_repo_access? ? "" : " (no private-repo access)"
+      notes << "not returned by GitHub: #{missing.join(', ')}#{why}"
+    end
+    notes << "skipped: #{skipped.join(', ')}" if skipped.any?
+    notes.join("; ").presence
+  end
 
   # A private repo the user has not opted into must not show its commits. This
   # hides rather than forcing per-entry visibility: repo inclusion owns `hidden`,
@@ -108,10 +133,10 @@ class GithubSyncJob < ApplicationJob
     # Private repos are opt-out by default: nobody signs up expecting their
     # private commit messages to be published. The false -> true transition is
     # the moment we learn a repo is private; the old included:true default was
-    # never a consent, so re-default once. A genuine later opt-in survives,
-    # because the transition can only happen once.
+    # never a consent, so re-default once. A choice the user made by hand
+    # (included_chosen) is a consent and is never overridden.
     newly_known_private = repo.private_repo? && (repo.new_record? || repo.private_repo_changed?)
-    repo.included = false if newly_known_private
+    repo.included = false if newly_known_private && !repo.included_chosen?
     repo.included = true if repo.new_record? && !repo.private_repo?
 
     repo.save!

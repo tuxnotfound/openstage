@@ -107,5 +107,40 @@ RSpec.describe User, type: :model do
       user = described_class.from_github_omniauth(auth)
       expect(user.username).to eq("custom_name")
     end
+
+    # GitHub issues each token with the scopes of that request, not of the
+    # grant. A plain sign-in (user:email) after "Connect private repos" must
+    # not replace the repo-scoped token, or private repos silently vanish.
+    describe "token scopes" do
+      it "records the scopes GitHub granted with the token" do
+        auth.extra = { scope: "repo,user:email" }
+        user = described_class.from_github_omniauth(auth)
+        expect(user.github_token_scopes).to eq("repo,user:email")
+        expect(user).to be_private_repo_access
+      end
+
+      it "keeps a repo-scoped token when a plain sign-in returns a narrower one" do
+        create(:user, github_uid: "12345", github_access_token: "gho_repo_token", github_token_scopes: "repo,user:email")
+        auth.extra = { scope: "user:email" }
+        user = described_class.from_github_omniauth(auth)
+        expect(user.github_access_token).to eq("gho_repo_token")
+        expect(user.github_token_scopes).to eq("repo,user:email")
+      end
+
+      it "replaces the token when the new grant also carries repo" do
+        create(:user, github_uid: "12345", github_access_token: "gho_old_repo_token", github_token_scopes: "repo,user:email")
+        auth.extra = { scope: "repo,user:email" }
+        user = described_class.from_github_omniauth(auth)
+        expect(user.github_access_token).to eq("gho_test_token")
+      end
+
+      it "replaces a token whose scopes were never recorded" do
+        create(:user, github_uid: "12345", github_access_token: "gho_unknown", github_token_scopes: nil)
+        auth.extra = { scope: "user:email" }
+        user = described_class.from_github_omniauth(auth)
+        expect(user.github_access_token).to eq("gho_test_token")
+        expect(user.github_token_scopes).to eq("user:email")
+      end
+    end
   end
 end

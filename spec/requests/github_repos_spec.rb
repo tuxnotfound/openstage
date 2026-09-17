@@ -48,6 +48,11 @@ RSpec.describe "GithubRepos", type: :request do
           patch github_repo_path(excluded_repo), params: { included: "true" }
           expect(hidden_entry.reload.hidden).to be false
         end
+
+        it "remembers that the user chose, so the sync never re-defaults it" do
+          patch github_repo_path(excluded_repo), params: { included: "true" }
+          expect(excluded_repo.reload.included_chosen).to be true
+        end
       end
     end
   end

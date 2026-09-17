@@ -18,6 +18,18 @@ RSpec.describe "Settings", type: :request do
         expect(response).to have_http_status(:ok)
       end
 
+      it "offers to connect private repos until the token can list them" do
+        sign_in_as(user)
+        get settings_path
+        expect(response.body).to include("Connect private repos")
+        expect(response.body).to include('name="scope" value="user:email,repo"')
+
+        user.update!(github_token_scopes: "repo,user:email")
+        get settings_path
+        expect(response.body).not_to include("Connect private repos")
+        expect(response.body).to include("Private repos are connected")
+      end
+
       it "shows the embed widget script snippet" do
         sign_in_as(user)
         get settings_path

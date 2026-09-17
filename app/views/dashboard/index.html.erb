@@ -172,8 +172,9 @@
               <span class="text-xs text-gray-600 capitalize"><%= log.source %></span>
               <% if log.success? && log.entries_added > 0 %>
                 <span class="text-xs text-gray-400">+<%= log.entries_added %> entries</span>
-              <% elsif log.failed? && log.error_message.present? %>
-                <span class="text-xs text-red-400 truncate max-w-xs"><%= log.error_message %></span>
+              <% end %>
+              <% if log.error_message.present? %>
+                <span class="text-xs <%= log.failed? ? 'text-red-400' : 'text-amber-600' %> truncate max-w-xs" title="<%= log.error_message %>"><%= log.error_message %></span>
               <% end %>
             </div>
             <time class="text-xs text-gray-400"><%= time_ago_in_words(log.ran_at) %> ago</time>

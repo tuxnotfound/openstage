@@ -26,6 +26,18 @@ RSpec.describe GithubSyncJob, "private repository handling", type: :job do
       expect(legacy.reload).to have_attributes(private_repo: true, included: false)
     end
 
+    # The row can still read private_repo: false when the user includes it
+    # (nothing listed it since the column shipped). Learning it is private
+    # afterwards must not undo that click.
+    it "never overrides an Included the user set by hand" do
+      chosen = create(:github_repo, user: user, github_repo_id: 43, name: "secret",
+                                    full_name: "tuxnotfound/secret", included: true, included_chosen: true, private_repo: false)
+
+      described_class.new.send(:sync_repo, user, repo_data(name: "secret", private: true, id: 43))
+
+      expect(chosen.reload).to have_attributes(private_repo: true, included: true)
+    end
+
     it "respects a deliberate opt-in on every later sync" do
       job = described_class.new
       repo = job.send(:sync_repo, user, repo_data(name: "secret", private: true, id: 7))

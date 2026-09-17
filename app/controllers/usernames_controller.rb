@@ -11,6 +11,7 @@ class UsernamesController < ApplicationController
       github_uid: pending["github_uid"],
       github_username: pending["github_username"],
       github_access_token: pending["github_access_token"],
+      github_token_scopes: pending["github_token_scopes"],
       display_name: pending["display_name"],
       avatar_url: pending["avatar_url"],
       email: pending["email"],

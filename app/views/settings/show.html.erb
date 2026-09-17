@@ -181,6 +181,21 @@
       </section>
       <% end %>
 
+      <!-- Private repos: sign-in asks only for user:email, so GitHub never lists
+           them until the user grants the repo scope here. -->
+      <section>
+        <% if current_user.private_repo_access? %>
+          <p class="text-xs text-gray-400">Private repos are connected. They stay excluded until you include them above.</p>
+        <% else %>
+          <div class="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex items-center justify-between gap-4">
+            <p class="text-xs text-amber-800">Private repos are not listed. GitHub only shares them through its <code>repo</code> permission, which also allows writes; Openstage only ever reads commit messages, and each private repo stays excluded until you include it.</p>
+            <%= button_to "Connect private repos", "/auth/github", method: :post,
+                params: { scope: "user:email,repo" }, data: { turbo: false },
+                class: "shrink-0 text-xs bg-gray-900 text-white px-3 py-1.5 rounded-md hover:bg-gray-700 transition-colors cursor-pointer" %>
+          </div>
+        <% end %>
+      </section>
+
       <!-- README badge -->
       <section class="mt-10">
         <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">README badge</h2>

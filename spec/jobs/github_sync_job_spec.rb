@@ -32,6 +32,7 @@ RSpec.describe GithubSyncJob, type: :job do
 
   before do
     allow(Octokit::Client).to receive(:new).and_return(client)
+    allow(client).to receive(:scopes).and_return([ "repo", "user:email" ])
     allow(client).to receive(:repositories).and_return([ repo_double ])
     allow(client).to receive(:commits).and_return([ commit_double ])
     # Single-page stub: no :next rel means each_page yields once and stops.
@@ -68,6 +69,7 @@ RSpec.describe GithubSyncJob, type: :job do
       allow(Octokit::Client).to receive(:new).and_call_original
       real_client = Octokit::Client.new(access_token: "token")
       allow(Octokit::Client).to receive(:new).and_return(real_client)
+      allow(real_client).to receive(:scopes).and_return([ "user:email" ])
       allow(real_client).to receive(:commits).and_return([])
 
       expect(real_client).to receive(:paginate)
@@ -121,6 +123,42 @@ RSpec.describe GithubSyncJob, type: :job do
       log = SyncLog.last
       expect(log.status).to eq("success")
       expect(log.entries_added).to eq(1)
+      expect(log.error_message).to be_nil
+    end
+
+    it "records the token's scopes on the user every run" do
+      described_class.new.perform(user.id)
+      expect(user.reload.github_token_scopes).to eq("repo,user:email")
+    end
+
+    # This is how story_time_v1 went missing for four days: included, but the
+    # token could not list it, and the run reported success with nothing else.
+    it "notes on a successful SyncLog any included repo GitHub did not return" do
+      create(:github_repo, user: user, github_repo_id: 999, full_name: "tuxnotfound/secret",
+                           private_repo: true, included: true)
+      allow(client).to receive(:scopes).and_return([ "user:email" ])
+
+      described_class.new.perform(user.id)
+
+      log = SyncLog.last
+      expect(log.status).to eq("success")
+      expect(log.error_message).to eq("not returned by GitHub: tuxnotfound/secret (no private-repo access)")
+    end
+
+    it "notes repos skipped on an API error" do
+      allow(client).to receive(:commits).and_raise(Octokit::NotFound.new)
+
+      described_class.new.perform(user.id)
+
+      expect(SyncLog.last.error_message).to eq("skipped: tuxnotfound/myapp")
+    end
+
+    it "clears recorded scopes on a dead token so the next sign-in replaces it" do
+      user.update!(github_token_scopes: "repo,user:email")
+      allow(client).to receive(:scopes).and_raise(Octokit::Unauthorized)
+
+      expect { described_class.new.perform(user.id) }.to raise_error(Octokit::Unauthorized)
+      expect(user.reload.github_token_scopes).to be_nil
     end
 
     it "does not create duplicate entries on re-sync" do
