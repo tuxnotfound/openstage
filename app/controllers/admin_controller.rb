@@ -32,6 +32,22 @@ class AdminController < ApplicationController
     @total_entries  = Entry.publicly_visible.count
     @pro_users      = User.active.where(pro: true).count
 
+    # Gate 1's north star, scored on people who are not me.
+    strangers         = cohort.where.not(id: current_user.id)
+    @strangers        = strangers.count
+    @returned         = Event.returned_user_ids(strangers).size
+    week_old          = strangers.where(created_at: ..7.days.ago)
+    @week_old         = week_old.count
+    @second_week      = Event.second_week_user_ids(week_old).size
+
+    @ref_visits = Event.named("ref_visit").since(@since).group(:detail).count.sort_by { |_ref, count| -count }
+
+    recap_events  = Event.since(@since).where.not(user_id: [ nil, current_user.id ])
+    @recap_funnel = %w[recap_opened recap_picked recap_copied recap_intent].map do |name|
+      [ name, recap_events.named(name).distinct.count(:user_id) ]
+    end
+    @recap_quiet = recap_events.named("recap_quiet").distinct.count(:user_id)
+
     # The earliest honest audience signal: a repo with more than one builder on
     # it means someone was recruited by a teammate, not by the founder.
     @shared_repos = Entry.where(source: :github)

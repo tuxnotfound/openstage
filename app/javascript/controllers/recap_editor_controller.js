@@ -5,7 +5,7 @@ import { Controller } from "@hotwired/stimulus"
 // the builder actually typed, and warns before a pick change rebuilds the text.
 export default class extends Controller {
   static targets = ["editor", "counter", "intent", "logText", "copyButton", "resetButton"]
-  static values = { limit: Number }
+  static values = { limit: Number, trackUrl: String }
 
   connect() {
     if (!this.hasEditorTarget) return
@@ -40,6 +40,7 @@ export default class extends Controller {
   }
 
   copy() {
+    this.report("recap_copied")
     navigator.clipboard.writeText(this.editorTarget.value)
       .then(() => this.flash("Copied"))
       .catch(() => this.flash("Press Cmd+C"))
@@ -61,6 +62,22 @@ export default class extends Controller {
     } else {
       input.checked = !input.checked
     }
+  }
+
+  // The compose links open a new tab, so the report must not block the click.
+  intent(event) {
+    this.report("recap_intent", event.currentTarget.dataset.network)
+  }
+
+  report(name, detail = "") {
+    if (!this.trackUrlValue) return
+    const token = document.querySelector('meta[name="csrf-token"]')?.content
+    fetch(this.trackUrlValue, {
+      method: "POST",
+      keepalive: true,
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": token },
+      body: JSON.stringify({ name, detail })
+    }).catch(() => {})
   }
 
   flash(message) {

@@ -20,9 +20,10 @@ Rails.application.routes.draw do
   get "/admin", to: "admin#show", as: :admin
   post "/admin/test_email", to: "admin#test_email", as: :admin_test_email
 
-  # Recap picker (owner-only until C1 generalises it)
+  # Recap picker, open to every signed-in builder
   get "/recap", to: "recaps#show", as: :recap
   post "/recap/posted", to: "recaps#log_post", as: :recap_log_post
+  post "/recap/track", to: "recaps#track", as: :recap_track
 
   # Analytics (Pro)
   get "/analytics", to: "analytics#index", as: :analytics

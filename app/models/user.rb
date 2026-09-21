@@ -12,6 +12,7 @@ class User < ApplicationRecord
   ].freeze
 
   has_many :entries, dependent: :destroy
+  has_many :events, dependent: :delete_all
   has_many :github_repos, dependent: :destroy
   has_many :sync_logs, dependent: :destroy
   has_many :profile_views, dependent: :destroy

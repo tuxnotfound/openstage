@@ -2,6 +2,7 @@ class ApplicationController < ActionController::Base
   helper_method :current_user, :user_signed_in?
 
   before_action :capture_first_touch_ref
+  before_action :track_seen
 
   private
 
@@ -12,6 +13,24 @@ class ApplicationController < ActionController::Base
     return if params[:ref].blank?
 
     session[:signup_ref] = User.normalize_ref(params[:ref])
+
+    # Once per session by construction, since the guard above returns after the
+    # first touch. Signed-in clicks are the builder checking their own links.
+    return if user_signed_in? || BotDetector.bot?(request.user_agent)
+
+    Event.track("ref_visit", detail: session[:signup_ref])
+  end
+
+  # One row per user per day, and one query per session per day: the session
+  # remembers the day so ordinary requests skip the insert entirely.
+  def track_seen
+    return unless user_signed_in?
+
+    today = Date.current.to_s
+    return if session[:seen_on] == today
+
+    Event.track("seen", user: current_user)
+    session[:seen_on] = today
   end
 
   # defined? rather than ||= so the nil results cache too; otherwise every

@@ -10,6 +10,20 @@ class RecapsController < ApplicationController
     @include_noise = params[:noise].present?
     @picks         = Array(params[:picks]).map(&:to_i)
     @draft         = build_draft
+
+    Event.track(@draft.quiet? ? "recap_quiet" : "recap_opened", user: current_user)
+    Event.track("recap_picked", user: current_user) if @picks.any? && !@draft.quiet?
+  end
+
+  # Copy and the compose buttons happen in the browser, so the page reports
+  # them. Only the two names a browser is allowed to claim are accepted.
+  def track
+    name = params[:name].to_s
+    return head(:unprocessable_entity) unless Event::CLIENT_NAMES.include?(name)
+
+    detail = Event::INTENT_DETAILS.include?(params[:detail].to_s) ? params[:detail].to_s : ""
+    Event.track(name, user: current_user, detail: detail)
+    head :no_content
   end
 
   # C3, early: a Posted entry is only ever created from a URL the user pastes,

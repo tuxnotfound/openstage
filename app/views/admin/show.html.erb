@@ -55,6 +55,60 @@
     </div>
   </section>
 
+  <!-- Returns: the Gate 1 north star -->
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Did they come back</h2>
+    <div class="rounded-xl border border-gray-200 divide-y divide-gray-100 text-sm">
+      <div class="flex items-center justify-between px-4 py-2.5" data-metric="returned" data-count="<%= @returned %>">
+        <span class="text-gray-700">Came back on a later day</span>
+        <span class="font-medium text-gray-900"><%= @returned %> of <%= @strangers %></span>
+      </div>
+      <div class="flex items-center justify-between px-4 py-2.5" data-metric="second-week" data-count="<%= @second_week %>">
+        <span class="text-gray-700">Came back in their second week</span>
+        <span class="font-medium text-gray-900"><%= @second_week %> of <%= @week_old %> old enough</span>
+      </div>
+    </div>
+    <p class="text-xs text-gray-400 mt-1.5">Signups in the window, not counting you. Counted from 2026-09-21; earlier visits were never recorded.</p>
+  </section>
+
+  <!-- Tagged link visits -->
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Visits from tagged links</h2>
+    <% if @ref_visits.any? %>
+      <div class="rounded-xl border border-gray-200 divide-y divide-gray-100">
+        <% @ref_visits.each do |ref, count| %>
+          <div class="flex items-center justify-between px-4 py-2.5" data-ref-visit="<%= ref %>" data-count="<%= count %>">
+            <span class="text-sm text-gray-700"><%= ref %></span>
+            <span class="text-sm font-medium text-gray-900"><%= count %></span>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-sm text-gray-400 rounded-xl border border-gray-200 px-4 py-3">No tagged visits yet.</p>
+    <% end %>
+    <p class="text-xs text-gray-400 mt-1.5">One per browser session, signed-out humans only. This is the top of the funnel that "signups by first touch" is the bottom of.</p>
+  </section>
+
+  <!-- Recap funnel -->
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Recap, builders other than you</h2>
+    <div class="rounded-xl border border-gray-200 divide-y divide-gray-100 text-sm">
+      <% labels = { "recap_opened" => "Opened the picker", "recap_picked" => "Ticked at least one commit",
+                    "recap_copied" => "Copied the post", "recap_intent" => "Opened a compose box" } %>
+      <% @recap_funnel.each do |name, builders| %>
+        <div class="flex items-center justify-between px-4 py-2.5" data-recap-step="<%= name %>" data-count="<%= builders %>">
+          <span class="text-gray-700"><%= labels[name] %></span>
+          <span class="font-medium text-gray-900"><%= builders %></span>
+        </div>
+      <% end %>
+      <div class="flex items-center justify-between px-4 py-2.5" data-recap-step="recap_quiet" data-count="<%= @recap_quiet %>">
+        <span class="text-gray-500">Saw the quiet-week state instead</span>
+        <span class="font-medium text-gray-500"><%= @recap_quiet %></span>
+      </div>
+    </div>
+    <p class="text-xs text-gray-400 mt-1.5">Distinct builders per step. A page that merely rendered is never counted.</p>
+  </section>
+
   <!-- Repos with more than one builder -->
   <section>
     <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Repos with more than one builder</h2>
