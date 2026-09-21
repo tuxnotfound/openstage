@@ -27,6 +27,11 @@ class DashboardController < ApplicationController
       manual:    current_user.entries.visible.where(source: :manual).count
     }
 
+    # Points at /recap only when the week has something to say. A quiet week
+    # gets no prompt, so the card never nags an empty page.
+    recap = RecapDraft.for_user(current_user)
+    @recap_prompt = recap unless recap.quiet?
+
     @sync_logs = current_user.sync_logs.order(ran_at: :desc).limit(5)
 
     # Analytics — free tier gets sparkline + unique visitors; Pro gets the full breakdown.

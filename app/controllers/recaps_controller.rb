@@ -38,16 +38,6 @@ class RecapsController < ApplicationController
   private
 
   def build_draft
-    entries = current_user.entries
-                          .publicly_visible
-                          .where(occurred_at: @days.days.ago..)
-                          .chronological
-
-    RecapDraft.new(
-      username:      current_user.username,
-      items:         RecapDraft.from_entries(entries),
-      days:          @days,
-      include_noise: @include_noise
-    )
+    RecapDraft.for_user(current_user, days: @days, include_noise: @include_noise)
   end
 end

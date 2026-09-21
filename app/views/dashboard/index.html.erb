@@ -43,6 +43,26 @@
 <!-- Analytics (free: 7-day sparkline + unique visitors; Pro: full breakdown) -->
 <%= render "dashboard/analytics" %>
 
+<!-- Recap prompt: only on weeks with something to say -->
+<% if @recap_prompt %>
+  <% commits = @recap_prompt.candidates.size %>
+  <% repos   = @recap_prompt.candidates_by_repo.keys.size %>
+  <div class="rounded-xl border border-gray-200 px-5 py-4 mb-6 flex flex-wrap items-center justify-between gap-3" data-recap-prompt>
+    <div>
+      <p class="text-sm font-semibold text-gray-900">
+        <% if commits.positive? %>
+          You shipped <%= pluralize(commits, "commit") %> <%= repos == 1 ? "in #{@recap_prompt.candidates_by_repo.keys.first}" : "across #{repos} repos" %> this week.
+        <% else %>
+          You logged <%= pluralize(@recap_prompt.highlights.size, "update") %> this week.
+        <% end %>
+      </p>
+      <p class="text-xs text-gray-500 mt-0.5">Turn it into a post. You pick the lines and write the words; nothing is posted for you.</p>
+    </div>
+    <%= link_to "Write this week's recap", recap_path,
+          class: "text-xs bg-gray-900 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors" %>
+  </div>
+<% end %>
+
 <!-- Upgrade CTA (free users only) -->
 <% unless current_user.pro? %>
   <div class="bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl px-6 py-5 mb-6 flex items-center justify-between">

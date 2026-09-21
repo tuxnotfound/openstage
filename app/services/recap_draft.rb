@@ -62,6 +62,17 @@ class RecapDraft
     end
   end
 
+  # The one way to build a draft from a user's own public entries, shared by
+  # the picker, the dashboard prompt and the landing page example.
+  def self.for_user(user, days: 7, include_noise: false)
+    entries = user.entries
+                  .publicly_visible
+                  .where(occurred_at: days.days.ago..)
+                  .chronological
+
+    new(username: user.username, items: from_entries(entries), days: days, include_noise: include_noise)
+  end
+
   attr_reader :username, :items, :period_end, :limit, :include_noise, :days
 
   def initialize(username:, items:, period_end: nil, limit: DEFAULT_LIMIT, include_noise: false, days: 7)

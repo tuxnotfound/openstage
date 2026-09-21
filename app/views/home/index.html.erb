@@ -122,6 +122,41 @@
   </ol>
 </section>
 
+<!-- Weekly recap: a real week and the real post it became -->
+<% if @recap_post %>
+  <% picked, rest = @recap_lines.partition { |c| @recap_post.body.include?(c.title) } %>
+  <% shown = (picked + rest).first(5) %>
+  <section class="px-4 py-10 border-t border-gray-100" aria-labelledby="recap" data-landing-recap>
+    <h2 id="recap" class="text-lg font-semibold text-gray-900 text-center">Your week, pre-filled. You pick what to share.</h2>
+    <p class="text-sm text-gray-500 text-center max-w-xl mx-auto mt-2 mb-6">
+      Openstage lists the week's commits. You tick the ones worth saying out loud, rewrite the text however you like, and post it yourself on X or Bluesky. It never writes, ranks or posts for you.
+    </p>
+    <div class="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
+      <div class="rounded-xl border border-gray-200 px-4 py-3">
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">The week's commits</p>
+        <ul class="space-y-1.5" aria-label="Example commits, with the shared ones ticked">
+          <% shown.each do |line| %>
+            <% on = picked.include?(line) %>
+            <li class="flex items-start gap-2 text-sm <%= on ? 'text-gray-900' : 'text-gray-400' %>">
+              <span aria-hidden="true" class="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] <%= on ? 'bg-gray-900 border-gray-900 text-white' : 'border-gray-300' %>"><%= "✓" if on %></span>
+              <span class="leading-snug"><%= line.title %></span>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+      <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">The post</p>
+        <p class="whitespace-pre-line text-sm text-gray-800 leading-relaxed"><%= @recap_post.body %></p>
+        <% if (post_url = safe_external_url(@recap_post.url)) %>
+          <%= link_to "See it where it was posted →", post_url, target: "_blank", rel: "noopener",
+                class: "inline-block text-xs text-gray-500 hover:text-gray-900 mt-3" %>
+        <% end %>
+      </div>
+    </div>
+    <p class="text-xs text-gray-400 text-center mt-4">A real week from <%= link_to "@#{@demo_user.username}", profile_path(@demo_user.username), class: "underline hover:text-gray-700" %>, not a mockup.</p>
+  </section>
+<% end %>
+
 <!-- Features -->
 <section class="px-4 py-10 border-t border-gray-100" aria-labelledby="features">
   <h2 id="features" class="text-lg font-semibold text-gray-900 mb-6 text-center">Everything on one page</h2>
