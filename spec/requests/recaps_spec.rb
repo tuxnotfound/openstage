@@ -9,22 +9,38 @@ RSpec.describe "Recaps", type: :request do
   end
 
   describe "GET /recap" do
-    context "when not the owner" do
-      it "404s when signed out" do
+    context "when signed out" do
+      it "sends the visitor home rather than rendering" do
         get "/recap"
-        expect(response).to have_http_status(:not_found)
+        expect(response).to redirect_to(root_path)
+      end
+    end
+
+    context "as any other signed-in builder" do
+      let(:builder) { create(:user, github_username: "someone_else", username: "someone") }
+
+      before { sign_in_as(builder) }
+
+      it "opens the picker over their own entries, not the owner's" do
+        commit "Owner only commit"
+        create(:entry, user: builder, entry_type: "shipped", source: "github", title: "Builder commit one",
+                       repo_name: "someone/app", external_id: "b1", occurred_at: 1.day.ago)
+        create(:entry, user: builder, entry_type: "shipped", source: "github", title: "Builder commit two",
+                       repo_name: "someone/app", external_id: "b2", occurred_at: 1.day.ago)
+        create(:entry, user: builder, entry_type: "shipped", source: "github", title: "Builder commit three",
+                       repo_name: "someone/app", external_id: "b3", occurred_at: 1.day.ago)
+
+        get "/recap"
+
+        expect(response).to have_http_status(:success)
+        expect(response.body).to include("Builder commit one")
+        expect(response.body).not_to include("Owner only commit")
       end
 
-      it "404s for another signed-in user" do
-        sign_in_as(create(:user, github_username: "someone_else"))
-        get "/recap"
-        expect(response).to have_http_status(:not_found)
-      end
-
-      it "does not advertise the page in the nav" do
-        sign_in_as(create(:user, github_username: "someone_else", username: "someone"))
+      it "advertises the page in the nav but not the admin page" do
         get "/dashboard"
-        expect(response.body).not_to include(">Recap<")
+        expect(response.body).to include('href="/recap"')
+        expect(response.body).not_to include('href="/admin"')
       end
     end
 
@@ -68,6 +84,17 @@ RSpec.describe "Recaps", type: :request do
           get "/recap", params: { noise: "1" }
 
           expect(response.body).to include("Merge branch &#39;main&#39; into feature")
+        end
+
+        it "offers the whole post as editable text, opening line included" do
+          get "/recap", params: { picks: [ 1 ] }
+
+          expect(response.body).to include('data-controller="recap-editor"')
+          editor = response.body[%r{<textarea.*?</textarea>}m]
+          expect(editor).to include('data-recap-editor-target="editor"')
+          expect(editor).to include("this week")
+          # The picker form is a GET; a named textarea would put the post in the URL.
+          expect(editor).not_to include("name=")
         end
 
         it "composes only what was picked" do
@@ -117,11 +144,17 @@ RSpec.describe "Recaps", type: :request do
       expect(flash[:alert]).to match(/Paste the URL/)
     end
 
-    it "404s for a non-owner" do
-      sign_in_as(create(:user, github_username: "someone_else"))
-      post "/recap/posted", params: { url: "https://x.com/a/1" }
+    it "lets any signed-in builder log their own post, with the text they edited" do
+      builder = create(:user, github_username: "someone_else", username: "someone")
+      sign_in_as(builder)
 
-      expect(response).to have_http_status(:not_found)
+      expect {
+        post "/recap/posted", params: { url: "https://x.com/a/1", text: "My own words entirely\nsecond line" }
+      }.to change { builder.entries.where(entry_type: "posted").count }.by(1)
+
+      entry = builder.entries.find_by(entry_type: "posted")
+      expect(entry.title).to eq("My own words entirely")
+      expect(entry.body).to include("second line")
     end
   end
 end

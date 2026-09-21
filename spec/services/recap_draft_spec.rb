@@ -19,7 +19,11 @@ RSpec.describe RecapDraft do
     ]
   end
 
-  subject(:draft) { described_class.new(username: "tuxnotfound", items: busy_items) }
+  # The opening line rotates by calendar week, so the week is pinned; without
+  # this the wording assertions below pass or fail depending on the date.
+  let(:pinned_week) { Date.new(2026, 9, 10) }
+
+  subject(:draft) { described_class.new(username: "tuxnotfound", items: busy_items, period_end: pinned_week) }
 
   describe "quiet weeks" do
     it "refuses to build a post below the minimum" do
@@ -113,7 +117,7 @@ RSpec.describe RecapDraft do
     end
 
     it "counts what the toggle shows" do
-      shown = described_class.new(username: "me", items: busy_items, include_noise: true)
+      shown = described_class.new(username: "me", items: busy_items, include_noise: true, period_end: pinned_week)
 
       expect(shown.skeleton).to start_with("This week's build log: 5 commits")
     end
@@ -193,7 +197,7 @@ RSpec.describe RecapDraft do
     end
 
     it "respects a custom limit" do
-      expect(described_class.new(username: "me", items: busy_items, limit: 3000).remaining).to eq(3000 - draft.skeleton.length)
+      expect(described_class.new(username: "me", items: busy_items, limit: 3000, period_end: pinned_week).remaining).to eq(3000 - draft.skeleton.length)
     end
   end
 

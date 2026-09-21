@@ -1,8 +1,7 @@
-# Owner-only for now. C1 generalises this page to every user on the dashboard;
-# building it owner-first is what unblocks the founder's own weekly dogfood,
-# whose data only exists in production.
+# Open to every signed-in builder. It was owner-only until 2026-09-21; Gate 0
+# asks for a non-founder at the keyboard, which an owner gate made impossible.
 class RecapsController < ApplicationController
-  before_action :require_owner
+  before_action :require_authentication
 
   WINDOWS = [ 7, 30, 90 ].freeze
 
@@ -50,9 +49,5 @@ class RecapsController < ApplicationController
       days:          @days,
       include_noise: @include_noise
     )
-  end
-
-  def require_owner
-    head :not_found unless current_user&.owner?
   end
 end

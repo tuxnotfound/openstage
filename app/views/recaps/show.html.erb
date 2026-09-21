@@ -4,13 +4,15 @@
 <% remaining = @draft.remaining(@picks) %>
 <% over      = remaining.negative? %>
 
-<div class="max-w-2xl mx-auto px-4 py-8">
+<div class="max-w-2xl mx-auto px-4 py-8"
+     data-controller="recap-editor"
+     data-recap-editor-limit-value="<%= @draft.limit %>">
 
   <div class="flex items-baseline justify-between gap-4 mb-1">
     <h1 class="text-2xl font-semibold text-gray-900">Your week</h1>
     <span class="text-xs text-gray-400"><%= @days.days.ago.to_date.strftime("%b %-d") %> &ndash; <%= Date.current.strftime("%b %-d") %></span>
   </div>
-  <p class="text-sm text-gray-500 mb-6">Tick the commits worth saying out loud. Nothing here is chosen for you.</p>
+  <p class="text-sm text-gray-500 mb-6">Tick the commits worth saying out loud, then rewrite the text however you like. Nothing here is chosen for you.</p>
 
   <% if flash[:notice] %>
     <div class="mb-4 rounded-lg bg-green-50 border border-green-200 px-4 py-2.5 text-sm text-green-800"><%= flash[:notice] %></div>
@@ -26,7 +28,7 @@
       <% RecapsController::WINDOWS.each do |window| %>
         <label class="cursor-pointer">
           <%= radio_button_tag :days, window, @days == window, class: "sr-only peer",
-                data: { action: "change->autosubmit#submit" } %>
+                data: { action: "change->recap-editor#guard change->autosubmit#submit" } %>
           <span class="px-3 py-1.5 text-sm rounded-lg border border-gray-200 text-gray-600 peer-checked:bg-gray-900 peer-checked:text-white peer-checked:border-gray-900">
             <%= window %> days
           </span>
@@ -67,7 +69,7 @@
                     <%= check_box_tag "picks[]", candidate.index, @picks.include?(candidate.index),
                           id: "pick_#{candidate.index}",
                           class: "mt-0.5 rounded border-gray-300 text-gray-900 focus:ring-gray-900",
-                          data: { action: "change->autosubmit#submit" } %>
+                          data: { action: "change->recap-editor#guard change->autosubmit#submit" } %>
                     <span class="text-sm text-gray-700 leading-snug"><%= candidate.title %></span>
                   </label>
                 <% end %>
@@ -80,36 +82,44 @@
           <label class="flex items-center gap-2 mt-4 text-sm text-gray-500 cursor-pointer">
             <%= check_box_tag :noise, "1", @include_noise,
                   class: "rounded border-gray-300 text-gray-900 focus:ring-gray-900",
-                  data: { action: "change->autosubmit#submit" } %>
+                  data: { action: "change->recap-editor#guard change->autosubmit#submit" } %>
             show <%= pluralize(@draft.noise.size, "merge / dependency commit") %>
           </label>
         <% end %>
       </section>
 
-      <!-- Preview -->
-      <section data-controller="clipboard">
+      <!-- Preview: a starting point. Every character is the builder's to change. -->
+      <section>
         <div class="flex items-baseline justify-between mb-2">
-          <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400">Preview</h2>
-          <span class="text-xs font-medium <%= over ? 'text-red-600' : 'text-gray-400' %>">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400">Your post</h2>
+          <span data-recap-editor-target="counter" class="text-xs font-medium <%= over ? 'text-red-600' : 'text-gray-400' %>">
             <%= text.length %> / <%= @draft.limit %><%= " — over limit" if over %>
           </span>
         </div>
 
-        <div class="rounded-xl border <%= over ? 'border-red-300' : 'border-gray-200' %> bg-white px-4 py-3">
-          <pre data-clipboard-target="source" class="whitespace-pre-wrap font-sans text-sm text-gray-900"><%= text %></pre>
-        </div>
+        <%# No name attribute on purpose: the picker form is a GET and must not carry the text. %>
+        <textarea data-recap-editor-target="editor"
+                  data-action="input->recap-editor#update"
+                  rows="<%= [ text.lines.size + 2, 6 ].max %>"
+                  aria-label="Your post, fully editable"
+                  class="w-full rounded-xl border <%= over ? 'border-red-300' : 'border-gray-200' %> bg-white px-4 py-3 text-sm text-gray-900 leading-relaxed focus:outline-none focus:ring-2 focus:ring-gray-900"><%= text %></textarea>
+        <p class="text-xs text-gray-400 mt-1">Edit anything, including the opening line. Changing your picks rebuilds the text from scratch.</p>
 
         <div class="flex flex-wrap items-center gap-2 mt-3">
-          <button type="button" data-action="clipboard#copy" data-clipboard-target="button"
+          <button type="button" data-action="recap-editor#copy" data-recap-editor-target="copyButton"
                   class="px-3 py-1.5 text-sm rounded-lg bg-gray-900 text-white hover:bg-gray-800">Copy</button>
           <%= link_to "Post on X", "https://x.com/intent/post?text=#{CGI.escape(text)}",
                 target: "_blank", rel: "noopener",
+                data: { recap_editor_target: "intent", base: "https://x.com/intent/post?text=" },
                 class: "px-3 py-1.5 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50" %>
           <%= link_to "Post on Bluesky", "https://bsky.app/intent/compose?text=#{CGI.escape(text)}",
                 target: "_blank", rel: "noopener",
+                data: { recap_editor_target: "intent", base: "https://bsky.app/intent/compose?text=" },
                 class: "px-3 py-1.5 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50" %>
+          <button type="button" data-action="recap-editor#reset" data-recap-editor-target="resetButton" hidden
+                  class="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-900">Reset to generated</button>
         </div>
-        <p class="text-xs text-gray-400 mt-2">Opens their compose box with the text in it. You review and send.</p>
+        <p class="text-xs text-gray-400 mt-2">Opens their compose box with your text in it. You review and send.</p>
       </section>
 
     <% end %>
@@ -131,7 +141,7 @@
     <section class="mt-8 pt-6 border-t border-gray-100">
       <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Posted it?</h2>
       <%= form_with url: recap_log_post_path, method: :post, class: "flex flex-wrap items-center gap-2" do |f| %>
-        <%= f.hidden_field :text, value: text %>
+        <%= f.hidden_field :text, value: text, data: { recap_editor_target: "logText" } %>
         <%= f.url_field :url, placeholder: "Paste the URL of your post",
               class: "flex-1 min-w-[16rem] rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" %>
         <%= f.submit "Log it", class: "px-3 py-2 text-sm rounded-lg bg-gray-900 text-white hover:bg-gray-800 cursor-pointer" %>
