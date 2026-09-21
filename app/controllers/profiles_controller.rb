@@ -13,10 +13,13 @@ class ProfilesController < ApplicationController
     @filter     = params[:filter].presence_in(%w[shipped posted milestone note link]) || "all"
     @repo_filter = params[:repo].presence
 
-    base = @user.entries.publicly_visible.chronological
+    # The list drops merge and dependency-bump commits. Counts, streak and the
+    # heatmap still include them: that work happened, it is just not reading.
+    base = @user.entries.publicly_visible.without_tooling_noise.chronological
     base = base.where(entry_type: @filter) unless @filter == "all"
     base = base.where(repo_name: @repo_filter) if @repo_filter.present?
     @entries = base.page(params[:page]).per(25)
+    @timeline = TimelineSessions.group(@entries)
 
     @pinned_entries  = @user.entries.publicly_visible.pinned_entries.chronological
     @available_repos = @user.entries.publicly_visible.where.not(repo_name: nil).distinct.order(:repo_name).pluck(:repo_name)

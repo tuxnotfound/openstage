@@ -45,6 +45,19 @@ class Entry < ApplicationRecord
 
   # Case-insensitive match across the fields a builder would actually remember:
   # what it said, and which project it was.
+  # RecapDraft::NOISE in Postgres syntax, so the public timeline can drop what
+  # bots wrote without breaking pagination. A spec holds the two in agreement.
+  TOOLING_NOISE_SQL = '^(merge (branch|pull request|remote|tag)\\M' \
+                      '|(build|chore|fix|ci)\\(deps(-dev)?\\):' \
+                      '|bump \\S+ from \\S+ to \\S+' \
+                      '|update dependenc(y|ies)\\M' \
+                      '|\\[dependabot\\])'.freeze
+
+  # Only synced commits are ever filtered. Anything a person typed stays.
+  scope :without_tooling_noise, -> {
+    where.not("entries.source = ? AND entries.title ~* ?", sources[:github], TOOLING_NOISE_SQL)
+  }
+
   scope :search, ->(term) {
     pattern = "%#{sanitize_sql_like(term.to_s.strip)}%"
     where("title ILIKE :q OR body ILIKE :q OR repo_name ILIKE :q", q: pattern)

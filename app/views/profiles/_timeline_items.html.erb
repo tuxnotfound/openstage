@@ -1,0 +1,7 @@
+<% items.each do |item| %>
+  <% if item.is_a?(TimelineSessions::Session) %>
+    <%= render "profiles/session_card", work: item %>
+  <% else %>
+    <%= render "profiles/entry_card", entry: item %>
+  <% end %>
+<% end %>

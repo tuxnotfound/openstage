@@ -174,9 +174,7 @@
       <%= render "profiles/empty_state" %>
     <% else %>
       <div id="timeline-entries" class="space-y-1">
-        <% @entries.each do |entry| %>
-          <%= render "profiles/entry_card", entry: entry %>
-        <% end %>
+        <%= render "profiles/timeline_items", items: @timeline %>
       </div>
       <% if @entries.next_page %>
         <div id="load-more" class="mt-6 text-center">
