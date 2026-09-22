@@ -27,6 +27,11 @@ class DashboardController < ApplicationController
       manual:    current_user.entries.visible.where(source: :manual).count
     }
 
+    # Onboarding step 3. Shown until a badge has been rendered from anywhere,
+    # which is the only honest evidence that it was actually added somewhere.
+    @badge_nudge = current_user.badge_impressions.none?
+    @badge_markdown = "[![openstage](#{profile_badge_url(current_user.username)})](#{profile_url(current_user.username)}?ref=badge)"
+
     # Points at /recap only when the week has something to say. A quiet week
     # gets no prompt, so the card never nags an empty page.
     recap = RecapDraft.for_user(current_user)

@@ -16,9 +16,9 @@ RSpec.describe "Profiles", type: :request do
         expect(response.body).not_to include("/badge/testuser.svg")
       end
 
-      it "shows Powered by Openstage footer for free profiles" do
+      it "shows the claim link in the footer of free profiles" do
         get "/testuser"
-        expect(response.body).to include("Powered by Openstage")
+        expect(response.body).to include("Get your own proof-of-work page")
       end
 
       it "never renders a javascript: website URL into the page" do
@@ -59,7 +59,7 @@ RSpec.describe "Profiles", type: :request do
 
       it "does not show Powered by Openstage footer" do
         get "/paidbuilder"
-        expect(response.body).not_to include("Powered by Openstage")
+        expect(response.body).not_to include("data-claim-cta")
       end
     end
 

@@ -23,7 +23,9 @@ class UsernamesController < ApplicationController
       session.delete(:pending_user)
       session[:user_id] = user.id
       GithubSyncJob.perform_later(user.id)
-      redirect_to dashboard_path, notice: "Welcome to Openstage, #{user.display_name}!"
+      # The page is the product. A new builder lands on their own profile and
+      # watches it fill, not on a dashboard of controls.
+      redirect_to profile_path(user.username), notice: "Welcome to Openstage, #{user.display_name}! This is your page."
     else
       @proposed_username = params[:username]
       flash.now[:alert] = user.errors.full_messages.to_sentence

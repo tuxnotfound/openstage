@@ -39,9 +39,32 @@ RSpec.describe "Usernames", type: :request do
         get "/auth/github/callback"
       end
 
-      it "creates a user and redirects to dashboard" do
+      it "creates a user and lands them on their own page, which says it is syncing" do
         expect { post claim_username_path, params: { username: "mynewhandle" } }.to change(User, :count).by(1)
-        expect(response).to redirect_to(dashboard_path)
+        expect(response).to redirect_to("/mynewhandle")
+
+        follow_redirect!
+        expect(response.body).to include("data-syncing")
+        expect(response.body).to include('http-equiv="refresh"')
+      end
+
+      it "stops saying syncing once the first sync has logged, and shows the honest thin state" do
+        post claim_username_path, params: { username: "mynewhandle" }
+        User.find_by(username: "mynewhandle").sync_logs.create!(source: "github", status: "success", ran_at: Time.current)
+
+        get "/mynewhandle"
+        expect(response.body).not_to include("data-syncing")
+        expect(response.body).to include("Nothing public in the last 90 days")
+        expect(response.body).to include("Log a milestone")
+      end
+
+      it "never shows the syncing state to a visitor" do
+        post claim_username_path, params: { username: "mynewhandle" }
+        reset!
+
+        get "/mynewhandle"
+        expect(response.body).not_to include("data-syncing")
+        expect(response.body).to include("no public activity")
       end
     end
 

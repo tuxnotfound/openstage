@@ -10,6 +10,11 @@ class ProfilesController < ApplicationController
 
     track_profile_view
 
+    # Only the owner, only until the first sync has written its log. The page
+    # polls itself (see the view) so the history appears without a reload.
+    @syncing = current_user == @user && @user.sync_logs.where(source: :github).none? &&
+               @user.github_access_token.present?
+
     @filter     = params[:filter].presence_in(%w[shipped posted milestone note link]) || "all"
     @repo_filter = params[:repo].presence
 

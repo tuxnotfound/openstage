@@ -14,12 +14,12 @@ RSpec.describe "Dashboard", type: :request do
 
       before { sign_in_as(user) }
 
-      it "does not show README badge snippet" do
+      it "shows the badge as an onboarding step, not the Settings snippet block" do
         get "/dashboard"
 
         expect(response).to have_http_status(:success)
         expect(response.body).not_to include("README badge")
-        expect(response.body).not_to include("/badge/builder")
+        expect(response.body).to include("data-badge-nudge")
       end
     end
   end

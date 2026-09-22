@@ -43,6 +43,19 @@
 <!-- Analytics (free: 7-day sparkline + unique visitors; Pro: full breakdown) -->
 <%= render "dashboard/analytics" %>
 
+<!-- Badge: onboarding step, gone once a badge has rendered anywhere -->
+<% if @badge_nudge %>
+  <div class="rounded-xl border border-gray-200 px-5 py-4 mb-6" data-badge-nudge data-controller="clipboard">
+    <p class="text-sm font-semibold text-gray-900">Put your page in a README.</p>
+    <p class="text-xs text-gray-500 mt-0.5">A live badge with your streak and commit count, linking here. Paste it into any repo you own.</p>
+    <div class="flex items-center gap-2 mt-3">
+      <code data-clipboard-target="source" class="flex-1 min-w-0 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 truncate"><%= @badge_markdown %></code>
+      <button type="button" data-action="clipboard#copy" data-clipboard-target="button"
+              class="text-xs bg-gray-900 text-white px-3 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors shrink-0">Copy</button>
+    </div>
+  </div>
+<% end %>
+
 <!-- Recap prompt: only on weeks with something to say -->
 <% if @recap_prompt %>
   <% commits = @recap_prompt.candidates.size %>

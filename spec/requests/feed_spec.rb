@@ -25,7 +25,7 @@ RSpec.describe "Feed", type: :request do
       create(:user, username: "freebie")
 
       get "/freebie"
-      expect(response.body.index("Powered by Openstage")).to be > response.body.index("Profile header")
+      expect(response.body.index("data-claim-cta")).to be > response.body.index("Profile header")
     end
 
     it "carries a ref tag so footer-driven signups are attributable" do
@@ -39,7 +39,7 @@ RSpec.describe "Feed", type: :request do
       create(:user, username: "paid", pro: true)
 
       get "/paid"
-      expect(response.body).not_to include("Powered by Openstage")
+      expect(response.body).not_to include("data-claim-cta")
       expect(response.body).to include("Explore other builders")
     end
   end

@@ -90,3 +90,35 @@ RSpec.describe "Public timeline de-noising", type: :request do
     end
   end
 end
+
+RSpec.describe "Distribution surfaces", type: :request do
+  let!(:user) { create(:user, username: "builder") }
+
+  it "gives a visitor to a free profile their next action, tagged" do
+    get "/builder"
+    expect(response.body).to include("data-claim-cta")
+    expect(response.body).to include("?ref=footer")
+  end
+
+  it "does not show the claim link to the owner or on Pro pages" do
+    sign_in_as(user)
+    get "/builder"
+    expect(response.body).not_to include("data-claim-cta")
+
+    reset!
+    user.update!(pro: true)
+    get "/builder"
+    expect(response.body).not_to include("data-claim-cta")
+  end
+
+  it "nudges the badge on the dashboard until one has rendered somewhere" do
+    sign_in_as(user)
+    get "/dashboard"
+    expect(response.body).to include("data-badge-nudge")
+    expect(response.body).to include("/builder?ref=badge")
+
+    user.badge_impressions.create!(kind: "badge", viewed_at: Time.current)
+    get "/dashboard"
+    expect(response.body).not_to include("data-badge-nudge")
+  end
+end
