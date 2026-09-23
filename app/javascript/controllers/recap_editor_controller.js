@@ -30,8 +30,13 @@ export default class extends Controller {
     this.intentTargets.forEach((link) => {
       link.href = link.dataset.base + encodeURIComponent(text)
     })
-    if (this.hasLogTextTarget) this.logTextTarget.value = text
+    // Follows the editor until the log text is edited by hand, then stops.
+    if (this.hasLogTextTarget && !this.logTextTarget.dataset.touched) this.logTextTarget.value = text
     if (this.hasResetButtonTarget) this.resetButtonTarget.hidden = !this.dirty
+  }
+
+  touchLog() {
+    this.logTextTarget.dataset.touched = "1"
   }
 
   reset() {

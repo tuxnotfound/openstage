@@ -197,3 +197,20 @@ RSpec.describe "Recaps", type: :request do
     end
   end
 end
+
+RSpec.describe "Recap log form", type: :request do
+  it "shows the text that will be logged instead of hiding it" do
+    owner = create(:user, github_username: "tuxnotfound", username: "tuxnotfound")
+    sign_in_as(owner)
+    3.times do |i|
+      create(:entry, user: owner, entry_type: "shipped", source: "github", title: "C#{i}",
+                     repo_name: "tuxnotfound/openstage", external_id: "s#{i}", occurred_at: 1.day.ago)
+    end
+
+    get "/recap"
+    form = response.body[/<h2[^>]*>Posted it\?<\/h2>.*?<\/form>/m]
+    expect(form).to include('<textarea')
+    expect(form).to include('name="text"')
+    expect(form).not_to include('type="hidden" name="text"')
+  end
+end
