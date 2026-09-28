@@ -1,12 +1,14 @@
 <% content_for :title, "Pricing — Openstage" %>
-<% content_for :meta_description, "Openstage is free forever for your public build-in-public timeline. Openstage Pro is $7/month or $49 one-time and adds analytics, private entries, pinned entries, and a Pro badge." %>
+<% content_for :meta_description, "Openstage is free forever: your proof-of-work page, the weekly recap picker, and a subscribe box on your page. Pro is $49 once, or $7 a month, and adds your subscriber list, analytics, private entries and pins." %>
 
 <%
   billing_faqs = [
     { q: "Is there really a free plan?",
-      a: "Yes. Your public timeline, automatic GitHub sync, profile page, social preview card, and embeddable badge are free forever." },
-    { q: "What's the difference between Monthly and Lifetime?",
-      a: "Monthly is $7 per month. Lifetime is a single $49 payment that unlocks Openstage Pro permanently, with no recurring charge." },
+      a: "Yes. Your public page, automatic GitHub sync, the weekly recap picker, the subscribe box on your page, the social preview card and the badge are free forever. Nothing that helps your page spread is behind the paywall." },
+    { q: "What does Pro actually add?",
+      a: "Your subscriber list: every address that confirmed on your page, with dates, yours to keep. Plus profile analytics, private entries, up to three pinned entries, and no Openstage link in your footer." },
+    { q: "What's the difference between Lifetime and Monthly?",
+      a: "Lifetime is a single $49 payment that unlocks Pro permanently. Monthly is $7 per month and can be cancelled any time. Most builders take Lifetime; it pays for itself against Monthly in seven months." },
     { q: "Can I cancel anytime?",
       a: "Yes. You can manage or cancel a monthly subscription from your Settings at any time, and Pro access continues until the end of the billing period." },
     { q: "How do payments work?",
@@ -28,8 +30,8 @@
 
 <div class="max-w-3xl mx-auto px-4 py-10">
   <header class="text-center">
-    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Simple pricing</h1>
-    <p class="text-lg text-gray-500 mt-3">Free to start. Upgrade when you want more.</p>
+    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Free forever. Pro is $49, once.</h1>
+    <p class="text-lg text-gray-500 mt-3">The page, the sync, the weekly recap and the subscribe box are free. Pro is for keeping the audience you build.</p>
   </header>
 
   <div class="grid sm:grid-cols-2 gap-5 mt-10">
@@ -41,11 +43,11 @@
         <span class="text-sm text-gray-400">forever</span>
       </div>
       <ul class="mt-5 space-y-2 text-sm text-gray-600 flex-1">
-        <li class="flex gap-2"><span class="text-green-500">✓</span> Public build-in-public timeline</li>
-        <li class="flex gap-2"><span class="text-green-500">✓</span> Automatic GitHub commit sync</li>
-        <li class="flex gap-2"><span class="text-green-500">✓</span> Milestones &amp; notes</li>
-        <li class="flex gap-2"><span class="text-green-500">✓</span> Activity heatmap &amp; streak</li>
-        <li class="flex gap-2"><span class="text-green-500">✓</span> Social preview card &amp; embeddable badge</li>
+        <li class="flex gap-2"><span class="text-green-500">✓</span> Your proof-of-work page, synced from GitHub</li>
+        <li class="flex gap-2"><span class="text-green-500">✓</span> Weekly recap picker: your commits pre-filled, you pick the lines</li>
+        <li class="flex gap-2"><span class="text-green-500">✓</span> A subscribe box on your page, and how many confirmed</li>
+        <li class="flex gap-2"><span class="text-green-500">✓</span> Milestones, notes, heatmap, streak</li>
+        <li class="flex gap-2"><span class="text-green-500">✓</span> Social preview card, README badge, RSS</li>
       </ul>
       <% if user_signed_in? %>
         <%= link_to "Go to dashboard", dashboard_path, class: "mt-6 text-center border border-gray-200 text-gray-700 px-4 py-2.5 rounded-lg text-sm font-medium hover:border-gray-300" %>
@@ -59,17 +61,17 @@
       <span class="absolute -top-3 left-6 bg-amber-400 text-gray-900 text-xs font-semibold px-2.5 py-0.5 rounded-full">Pro</span>
       <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Pro</h2>
       <div class="mt-2 flex items-baseline gap-1">
-        <span class="text-3xl font-bold text-gray-900">$7</span>
-        <span class="text-sm text-gray-400">/month</span>
-        <span class="text-sm text-gray-400 ml-2">or $49 once</span>
+        <span class="text-3xl font-bold text-gray-900">$49</span>
+        <span class="text-sm text-gray-400">once, forever</span>
+        <span class="text-sm text-gray-400 ml-2">or $7/month</span>
       </div>
       <ul class="mt-5 space-y-2 text-sm text-gray-600 flex-1">
-        <li class="flex gap-2"><span class="text-green-500">✓</span> <strong class="font-medium text-gray-900">Everything in Free</strong></li>
-        <li class="flex gap-2"><span class="text-green-500">✓</span> Profile analytics (views &amp; referrers)</li>
+        <li class="flex gap-2"><span class="text-green-500">✓</span> <span><strong class="font-medium text-gray-900">Your subscriber list.</strong> Every confirmed address, with dates. Yours to keep.</span></li>
+        <li class="flex gap-2"><span class="text-green-500">✓</span> Profile analytics: views, referrers, countries</li>
         <li class="flex gap-2"><span class="text-green-500">✓</span> Private entries</li>
         <li class="flex gap-2"><span class="text-green-500">✓</span> Pin up to 3 entries</li>
-        <li class="flex gap-2"><span class="text-green-500">✓</span> Pro badge on your profile</li>
-        <li class="flex gap-2"><span class="text-green-500">✓</span> Remove the Openstage badge</li>
+        <li class="flex gap-2"><span class="text-green-500">✓</span> No Openstage link in your footer</li>
+        <li class="flex gap-2"><span class="text-green-500">✓</span> Everything in Free</li>
       </ul>
 
       <div class="mt-6 space-y-2">
@@ -79,8 +81,8 @@
             <%= link_to "Manage billing", billing_portal_path, data: { turbo: false }, class: "block text-center text-sm text-gray-500 hover:text-gray-900" %>
           <% end %>
         <% elsif user_signed_in? %>
-          <%= button_to "Go Pro — $7/mo", checkout_path(plan: "monthly"), method: :post, form: { data: { turbo: false } }, class: "bg-gray-900 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer w-full" %>
-          <%= button_to "Lifetime — $49", checkout_path(plan: "lifetime"), method: :post, form: { data: { turbo: false } }, class: "bg-amber-400 text-gray-900 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-amber-300 border-0 cursor-pointer w-full" %>
+          <%= button_to "Lifetime — $49 once", checkout_path(plan: "lifetime"), method: :post, form: { data: { turbo: false } }, class: "bg-gray-900 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer w-full" %>
+          <%= button_to "Monthly — $7/mo", checkout_path(plan: "monthly"), method: :post, form: { data: { turbo: false } }, class: "bg-white text-gray-700 border border-gray-200 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 cursor-pointer w-full" %>
         <% else %>
           <%= button_to "Sign in to go Pro", "/auth/github", method: :post, data: { turbo: false }, class: "bg-gray-900 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer w-full" %>
           <p class="text-center text-xs text-gray-400">Sign in free first, then upgrade anytime.</p>

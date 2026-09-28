@@ -27,6 +27,10 @@ class DashboardController < ApplicationController
       manual:    current_user.entries.visible.where(source: :manual).count
     }
 
+    # The subscriber list is the builder's. Free sees how many; Pro sees who.
+    @subscribers_count = current_user.subscriptions.confirmed.count
+    @subscribers = current_user.pro? ? current_user.subscriptions.confirmed.order(confirmed_at: :desc) : nil
+
     # Onboarding step 3. Shown until a badge has been rendered from anywhere,
     # which is the only honest evidence that it was actually added somewhere.
     @badge_nudge = current_user.badge_impressions.none?

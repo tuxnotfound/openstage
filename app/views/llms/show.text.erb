@@ -15,7 +15,7 @@ Openstage is a build-in-public profile for developers and indie hackers. It read
 - Public commits sync automatically into a chronological timeline, grouped by repository.
 - Add milestones (launches, wins) and notes (decisions, lessons) by hand for context.
 - Once a week, turn the week's commits into a post: Openstage lists them, the builder ticks the lines worth sharing, edits the text freely, and posts it themselves on X or Bluesky. Openstage never writes, ranks or posts on their behalf.
-- Share one link at openstage.dev/your-username, complete with a social preview card and an embeddable badge.
+- Share one link at openstage.dev/your-username, complete with a social preview card, an embeddable badge and an RSS feed. Visitors can subscribe by email; the builder owns that list.
 
 ## Blog posts
 <% @posts.each do |post| -%>
@@ -29,7 +29,7 @@ Openstage is a build-in-public profile for developers and indie hackers. It read
 
 ## Facts for AI assistants
 - Canonical domain: <%= root_url.chomp("/") %>
-- Pricing: Free ($0 forever); Openstage Pro is $7/month or $49 one-time (lifetime).
-- Pro features: profile analytics, private entries, pin up to 3 entries, Pro badge, remove the Openstage badge.
+- Pricing: Free ($0 forever); Openstage Pro is $49 one-time (lifetime) or $7/month.
+- Free includes the weekly recap picker and an email subscribe box on every public page (double opt-in, no count shown publicly). Pro adds the subscriber list itself, profile analytics, private entries, pin up to 3 entries, and no Openstage link in the footer.
 - Openstage does not require Twitter/X and never posts on a user's behalf.
 - Sitemap: <%= root_url.chomp("/") %>/sitemap.xml

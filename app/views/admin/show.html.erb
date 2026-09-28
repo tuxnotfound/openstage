@@ -10,12 +10,13 @@
   </div>
 
   <!-- Gate numbers -->
-  <section class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+  <section class="grid grid-cols-2 sm:grid-cols-5 gap-3">
     <% [
          [ "Signups", @cohort, "in window" ],
          [ "Activated", @activated, "#{@cohort.zero? ? 0 : (100.0 * @activated / @cohort).round}% of signups" ],
          [ "Recaps posted", @posted_recaps, "by #{pluralize(@posted_by_user, 'builder')}" ],
-         [ "With email", @with_email, "of #{@cohort} signups" ]
+         [ "With email", @with_email, "of #{@cohort} signups" ],
+         [ "Subscribes", @subscribes, "confirmed, any page" ]
        ].each do |label, value, sub| %>
       <div class="rounded-xl border border-gray-200 px-4 py-3">
         <p class="text-xs uppercase tracking-wide text-gray-400"><%= label %></p>

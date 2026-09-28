@@ -40,6 +40,8 @@ class AdminController < ApplicationController
     @week_old         = week_old.count
     @second_week      = Event.second_week_user_ids(week_old).size
 
+    @subscribes = Subscription.confirmed.where(confirmed_at: @since..).count
+
     @ref_visits = Event.named("ref_visit").since(@since).group(:detail).count.sort_by { |_ref, count| -count }
 
     recap_events  = Event.since(@since).where.not(user_id: [ nil, current_user.id ])

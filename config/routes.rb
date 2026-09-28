@@ -44,6 +44,12 @@ Rails.application.routes.draw do
   # Stripe webhook
   post "/webhooks/stripe", to: "webhooks#stripe", as: :stripe_webhook
 
+  # Email subscribe on public profiles (C11). Token routes sit above the
+  # profile catch-all; "subscriptions" is a reserved username.
+  post "/:username/subscribe", to: "subscriptions#create", as: :profile_subscribe, constraints: { username: /[a-zA-Z0-9_-]+/ }
+  get "/subscriptions/:token/confirm", to: "subscriptions#confirm", as: :confirm_subscription
+  match "/subscriptions/:token/unsubscribe", to: "subscriptions#unsubscribe", as: :unsubscribe_subscription, via: [ :get, :post ]
+
   # Global feed
   get "/feed", to: "feed#index", as: :feed
 

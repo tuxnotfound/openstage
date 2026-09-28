@@ -2,6 +2,8 @@ class ProfilesController < ApplicationController
   def show
     @user = User.active.find_by(username: params[:username])
     unless @user
+      return head(:not_found) unless request.format.html?
+
       @claimed_username = params[:username]
       session[:claimed_username] = @claimed_username
       render :claim
@@ -49,6 +51,8 @@ class ProfilesController < ApplicationController
     respond_to do |format|
       format.html
       format.turbo_stream
+      # The same de-noised public list the page shows, newest 50, no counts.
+      format.rss { @rss_entries = @user.entries.publicly_visible.without_tooling_noise.chronological.limit(50) }
     end
   end
 

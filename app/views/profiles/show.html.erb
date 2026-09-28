@@ -5,6 +5,7 @@
 <% content_for :og_image, "#{og_image_url(@user.username)}?v=3" %>
 
 <% content_for :head do %>
+  <link rel="alternate" type="application/rss+xml" title="<%= @user.display_name %> on Openstage" href="<%= profile_url(@user.username, format: :rss) %>">
   <script type="application/ld+json">
     <%= {
       "@context" => "https://schema.org",
@@ -60,6 +61,24 @@
         </a>
       <% end %>
 
+      <span class="flex items-center gap-2" data-controller="share"
+            data-share-url-value="<%= profile_url(@user.username) %>"
+            data-share-title-value="<%= @user.display_name %>'s proof-of-work page">
+        <button type="button" data-action="share#share" data-share-target="button"
+                class="flex items-center gap-1.5 hover:text-gray-900 transition-colors cursor-pointer" data-share-button>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/>
+          </svg>
+          Share
+        </button>
+        <a href="<%= profile_url(@user.username, format: :rss) %>" class="flex items-center gap-1.5 hover:text-gray-900 transition-colors" title="RSS feed" data-rss-link>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12.75 19.5v-.75a7.5 7.5 0 00-7.5-7.5H4.5m0-6.75h.75c7.87 0 14.25 6.38 14.25 14.25v.75M6 18.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/>
+          </svg>
+          RSS
+        </a>
+      </span>
+
       <% if @user.building_since.present? %>
         <span class="flex items-center gap-1.5">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
@@ -93,6 +112,21 @@
     </div>
   <% end %>
 </div>
+
+<!-- Subscribe box: visitors only, never a count -->
+<% unless current_user == @user %>
+  <div class="py-5 border-b border-gray-200" data-subscribe-box>
+    <%= form_with url: profile_subscribe_path(@user.username), method: :post, class: "flex flex-col sm:flex-row sm:items-center gap-2" do |f| %>
+      <label for="subscribe-email" class="text-sm text-gray-700 sm:w-64 shrink-0">Get <%= @user.display_name %>'s updates by email</label>
+      <%= f.email_field :email, id: "subscribe-email", placeholder: "you@example.com", required: true, autocomplete: "email",
+            class: "flex-1 min-w-0 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" %>
+      <%# Honeypot: hidden from people, filled by scripts. %>
+      <div class="hidden" aria-hidden="true"><%= f.text_field :website, tabindex: -1, autocomplete: "off" %></div>
+      <%= f.submit "Subscribe", class: "px-4 py-2 text-sm rounded-lg bg-gray-900 text-white hover:bg-gray-800 cursor-pointer shrink-0" %>
+    <% end %>
+    <p class="text-xs text-gray-400 mt-1.5">Double opt-in, one-click unsubscribe. Your address goes to <%= @user.display_name %>, not to a list of ours.</p>
+  </div>
+<% end %>
 
 <!-- Activity heatmap -->
 <% if @heatmap_data.any? %>
