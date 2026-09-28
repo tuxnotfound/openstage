@@ -50,7 +50,13 @@ class ProfilesController < ApplicationController
 
     respond_to do |format|
       format.html
-      format.turbo_stream
+      # Only "Load more" (which always carries page) wants the append stream.
+      # A Turbo form redirecting here (Subscribe) arrives accepting turbo_stream
+      # too, because fetch keeps the Accept header across the redirect. Serving
+      # it the stream skipped the layout, so the flash only appeared on the next
+      # full load and page 1 was silently appended again. Same fix as the
+      # dashboard's.
+      format.turbo_stream if params[:page].present?
       # The same de-noised public list the page shows, newest 50, no counts.
       format.rss { @rss_entries = @user.entries.publicly_visible.without_tooling_noise.chronological.limit(50) }
     end

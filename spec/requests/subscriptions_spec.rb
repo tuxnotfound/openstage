@@ -62,6 +62,17 @@ RSpec.describe "Email subscribe", type: :request do
       }.not_to change { Subscription.count }
     end
 
+    it "renders the page, flash and all, when Turbo follows the redirect" do
+      turbo = browser.merge("HTTP_ACCEPT" => "text/vnd.turbo-stream.html, text/html, application/xhtml+xml")
+
+      post "/builder/subscribe", params: { email: "reader@example.com" }, headers: turbo
+      follow_redirect!
+
+      expect(response.media_type).to eq("text/html")
+      expect(response.body).to include("Check your inbox")
+      expect(response.body).not_to include("<turbo-stream")
+    end
+
     it "404s for an unknown builder" do
       post "/nobody-here/subscribe", params: { email: "reader@example.com" }, headers: browser
       expect(response).to have_http_status(:not_found)
