@@ -1,7 +1,7 @@
 {
   "name": "Openstage",
   "short_name": "Openstage",
-  "description": "Your build, in public. One link.",
+  "description": "Your automatic proof-of-work page",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -1,4 +1,4 @@
-<% content_for :title, "Openstage — Your build, in public. One link." %>
+<% content_for :title, "Openstage — Your automatic proof-of-work page" %>
 <% content_for :meta_description, "Openstage turns your GitHub commits, milestones, and notes into one automatically-updated build-in-public timeline. Claim your free builder profile and share it with a single link." %>
 
 <%
@@ -52,8 +52,9 @@
 
 <!-- Hero -->
 <div class="flex flex-col items-center justify-center text-center pt-10 sm:pt-14 pb-8 px-4">
-  <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 mb-3 tracking-tight">Your build, in public. One link.</h1>
-  <p class="text-lg text-gray-500 mb-8 max-w-xl">GitHub commits, milestones, and notes — one chronological timeline, automatically updated.</p>
+  <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 mb-3 tracking-tight">Your automatic proof-of-work page</h1>
+  <p class="text-lg text-gray-500 mb-2 max-w-xl">Sign in with GitHub and your commits become one public page that stays current on its own. Once a week it pre-fills your "here's what I shipped" post, and you pick the lines.</p>
+  <p class="text-sm text-gray-400 mb-8 max-w-xl">For indie and side-project builders with work in repos they own. Public repos sync as they are; private ones only if you say so.</p>
 
   <% unless user_signed_in? %>
     <%= button_to "/auth/github", method: :post, data: { turbo: false }, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer" do %>

@@ -92,7 +92,7 @@ RSpec.describe "Recaps", type: :request do
           expect(response.body).to include('data-controller="recap-editor"')
           editor = response.body[%r{<textarea.*?</textarea>}m]
           expect(editor).to include('data-recap-editor-target="editor"')
-          expect(editor).to include("this week")
+          expect(editor).to match(/this week/i) # the opening line rotates by calendar week
           # The picker form is a GET; a named textarea would put the post in the URL.
           expect(editor).not_to include("name=")
         end
