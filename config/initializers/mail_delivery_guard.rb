@@ -4,24 +4,30 @@
 # the Solid Queue worker did not, so every subscription confirmation the queue
 # handled was silently discarded while the admin test mail worked.
 #
-# Interceptors run before the perform_deliveries check, so this sees the mails
-# that are about to be dropped and names them.
+# So a mail that cannot be sent is now an error rather than a shrug. From a
+# job that means a failed execution, which is visible and can be retried once
+# the environment is fixed; nothing is lost quietly. Interceptors run before
+# the perform_deliveries check, so this sees the mail before it disappears.
+#
+# Deliveries are on in development and test, so this only fires where the
+# environment is genuinely wrong.
 module MailDeliveryGuard
-  def self.delivering_email(message)
+  Error = Class.new(StandardError)
+
+  def self.delivering_email(mail)
     return if ActionMailer::Base.perform_deliveries
 
-    Rails.logger.warn(
-      "[mail] DROPPED #{message.subject.inspect} to #{Array(message.to).join(', ')}: " \
-      "deliveries are off in this process (RESEND_API_KEY missing?)."
-    )
+    raise Error, "refusing to silently drop #{mail.subject.inspect} to #{Array(mail.to).join(', ')}: " \
+                 "deliveries are off in this process (RESEND_API_KEY missing?)."
   end
 end
 
 ActionMailer::Base.register_interceptor(MailDeliveryGuard)
 
-# Said once at boot, so the state is visible without waiting for a mail.
+# Said once at boot, so the state is visible before the first mail fails.
+# A warning, not a raise: a missing mail key must not keep the site down.
 Rails.application.config.after_initialize do
   if Rails.env.production? && !ActionMailer::Base.perform_deliveries
-    Rails.logger.warn("[mail] deliveries are OFF in this process: RESEND_API_KEY is missing. Mail will be rendered and discarded.")
+    Rails.logger.warn("[mail] deliveries are OFF in this process: RESEND_API_KEY is missing. Every mail job will fail until it is set.")
   end
 end
