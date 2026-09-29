@@ -114,6 +114,13 @@ RSpec.describe "Recaps", type: :request do
           expect(response.body).not_to include("something older")
         end
 
+        it "names the heading after the window, not always the week" do
+          { "7" => "Your week", "30" => "Your month", "90" => "Your last 90 days" }.each do |days, heading|
+            get "/recap", params: { days: days }
+            expect(response.body).to include("<h1 class=\"text-2xl font-semibold text-gray-900\">#{heading}</h1>")
+          end
+        end
+
         it "falls back to 7 days for an unsupported window" do
           get "/recap", params: { days: "365" }
           expect(response.body).to include("7 days")

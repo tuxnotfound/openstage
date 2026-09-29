@@ -1,4 +1,6 @@
-<% content_for :title, "Your week" %>
+<%# The heading follows the window, so 30 days never reads as "your week". %>
+<% heading = { 7 => "Your week", 30 => "Your month" }.fetch(@days, "Your last #{@days} days") %>
+<% content_for :title, heading %>
 
 <% text      = @draft.text(@picks) %>
 <% remaining = @draft.remaining(@picks) %>
@@ -9,7 +11,7 @@
      data-recap-editor-track-url-value="<%= recap_track_path %>">
 
   <div class="flex items-baseline justify-between gap-4 mb-1">
-    <h1 class="text-2xl font-semibold text-gray-900">Your week</h1>
+    <h1 class="text-2xl font-semibold text-gray-900"><%= heading %></h1>
     <span class="text-xs text-gray-400"><%= @days.days.ago.to_date.strftime("%b %-d") %> &ndash; <%= Date.current.strftime("%b %-d") %></span>
   </div>
   <p class="text-sm text-gray-500 mb-6">Tick the commits worth saying out loud, then rewrite the text however you like. Nothing here is chosen for you.</p>

@@ -34,6 +34,51 @@ RSpec.describe "Home layout", type: :request do
     expect(response.body).to include("See a live page")
   end
 
+  it "says what commits can't, and where the page goes" do
+    get "/"
+
+    expect(response.body).to include("Add what commits can't say")
+    expect(response.body).to include("Share one link")
+  end
+
+  # The picker offers 7, 30 and 90 days. "Once a week" read as the only window.
+  it "does not sell the recap as weekly-only" do
+    get "/"
+
+    expect(response.body).to include("Recap a week or a month")
+    expect(response.body).not_to match(/once a week|weekly/i)
+  end
+
+  it "links the live page once in text; the card itself is the other way in" do
+    get "/"
+
+    expect(response.body).not_to include("see the whole thing")
+    expect(response.body).to include(%(aria-label="Open Tux&#39;s live Openstage page"))
+  end
+
+  describe "demo card" do
+    it "shows an entry written by hand next to two commits, preferring a pinned one" do
+      create(:entry, user: demo, entry_type: "milestone", source: "manual", title: "Newer milestone", occurred_at: 1.hour.ago)
+      create(:entry, user: demo, entry_type: "milestone", source: "manual", title: "Rebirth begins", pinned: true, occurred_at: 3.weeks.ago)
+
+      get "/"
+
+      highlight = response.body[/<div[^>]*data-demo-highlight.*?<\/div>/m]
+      expect(highlight).to include("Pinned milestone, written by hand")
+      expect(highlight).to include("Rebirth begins")
+      expect(response.body).not_to include("Newer milestone")
+      expect(response.body.scan("Commit message").size).to eq(2)
+    end
+
+    it "falls back to three commits when nothing was written by hand" do
+      get "/"
+
+      expect(response.body).not_to include("data-demo-highlight")
+      expect(response.body.scan("Commit message").size).to eq(3)
+      expect(response.body).to include("kept current by its commits")
+    end
+  end
+
   it "renders the FAQ as native details so it collapses without JS" do
     get "/"
     expect(response.body).to include("<details")
