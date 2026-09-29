@@ -4,7 +4,8 @@ export default class extends Controller {
   static targets = ["source", "button"]
 
   copy() {
-    const text = this.sourceTarget.textContent
+    const source = this.sourceTarget
+    const text = ["INPUT", "TEXTAREA"].includes(source.tagName) ? source.value : source.textContent
 
     navigator.clipboard.writeText(text)
       .then(() => this.flash("Copied"))
