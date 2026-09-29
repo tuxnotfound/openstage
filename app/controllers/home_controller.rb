@@ -14,13 +14,11 @@ class HomeController < ApplicationController
                              .order(pinned: :desc, occurred_at: :desc).first
       @demo_entries = shown.where(entry_type: RecapDraft::COMMIT_TYPES).chronological
                            .limit(@demo_highlight ? 2 : 3).to_a
-
-      # The recap, shown with the founder's real week and the post that came
-      # out of it. Nothing is mocked: no logged post, no section.
-      @recap_post  = shown.where(entry_type: :posted)
-                          .where.not(body: [ nil, "" ]).order(occurred_at: :desc).first
-      @recap_lines = @recap_post ? RecapDraft.for_user(@demo_user, days: 30).candidates.first(40) : []
     end
+
+    # No recap example either. The founder's posts are rewritten by hand, so a
+    # "ticked commits next to the post" panel could only ever show nothing
+    # ticked. The four steps describe the recap; the picker shows it.
 
     # No global feed here. It sold a network of a handful of people, which is
     # the framing the rebirth dropped; /feed is still one click from a profile.

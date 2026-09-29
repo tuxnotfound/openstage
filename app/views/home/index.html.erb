@@ -141,7 +141,7 @@
     <li>
       <div class="text-xs font-mono text-gray-400 mb-1">03</div>
       <h3 class="font-semibold text-gray-900">Recap a week or a month</h3>
-      <p class="text-sm text-gray-500 mt-1">Openstage lists your commits from the last 7, 30 or 90 days. You tick the lines worth saying, edit freely, and post it yourself on X or Bluesky.</p>
+      <p class="text-sm text-gray-500 mt-1">Openstage lists your commits from the last 7, 30 or 90 days. Tick the lines worth saying or write it in your own words, then post it yourself on X or Bluesky.</p>
     </li>
     <li>
       <div class="text-xs font-mono text-gray-400 mb-1">04</div>
@@ -149,38 +149,6 @@
       <p class="text-sm text-gray-500 mt-1">Put your page in your bio and a live badge in your README; every recap you post brings people back to it. Visitors can subscribe to your page.</p>
     </li>
   </ol>
-
-  <%# Step 3 with the founder's real week and the post that came out of it.
-      Nothing is mocked: no logged post, no example. %>
-  <% if @recap_post %>
-    <% picked, rest = @recap_lines.partition { |c| @recap_post.body.include?(c.title) } %>
-    <% shown = (picked + rest).first(5) %>
-    <div class="mt-10" data-landing-recap>
-      <div class="grid sm:grid-cols-2 gap-4">
-        <div class="rounded-xl border border-gray-200 px-4 py-3">
-          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">The week's commits</p>
-          <ul class="space-y-1.5" aria-label="Example commits, with the shared ones ticked">
-            <% shown.each do |line| %>
-              <% on = picked.include?(line) %>
-              <li class="flex items-start gap-2 text-sm <%= on ? 'text-gray-900' : 'text-gray-400' %>">
-                <span aria-hidden="true" class="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] <%= on ? 'bg-gray-900 border-gray-900 text-white' : 'border-gray-300' %>"><%= "✓" if on %></span>
-                <span class="leading-snug"><%= line.title %></span>
-              </li>
-            <% end %>
-          </ul>
-        </div>
-        <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">The post</p>
-          <p class="whitespace-pre-line text-sm text-gray-800 leading-relaxed"><%= @recap_post.body %></p>
-          <% if (post_url = safe_external_url(@recap_post.url)) %>
-            <%= link_to "See it where it was posted →", post_url, target: "_blank", rel: "noopener",
-                  class: "inline-block text-xs text-gray-500 hover:text-gray-900 mt-3" %>
-          <% end %>
-        </div>
-      </div>
-      <p class="text-xs text-gray-400 mt-3">Step 3 from a real week of <%= link_to "@#{@demo_user.username}", profile_path(@demo_user.username), class: "underline hover:text-gray-700" %>, not a mockup.</p>
-    </div>
-  <% end %>
 </section>
 
 <!-- FAQ (visible content mirrors the FAQPage schema above) -->

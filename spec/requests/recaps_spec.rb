@@ -185,22 +185,18 @@ RSpec.describe "Recaps", type: :request do
       expect(response.body).not_to include("data-recap-prompt")
     end
 
-    it "shows the founder's real post on the landing page, ticking the lines it used" do
+    # Removed from the landing on 2026-09-29. The founder's posts are rewritten
+    # by hand, so "the ticked commits next to the post" matched nothing and
+    # read as the picker picking nothing.
+    it "shows no recap example on the landing, even with a logged post" do
       commit "Add admin page"
-      commit "Fix sync paging"
       create(:entry, user: owner, entry_type: "posted", source: "manual", title: "Shipped this week:",
-                     body: "Shipped this week:\n- Add admin page", url: "https://x.com/tux404/status/1",
+                     body: "Shipped this week, in my own words", url: "https://x.com/tux404/status/1",
                      occurred_at: 1.hour.ago)
 
       get "/"
-      expect(response.body).to include("data-landing-recap")
-      expect(response.body).to include("https://x.com/tux404/status/1")
-      expect(response.body).to include("Fix sync paging")
-    end
-
-    it "omits the landing section when there is no logged post, rather than mocking one" do
-      get "/"
       expect(response.body).not_to include("data-landing-recap")
+      expect(response.body).not_to include("https://x.com/tux404/status/1")
     end
   end
 end
