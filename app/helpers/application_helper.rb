@@ -22,6 +22,14 @@ module ApplicationHelper
     "https://twitter.com/intent/tweet?text=#{CGI.escape(parts.join("\n\n"))}"
   end
 
+  # Top-level nav link, marked when it is the page being shown.
+  def nav_link(label, path)
+    active = current_page?(path)
+    link_to label, path,
+            class: "px-1.5 sm:px-2 py-1 rounded-md whitespace-nowrap #{active ? 'text-gray-900 font-medium bg-gray-100' : 'text-gray-600 hover:text-gray-900'}",
+            aria: { current: (active ? "page" : nil) }
+  end
+
   def streak_emoji(streak)
     case streak
     when 1    then "🐢"

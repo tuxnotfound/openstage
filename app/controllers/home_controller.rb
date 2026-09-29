@@ -13,14 +13,7 @@ class HomeController < ApplicationController
       @recap_lines = @recap_post ? RecapDraft.for_user(@demo_user, days: 30).candidates.first(40) : []
     end
 
-    @recent_entries = Entry.publicly_visible
-                          .joins(:user)
-                          .merge(User.active)
-                          .includes(:user)
-                          .chronological
-                          # Capped, not paginated. An infinite scroll here made
-                          # everything below the feed unreachable, including the
-                          # closing CTA. /feed is where the river belongs.
-                          .limit(5)
+    # No global feed here. It sold a network of a handful of people, which is
+    # the framing the rebirth dropped; /feed is still one click from a profile.
   end
 end

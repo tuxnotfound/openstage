@@ -1,7 +1,7 @@
 <%# One dashboard row. Extracted so the html and turbo_stream renders cannot
     drift apart, which is exactly how the settings repo row broke. %>
 <%= turbo_frame_tag dom_id(entry) do %>
-  <div id="entry-<%= entry.id %>" class="group flex gap-4 p-4 hover:bg-gray-50 transition-colors">
+  <div id="entry-<%= entry.id %>" class="group relative flex gap-4 p-4 hover:bg-gray-50 transition-colors">
     <div class="shrink-0 mt-0.5">
       <%= render "profiles/entry_icon", type: entry.entry_type %>
     </div>
@@ -23,20 +23,20 @@
           <% end %>
           <% if entry.url.present? %>
             <a href="<%= entry_click_out_path(entry) %>" target="_blank" rel="noopener"
-               class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-700 mt-1 transition-colors">
+               class="inline-flex max-w-full items-center gap-1 text-xs text-gray-400 hover:text-gray-700 mt-1 transition-colors">
               <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
               </svg>
-              <span class="truncate max-w-xs"><%= entry.url.gsub(%r{\Ahttps?://}, '') %></span>
+              <span class="truncate min-w-0 max-w-xs"><%= entry.url.gsub(%r{\Ahttps?://}, '') %></span>
             </a>
           <% end %>
         </div>
         <time class="text-xs text-gray-400 shrink-0"><%= entry.occurred_at.strftime("%-d %b %Y") %></time>
       </div>
 
-      <!-- Action buttons: bottom-right, visible on hover -->
+      <!-- Action buttons: overlaid in the corner on hover or keyboard focus, so they never take layout space -->
       <% _share_href = share_on_x_url(entry, current_user) %>
-      <div class="flex justify-end items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div class="absolute right-3 bottom-2.5 flex items-center gap-1.5 rounded-md bg-gray-50 px-1.5 py-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
         <!-- Share on X -->
         <a href="<%= _share_href %>" target="_blank" rel="noopener"
            title="Share on X"

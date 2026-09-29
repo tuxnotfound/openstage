@@ -1,20 +1,22 @@
 <% content_for :title, "Feed — Openstage" %>
 
-<div class="mb-6">
-  <h1 class="text-2xl font-bold text-gray-900">Feed</h1>
-  <p class="text-sm text-gray-500 mt-0.5">The latest from every builder on Openstage.</p>
-</div>
-
-<% if @entries.empty? %>
-  <div class="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-16 text-center">
-    <p class="text-gray-500 text-sm">No public entries yet.</p>
+<div class="max-w-3xl mx-auto">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Feed</h1>
+    <p class="text-sm text-gray-500 mt-0.5">The latest from every builder on Openstage.</p>
   </div>
-<% else %>
-  <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden">
-    <div id="feed-entries">
-      <%= render partial: "home/feed_entry", collection: @entries, as: :entry %>
+
+  <% if @entries.empty? %>
+    <div class="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-16 text-center">
+      <p class="text-gray-500 text-sm">No public entries yet.</p>
     </div>
-  </div>
+  <% else %>
+    <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+      <div id="feed-entries">
+        <%= render partial: "home/feed_entry", collection: @entries, as: :entry %>
+      </div>
+    </div>
 
-  <%= render "feed/load_more", entries: @entries %>
-<% end %>
+    <%= render "feed/load_more", entries: @entries %>
+  <% end %>
+</div>

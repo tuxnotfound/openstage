@@ -1,0 +1,37 @@
+<%# The one thing to do this week. A week with something to say points at the
+    picker; a quiet week points at the composer right below instead of nagging. %>
+<section class="rounded-xl border border-gray-200 px-5 py-4" <%= "data-recap-prompt" if @recap_prompt %>>
+  <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">This week</p>
+
+  <div class="flex flex-wrap items-center justify-between gap-3 mt-1.5">
+    <div class="min-w-0">
+      <% if @recap_prompt %>
+        <% commits = @recap_prompt.candidates.size %>
+        <% repos   = @recap_prompt.candidates_by_repo.keys.size %>
+        <p class="text-base font-semibold text-gray-900">
+          <% if commits.positive? %>
+            You shipped <%= pluralize(commits, "commit") %> <%= repos == 1 ? "in #{@recap_prompt.candidates_by_repo.keys.first}" : "across #{repos} repos" %>.
+          <% else %>
+            You logged <%= pluralize(@recap_prompt.highlights.size, "update") %>.
+          <% end %>
+        </p>
+        <p class="text-sm text-gray-500 mt-0.5">Turn it into a post. You pick the lines and write the words; nothing is posted for you.</p>
+      <% else %>
+        <p class="text-base font-semibold text-gray-900">Quiet week so far.</p>
+        <p class="text-sm text-gray-500 mt-0.5">A milestone or a note, added below, tells visitors what the commits don't.</p>
+      <% end %>
+    </div>
+
+    <% if @recap_prompt %>
+      <%= link_to "Pick what to share", recap_path,
+            class: "shrink-0 text-sm bg-gray-900 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors" %>
+    <% end %>
+  </div>
+
+  <% if @streak > 0 %>
+    <p class="text-xs text-gray-500 mt-3">
+      <%= streak_emoji(@streak) %> <span class="font-medium text-gray-700"><%= @streak %>-day streak</span>
+      <% unless @logged_today %><span class="text-amber-600">&middot; log something today to keep it</span><% end %>
+    </p>
+  <% end %>
+</section>

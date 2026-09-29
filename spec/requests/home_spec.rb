@@ -7,54 +7,38 @@ RSpec.describe "Home", type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it "shows recent public activity entries" do
-      user = create(:user, username: "alice")
-      entry = create(:entry, user: user, entry_type: "shipped", source: "github", title: "Shipped v1", occurred_at: 1.hour.ago)
+    it "leads with the friction, not a feature list" do
+      get "/"
+
+      expect(response.body).to include("Keep shipping.")
+      expect(response.body).to include("Openstage does the showing.")
+      expect(response.body).to include("Start free with GitHub")
+    end
+
+    # The feed sold a network of a handful of people, which is the framing the
+    # rebirth dropped. The landing shows one real page, never other builders.
+    it "does not show a feed of other builders' entries" do
+      stranger = create(:user, username: "alice")
+      create(:entry, user: stranger, entry_type: "shipped", source: "github", title: "Shipped v1", occurred_at: 1.hour.ago)
 
       get "/"
 
-      expect(response.body).to include("Live public feed")
-      expect(response.body).to include(entry.title)
-      expect(response.body).to include("@alice")
+      expect(response.body).not_to include("Live public feed")
+      expect(response.body).not_to include("Shipped v1")
+      expect(response.body).not_to include("@alice")
     end
 
-    it "does not show hidden, private, or deleted-user entries" do
-      visible_user = create(:user, username: "visible")
-      deleted_user = create(:user, username: "gone", deleted_at: Time.current)
-
-      create(:entry, user: visible_user, title: "Public entry", entry_type: "note", source: "manual", occurred_at: 1.hour.ago)
-      create(:entry, user: visible_user, title: "Hidden entry", hidden: true, entry_type: "note", source: "manual", occurred_at: 2.hours.ago)
-      create(:entry, user: visible_user, title: "Private entry", visibility: "private", entry_type: "note", source: "manual", occurred_at: 3.hours.ago)
-      create(:entry, user: deleted_user, title: "Deleted user entry", entry_type: "note", source: "manual", occurred_at: 4.hours.ago)
+    it "shows only public entries of the demo page" do
+      demo = create(:user, username: "tuxnotfound")
+      create(:entry, user: demo, title: "Public entry", entry_type: "note", source: "manual", occurred_at: 1.hour.ago)
+      create(:entry, user: demo, title: "Hidden entry", hidden: true, entry_type: "note", source: "manual", occurred_at: 2.hours.ago)
+      create(:entry, user: demo, title: "Private entry", visibility: "private", entry_type: "note", source: "manual", occurred_at: 3.hours.ago)
 
       get "/"
 
       expect(response.body).to include("Public entry")
       expect(response.body).not_to include("Hidden entry")
       expect(response.body).not_to include("Private entry")
-      expect(response.body).not_to include("Deleted user entry")
-    end
-
-    it "shows only the latest 5 public entries" do
-      user = create(:user, username: "limit_user")
-
-      7.times do |index|
-        create(
-          :entry,
-          user: user,
-          title: "Entry #{index + 1}",
-          entry_type: "note",
-          source: "manual",
-          occurred_at: (index + 1).hours.ago
-        )
-      end
-
-      get "/"
-
-      expect(response.body).to include("Entry 1")
-      expect(response.body).to include("Entry 5")
-      expect(response.body).not_to include("Entry 6")
-      expect(response.body).not_to include("Entry 7")
     end
   end
 end

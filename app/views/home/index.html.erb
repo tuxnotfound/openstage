@@ -1,20 +1,18 @@
-<% content_for :title, "Openstage — Your automatic proof-of-work page" %>
-<% content_for :meta_description, "Openstage turns your GitHub commits, milestones, and notes into one automatically-updated build-in-public timeline. Claim your free builder profile and share it with a single link." %>
+<% content_for :title, "Openstage — Build in public without the second job" %>
+<% content_for :meta_description, "Openstage turns the commits you already push into a public page that keeps itself current, and pre-fills your weekly post. You pick the lines. Free for indie builders." %>
 
 <%
+  # Four questions, each one an objection a builder has before signing in.
+  # The FAQPage JSON-LD below mirrors these, so the markup matches visible text.
   faqs = [
     { q: "What is Openstage?",
-      a: "Openstage is a public profile page that aggregates your build-in-public activity — GitHub commits, milestones, and notes — into one chronological, automatically-updated timeline you can share with a single link." },
-    { q: "How does Openstage work?",
-      a: "Sign in with GitHub, claim your username, and Openstage syncs your public commit activity into a clean timeline. Add milestones and notes by hand to tell the full story. Your page lives at openstage.dev/your-username." },
-    { q: "Is Openstage free?",
-      a: "Yes. The timeline, GitHub sync, and public profile are free forever. Openstage Pro ($7/month or $49 one-time) adds profile analytics, private entries, pinned entries, and a Pro badge." },
-    { q: "Does Openstage post on my behalf or require Twitter?",
-      a: "No. Openstage only reads your public GitHub activity and shows the milestones and notes you add yourself. It never posts for you, and there are no likes or comments — it is a timeline, not a social network." },
-    { q: "Who is Openstage for?",
-      a: "Indie hackers, developers, and makers who build in public and want one link that tells the full story of what they are shipping." },
-    { q: "How do I share my Openstage profile?",
-      a: "Every profile has a clean URL (openstage.dev/username), an auto-generated social preview image, and an embeddable badge you can add to your website or GitHub README." }
+      a: "A public page that builds itself from your GitHub commits, plus a weekly picker that pre-fills your \"here's what I shipped\" post. It is for indie and side-project builders who want to build in public without it becoming a second job." },
+    { q: "What does it read from GitHub?",
+      a: "Sign-in asks only for your email address. Public repos you push to sync every 2 hours. Private repos stay out unless you connect them in Settings and include each one, and even then only commit messages appear, never links to the code." },
+    { q: "Does it post for me?",
+      a: "No. It lists your week's commits; you tick the lines worth saying, edit the text and post it yourself on X or Bluesky. Openstage never writes, ranks or posts anything for you." },
+    { q: "What does it cost?",
+      a: "The page, the sync, the weekly picker and a subscribe box on your page are free for good. Pro is $49 once, or $7 a month, and adds your subscriber list, profile analytics, private entries and pins." }
   ]
 %>
 
@@ -50,23 +48,35 @@
   </script>
 <% end %>
 
-<!-- Hero -->
-<div class="flex flex-col items-center justify-center text-center pt-10 sm:pt-14 pb-8 px-4">
-  <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 mb-3 tracking-tight">Your automatic proof-of-work page</h1>
-  <p class="text-lg text-gray-500 mb-2 max-w-xl">Sign in with GitHub and your commits become one public page that stays current on its own. Once a week it pre-fills your "here's what I shipped" post, and you pick the lines.</p>
-  <p class="text-sm text-gray-400 mb-8 max-w-xl">For indie and side-project builders with work in repos they own. Public repos sync as they are; private ones only if you say so.</p>
+<%# The friction, stated once: showing your work is a second job. The page and
+    the weekly post are two outputs of the same commits, not two products. %>
 
-  <% unless user_signed_in? %>
-    <%= button_to "/auth/github", method: :post, data: { turbo: false }, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer" do %>
-      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-      Sign in with GitHub
-    <% end %>
-  <% else %>
-    <%= link_to "Go to Dashboard", dashboard_path, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700" %>
-  <% end %>
+<!-- Hero -->
+<section class="grid gap-10 lg:grid-cols-2 lg:items-center pt-6 sm:pt-10 pb-12">
+  <div>
+    <p class="text-sm font-medium text-gray-500 mb-3">For indie and side-project builders</p>
+    <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight leading-[1.1]">Keep shipping.<br>Openstage does the showing.</h1>
+    <p class="text-lg text-gray-600 mt-5 max-w-lg">The commits you already push become a public page that keeps itself current, and a weekly &ldquo;here's what I shipped&rdquo; post you only pick lines for.</p>
+
+    <div class="flex flex-wrap items-center gap-x-5 gap-y-3 mt-8">
+      <% if user_signed_in? %>
+        <%= link_to "Go to your dashboard", dashboard_path, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700" %>
+      <% else %>
+        <%= button_to "/auth/github", method: :post, data: { turbo: false }, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer" do %>
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          Start free with GitHub
+        <% end %>
+      <% end %>
+      <% if @demo_user %>
+        <%= link_to "See a live page →", profile_path(@demo_user.username), class: "text-sm font-medium text-gray-600 hover:text-gray-900" %>
+      <% end %>
+    </div>
+
+    <p class="text-xs text-gray-400 mt-4 max-w-md">Public repos sync on their own. Private ones only if you add them. Nothing is ever posted for you.</p>
+  </div>
 
   <% if @demo_user && @demo_entries.any? %>
-    <div class="mt-10 w-full max-w-xl text-left">
+    <div>
       <div class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
         <div class="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
           <img src="<%= @demo_user.avatar_url %>" alt="" class="w-9 h-9 rounded-full shrink-0">
@@ -90,191 +100,101 @@
       </div>
 
       <p class="mt-3 text-center text-sm text-gray-400">
-        A real Openstage page &mdash;
-        <%= link_to "see the full timeline", profile_path(@demo_user.username), class: "text-gray-600 underline hover:text-gray-900" %>
+        A real Openstage page, updated by its commits &mdash;
+        <%= link_to "see the whole thing", profile_path(@demo_user.username), class: "text-gray-600 underline hover:text-gray-900" %>
       </p>
     </div>
   <% end %>
-</div>
-
-<%# "What is Openstage?" section removed: the artifact above the fold now shows
-    what prose was describing. The same definition still serves search and AI
-    answers verbatim via FAQ #1, the FAQPage JSON-LD, and the meta description. %>
+</section>
 
 <!-- How it works -->
-<section class="px-4 py-10 border-t border-gray-100" aria-labelledby="how">
-  <h2 id="how" class="text-lg font-semibold text-gray-900 mb-6 text-center">How it works</h2>
-  <ol class="grid sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
+<section class="py-12 border-t border-gray-100" aria-labelledby="how">
+  <h2 id="how" class="text-2xl font-bold text-gray-900 tracking-tight">How it works</h2>
+  <p class="text-gray-500 mt-2 max-w-xl">One sign-in. After that, the only thing you do is the thing you already do.</p>
+
+  <ol class="grid sm:grid-cols-3 gap-8 mt-8">
     <li>
       <div class="text-xs font-mono text-gray-400 mb-1">01</div>
-      <h3 class="font-medium text-gray-900">Sign in with GitHub</h3>
-      <p class="text-sm text-gray-500 mt-1">Connect in one click. Openstage only reads public activity and never posts on your behalf.</p>
+      <h3 class="font-semibold text-gray-900">Push code like you already do</h3>
+      <p class="text-sm text-gray-500 mt-1">Sign in with GitHub. Your public repos sync every 2 hours, with nothing to install and nothing to log by hand.</p>
     </li>
     <li>
       <div class="text-xs font-mono text-gray-400 mb-1">02</div>
-      <h3 class="font-medium text-gray-900">Claim your link</h3>
-      <p class="text-sm text-gray-500 mt-1">Pick a username. Your page lives at <span class="font-mono text-gray-600">openstage.dev/you</span>.</p>
+      <h3 class="font-semibold text-gray-900">Your page keeps itself current</h3>
+      <p class="text-sm text-gray-500 mt-1">A day of commits folds into one work session, next to the milestones and notes you add. Put the link in your bio once.</p>
     </li>
     <li>
       <div class="text-xs font-mono text-gray-400 mb-1">03</div>
-      <h3 class="font-medium text-gray-900">Build in public</h3>
-      <p class="text-sm text-gray-500 mt-1">Commits sync automatically. Add milestones and notes to tell the story behind the work.</p>
+      <h3 class="font-semibold text-gray-900">Once a week, pick what to say</h3>
+      <p class="text-sm text-gray-500 mt-1">Openstage lists the week's commits. You tick the lines worth saying, edit freely, and post it yourself on X or Bluesky.</p>
     </li>
   </ol>
-</section>
 
-<!-- Weekly recap: a real week and the real post it became -->
-<% if @recap_post %>
-  <% picked, rest = @recap_lines.partition { |c| @recap_post.body.include?(c.title) } %>
-  <% shown = (picked + rest).first(5) %>
-  <section class="px-4 py-10 border-t border-gray-100" aria-labelledby="recap" data-landing-recap>
-    <h2 id="recap" class="text-lg font-semibold text-gray-900 text-center">Your week, pre-filled. You pick what to share.</h2>
-    <p class="text-sm text-gray-500 text-center max-w-xl mx-auto mt-2 mb-6">
-      Openstage lists the week's commits. You tick the ones worth saying out loud, rewrite the text however you like, and post it yourself on X or Bluesky. It never writes, ranks or posts for you.
-    </p>
-    <div class="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
-      <div class="rounded-xl border border-gray-200 px-4 py-3">
-        <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">The week's commits</p>
-        <ul class="space-y-1.5" aria-label="Example commits, with the shared ones ticked">
-          <% shown.each do |line| %>
-            <% on = picked.include?(line) %>
-            <li class="flex items-start gap-2 text-sm <%= on ? 'text-gray-900' : 'text-gray-400' %>">
-              <span aria-hidden="true" class="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] <%= on ? 'bg-gray-900 border-gray-900 text-white' : 'border-gray-300' %>"><%= "✓" if on %></span>
-              <span class="leading-snug"><%= line.title %></span>
-            </li>
+  <%# Step 3 with the founder's real week and the post that came out of it.
+      Nothing is mocked: no logged post, no example. %>
+  <% if @recap_post %>
+    <% picked, rest = @recap_lines.partition { |c| @recap_post.body.include?(c.title) } %>
+    <% shown = (picked + rest).first(5) %>
+    <div class="mt-10" data-landing-recap>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div class="rounded-xl border border-gray-200 px-4 py-3">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">The week's commits</p>
+          <ul class="space-y-1.5" aria-label="Example commits, with the shared ones ticked">
+            <% shown.each do |line| %>
+              <% on = picked.include?(line) %>
+              <li class="flex items-start gap-2 text-sm <%= on ? 'text-gray-900' : 'text-gray-400' %>">
+                <span aria-hidden="true" class="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] <%= on ? 'bg-gray-900 border-gray-900 text-white' : 'border-gray-300' %>"><%= "✓" if on %></span>
+                <span class="leading-snug"><%= line.title %></span>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+        <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">The post</p>
+          <p class="whitespace-pre-line text-sm text-gray-800 leading-relaxed"><%= @recap_post.body %></p>
+          <% if (post_url = safe_external_url(@recap_post.url)) %>
+            <%= link_to "See it where it was posted →", post_url, target: "_blank", rel: "noopener",
+                  class: "inline-block text-xs text-gray-500 hover:text-gray-900 mt-3" %>
           <% end %>
-        </ul>
+        </div>
       </div>
-      <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-        <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">The post</p>
-        <p class="whitespace-pre-line text-sm text-gray-800 leading-relaxed"><%= @recap_post.body %></p>
-        <% if (post_url = safe_external_url(@recap_post.url)) %>
-          <%= link_to "See it where it was posted →", post_url, target: "_blank", rel: "noopener",
-                class: "inline-block text-xs text-gray-500 hover:text-gray-900 mt-3" %>
-        <% end %>
-      </div>
+      <p class="text-xs text-gray-400 mt-3">Step 3 from a real week of <%= link_to "@#{@demo_user.username}", profile_path(@demo_user.username), class: "underline hover:text-gray-700" %>, not a mockup.</p>
     </div>
-    <p class="text-xs text-gray-400 text-center mt-4">A real week from <%= link_to "@#{@demo_user.username}", profile_path(@demo_user.username), class: "underline hover:text-gray-700" %>, not a mockup.</p>
-  </section>
-<% end %>
-
-<!-- Features -->
-<section class="px-4 py-10 border-t border-gray-100" aria-labelledby="features">
-  <h2 id="features" class="text-lg font-semibold text-gray-900 mb-6 text-center">Everything on one page</h2>
-  <div class="grid sm:grid-cols-2 gap-x-8 gap-y-6 max-w-3xl mx-auto text-sm">
-    <div>
-      <h3 class="font-medium text-gray-900">Automatic GitHub sync</h3>
-      <p class="text-gray-500 mt-1">Your public commits become timeline entries, grouped by repository.</p>
-    </div>
-    <div>
-      <h3 class="font-medium text-gray-900">Milestones &amp; notes</h3>
-      <p class="text-gray-500 mt-1">Add launches, wins, and lessons by hand to give your commits context.</p>
-    </div>
-    <div>
-      <h3 class="font-medium text-gray-900">Activity heatmap &amp; streak</h3>
-      <p class="text-gray-500 mt-1">A 52-week heatmap and day streak show momentum at a glance.</p>
-    </div>
-    <div>
-      <h3 class="font-medium text-gray-900">One shareable link</h3>
-      <p class="text-gray-500 mt-1">A clean URL, an auto-generated social card, and an embeddable badge for your README.</p>
-    </div>
-    <div>
-      <h3 class="font-medium text-gray-900">Filter by type or repo</h3>
-      <p class="text-gray-500 mt-1">Visitors can focus on shipped work, milestones, notes, or a single project.</p>
-    </div>
-    <div>
-      <h3 class="font-medium text-gray-900">Fast and quiet</h3>
-      <p class="text-gray-500 mt-1">Server-rendered, mobile-first, and free of social-network noise.</p>
-    </div>
-  </div>
-</section>
-
-<!-- Comparison -->
-<section class="px-4 py-10 border-t border-gray-100" aria-labelledby="why">
-  <h2 id="why" class="text-lg font-semibold text-gray-900 mb-6 text-center">Why Openstage</h2>
-  <div class="max-w-3xl mx-auto overflow-x-auto">
-    <table class="w-full text-sm border-collapse">
-      <thead>
-        <tr class="text-left text-gray-500">
-          <th class="py-2 pr-4 font-medium"></th>
-          <th class="py-2 px-3 font-semibold text-gray-900">Openstage</th>
-          <th class="py-2 px-3 font-medium">GitHub profile</th>
-          <th class="py-2 px-3 font-medium">Link-in-bio</th>
-        </tr>
-      </thead>
-      <tbody class="text-gray-600">
-        <% [
-          ["Shows what you're building over time", "Yes", "Commits only", "No"],
-          ["Auto-updates from GitHub", "Yes", "Yes", "No"],
-          ["Milestones, launches & notes", "Yes", "No", "Manual"],
-          ["One link that tells the story", "Yes", "No", "Links only"],
-          ["Built for building in public", "Yes", "No", "No"]
-        ].each do |row| %>
-          <tr class="border-t border-gray-100">
-            <td class="py-2.5 pr-4 text-gray-700"><%= row[0] %></td>
-            <td class="py-2.5 px-3 font-medium text-gray-900"><%= row[1] %></td>
-            <td class="py-2.5 px-3"><%= row[2] %></td>
-            <td class="py-2.5 px-3"><%= row[3] %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<!-- Final CTA -->
-<section class="px-4 py-12 border-t border-gray-100 text-center">
-  <h2 class="text-2xl font-bold text-gray-900 mb-2">Start your timeline</h2>
-  <p class="text-gray-500 mb-6">Free forever. <%= link_to "See pricing", pricing_path, class: "underline hover:text-gray-900" %> · <%= link_to "Read the story", about_path, class: "underline hover:text-gray-900" %></p>
-  <% unless user_signed_in? %>
-    <%= button_to "Sign in with GitHub", "/auth/github", method: :post, data: { turbo: false }, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer" %>
-  <% else %>
-    <%= link_to "Go to Dashboard", dashboard_path, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700" %>
   <% end %>
 </section>
 
-<!-- FAQ (visible content mirrors FAQPage schema above) -->
-<section class="max-w-2xl mx-auto px-4 py-10 border-t border-gray-100" aria-labelledby="faq">
-  <h2 id="faq" class="text-lg font-semibold text-gray-900 mb-5">Frequently asked questions</h2>
-  <%# Native <details>: collapsible, keyboard- and screen-reader-correct, no JS. %>
-  <div class="divide-y divide-gray-100">
-    <% faqs.each_with_index do |f, i| %>
-      <details class="group py-4" <%= "open" if i.zero? %>>
-        <summary class="flex items-start justify-between gap-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-          <h3 class="font-medium text-gray-900"><%= f[:q] %></h3>
-          <svg class="w-4 h-4 mt-0.5 shrink-0 text-gray-400 transition-transform group-open:rotate-90"
-               fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-          </svg>
-        </summary>
-        <p class="text-sm text-gray-600 mt-1.5 leading-relaxed"><%= f[:a] %></p>
-      </details>
+<!-- FAQ (visible content mirrors the FAQPage schema above) -->
+<section class="py-12 border-t border-gray-100" aria-labelledby="faq">
+  <div class="max-w-2xl">
+    <h2 id="faq" class="text-2xl font-bold text-gray-900 tracking-tight mb-4">Frequently asked questions</h2>
+    <%# Native <details>: collapsible, keyboard- and screen-reader-correct, no JS. %>
+    <div class="divide-y divide-gray-100">
+      <% faqs.each_with_index do |f, i| %>
+        <details class="group py-4" <%= "open" if i.zero? %>>
+          <summary class="flex items-start justify-between gap-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+            <h3 class="font-medium text-gray-900"><%= f[:q] %></h3>
+            <svg class="w-4 h-4 mt-0.5 shrink-0 text-gray-400 transition-transform group-open:rotate-90"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+          </summary>
+          <p class="text-sm text-gray-600 mt-1.5 leading-relaxed"><%= f[:a] %></p>
+        </details>
+      <% end %>
+    </div>
+  </div>
+</section>
+
+<!-- Closing CTA -->
+<section class="py-14 border-t border-gray-100 text-center">
+  <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Your commits already tell the story.</h2>
+  <p class="text-gray-500 mt-2">Give them a page. Free, and it fills itself.</p>
+  <div class="mt-6 flex flex-col items-center gap-3">
+    <% if user_signed_in? %>
+      <%= link_to "Go to your dashboard", dashboard_path, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700" %>
+    <% else %>
+      <%= button_to "Start free with GitHub", "/auth/github", method: :post, data: { turbo: false }, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer" %>
     <% end %>
+    <%= link_to "Pro is $49 once. See pricing", pricing_path, class: "text-sm text-gray-500 hover:text-gray-900" %>
   </div>
-</section>
-
-<!-- Live public feed (kept: indexable, fresh content) -->
-<section class="max-w-3xl mx-auto px-4 py-10 border-t border-gray-100" aria-label="Recent public activity">
-  <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
-    <div>
-      <h2 class="text-lg font-semibold text-gray-900">Live public feed</h2>
-      <p class="text-sm text-gray-500 mt-0.5">Recent entries from builders across Openstage.</p>
-    </div>
-  </div>
-
-  <% if @recent_entries.any? %>
-    <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden">
-      <div id="feed-entries">
-        <%= render partial: "home/feed_entry", collection: @recent_entries, as: :entry %>
-      </div>
-    </div>
-
-    <div class="mt-3 text-right">
-      <%= link_to "See all activity →", feed_path, class: "text-sm text-gray-500 hover:text-gray-900" %>
-    </div>
-  <% else %>
-    <div class="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-12 text-center">
-      <p class="text-sm text-gray-500">No public activity yet.</p>
-    </div>
-  <% end %>
 </section>

@@ -1,0 +1,54 @@
+<%# Who is paying attention: page views, and the subscriber list, which is the
+    audience mechanic. Free sees how many; Pro sees who. The full breakdown
+    lives on /analytics, not here. %>
+<%
+  is_pro    = current_user.pro?
+  sparkline = is_pro ? @analytics[:sparkline_30d] : @analytics[:sparkline_7d]
+  bar_w     = is_pro ? 5 : 8
+  bar_gap   = is_pro ? 2 : 3
+  bar_h     = 28
+  svg_w     = sparkline.size * bar_w + (sparkline.size - 1) * bar_gap
+  sp_max    = [ sparkline.values.max.to_f, 1.0 ].max
+%>
+<section class="rounded-xl border border-gray-200 p-4">
+  <div class="flex items-baseline justify-between gap-2">
+    <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Audience</p>
+    <% if is_pro %>
+      <%= link_to "Full analytics →", analytics_path, class: "text-xs text-gray-500 hover:text-gray-900" %>
+    <% end %>
+  </div>
+
+  <div class="mt-3">
+    <svg width="<%= svg_w %>" height="<%= bar_h %>" viewBox="0 0 <%= svg_w %> <%= bar_h %>" aria-hidden="true" class="block">
+      <% sparkline.each_with_index do |(_date, count), i| %>
+        <% h = [ ((count / sp_max) * bar_h).round, 2 ].max %>
+        <rect x="<%= i * (bar_w + bar_gap) %>" y="<%= bar_h - h %>" width="<%= bar_w %>" height="<%= h %>" rx="1"
+              fill="<%= count > 0 ? '#111827' : '#e5e7eb' %>" />
+      <% end %>
+    </svg>
+    <p class="text-xs text-gray-500 mt-2">
+      <span class="font-medium text-gray-900"><%= @analytics[:unique_7d] %></span> unique visitors this week
+      &middot; <%= @analytics[:total_views] %> views all time
+    </p>
+  </div>
+
+  <div class="mt-4 pt-3 border-t border-gray-100" data-subscribers data-count="<%= @subscribers_count %>">
+    <div class="flex items-baseline justify-between gap-2">
+      <p class="text-sm font-semibold text-gray-900"><%= pluralize(@subscribers_count, "subscriber") %></p>
+      <% unless is_pro %>
+        <%= link_to "See who, with Pro", pricing_path, class: "text-xs text-gray-500 hover:text-gray-900 shrink-0" %>
+      <% end %>
+    </div>
+    <p class="text-xs text-gray-500 mt-0.5">People who confirmed they want your updates, from the box on your page.</p>
+    <% if @subscribers&.any? %>
+      <ul class="mt-2 divide-y divide-gray-100">
+        <% @subscribers.each do |sub| %>
+          <li class="flex items-center justify-between gap-2 py-1.5">
+            <span class="text-gray-700 font-mono text-xs truncate"><%= sub.email %></span>
+            <span class="text-xs text-gray-400 shrink-0"><%= sub.confirmed_at.strftime("%b %-d") %></span>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </div>
+</section>

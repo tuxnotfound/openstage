@@ -1,36 +1,37 @@
 require "rails_helper"
 
-# The landing page had an infinite-scrolling feed sitting between the comparison
-# table and the closing CTA, which made everything below it unreachable.
+# The landing had eight sections selling three products: a GitHub showcase (the
+# comparison table), a post-writing tool (the recap section) and a network (the
+# live feed). It now makes one argument in four sections.
 RSpec.describe "Home layout", type: :request do
   let!(:demo) { create(:user, username: "tuxnotfound", display_name: "Tux") }
 
   before { create_list(:entry, 3, user: demo) }
 
-  it "puts the closing CTA above the feed so it can actually be reached" do
+  it "keeps the four agreed sections, in order" do
     get "/"
 
-    cta  = response.body.index("Start your timeline")
-    feed = response.body.index("Live public feed")
+    order = [ "Keep shipping.", "How it works", "Frequently asked questions", "Your commits already tell the story." ]
+    positions = order.map { |text| response.body.index(text) }
 
-    expect(cta).to be_present
-    expect(feed).to be_present
-    expect(cta).to be < feed
+    expect(positions).to all(be_present)
+    expect(positions).to eq(positions.sort)
   end
 
-  it "caps the feed and sends the river to /feed instead of scrolling forever" do
-    create_list(:entry, 12, user: demo)
-
+  it "drops the sections that framed it as something else" do
     get "/"
-    expect(response.body).to include("See all activity →")
-    expect(response.body).not_to include("infinite-scroll")
+
+    expect(response.body).not_to include("Live public feed")
+    expect(response.body).not_to include("Why Openstage")
+    expect(response.body).not_to include("Everything on one page")
   end
 
-  it "shows a real profile above the fold" do
+  it "shows a real profile above the fold, with a way to see all of it" do
     get "/"
 
     expect(response.body).to include("A real Openstage page")
     expect(response.body).to include("openstage.dev/tuxnotfound")
+    expect(response.body).to include("See a live page")
   end
 
   it "renders the FAQ as native details so it collapses without JS" do

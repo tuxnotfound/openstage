@@ -1,0 +1,56 @@
+<%# The product is the page, so the dashboard keeps it one glance away: the
+    link to share, and whether it is up to date. %>
+<% last_log = @sync_logs.first %>
+<section class="rounded-xl border border-gray-200 p-4" data-page-card>
+  <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Your page</p>
+
+  <div class="flex items-center gap-3 mt-3">
+    <img src="<%= current_user.avatar_url %>" alt="" class="w-9 h-9 rounded-full shrink-0">
+    <%= link_to "openstage.dev/#{current_user.username}", profile_path(current_user.username),
+          class: "min-w-0 truncate text-sm font-medium text-gray-900 hover:underline" %>
+  </div>
+
+  <div class="flex items-center gap-2 mt-3" data-controller="clipboard">
+    <span data-clipboard-target="source" class="hidden"><%= profile_url(current_user.username) %></span>
+    <button type="button" data-action="clipboard#copy" data-clipboard-target="button"
+            class="flex-1 text-xs font-medium px-3 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer">Copy link</button>
+    <%= link_to "View page", profile_path(current_user.username),
+          class: "flex-1 text-center text-xs font-medium px-3 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50" %>
+  </div>
+
+  <div class="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-gray-100">
+    <span class="text-xs text-gray-500">
+      <% if @last_github_sync %>
+        Synced <%= time_ago_in_words(@last_github_sync) %> ago
+      <% else %>
+        Not synced yet
+      <% end %>
+    </span>
+    <%= button_to "Sync now", sync_github_path, method: :post,
+          class: "text-xs text-gray-600 hover:text-gray-900 border border-gray-200 px-2.5 py-1 rounded-md hover:bg-gray-50 transition-colors cursor-pointer" %>
+  </div>
+
+  <% if last_log&.error_message.present? %>
+    <p class="text-xs <%= last_log.failed? ? 'text-red-500' : 'text-amber-600' %> mt-2 line-clamp-2" title="<%= last_log.error_message %>"><%= last_log.error_message %></p>
+  <% end %>
+
+  <% if @sync_logs.any? %>
+    <details class="mt-2 group">
+      <summary class="list-none [&::-webkit-details-marker]:hidden text-xs text-gray-400 hover:text-gray-600 cursor-pointer">Sync history</summary>
+      <ul class="mt-2 space-y-1.5">
+        <% @sync_logs.each do |log| %>
+          <li class="flex items-center justify-between gap-2 text-xs">
+            <span class="flex items-center gap-2 min-w-0">
+              <span class="w-1.5 h-1.5 rounded-full shrink-0 <%= log.success? ? 'bg-green-500' : log.failed? ? 'bg-red-400' : 'bg-yellow-400' %>"></span>
+              <span class="text-gray-600 capitalize"><%= log.source %></span>
+              <% if log.success? && log.entries_added > 0 %>
+                <span class="text-gray-400">+<%= log.entries_added %></span>
+              <% end %>
+            </span>
+            <time class="text-gray-400 shrink-0"><%= time_ago_in_words(log.ran_at) %> ago</time>
+          </li>
+        <% end %>
+      </ul>
+    </details>
+  <% end %>
+</section>
