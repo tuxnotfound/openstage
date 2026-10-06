@@ -4,6 +4,13 @@
 class BlogPost
   POSTS = [
     {
+      slug: "rebuilt-on-itself",
+      title: "My build-in-public tool showed I had quit. So I rebuilt it on itself.",
+      description: "Openstage's own timeline showed 82 days of nothing from its founder. What the page exposed, what was broken underneath, and what the relaunch changed, with the honest numbers.",
+      published_on: Date.new(2026, 10, 6),
+      reading_minutes: 4
+    },
+    {
       slug: "why-one-link-beats-ten",
       title: "Why one link beats ten for building in public",
       description: "Your build-in-public proof is scattered across GitHub, threads, and forums. Here's why consolidating it into a single link compounds.",
