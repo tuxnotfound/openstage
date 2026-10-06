@@ -21,6 +21,11 @@ RSpec.describe "Signup attribution", type: :request do
       User::REFS.each { |ref| expect(User.normalize_ref(ref)).to eq(ref) }
     end
 
+    it "attributes launch-post links on any page, the blog included" do
+      get "/blog", params: { ref: "launch" }
+      expect(session[:signup_ref]).to eq("launch")
+    end
+
     it "attributes the X bio link separately from recap posts" do
       get "/", params: { ref: "bio" }
       expect(session[:signup_ref]).to eq("bio")

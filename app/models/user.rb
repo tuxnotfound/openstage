@@ -40,7 +40,8 @@ class User < ApplicationRecord
   # recorded as "direct" so the denominator is never silently incomplete.
   # "bio" is the link in the founder's X profile, so reply-first presence on X
   # is attributed separately from recap posts.
-  REFS = %w[recap badge footer feed claim bio].freeze
+  # "launch" is the tag on the links in the soft-launch and card posts.
+  REFS = %w[recap badge footer feed claim bio launch].freeze
   DEFAULT_REF = "direct".freeze
 
   def self.normalize_ref(value)
