@@ -134,15 +134,40 @@ RSpec.describe GithubSyncJob, type: :job do
     # This is how story_time_v1 went missing for four days: included, but the
     # token could not list it, and the run reported success with nothing else.
     it "notes on a successful SyncLog any included repo GitHub did not return" do
-      create(:github_repo, user: user, github_repo_id: 999, full_name: "tuxnotfound/secret",
-                           private_repo: true, included: true)
-      allow(client).to receive(:scopes).and_return([ "user:email" ])
+      create(:github_repo, user: user, github_repo_id: 999, full_name: "tuxnotfound/gone",
+                           private_repo: false, included: true)
 
       described_class.new.perform(user.id)
 
       log = SyncLog.last
       expect(log.status).to eq("success")
-      expect(log.error_message).to eq("not returned by GitHub: tuxnotfound/secret (no private-repo access)")
+      expect(log.error_message).to eq("not returned by GitHub: tuxnotfound/gone")
+    end
+
+    # Since C12 GitHub's list decides which private repos Openstage may read, so
+    # an unlisted one is removed rather than left looking included.
+    it "removes a private repo GitHub no longer lists, hides its commits, and says so" do
+      create(:github_repo, user: user, github_repo_id: 999, full_name: "tuxnotfound/secret",
+                           private_repo: true, included: true, included_chosen: true)
+      entry = create(:entry, user: user, source: "github", repo_name: "tuxnotfound/secret", hidden: false)
+      allow(client).to receive(:scopes).and_return([ "user:email" ])
+
+      described_class.new.perform(user.id)
+
+      expect(user.github_repos.find_by(github_repo_id: 999)).to be_nil
+      expect(entry.reload).to have_attributes(hidden: true, url: nil)
+      expect(SyncLog.last.error_message).to eq("no longer readable, removed: tuxnotfound/secret")
+    end
+
+    it "removes nothing when a listing ran into the page cap" do
+      stub_const("GithubSyncJob::MAX_PAGES", 1)
+      stub_const("GithubSyncJob::PER_PAGE", 1)
+      create(:github_repo, user: user, github_repo_id: 999, full_name: "tuxnotfound/secret",
+                           private_repo: true, included: true)
+
+      described_class.new.perform(user.id)
+
+      expect(user.github_repos.find_by(github_repo_id: 999)).to be_present
     end
 
     it "notes repos skipped on an API error" do

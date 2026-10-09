@@ -75,6 +75,24 @@ RSpec.describe GithubSyncJob, "private repos through the GitHub App", type: :job
     expect(user.github_repos.find_by(github_repo_id: 1)).to be_present
   end
 
+  # Pedro's test, 2026-10-09: codeconvert taken out of the App on GitHub still
+  # sat in Settings, and including it there looked like it published something.
+  it "removes a private repo taken out of the App, and brings it back excluded when picked again" do
+    create(:github_repo, user: user, github_repo_id: 3, full_name: "tuxnotfound/dropped",
+                         private_repo: true, included: true, included_chosen: true)
+    entry = create(:entry, user: user, source: "github", repo_name: "tuxnotfound/dropped", hidden: false)
+
+    described_class.new.perform(user.id)
+    expect(user.github_repos.find_by(github_repo_id: 3)).to be_nil
+    expect(entry.reload.hidden).to be(true)
+
+    allow(app_client).to receive(:list_app_installation_repositories)
+      .and_return(double(repositories: [ private_repo, repo(id: 3, name: "dropped", private: true) ]))
+    described_class.new.perform(user.id)
+    expect(user.github_repos.find_by(github_repo_id: 3)).to have_attributes(included: false)
+    expect(entry.reload.hidden).to be(true)
+  end
+
   it "never asks for an installation token without an installation" do
     user.update!(github_installation_id: nil)
 

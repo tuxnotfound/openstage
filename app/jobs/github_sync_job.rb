@@ -39,6 +39,7 @@ class GithubSyncJob < ApplicationJob
     @entries_added = 0
     @listed_ids = []
     @skipped = []
+    @dropped = []
     client = Octokit::Client.new(access_token: user.github_access_token)
 
     # One header read. Keeps Settings honest about private-repo access
@@ -60,6 +61,7 @@ class GithubSyncJob < ApplicationJob
       client.repositories(nil, affiliation: "owner,collaborator,organization_member", per_page: PER_PAGE, page: page)
     end)
     sync_installation(user)
+    drop_unreadable_private_repos(user)
 
     # Runs off our own table, not the GitHub listing, so it still works after
     # the "repo" scope is revoked and private repos vanish from the API.
@@ -85,6 +87,19 @@ class GithubSyncJob < ApplicationJob
     user.update_column(:github_installation_id, nil)
   end
 
+  # A private repo no listing returned is one Openstage can no longer read: taken
+  # out of the GitHub App, the App uninstalled, or the repo deleted. GitHub's
+  # list wins, so its commits come off the profile and it leaves Settings.
+  # Picked again on GitHub it comes back excluded, and including it shows them.
+  def drop_unreadable_private_repos(user)
+    return if @listing_capped
+
+    unreadable = user.github_repos.where(private_repo: true).where.not(github_repo_id: @listed_ids)
+    @dropped = unreadable.pluck(:full_name)
+    user.entries.where(source: :github, repo_name: @dropped).update_all(hidden: true, url: nil)
+    unreadable.delete_all
+  end
+
   def sync_listed_repo(client, user, repo_data)
     # A repo can be on both listings: a public one picked in the App, or any
     # repo while an older repo-scoped token is still stored.
@@ -103,17 +118,15 @@ class GithubSyncJob < ApplicationJob
     @skipped << repo.full_name
   end
 
-  # A repo the user included but GitHub no longer lists (token without
-  # private-repo access, repo deleted or transferred) used to leave no trace:
-  # the run said success and nothing else. Same for a repo skipped on an API
-  # error. Shown on the dashboard's sync history.
+  # A repo the user included but GitHub no longer lists (repo deleted or
+  # transferred) used to leave no trace: the run said success and nothing else.
+  # Same for a repo skipped on an API error, and for private repos dropped as
+  # unreadable. Shown on the dashboard's sync history.
   def sync_notes(user)
     missing = user.github_repos.included_repos.where.not(github_repo_id: @listed_ids).pluck(:full_name)
     notes = []
-    if missing.any?
-      why = user.private_repo_access? ? "" : " (no private-repo access)"
-      notes << "not returned by GitHub: #{missing.join(', ')}#{why}"
-    end
+    notes << "not returned by GitHub: #{missing.join(', ')}" if missing.any?
+    notes << "no longer readable, removed: #{@dropped.join(', ')}" if @dropped.any?
     notes << "skipped: #{@skipped.join(', ')}" if @skipped.any?
     notes.join("; ").presence
   end
@@ -222,6 +235,9 @@ class GithubSyncJob < ApplicationJob
 
       yield page
       break if page.size < PER_PAGE
+
+      # A full last page means anything past the cap went unseen.
+      @listing_capped = true if page_number == MAX_PAGES
     end
   end
 

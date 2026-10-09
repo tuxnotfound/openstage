@@ -3,7 +3,8 @@
     <p class="text-xs text-gray-400">
       Private repos are connected, read-only. They stay excluded until you include them above.
       <%= link_to "Change which repos Openstage can read", "https://github.com/settings/installations/#{current_user.github_installation_id}",
-          class: "underline hover:text-gray-600", target: "_blank", rel: "noopener" %>.
+          class: "underline hover:text-gray-600", target: "_blank", rel: "noopener" %>
+      on GitHub: a repo you add there shows up here excluded, and one you remove leaves Openstage, its commits with it.
     </p>
     <% if repo_scope %>
       <p class="text-xs text-amber-800 mt-2">Openstage no longer needs the read and write access you gave it before. Revoke it at <%= link_to "github.com/settings/applications", "https://github.com/settings/applications", class: "underline", target: "_blank", rel: "noopener" %>, then sign in again.</p>
@@ -12,7 +13,7 @@
     <p class="text-xs text-gray-400">Private repos are connected. They stay excluded until you include them above.</p>
     <% if github_app %>
       <div class="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 mt-2 flex items-center justify-between gap-4">
-        <p class="text-xs text-amber-800">Openstage can now read private repos without write access, and only the ones you pick.</p>
+        <p class="text-xs text-amber-800">Openstage can now read private repos without write access, and only the ones you pick. Pick every private repo you want on your page: once you switch, the ones you leave out are removed.</p>
         <%= link_to "Switch to read-only", new_github_installation_path, data: { turbo: false },
             class: "shrink-0 text-xs bg-gray-900 text-white px-3 py-1.5 rounded-md hover:bg-gray-700 transition-colors" %>
       </div>
