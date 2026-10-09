@@ -6,6 +6,11 @@ Rails.application.routes.draw do
   get "/auth/failure", to: "sessions#failure"
   delete "/sign_out", to: "sessions#destroy"
 
+  # Read-only private repos through the Openstage GitHub App (C12). The
+  # callback is the App's callback URL on GitHub.
+  get "/github_app/install", to: "github_installations#new", as: :new_github_installation
+  get "/github_app/callback", to: "github_installations#create", as: :github_installation_callback
+
   # Username claim (new user onboarding)
   get "/claim-username", to: "usernames#new", as: :new_username
   post "/claim-username", to: "usernames#create"

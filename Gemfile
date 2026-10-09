@@ -49,6 +49,9 @@ gem "solid_queue"
 gem "octokit", "~> 7.0"
 gem "faraday-retry"
 
+# Signs as the GitHub App that reads private repos (C12)
+gem "jwt", "~> 3.1"
+
 # ApplicationService#after_commit on Rails 7.1; 7.2 has it built in
 gem "after_commit_everywhere", "~> 1.4"
 
@@ -101,4 +104,5 @@ group :test do
 
   gem "shoulda-matchers"
   gem "simplecov", require: false
+  gem "webmock"
 end

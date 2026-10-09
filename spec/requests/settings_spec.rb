@@ -1,4 +1,5 @@
 require "rails_helper"
+require "support/github_app"
 
 RSpec.describe "Settings", type: :request do
   let!(:user) { create(:user) }
@@ -28,6 +29,39 @@ RSpec.describe "Settings", type: :request do
         get settings_path
         expect(response.body).not_to include("Connect private repos")
         expect(response.body).to include("Private repos are connected")
+      end
+
+      context "with the GitHub App registered" do
+        include_context "with the GitHub App configured"
+
+        it "connects private repos through the App, not the repo scope" do
+          sign_in_as(user)
+          get settings_path
+          expect(response.body).to include("Connect private repos")
+          expect(response.body).to include(new_github_installation_path)
+          expect(response.body).not_to include('name="scope"')
+        end
+
+        it "offers a builder on the repo scope the switch to read-only" do
+          sign_in_as(user)
+          user.update!(github_token_scopes: "repo,user:email")
+          get settings_path
+          expect(response.body).to include("Private repos are connected")
+          expect(response.body).to include("Switch to read-only")
+        end
+
+        it "shows an installed App, and asks to revoke a leftover repo grant" do
+          sign_in_as(user)
+          user.update!(github_installation_id: 7, github_token_scopes: "repo,user:email")
+          get settings_path
+          expect(response.body).to include("Private repos are connected, read-only")
+          expect(response.body).to include("https://github.com/settings/installations/7")
+          expect(response.body).to include("Revoke it at")
+
+          user.update!(github_token_scopes: "user:email")
+          get settings_path
+          expect(response.body).not_to include("Revoke it at")
+        end
       end
 
       it "shows the embed widget script snippet" do

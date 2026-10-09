@@ -46,6 +46,8 @@ class SettingsController < ApplicationController
     @last_github_sync = current_user.last_synced_at(source: :github)
     @badge_markdown   = "[![openstage](#{profile_badge_url(current_user.username)})](#{profile_url(current_user.username)}?ref=badge)"
     @embed_script_tag = "<script src=\"#{profile_embed_url(current_user.username)}\"></script>"
+    @github_app       = GithubAppGateway.configured?
+    @repo_scope       = User.scopes_include_repo?(current_user.github_token_scopes)
   end
 
   def profile_params

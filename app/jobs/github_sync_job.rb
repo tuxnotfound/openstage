@@ -59,6 +59,7 @@ class GithubSyncJob < ApplicationJob
     sync_listing(client, user, lambda do |page|
       client.repositories(nil, affiliation: "owner,collaborator,organization_member", per_page: PER_PAGE, page: page)
     end)
+    sync_installation(user)
 
     # Runs off our own table, not the GitHub listing, so it still works after
     # the "repo" scope is revoked and private repos vanish from the API.
@@ -72,7 +73,23 @@ class GithubSyncJob < ApplicationJob
     end
   end
 
+  # Private repos the builder picked in the GitHub App (C12), read with an
+  # installation token. The sign-in token above keeps the public ones.
+  def sync_installation(user)
+    return unless user.github_installation_id?
+
+    client = Octokit::Client.new(access_token: GithubAppGateway.installation_token(user.github_installation_id))
+    sync_listing(client, user, ->(page) { client.list_app_installation_repositories(per_page: PER_PAGE, page: page).repositories })
+  rescue ApplicationGateway::NotFound
+    # Uninstalled on GitHub. Forgetting it lets Settings offer to connect again.
+    user.update_column(:github_installation_id, nil)
+  end
+
   def sync_listed_repo(client, user, repo_data)
+    # A repo can be on both listings: a public one picked in the App, or any
+    # repo while an older repo-scoped token is still stored.
+    return if @listed_ids.include?(repo_data.id)
+
     @listed_ids << repo_data.id
     repo = sync_repo(user, repo_data)
     return unless repo.included?

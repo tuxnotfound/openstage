@@ -1,0 +1,34 @@
+<section>
+  <% if current_user.github_installation_id? %>
+    <p class="text-xs text-gray-400">
+      Private repos are connected, read-only. They stay excluded until you include them above.
+      <%= link_to "Change which repos Openstage can read", "https://github.com/settings/installations/#{current_user.github_installation_id}",
+          class: "underline hover:text-gray-600", target: "_blank", rel: "noopener" %>.
+    </p>
+    <% if repo_scope %>
+      <p class="text-xs text-amber-800 mt-2">Openstage no longer needs the read and write access you gave it before. Revoke it at <%= link_to "github.com/settings/applications", "https://github.com/settings/applications", class: "underline", target: "_blank", rel: "noopener" %>, then sign in again.</p>
+    <% end %>
+  <% elsif repo_scope %>
+    <p class="text-xs text-gray-400">Private repos are connected. They stay excluded until you include them above.</p>
+    <% if github_app %>
+      <div class="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 mt-2 flex items-center justify-between gap-4">
+        <p class="text-xs text-amber-800">Openstage can now read private repos without write access, and only the ones you pick.</p>
+        <%= link_to "Switch to read-only", new_github_installation_path, data: { turbo: false },
+            class: "shrink-0 text-xs bg-gray-900 text-white px-3 py-1.5 rounded-md hover:bg-gray-700 transition-colors" %>
+      </div>
+    <% end %>
+  <% elsif github_app %>
+    <div class="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex items-center justify-between gap-4">
+      <p class="text-xs text-amber-800">Private repos are not listed. Connecting them installs the Openstage GitHub App on the repos you pick, read-only; Openstage only ever reads commit messages, and each private repo stays excluded until you include it.</p>
+      <%= link_to "Connect private repos", new_github_installation_path, data: { turbo: false },
+          class: "shrink-0 text-xs bg-gray-900 text-white px-3 py-1.5 rounded-md hover:bg-gray-700 transition-colors" %>
+    </div>
+  <% else %>
+    <div class="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex items-center justify-between gap-4">
+      <p class="text-xs text-amber-800">Private repos are not listed. GitHub only shares them through its <code>repo</code> permission, which also allows writes; Openstage only ever reads commit messages, and each private repo stays excluded until you include it.</p>
+      <%= button_to "Connect private repos", "/auth/github", method: :post,
+          params: { scope: "user:email,repo" }, data: { turbo: false },
+          class: "shrink-0 text-xs bg-gray-900 text-white px-3 py-1.5 rounded-md hover:bg-gray-700 transition-colors cursor-pointer" %>
+    </div>
+  <% end %>
+</section>
