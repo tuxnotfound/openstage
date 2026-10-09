@@ -25,10 +25,13 @@ class GithubWebhooksController < ApplicationController
     head :unauthorized unless ActiveSupport::SecurityUtils.secure_compare(expected, signature)
   end
 
-  # The builder whose own account holds the installation. Installs on an
-  # organization match nobody, because C12 never connects them.
+  # The builder already connected to this installation or, for a new one, the
+  # builder whose own account holds it. Installs on an organization match
+  # nobody, because C12 never connects them.
   def installation_owner
-    account_id = JSON.parse(request.raw_post).dig("installation", "account", "id")
-    User.active.find_by(github_uid: account_id.to_s) if account_id
+    installation = JSON.parse(request.raw_post)["installation"] || {}
+    connected = User.active.find_by(github_installation_id: installation["id"]) if installation["id"]
+    account_id = installation.dig("account", "id")
+    connected || (User.active.find_by(github_uid: account_id.to_s) if account_id)
   end
 end

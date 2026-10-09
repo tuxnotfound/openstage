@@ -53,11 +53,20 @@ RSpec.describe "GitHub App webhooks", type: :request do
     expect(GithubInstallationRefreshJob).not_to have_received(:perform_later)
   end
 
-  it "ignores other events" do
-    deliver("ping", { zen: "Keep it logically awesome.", hook_id: 1 })
+  # The payload names the builder's own account, so only the event filter can
+  # keep this from refreshing.
+  it "ignores other events, even about the builder's installation" do
+    deliver("push", installation_payload(123, action: nil))
 
     expect(response).to have_http_status(:accepted)
     expect(GithubInstallationRefreshJob).not_to have_received(:perform_later)
+  end
+
+  it "finds a connected builder by the installation id alone" do
+    user.update!(github_installation_id: 7)
+    deliver("installation_repositories", { action: "removed", installation: { id: 7 } })
+
+    expect(GithubInstallationRefreshJob).to have_received(:perform_later).with(user.id)
   end
 
   it "is off until a webhook secret is set" do

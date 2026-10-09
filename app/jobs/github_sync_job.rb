@@ -36,6 +36,7 @@ class GithubSyncJob < ApplicationJob
   private
 
   def sync(user)
+    @started_at = Time.current
     @entries_added = 0
     @listed_ids = []
     @skipped = []
@@ -76,22 +77,29 @@ class GithubSyncJob < ApplicationJob
   end
 
   # Private repos the builder picked in the GitHub App (C12), read with an
-  # installation token. The sign-in token above keeps the public ones.
+  # installation token. The sign-in token above keeps the public ones. The id is
+  # read fresh: a Settings check or webhook may have stored a new one since this
+  # job loaded the user.
   def sync_installation(user)
-    return unless user.github_installation_id?
+    installation_id = User.where(id: user.id).pick(:github_installation_id)
+    return unless installation_id
 
-    client = Octokit::Client.new(access_token: GithubAppGateway.installation_token(user.github_installation_id))
+    client = Octokit::Client.new(access_token: GithubAppGateway.installation_token(installation_id))
     sync_listing(client, user, ->(page) { client.list_app_installation_repositories(per_page: PER_PAGE, page: page).repositories })
   rescue ApplicationGateway::NotFound
-    # Uninstalled on GitHub. Forgetting it lets Settings offer to connect again.
-    user.update_column(:github_installation_id, nil)
+    # Uninstalled on GitHub, or reinstalled under a new id. Forget this id unless
+    # something stored a newer one, and drop nothing this run, or a reinstall
+    # would lose every include. The next Settings check or webhook settles it.
+    User.where(id: user.id, github_installation_id: installation_id).update_all(github_installation_id: nil)
+    @listing_incomplete = true
   end
 
-  # A listing that ran into the page cap is incomplete, so nothing is dropped.
+  # An incomplete listing (page cap, App not reachable) drops nothing.
   def drop_unreadable_private_repos(user)
-    return if @listing_capped
+    return if @listing_incomplete
 
-    @dropped = GithubRepos::DropUnreadableService.new(user: user, listed_ids: @listed_ids).tap(&:call!).dropped
+    drop = GithubRepos::DropUnreadableService.new(user: user, listed_ids: @listed_ids, listed_at: @started_at)
+    @dropped = drop.tap(&:call!).dropped
   end
 
   def sync_listed_repo(client, user, repo_data)
@@ -105,6 +113,10 @@ class GithubSyncJob < ApplicationJob
 
     @entries_added += sync_commits(client, user, repo, private_repo: repo_data.private)
     repo.update!(last_synced_at: Time.current)
+  rescue Octokit::Conflict
+    # GitHub answers 409 while a repo has no commits yet. Nothing failed, and the
+    # watermark stays unset so its first commits get the full window.
+    nil
   rescue Octokit::Error => e
     # Per-repo failure must not advance the watermark, or commits in the
     # gap are lost forever. Other repos continue to sync.
@@ -201,7 +213,7 @@ class GithubSyncJob < ApplicationJob
       break if page.size < PER_PAGE
 
       # A full last page means anything past the cap went unseen.
-      @listing_capped = true if page_number == MAX_PAGES
+      @listing_incomplete = true if page_number == MAX_PAGES
     end
   end
 

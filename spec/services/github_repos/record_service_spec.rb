@@ -6,12 +6,15 @@ require "rails_helper"
 RSpec.describe GithubRepos::RecordService do
   let(:user) { create(:user, github_username: "tuxnotfound") }
 
-  def record(name:, private:, id: nil, branch: "main")
-    listing = GithubAppGateway::Repo.new(
+  def listing(name:, private:, id: nil, branch: "main")
+    GithubAppGateway::Repo.new(
       id: id || name.hash.abs, name: name, full_name: "tuxnotfound/#{name}", description: "d",
       html_url: "https://github.com/tuxnotfound/#{name}", default_branch: branch, private: private
     )
-    described_class.new(user: user, listing: listing).tap(&:call!).repo
+  end
+
+  def record(**attributes)
+    described_class.new(user: user, listing: listing(**attributes)).tap(&:call!).repo
   end
 
   it "excludes a newly discovered private repo and includes a public one" do
@@ -54,6 +57,57 @@ RSpec.describe GithubRepos::RecordService do
 
     record(name: "open", private: false, id: 9, branch: "trunk")
     expect(repo.reload).to have_attributes(default_branch: "trunk", last_synced_at: nil)
+  end
+
+  # Commits are tied to their repo by name, so a rename must carry them, or a
+  # later exclude or drop would miss the ones from before it.
+  it "carries the repo's commits through a rename" do
+    repo = record(name: "stealth", private: true, id: 5)
+    old = create(:entry, user: user, source: "github", repo_name: "tuxnotfound/stealth")
+    note = create(:entry, user: user, source: "manual", repo_name: "tuxnotfound/stealth")
+
+    record(name: "launch", private: true, id: 5)
+
+    expect(repo.reload.full_name).to eq("tuxnotfound/launch")
+    expect(old.reload.repo_name).to eq("tuxnotfound/launch")
+    expect(note.reload.repo_name).to eq("tuxnotfound/stealth")
+  end
+
+  it "takes the commits of a repo just excluded for going private off the profile now" do
+    public_repo = record(name: "app", private: false, id: 6)
+    shown = create(:entry, user: user, source: "github", repo_name: public_repo.full_name, hidden: false,
+                           url: "https://github.com/tuxnotfound/app/commit/abc")
+
+    record(name: "app", private: true, id: 6)
+
+    expect(public_repo.reload.included).to be(false)
+    expect(shown.reload).to have_attributes(hidden: true, url: nil)
+  end
+
+  # Two recorders seeing the same new repo at once: the sync and a Settings
+  # check, or the webhook and the Setup URL callback.
+  describe "a repo recorded meanwhile by another writer" do
+    let!(:theirs) do
+      create(:github_repo, user: user, github_repo_id: 8, name: "race", full_name: "tuxnotfound/race", private_repo: true, included: false)
+    end
+
+    it "uses that row when the uniqueness check sees it first" do
+      allow(GithubRepo).to receive(:find_or_initialize_by).and_return(GithubRepo.new(user: user, github_repo_id: 8))
+      service = described_class.new(user: user, listing: listing(name: "race", private: true, id: 8))
+
+      expect(service.call).to be(true)
+      expect(service.repo).to eq(theirs)
+    end
+
+    it "uses that row when the insert loses on the unique index" do
+      fresh = GithubRepo.new(user: user, github_repo_id: 8)
+      allow(GithubRepo).to receive(:find_or_initialize_by).and_return(fresh)
+      allow(fresh).to receive(:save).and_raise(ActiveRecord::RecordNotUnique)
+      service = described_class.new(user: user, listing: listing(name: "race", private: true, id: 8))
+
+      expect(service.call).to be(true)
+      expect(service.repo).to eq(theirs)
+    end
   end
 
   it "requires a user" do

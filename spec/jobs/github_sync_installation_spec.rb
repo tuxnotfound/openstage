@@ -65,7 +65,11 @@ RSpec.describe GithubSyncJob, "private repos through the GitHub App", type: :job
     expect(app_client).not_to have_received(:commits)
   end
 
-  it "forgets an installation GitHub no longer has, and still syncs public repos" do
+  # A 404 is an uninstall or a reinstall under a new id. Dropping on it would
+  # lose every include of a reinstall, so this run drops nothing; the next
+  # Settings check or webhook settles it.
+  it "forgets an installation GitHub no longer has, drops nothing this run, and still syncs public repos" do
+    create(:github_repo, user: user, github_repo_id: 2, full_name: "tuxnotfound/secret", private_repo: true, included: true)
     allow(GithubAppGateway).to receive(:installation_token).and_raise(ApplicationGateway::NotFound.new(status: 404))
 
     described_class.new.perform(user.id)
@@ -73,6 +77,49 @@ RSpec.describe GithubSyncJob, "private repos through the GitHub App", type: :job
     expect(user.reload.github_installation_id).to be_nil
     expect(user.sync_logs.last).to have_attributes(status: "success")
     expect(user.github_repos.find_by(github_repo_id: 1)).to be_present
+    expect(user.github_repos.find_by(github_repo_id: 2)).to be_present
+  end
+
+  it "keeps a newer installation id that a reinstall stored meanwhile" do
+    allow(GithubAppGateway).to receive(:installation_token).with(7) do
+      User.where(id: user.id).update_all(github_installation_id: 8)
+      raise ApplicationGateway::NotFound.new(status: 404)
+    end
+
+    described_class.new.perform(user.id)
+
+    expect(user.reload.github_installation_id).to eq(8)
+  end
+
+  # The review's high finding: signing up starts a sync that loads the user
+  # before the App is connected. The Settings check then connects it and
+  # records the private repos while the sync is still importing.
+  it "never deletes private repos that a Settings check recorded while it ran" do
+    user.update!(github_installation_id: nil)
+    allow(GithubAppGateway).to receive(:installation_token).with(8).and_return("ghs_installation")
+    allow(app_client).to receive(:list_app_installation_repositories).and_return(double(repositories: []))
+    allow(signin_client).to receive(:repositories) do
+      User.where(id: user.id).update_all(github_installation_id: 8)
+      create(:github_repo, user: user, github_repo_id: 3, full_name: "tuxnotfound/connected", private_repo: true)
+      [ public_repo ]
+    end
+
+    described_class.new.perform(user.id)
+
+    expect(GithubAppGateway).to have_received(:installation_token).with(8)
+    expect(user.github_repos.find_by(github_repo_id: 3)).to be_present
+  end
+
+  # GitHub answers 409 for a repo with no commits yet; that is not a failure.
+  it "treats an empty repo as nothing to import, not as skipped" do
+    create(:github_repo, user: user, github_repo_id: 2, full_name: "tuxnotfound/secret", private_repo: true,
+                         included: true, included_chosen: true)
+    allow(app_client).to receive(:commits).and_raise(Octokit::Conflict.new)
+
+    described_class.new.perform(user.id)
+
+    expect(user.sync_logs.last).to have_attributes(status: "success", error_message: nil)
+    expect(user.github_repos.find_by(github_repo_id: 2).last_synced_at).to be_nil
   end
 
   # Pedro's test, 2026-10-09: codeconvert taken out of the App on GitHub still

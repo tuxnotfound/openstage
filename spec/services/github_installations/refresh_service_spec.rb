@@ -19,6 +19,7 @@ RSpec.describe GithubInstallations::RefreshService do
   before do
     allow(GithubAppGateway).to receive(:user_installation).and_raise(not_found)
     allow(GithubAppGateway).to receive(:installation_repositories).and_raise(not_found)
+    allow(GithubAppGateway).to receive(:repository).and_raise(not_found)
   end
 
   it "connects an installation GitHub never sent the builder back from, with its repos excluded" do
@@ -78,13 +79,47 @@ RSpec.describe GithubInstallations::RefreshService do
 
   # github_username is refreshed only at sign-in; a renamed builder's old name
   # may belong to someone else now.
-  it "never connects an installation on another account" do
+  it "never connects an installation on another account, says why, and drops nothing" do
+    create(:github_repo, user: user, github_repo_id: 2, private_repo: true)
     allow(GithubAppGateway).to receive(:user_installation).and_return(id: 9, account_id: 555)
+    service = described_class.new(user: user)
+
+    expect(service.call).to be(false)
+    expect(service.errors.full_messages).to include(described_class::RENAMED)
+    expect(user.reload.github_installation_id).to be_nil
+    expect(user.github_repos.find_by(github_repo_id: 2)).to be_present
+    expect(GithubAppGateway).not_to have_received(:installation_repositories)
+  end
+
+  # Taken out of the App after going public: dropping it would hide its commits
+  # and erase their links, and the next sync would bring it back as new.
+  it "records a repo that went public instead of dropping it" do
+    user.update!(github_installation_id: 7)
+    create(:github_repo, user: user, github_repo_id: 2, full_name: "tuxnotfound/tool", private_repo: true, included: true)
+    entry = create(:entry, user: user, source: "github", repo_name: "tuxnotfound/tool", hidden: false)
+    allow(GithubAppGateway).to receive(:installation_repositories).with(7).and_return([])
+    allow(GithubAppGateway).to receive(:repository).with(2, token: user.github_access_token)
+                                                   .and_return(listing(2, "tool", private: false))
 
     refresh
 
-    expect(user.reload.github_installation_id).to be_nil
-    expect(GithubAppGateway).not_to have_received(:installation_repositories)
+    expect(user.github_repos.find_by(github_repo_id: 2)).to have_attributes(private_repo: false, included: true)
+    expect(entry.reload.hidden).to be(false)
+  end
+
+  # A webhook and a Settings check can both see the stale id after a reinstall;
+  # the one that loses must neither wipe the new id the other stored nor, unable
+  # to look it up itself, drop the repos that id still reads.
+  it "keeps and reads a newer installation id stored meanwhile" do
+    user.update!(github_installation_id: 7)
+    create(:github_repo, user: user, github_repo_id: 1, full_name: "tuxnotfound/secret", private_repo: true, included: true)
+    User.where(id: user.id).update_all(github_installation_id: 8)
+    allow(GithubAppGateway).to receive(:installation_repositories).with(8).and_return([ listing(1, "secret") ])
+
+    refresh
+
+    expect(user.reload.github_installation_id).to eq(8)
+    expect(user.github_repos.find_by(github_repo_id: 1)).to have_attributes(included: true)
   end
 
   it "leaves private repos alone for a builder still on the repo-scoped token" do

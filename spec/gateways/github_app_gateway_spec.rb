@@ -6,6 +6,11 @@ RSpec.describe GithubAppGateway do
 
   let(:json) { { "Content-Type" => "application/json" } }
 
+  # GET /app answers with the App these credentials sign as.
+  def signs_as(slug)
+    stub_request(:get, "https://api.github.com/app").to_return(status: 200, headers: json, body: { slug: slug }.to_json)
+  end
+
   describe ".configured?" do
     it "is true once every App setting is present" do
       expect(described_class).to be_configured
@@ -41,10 +46,28 @@ RSpec.describe GithubAppGateway do
     end
 
     it "raises NotFound once the App is uninstalled" do
+      signs_as("openstage-test")
       stub_request(:post, "https://api.github.com/app/installations/42/access_tokens")
         .to_return(status: 404, body: { message: "Not Found" }.to_json, headers: json)
 
       expect { described_class.installation_token(42) }.to raise_error(ApplicationGateway::NotFound)
+    end
+
+    # Another App's key finds none of this App's installations. Read as an
+    # uninstall, that would drop every builder's private repos.
+    it "raises Misconfigured, not NotFound, when the credentials sign as another App" do
+      signs_as("openstage-dev")
+      stub_request(:post, "https://api.github.com/app/installations/42/access_tokens")
+        .to_return(status: 404, body: { message: "Not Found" }.to_json, headers: json)
+
+      expect { described_class.installation_token(42) }
+        .to raise_error(GithubAppGateway::Misconfigured, /signs as openstage-dev, not openstage-test/)
+    end
+
+    it "raises Misconfigured when the private key does not parse" do
+      Rails.configuration.x.github_app.private_key = "-----BEGIN RSA PRIVATE KEY-----\nnot a key\n-----END RSA PRIVATE KEY-----"
+
+      expect { described_class.installation_token(42) }.to raise_error(GithubAppGateway::Misconfigured, /GITHUB_APP_PRIVATE_KEY/)
     end
   end
 
@@ -76,10 +99,30 @@ RSpec.describe GithubAppGateway do
     end
 
     it "raises NotFound once the App is uninstalled" do
+      signs_as("openstage-test")
       stub_request(:post, "https://api.github.com/app/installations/42/access_tokens")
         .to_return(status: 404, body: { message: "Not Found" }.to_json, headers: json)
 
       expect { described_class.installation_repositories(42) }.to raise_error(ApplicationGateway::NotFound)
+    end
+  end
+
+  describe ".repository" do
+    it "reads a repo by id with the builder's own token" do
+      stub_request(:get, "https://api.github.com/repositories/42")
+        .with(headers: { "Authorization" => "Bearer gho_user" })
+        .to_return(status: 200, headers: json, body: {
+          id: 42, name: "tool", full_name: "me/tool", description: "d", html_url: "https://github.com/me/tool",
+          default_branch: "main", private: false
+        }.to_json)
+
+      expect(described_class.repository(42, token: "gho_user")).to have_attributes(id: 42, full_name: "me/tool", private: false)
+    end
+
+    it "raises NotFound for a repo the token cannot see" do
+      stub_request(:get, "https://api.github.com/repositories/42").to_return(status: 404, body: "{}", headers: json)
+
+      expect { described_class.repository(42, token: "gho_user") }.to raise_error(ApplicationGateway::NotFound)
     end
   end
 

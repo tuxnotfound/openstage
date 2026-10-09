@@ -45,6 +45,26 @@ RSpec.describe "GithubRepos", type: :request do
 
           expect(response.body).to include("fresh-secret")
           expect(response.body).to include("Private repos are connected, read-only")
+          expect(response.body).not_to include(GithubReposController::REFRESH_FAILED)
+        end
+
+        it "says why when the check refuses, instead of blaming GitHub" do
+          user.update!(github_uid: "123", github_username: "me")
+          allow(GithubAppGateway).to receive(:user_installation).and_return(id: 9, account_id: 555)
+
+          get github_repos_path, headers: frame
+
+          expect(response.body).to include("Your GitHub username has changed since you signed in")
+          expect(response.body).not_to include(GithubReposController::REFRESH_FAILED)
+        end
+
+        it "still renders, with a note, when the App credentials are wrong" do
+          allow(GithubAppGateway).to receive(:user_installation).and_raise(GithubAppGateway::Misconfigured.new("bad key"))
+
+          get github_repos_path, headers: frame
+
+          expect(response).to have_http_status(:ok)
+          expect(response.body).to include(GithubReposController::REFRESH_FAILED)
         end
 
         it "still renders, with a note, when GitHub does not answer" do

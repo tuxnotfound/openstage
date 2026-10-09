@@ -13,7 +13,7 @@ class GithubReposController < ApplicationController
     return redirect_to(settings_path(tab: "integrations")) unless turbo_frame_request?
 
     refresh = GithubInstallations::RefreshService.new(user: current_user)
-    note = REFRESH_FAILED if GithubAppGateway.configured? && !refresh.call
+    note = refusal(refresh) if GithubAppGateway.configured? && !refresh.call
     render_section(note)
   end
 
@@ -45,6 +45,10 @@ class GithubReposController < ApplicationController
   end
 
   private
+
+  def refusal(refresh)
+    refresh.errors.full_messages.to_sentence.presence || REFRESH_FAILED
+  end
 
   def render_section(note)
     render partial: "settings/github_repos", locals: github_repos_section.merge(refresh: false, note: note)
