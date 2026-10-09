@@ -18,6 +18,10 @@ class GithubReposController < ApplicationController
       scope.update_all(hidden: false)
     end
 
+    # A repo never synced has no commits here yet, like a private repo just
+    # connected: fetch them now, not at the next 2-hourly run.
+    GithubSyncJob.perform_later(current_user.id) if @repo.included? && @repo.last_synced_at.nil?
+
     respond_to do |format|
       format.turbo_stream
       format.html { redirect_to dashboard_path }

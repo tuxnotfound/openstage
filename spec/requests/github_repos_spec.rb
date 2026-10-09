@@ -35,6 +35,25 @@ RSpec.describe "GithubRepos", type: :request do
         end
       end
 
+      # A private repo just connected through the GitHub App has no commits
+      # until a sync reads it, and the manual sync has a cooldown.
+      context "including a repo that was never synced" do
+        let!(:new_private) { create(:github_repo, user: user, full_name: "user/secret", private_repo: true, included: false) }
+
+        it "syncs right away" do
+          expect(GithubSyncJob).to receive(:perform_later).with(user.id).once
+
+          patch github_repo_path(new_private), params: { included: "true" }
+        end
+
+        it "does not sync again for a repo already synced" do
+          new_private.update!(last_synced_at: 1.hour.ago)
+          expect(GithubSyncJob).not_to receive(:perform_later)
+
+          patch github_repo_path(new_private), params: { included: "true" }
+        end
+      end
+
       context "re-including a repo" do
         let!(:excluded_repo) { create(:github_repo, user: user, full_name: "user/oldapp", included: false) }
         let!(:hidden_entry)  { create(:entry, user: user, source: "github", repo_name: "user/oldapp", hidden: true) }
