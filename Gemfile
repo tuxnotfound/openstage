@@ -49,6 +49,9 @@ gem "solid_queue"
 gem "octokit", "~> 7.0"
 gem "faraday-retry"
 
+# ApplicationService#after_commit on Rails 7.1; 7.2 has it built in
+gem "after_commit_everywhere", "~> 1.4"
+
 # Pagination
 gem "kaminari"
 
