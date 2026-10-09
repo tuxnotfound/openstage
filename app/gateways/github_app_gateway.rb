@@ -4,7 +4,7 @@ class GithubAppGateway < ApplicationGateway
   API_VERSION = "2022-11-28".freeze
 
   def self.configured?
-    settings.values_at(:slug, :client_id, :client_secret, :private_key).all?(&:present?)
+    settings.values_at(:slug, :client_id, :private_key).all?(&:present?)
   end
 
   # Where a builder installs the App and picks the repos it may read.
@@ -12,16 +12,16 @@ class GithubAppGateway < ApplicationGateway
     "https://github.com/apps/#{settings.slug}/installations/new"
   end
 
+  # The App's installation on a GitHub user account, as { id:, account_id: }.
+  # Raises NotFound when the App is not installed there.
+  def self.user_installation(github_username)
+    installation = get("/users/#{ERB::Util.url_encode(github_username)}/installation", headers: auth(app_jwt))
+    { id: installation[:id], account_id: installation[:account][:id] }
+  end
+
   # Reads the installation's repos for an hour, and can never write.
   def self.installation_token(installation_id)
     post("/app/installations/#{installation_id.to_i}/access_tokens", headers: auth(app_jwt))[:token]
-  end
-
-  # The installations a user token can see, as { id:, account_id:, account_login: }.
-  def self.installations(user_token)
-    get("/user/installations", query: { per_page: 100 }, headers: auth(user_token))[:installations].map do |installation|
-      { id: installation[:id], account_id: installation[:account][:id], account_login: installation[:account][:login] }
-    end
   end
 
   def self.settings

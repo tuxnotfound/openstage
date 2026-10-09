@@ -5,8 +5,7 @@ RSpec.shared_context "with the GitHub App configured" do
   around do |example|
     settings = Rails.configuration.x.github_app
     saved = settings.to_h
-    settings.merge!(slug: "openstage-test", client_id: "Iv23test", client_secret: "app-secret",
-                    private_key: GITHUB_APP_TEST_KEY.to_pem)
+    settings.merge!(slug: "openstage-test", client_id: "Iv23test", private_key: GITHUB_APP_TEST_KEY.to_pem)
     example.run
   ensure
     settings.clear

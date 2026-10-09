@@ -11,6 +11,11 @@ RSpec.describe GithubAppGateway do
       expect(described_class).to be_configured
     end
 
+    it "needs no client secret" do
+      Rails.configuration.x.github_app.client_secret = nil
+      expect(described_class).to be_configured
+    end
+
     it "is false while the App is not registered" do
       Rails.configuration.x.github_app.private_key = nil
       expect(described_class).not_to be_configured
@@ -43,22 +48,20 @@ RSpec.describe GithubAppGateway do
     end
   end
 
-  describe ".installations" do
-    it "lists the installations the user token can see, with their accounts" do
-      stub_request(:get, "https://api.github.com/user/installations?per_page=100")
-        .with(headers: { "Authorization" => "Bearer ghu_user" })
-        .to_return(status: 200, headers: json, body: {
-          total_count: 1, installations: [ { id: 7, account: { id: 123, login: "tuxnotfound" } } ]
-        }.to_json)
+  describe ".user_installation" do
+    it "finds the App's installation on an account, signed as the App" do
+      stub_request(:get, "https://api.github.com/users/tuxnotfound/installation")
+        .with { |request| JWT.decode(request.headers["Authorization"].delete_prefix("Bearer "), GITHUB_APP_TEST_KEY.public_key, true, algorithm: "RS256") }
+        .to_return(status: 200, headers: json, body: { id: 7, account: { id: 123, login: "tuxnotfound", type: "User" } }.to_json)
 
-      expect(described_class.installations("ghu_user")).to eq([ { id: 7, account_id: 123, account_login: "tuxnotfound" } ])
+      expect(described_class.user_installation("tuxnotfound")).to eq(id: 7, account_id: 123)
     end
 
-    it "raises Unauthorized for a dead user token" do
-      stub_request(:get, "https://api.github.com/user/installations?per_page=100")
-        .to_return(status: 401, body: { message: "Bad credentials" }.to_json, headers: json)
+    it "raises NotFound when the App is not installed there" do
+      stub_request(:get, "https://api.github.com/users/tuxnotfound/installation")
+        .to_return(status: 404, body: { message: "Not Found" }.to_json, headers: json)
 
-      expect { described_class.installations("ghu_dead") }.to raise_error(ApplicationGateway::Unauthorized)
+      expect { described_class.user_installation("tuxnotfound") }.to raise_error(ApplicationGateway::NotFound)
     end
   end
 end

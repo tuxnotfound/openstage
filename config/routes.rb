@@ -7,7 +7,7 @@ Rails.application.routes.draw do
   delete "/sign_out", to: "sessions#destroy"
 
   # Read-only private repos through the Openstage GitHub App (C12). The
-  # callback is the App's callback URL on GitHub.
+  # callback is the App's Setup URL on GitHub.
   get "/github_app/install", to: "github_installations#new", as: :new_github_installation
   get "/github_app/callback", to: "github_installations#create", as: :github_installation_callback
 
