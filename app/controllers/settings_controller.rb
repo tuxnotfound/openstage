@@ -2,10 +2,7 @@ class SettingsController < ApplicationController
   before_action :require_authentication
 
   def show
-    @github_repos     = current_user.github_repos.order(:name)
-    @last_github_sync = current_user.last_synced_at(source: :github)
-    @badge_markdown   = "[![openstage](#{profile_badge_url(current_user.username)})](#{profile_url(current_user.username)}?ref=badge)"
-    @embed_script_tag = "<script src=\"#{profile_embed_url(current_user.username)}\"></script>"
+    load_settings
   end
 
   def update
@@ -13,6 +10,7 @@ class SettingsController < ApplicationController
       redirect_to settings_path, notice: "Settings saved."
     else
       flash.now[:alert] = current_user.errors.full_messages.to_sentence
+      load_settings
       render :show, status: :unprocessable_entity
     end
   end
@@ -27,6 +25,9 @@ class SettingsController < ApplicationController
       redirect_to settings_path, notice: "Username updated."
     else
       flash.now[:alert] = current_user.errors.full_messages.to_sentence
+      # The page links to the profile, and a rejected name may not fit its route.
+      current_user.restore_attributes([ :username ])
+      load_settings
       render :show, status: :unprocessable_entity
     end
   end
@@ -38,6 +39,14 @@ class SettingsController < ApplicationController
   end
 
   private
+
+  # show also renders after a failed update, so everything it reads loads here.
+  def load_settings
+    @github_repos     = current_user.github_repos.order(:name)
+    @last_github_sync = current_user.last_synced_at(source: :github)
+    @badge_markdown   = "[![openstage](#{profile_badge_url(current_user.username)})](#{profile_url(current_user.username)}?ref=badge)"
+    @embed_script_tag = "<script src=\"#{profile_embed_url(current_user.username)}\"></script>"
+  end
 
   def profile_params
     params.require(:user).permit(:display_name, :bio, :website_url, :building_since)

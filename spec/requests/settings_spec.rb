@@ -59,6 +59,13 @@ RSpec.describe "Settings", type: :request do
         expect(response).to redirect_to(settings_path)
         expect(user.reload.display_name).to eq("New Name")
       end
+
+      # The re-render used to read instance variables only show set, and 500ed.
+      it "re-renders Settings with the reason when a value is rejected" do
+        patch settings_path, params: { user: { website_url: "javascript:alert(1)" } }
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.body).to include("must start with http:// or https://")
+      end
     end
   end
 
@@ -70,6 +77,14 @@ RSpec.describe "Settings", type: :request do
         patch settings_username_path, params: { user: { username: "newusername" } }
         expect(response).to redirect_to(settings_path)
         expect(user.reload.username).to eq("newusername")
+      end
+
+      # The layout links to the profile, whose route rejects such a name.
+      it "re-renders Settings when the username has characters a profile URL cannot hold" do
+        patch settings_username_path, params: { user: { username: "bad name!" } }
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.body).to include("only allows letters, numbers, hyphens, and underscores")
+        expect(user.reload.username).not_to eq("bad name!")
       end
     end
 
