@@ -1,8 +1,10 @@
 <%# The GitHub repos section of Settings. The page renders it from the database
     with a lazy src; once the Integrations tab shows it, GithubReposController
     checks GitHub and renders it again, so private repos picked or removed on
-    GitHub show at once. Links inside leave the frame (target _top). %>
-<%= turbo_frame_tag "github_repos", src: (github_repos_path if refresh), loading: (:lazy if refresh), target: "_top" do %>
+    GitHub show at once. refresh-frame reloads it when the page comes back into
+    view. Links inside leave the frame (target _top). %>
+<%= turbo_frame_tag "github_repos", src: (github_repos_path if refresh), loading: (:lazy if refresh), target: "_top",
+                    data: { controller: ("refresh-frame" if refresh) } do %>
   <% if note %>
     <p class="text-xs text-amber-800 mb-3"><%= note %></p>
   <% end %>

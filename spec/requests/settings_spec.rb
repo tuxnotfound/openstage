@@ -68,6 +68,7 @@ RSpec.describe "Settings", type: :request do
         sign_in_as(user)
         get settings_path
         expect(response.body).to match(/<turbo-frame[^>]*id="github_repos"[^>]*src="#{github_repos_path}"/)
+        expect(response.body).to match(/<turbo-frame[^>]*data-controller="refresh-frame"[^>]*id="github_repos"/)
       end
 
       it "opens the tab named in the URL, and only a known one" do
