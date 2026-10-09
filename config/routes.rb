@@ -36,8 +36,8 @@ Rails.application.routes.draw do
   # Sync triggers
   post "/sync/github", to: "syncs#github", as: :sync_github
 
-  # Repo management
-  resources :github_repos, only: [ :update ]
+  # Repo management. index is the Settings frame that checks GitHub first.
+  resources :github_repos, only: [ :index, :update ]
 
   # Entries
   resources :entries, only: [ :create, :edit, :update, :destroy ]
@@ -48,6 +48,9 @@ Rails.application.routes.draw do
 
   # Stripe webhook
   post "/webhooks/stripe", to: "webhooks#stripe", as: :stripe_webhook
+
+  # GitHub App webhooks (C12): installs, uninstalls and repo picks on GitHub
+  post "/webhooks/github", to: "github_webhooks#create", as: :github_webhook
 
   # Email subscribe on public profiles (C11). Token routes sit above the
   # profile catch-all; "subscriptions" is a reserved username.

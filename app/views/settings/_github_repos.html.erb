@@ -1,0 +1,31 @@
+<%# The GitHub repos section of Settings. The page renders it from the database
+    with a lazy src; once the Integrations tab shows it, GithubReposController
+    checks GitHub and renders it again, so private repos picked or removed on
+    GitHub show at once. Links inside leave the frame (target _top). %>
+<%= turbo_frame_tag "github_repos", src: (github_repos_path if refresh), loading: (:lazy if refresh), target: "_top" do %>
+  <% if note %>
+    <p class="text-xs text-amber-800 mb-3"><%= note %></p>
+  <% end %>
+
+  <% if github_repos.any? %>
+  <section>
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">GitHub repos</h2>
+      <% if last_github_sync %>
+        <span class="text-xs text-gray-400">Synced <%= time_ago_in_words(last_github_sync) %> ago</span>
+      <% end %>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden">
+      <% github_repos.each do |repo| %>
+        <%= render "github_repos/repo", repo: repo %>
+      <% end %>
+    </div>
+    <p class="text-xs text-gray-400 mt-2">Excluded repos won't contribute commits to your timeline.</p>
+    <p class="text-xs text-gray-400 mt-1">Private repos are excluded by default. Including one publishes its commit messages on your profile, so your build is public while your code stays private. Commit links are never shown for private repos.</p>
+  </section>
+  <% end %>
+
+  <%# Private repos: sign-in asks only for user:email, so GitHub never lists
+      them until the user connects them here. %>
+  <%= render "settings/private_repos", github_app: github_app, repo_scope: repo_scope %>
+<% end %>

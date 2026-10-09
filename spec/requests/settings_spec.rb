@@ -64,6 +64,21 @@ RSpec.describe "Settings", type: :request do
         end
       end
 
+      it "loads the GitHub repos section through a frame that checks GitHub" do
+        sign_in_as(user)
+        get settings_path
+        expect(response.body).to match(/<turbo-frame[^>]*id="github_repos"[^>]*src="#{github_repos_path}"/)
+      end
+
+      it "opens the tab named in the URL, and only a known one" do
+        sign_in_as(user)
+        get settings_path(tab: "integrations")
+        expect(response.body).to include('data-tabs-active-value="integrations"')
+
+        get settings_path(tab: "<script>")
+        expect(response.body).to include('data-tabs-active-value=""')
+      end
+
       it "shows the embed widget script snippet" do
         sign_in_as(user)
         get settings_path

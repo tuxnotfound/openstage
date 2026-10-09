@@ -4,7 +4,7 @@
   <h1 class="text-2xl font-bold mb-6">Settings</h1>
 
   <!-- Tab nav -->
-  <div data-controller="tabs">
+  <div data-controller="tabs" data-tabs-active-value="<%= params[:tab].presence_in(%w[profile integrations billing]) %>">
     <div class="flex gap-1 border-b border-gray-100 mb-8">
       <button data-tabs-target="tab"
               data-tabs-tab="profile"
@@ -162,28 +162,8 @@
         </div>
       </section>
 
-      <!-- GitHub repos -->
-      <% if @github_repos.any? %>
-      <section>
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">GitHub repos</h2>
-          <% if @last_github_sync %>
-            <span class="text-xs text-gray-400">Synced <%= time_ago_in_words(@last_github_sync) %> ago</span>
-          <% end %>
-        </div>
-        <div class="bg-white border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden">
-          <% @github_repos.each do |repo| %>
-            <%= render "github_repos/repo", repo: repo %>
-          <% end %>
-        </div>
-        <p class="text-xs text-gray-400 mt-2">Excluded repos won't contribute commits to your timeline.</p>
-        <p class="text-xs text-gray-400 mt-1">Private repos are excluded by default. Including one publishes its commit messages on your profile, so your build is public while your code stays private. Commit links are never shown for private repos.</p>
-      </section>
-      <% end %>
-
-      <!-- Private repos: sign-in asks only for user:email, so GitHub never lists
-           them until the user connects them here. -->
-      <%= render "settings/private_repos", github_app: @github_app, repo_scope: @repo_scope %>
+      <!-- GitHub repos, refreshed from GitHub when this tab opens -->
+      <%= render "settings/github_repos", **@github_repos_section, refresh: true, note: nil %>
 
       <!-- README badge -->
       <section class="mt-10">

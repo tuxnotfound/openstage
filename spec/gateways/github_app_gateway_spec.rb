@@ -48,6 +48,41 @@ RSpec.describe GithubAppGateway do
     end
   end
 
+  describe ".installation_repositories" do
+    def repo_json(id, private: true)
+      { id: id, name: "r#{id}", full_name: "me/r#{id}", description: nil, html_url: "https://github.com/me/r#{id}",
+        default_branch: "main", private: private, owner: { login: "me" } }
+    end
+
+    before do
+      stub_request(:post, "https://api.github.com/app/installations/42/access_tokens")
+        .to_return(status: 201, body: { token: "ghs_abc" }.to_json, headers: json)
+    end
+
+    it "reads every page with the installation token, as Repo values" do
+      first = stub_request(:get, "https://api.github.com/installation/repositories?page=1&per_page=100")
+        .with(headers: { "Authorization" => "Bearer ghs_abc" })
+        .to_return(status: 200, headers: json, body: { total_count: 101, repositories: (1..100).map { |id| repo_json(id) } }.to_json)
+      second = stub_request(:get, "https://api.github.com/installation/repositories?page=2&per_page=100")
+        .to_return(status: 200, headers: json, body: { total_count: 101, repositories: [ repo_json(101, private: false) ] }.to_json)
+
+      repos = described_class.installation_repositories(42)
+
+      expect(first).to have_been_requested
+      expect(second).to have_been_requested
+      expect(repos.size).to eq(101)
+      expect(repos.last).to eq(GithubAppGateway::Repo.new(id: 101, name: "r101", full_name: "me/r101", description: nil,
+                                                          html_url: "https://github.com/me/r101", default_branch: "main", private: false))
+    end
+
+    it "raises NotFound once the App is uninstalled" do
+      stub_request(:post, "https://api.github.com/app/installations/42/access_tokens")
+        .to_return(status: 404, body: { message: "Not Found" }.to_json, headers: json)
+
+      expect { described_class.installation_repositories(42) }.to raise_error(ApplicationGateway::NotFound)
+    end
+  end
+
   describe ".user_installation" do
     it "finds the App's installation on an account, signed as the App" do
       stub_request(:get, "https://api.github.com/users/tuxnotfound/installation")

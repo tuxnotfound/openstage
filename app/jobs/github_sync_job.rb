@@ -87,17 +87,11 @@ class GithubSyncJob < ApplicationJob
     user.update_column(:github_installation_id, nil)
   end
 
-  # A private repo no listing returned is one Openstage can no longer read: taken
-  # out of the GitHub App, the App uninstalled, or the repo deleted. GitHub's
-  # list wins, so its commits come off the profile and it leaves Settings.
-  # Picked again on GitHub it comes back excluded, and including it shows them.
+  # A listing that ran into the page cap is incomplete, so nothing is dropped.
   def drop_unreadable_private_repos(user)
     return if @listing_capped
 
-    unreadable = user.github_repos.where(private_repo: true).where.not(github_repo_id: @listed_ids)
-    @dropped = unreadable.pluck(:full_name)
-    user.entries.where(source: :github, repo_name: @dropped).update_all(hidden: true, url: nil)
-    unreadable.delete_all
+    @dropped = GithubRepos::DropUnreadableService.new(user: user, listed_ids: @listed_ids).tap(&:call!).dropped
   end
 
   def sync_listed_repo(client, user, repo_data)
@@ -106,7 +100,7 @@ class GithubSyncJob < ApplicationJob
     return if @listed_ids.include?(repo_data.id)
 
     @listed_ids << repo_data.id
-    repo = sync_repo(user, repo_data)
+    repo = GithubRepos::RecordService.new(user: user, listing: repo_data).tap(&:call!).repo
     return unless repo.included?
 
     @entries_added += sync_commits(client, user, repo, private_repo: repo_data.private)
@@ -144,36 +138,6 @@ class GithubSyncJob < ApplicationJob
 
     Rails.logger.warn "[GithubSyncJob] hid #{count} entries from excluded private repos" if count.positive?
     count
-  end
-
-  def sync_repo(user, repo_data)
-    repo = GithubRepo.find_or_initialize_by(user: user, github_repo_id: repo_data.id)
-    new_branch = repo_data.default_branch || "main"
-
-    # A default-branch rename invalidates last_synced_at: the watermark was set
-    # against the old branch, and commits on the new branch may predate it, so
-    # a normal sync would miss them. Reset to force INITIAL_SYNC_WINDOW.
-    repo.last_synced_at = nil if repo.persisted? && repo.default_branch != new_branch
-
-    repo.assign_attributes(
-      name: repo_data.name,
-      full_name: repo_data.full_name,
-      description: repo_data.description,
-      url: repo_data.html_url,
-      default_branch: new_branch,
-      private_repo: !!repo_data.private
-    )
-    # Private repos are opt-out by default: nobody signs up expecting their
-    # private commit messages to be published. The false -> true transition is
-    # the moment we learn a repo is private; the old included:true default was
-    # never a consent, so re-default once. A choice the user made by hand
-    # (included_chosen) is a consent and is never overridden.
-    newly_known_private = repo.private_repo? && (repo.new_record? || repo.private_repo_changed?)
-    repo.included = false if newly_known_private && !repo.included_chosen?
-    repo.included = true if repo.new_record? && !repo.private_repo?
-
-    repo.save!
-    repo
   end
 
   def sync_commits(client, user, repo, private_repo: false)

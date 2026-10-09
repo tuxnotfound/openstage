@@ -2,6 +2,10 @@
 # private repos a builder picks when they install it.
 class GithubAppGateway < ApplicationGateway
   API_VERSION = "2022-11-28".freeze
+  PER_PAGE = 100
+
+  # A repo as GitHub lists it, with the fields Openstage keeps.
+  Repo = Data.define(:id, :name, :full_name, :description, :html_url, :default_branch, :private)
 
   def self.configured?
     settings.values_at(:slug, :client_id, :private_key).all?(&:present?)
@@ -22,6 +26,18 @@ class GithubAppGateway < ApplicationGateway
   # Reads the installation's repos for an hour, and can never write.
   def self.installation_token(installation_id)
     post("/app/installations/#{installation_id.to_i}/access_tokens", headers: auth(app_jwt))[:token]
+  end
+
+  # Every repo picked in an installation, as Repo values. Raises NotFound once
+  # the App is uninstalled.
+  def self.installation_repositories(installation_id)
+    headers = auth(installation_token(installation_id))
+    repos = []
+    (1..).each do |page|
+      body = get("/installation/repositories", query: { per_page: PER_PAGE, page: page }, headers: headers)
+      repos.concat(body[:repositories].map { |repo| Repo.new(**Repo.members.to_h { |field| [ field, repo[field] ] }) })
+      return repos if body[:repositories].size < PER_PAGE || repos.size >= body[:total_count]
+    end
   end
 
   def self.settings

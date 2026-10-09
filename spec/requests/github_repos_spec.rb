@@ -1,8 +1,64 @@
 require "rails_helper"
+require "support/github_app"
 
 RSpec.describe "GithubRepos", type: :request do
   let!(:user) { create(:user) }
   let!(:repo) { create(:github_repo, user: user, full_name: "user/myapp", included: true) }
+
+  # The Settings frame: it checks GitHub, then renders the repos section.
+  describe "GET /github_repos" do
+    let(:frame) { { "Turbo-Frame" => "github_repos" } }
+
+    it "requires sign-in" do
+      get github_repos_path, headers: frame
+      expect(response).to redirect_to(root_path)
+    end
+
+    context "when signed in" do
+      before { sign_in_as(user) }
+
+      it "sends a plain visit to the Integrations tab" do
+        get github_repos_path
+        expect(response).to redirect_to(settings_path(tab: "integrations"))
+      end
+
+      it "renders the section from the database while the App is not registered" do
+        get github_repos_path, headers: frame
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to match(/<turbo-frame[^>]*id="github_repos"/)
+        expect(response.body).to include(repo.name)
+      end
+
+      context "with the App registered" do
+        include_context "with the GitHub App configured"
+
+        it "shows a private repo picked on GitHub since the last sync" do
+          user.update!(github_uid: "123", github_username: "me")
+          allow(GithubAppGateway).to receive(:user_installation).with("me").and_return(id: 7, account_id: 123)
+          allow(GithubAppGateway).to receive(:installation_repositories).with(7).and_return([
+            GithubAppGateway::Repo.new(id: 99, name: "fresh-secret", full_name: "me/fresh-secret", description: nil,
+                                       html_url: "https://github.com/me/fresh-secret", default_branch: "main", private: true)
+          ])
+
+          get github_repos_path, headers: frame
+
+          expect(response.body).to include("fresh-secret")
+          expect(response.body).to include("Private repos are connected, read-only")
+        end
+
+        it "still renders, with a note, when GitHub does not answer" do
+          allow(GithubAppGateway).to receive(:user_installation).and_raise(ApplicationGateway::ConnectionFailed.new("timeout"))
+
+          get github_repos_path, headers: frame
+
+          expect(response).to have_http_status(:ok)
+          expect(response.body).to include("GitHub did not answer")
+          expect(response.body).to include(repo.name)
+        end
+      end
+    end
+  end
 
   describe "PATCH /github_repos/:id" do
     context "when not signed in" do
