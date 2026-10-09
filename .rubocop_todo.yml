@@ -52,7 +52,6 @@ Metrics/MethodLength:
     - 'app/controllers/dashboard_controller.rb'
     - 'app/controllers/entries_controller.rb'
     - 'app/controllers/profiles_controller.rb'
-    - 'app/jobs/github_sync_job.rb'
     - 'app/services/og_image_generator.rb'
 
 # Offense count: 2

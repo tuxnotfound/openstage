@@ -18,60 +18,12 @@ class GithubSyncJob < ApplicationJob
     user = User.find_by(id: user_id)
     return unless user && user.github_access_token.present?
 
-    client = Octokit::Client.new(access_token: user.github_access_token)
-
     log = SyncLog.create!(user: user, source: :github, status: :running, ran_at: Time.current)
-    entries_added = 0
-    repos_seen = 0
-    listed_ids = []
-    skipped = []
 
     begin
-      # One header read. Keeps Settings honest about private-repo access
-      # without waiting for a sign-in; a revoked token raises here.
-      user.update_column(:github_token_scopes, client.scopes.join(","))
-
-      # Every repo the user can push to, not just the ones they own. `type: "owner"`
-      # silently dropped org repos and any shared project owned by a teammate,
-      # so a contributor's commits to it never appeared anywhere on Openstage.
-      # Only the user's own commits are imported (see authored_by?), so a shared
-      # repo shows each builder their own work. GitHub rejects `type` combined
-      # with `affiliation`, hence the replacement rather than an addition.
-      #
-      # The explicit nil matters: Octokit's signature is repositories(user = nil,
-      # options = {}), so a bare options hash lands in `user` and every option is
-      # dropped. GitHub then returns its default 30 repos, the short page ends
-      # pagination, and any repo past #30 by name silently never syncs.
-      fetch_repos = lambda do |page|
-        client.repositories(nil, affiliation: "owner,collaborator,organization_member", per_page: PER_PAGE, page: page)
-      end
-
-      each_page(fetch_repos) do |repo_page|
-        repos_seen += repo_page.size
-
-        repo_page.each do |repo_data|
-          listed_ids << repo_data.id
-          repo = sync_repo(user, repo_data)
-          next unless repo.included?
-
-          begin
-            entries_added += sync_commits(client, user, repo, private_repo: repo_data.private)
-            repo.update!(last_synced_at: Time.current)
-          rescue Octokit::Error => e
-            # Per-repo failure must not advance the watermark, or commits in the
-            # gap are lost forever. Other repos continue to sync.
-            Rails.logger.warn "[GithubSyncJob] skipping #{repo.full_name}: #{e.message}"
-            skipped << repo.full_name
-          end
-        end
-      end
-
-      # Runs off our own table, not the GitHub listing, so it still works after
-      # the "repo" scope is revoked and private repos vanish from the API.
-      hide_excluded_private_entries(user)
-
-      log.update!(status: :success, entries_added: entries_added, error_message: sync_notes(user, listed_ids, skipped))
-      Rails.logger.info "[GithubSyncJob] user=#{user.username} repos=#{repos_seen} entries_added=#{entries_added}"
+      sync(user)
+      log.update!(status: :success, entries_added: @entries_added, error_message: sync_notes(user))
+      Rails.logger.info "[GithubSyncJob] user=#{user.username} repos=#{@listed_ids.size} entries_added=#{@entries_added}"
     rescue => e
       # A dead token must not stop the next sign-in from replacing it.
       user.update_column(:github_token_scopes, nil) if e.is_a?(Octokit::Unauthorized)
@@ -83,18 +35,69 @@ class GithubSyncJob < ApplicationJob
 
   private
 
+  def sync(user)
+    @entries_added = 0
+    @listed_ids = []
+    @skipped = []
+    client = Octokit::Client.new(access_token: user.github_access_token)
+
+    # One header read. Keeps Settings honest about private-repo access
+    # without waiting for a sign-in; a revoked token raises here.
+    user.update_column(:github_token_scopes, client.scopes.join(","))
+
+    # Every repo the user can push to, not just the ones they own. `type: "owner"`
+    # silently dropped org repos and any shared project owned by a teammate,
+    # so a contributor's commits to it never appeared anywhere on Openstage.
+    # Only the user's own commits are imported (see authored_by?), so a shared
+    # repo shows each builder their own work. GitHub rejects `type` combined
+    # with `affiliation`, hence the replacement rather than an addition.
+    #
+    # The explicit nil matters: Octokit's signature is repositories(user = nil,
+    # options = {}), so a bare options hash lands in `user` and every option is
+    # dropped. GitHub then returns its default 30 repos, the short page ends
+    # pagination, and any repo past #30 by name silently never syncs.
+    sync_listing(client, user, lambda do |page|
+      client.repositories(nil, affiliation: "owner,collaborator,organization_member", per_page: PER_PAGE, page: page)
+    end)
+
+    # Runs off our own table, not the GitHub listing, so it still works after
+    # the "repo" scope is revoked and private repos vanish from the API.
+    hide_excluded_private_entries(user)
+  end
+
+  # fetch receives a page number and returns that page of repos.
+  def sync_listing(client, user, fetch)
+    each_page(fetch) do |repo_page|
+      repo_page.each { |repo_data| sync_listed_repo(client, user, repo_data) }
+    end
+  end
+
+  def sync_listed_repo(client, user, repo_data)
+    @listed_ids << repo_data.id
+    repo = sync_repo(user, repo_data)
+    return unless repo.included?
+
+    @entries_added += sync_commits(client, user, repo, private_repo: repo_data.private)
+    repo.update!(last_synced_at: Time.current)
+  rescue Octokit::Error => e
+    # Per-repo failure must not advance the watermark, or commits in the
+    # gap are lost forever. Other repos continue to sync.
+    Rails.logger.warn "[GithubSyncJob] skipping #{repo.full_name}: #{e.message}"
+    @skipped << repo.full_name
+  end
+
   # A repo the user included but GitHub no longer lists (token without
   # private-repo access, repo deleted or transferred) used to leave no trace:
   # the run said success and nothing else. Same for a repo skipped on an API
   # error. Shown on the dashboard's sync history.
-  def sync_notes(user, listed_ids, skipped)
-    missing = user.github_repos.included_repos.where.not(github_repo_id: listed_ids).pluck(:full_name)
+  def sync_notes(user)
+    missing = user.github_repos.included_repos.where.not(github_repo_id: @listed_ids).pluck(:full_name)
     notes = []
     if missing.any?
       why = user.private_repo_access? ? "" : " (no private-repo access)"
       notes << "not returned by GitHub: #{missing.join(', ')}#{why}"
     end
-    notes << "skipped: #{skipped.join(', ')}" if skipped.any?
+    notes << "skipped: #{@skipped.join(', ')}" if @skipped.any?
     notes.join("; ").presence
   end
 
