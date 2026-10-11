@@ -8,56 +8,19 @@ class AdminController < ApplicationController
 
   def show
     @since = DAYS.days.ago
+    load_signups
+    load_cohort
+    load_strangers
+    load_recap_funnel
 
-    @signups_by_ref = User.active
-                          .where(created_at: @since..)
-                          .group(:signup_ref)
-                          .count
-                          .transform_keys { |ref| ref.presence || "unattributed" }
-                          .sort_by { |_ref, count| -count }
-
-    @signups_total  = @signups_by_ref.sum { |_ref, count| count }
-    @signups_by_day = signups_by_day
-
-    cohort      = User.active.where(created_at: @since..)
-    @cohort     = cohort.count
-    @activated  = cohort.joins(:entries).distinct.count
-    @with_email = cohort.where.not(email: [ nil, "" ]).count
-
-    @posted_recaps = Entry.where(entry_type: :posted, occurred_at: @since..).count
-    @posted_by_user = Entry.where(entry_type: :posted, occurred_at: @since..)
-                           .joins(:user).distinct.count(:user_id)
-
+    @posted_recaps  = Entry.where(entry_type: :posted, occurred_at: @since..).count
+    @posted_by_user = Entry.where(entry_type: :posted, occurred_at: @since..).joins(:user).distinct.count(:user_id)
     @total_users    = User.active.count
     @total_entries  = Entry.publicly_visible.count
     @pro_users      = User.active.where(pro: true).count
-
-    # Gate 1's north star, scored on people who are not me.
-    strangers         = cohort.where.not(id: current_user.id)
-    @strangers        = strangers.count
-    @returned         = Event.returned_user_ids(strangers).size
-    week_old          = strangers.where(created_at: ..7.days.ago)
-    @week_old         = week_old.count
-    @second_week      = Event.second_week_user_ids(week_old).size
-
-    @subscribes = Subscription.confirmed.where(confirmed_at: @since..).count
-
-    @ref_visits = Event.named("ref_visit").since(@since).group(:detail).count.sort_by { |_ref, count| -count }
-
-    recap_events  = Event.since(@since).where.not(user_id: [ nil, current_user.id ])
-    @recap_funnel = %w[recap_opened recap_picked recap_copied recap_intent].map do |name|
-      [ name, recap_events.named(name).distinct.count(:user_id) ]
-    end
-    @recap_quiet = recap_events.named("recap_quiet").distinct.count(:user_id)
-
-    # The earliest honest audience signal: a repo with more than one builder on
-    # it means someone was recruited by a teammate, not by the founder.
-    @shared_repos = Entry.where(source: :github)
-                         .where.not(repo_name: nil)
-                         .group(:repo_name)
-                         .having("COUNT(DISTINCT user_id) > 1")
-                         .count("DISTINCT user_id")
-                         .sort_by { |_repo, builders| -builders }
+    @subscribes     = Subscription.confirmed.where(confirmed_at: @since..).count
+    @ref_visits     = Event.named("ref_visit").since(@since).group(:detail).count.sort_by { |_ref, count| -count }
+    @shared_repos   = shared_repos
   end
 
   def test_email
@@ -75,6 +38,57 @@ class AdminController < ApplicationController
   end
 
   private
+
+  def load_signups
+    @signups_by_ref = User.active
+                          .where(created_at: @since..)
+                          .group(:signup_ref)
+                          .count
+                          .transform_keys { |ref| ref.presence || "unattributed" }
+                          .sort_by { |_ref, count| -count }
+
+    @signups_total  = @signups_by_ref.sum { |_ref, count| count }
+    @signups_by_day = signups_by_day
+  end
+
+  def cohort
+    User.active.where(created_at: @since..)
+  end
+
+  def load_cohort
+    @cohort     = cohort.count
+    @activated  = cohort.joins(:entries).distinct.count
+    @with_email = cohort.where.not(email: [ nil, "" ]).count
+  end
+
+  # Gate 1's north star, scored on people who are not me.
+  def load_strangers
+    strangers    = cohort.where.not(id: current_user.id)
+    @strangers   = strangers.count
+    @returned    = Event.returned_user_ids(strangers).size
+    week_old     = strangers.where(created_at: ..7.days.ago)
+    @week_old    = week_old.count
+    @second_week = Event.second_week_user_ids(week_old).size
+  end
+
+  def load_recap_funnel
+    recap_events  = Event.since(@since).where.not(user_id: [ nil, current_user.id ])
+    @recap_funnel = %w[recap_opened recap_picked recap_copied recap_intent].map do |name|
+      [ name, recap_events.named(name).distinct.count(:user_id) ]
+    end
+    @recap_quiet = recap_events.named("recap_quiet").distinct.count(:user_id)
+  end
+
+  # The earliest honest audience signal: a repo with more than one builder on
+  # it means someone was recruited by a teammate, not by the founder.
+  def shared_repos
+    Entry.where(source: :github)
+         .where.not(repo_name: nil)
+         .group(:repo_name)
+         .having("COUNT(DISTINCT user_id) > 1")
+         .count("DISTINCT user_id")
+         .sort_by { |_repo, builders| -builders }
+  end
 
   # Mirrors ProfileView.daily_counts so the two charts read the same way.
   def signups_by_day

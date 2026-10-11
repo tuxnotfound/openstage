@@ -43,11 +43,10 @@ Metrics/ClassLength:
     - 'app/models/user.rb'
     - 'app/services/og_image_generator.rb'
 
-# Offense count: 8
+# Offense count: 7
 # Configuration parameters: CountComments, Max, CountAsOne, AllowedMethods, AllowedPatterns.
 Metrics/MethodLength:
   Exclude:
-    - 'app/controllers/admin_controller.rb'
     - 'app/controllers/analytics_controller.rb'
     - 'app/controllers/dashboard_controller.rb'
     - 'app/controllers/entries_controller.rb'
