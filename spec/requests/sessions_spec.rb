@@ -11,6 +11,22 @@ RSpec.describe "Sessions", type: :request do
       end
     end
 
+    # Settings promises 30 days to come back after deleting the account.
+    context "when the account was deleted" do
+      let!(:user) { create(:user, deleted_at: 3.days.ago) }
+
+      it "restores the account and signs the user in" do
+        sign_in_as(user)
+
+        expect(response).to redirect_to(dashboard_path)
+        expect(flash[:notice]).to eq(SessionsController::RESTORED)
+        expect(user.reload.deleted_at).to be_nil
+
+        get dashboard_path
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
     # The Settings button posts scope=user:email,repo. omniauth-github forwards
     # a scope param into the authorize URL; pin that GitHub is actually asked,
     # since the request phase is what test mode short-circuits everywhere else.

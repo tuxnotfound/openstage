@@ -37,7 +37,7 @@ class SettingsController < ApplicationController
   def destroy
     current_user.soft_delete!
     session.delete(:user_id)
-    redirect_to root_path, notice: "Your account has been scheduled for deletion. You have 30 days to recover it by contacting support."
+    redirect_to root_path, notice: "Your account has been scheduled for deletion. Sign in again within 30 days to restore it."
   end
 
   private

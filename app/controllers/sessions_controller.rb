@@ -1,4 +1,6 @@
 class SessionsController < ApplicationController
+  RESTORED = "Welcome back. Your account is restored and your page is online again.".freeze
+
   def create
     auth = request.env["omniauth.auth"]
     user = User.from_github_omniauth(auth)
@@ -17,19 +19,8 @@ class SessionsController < ApplicationController
         proposed_username: claimed_username || user.username
       }
       redirect_to new_username_path
-    elsif user.save
-      session.delete(:signup_ref)
-      session[:user_id] = user.id
-      if user.gained_private_repo_access?
-        GithubSyncJob.perform_later(user.id)
-        redirect_to settings_path, notice: "Private repos connected. Syncing now. Include the ones you want on your timeline."
-      else
-        last_sync = user.last_synced_at(source: :github)
-        GithubSyncJob.perform_later(user.id) if last_sync.nil? || last_sync < 2.hours.ago
-        redirect_to dashboard_path, notice: "Welcome back, #{user.display_name}!"
-      end
     else
-      redirect_to root_path, alert: "Sign in failed. Please try again."
+      sign_in_existing(user)
     end
   end
 
@@ -40,5 +31,26 @@ class SessionsController < ApplicationController
 
   def failure
     redirect_to root_path, alert: "GitHub authentication failed: #{params[:message]}"
+  end
+
+  private
+
+  # Settings promises 30 days to come back after deleting the account. Signing
+  # in is the way back; Users::PurgeDeletedService makes it final after that.
+  def sign_in_existing(user)
+    restored = user.deleted?
+    user.deleted_at = nil
+    return redirect_to(root_path, alert: "Sign in failed. Please try again.") unless user.save
+
+    session.delete(:signup_ref)
+    session[:user_id] = user.id
+    if user.gained_private_repo_access?
+      GithubSyncJob.perform_later(user.id)
+      redirect_to settings_path, notice: "Private repos connected. Syncing now. Include the ones you want on your timeline."
+    else
+      last_sync = user.last_synced_at(source: :github)
+      GithubSyncJob.perform_later(user.id) if last_sync.nil? || last_sync < 2.hours.ago
+      redirect_to dashboard_path, notice: restored ? RESTORED : "Welcome back, #{user.display_name}!"
+    end
   end
 end

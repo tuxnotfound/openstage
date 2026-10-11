@@ -113,11 +113,11 @@
             <div>
               <p class="text-sm font-medium text-gray-900">Delete account</p>
               <p class="text-xs text-gray-500 mt-1">
-                Your profile goes offline immediately. You have 30 days to recover your account by contacting support — after that, it's permanent.
+                Your profile goes offline immediately. Sign in again within 30 days to restore it. After that, the account and everything on it are deleted for good.
               </p>
             </div>
             <%= button_to "Delete account", settings_path, method: :delete,
-                data: { turbo_confirm: "Are you sure? Your profile will go offline immediately. This can be recovered within 30 days." },
+                data: { turbo_confirm: "Are you sure? Your profile will go offline immediately. Signing in within 30 days restores it." },
                 class: "shrink-0 bg-white text-red-600 border border-red-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors cursor-pointer" %>
           </div>
         </div>
