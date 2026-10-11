@@ -100,6 +100,22 @@ RSpec.describe RecapDraft do
       ])
     end
 
+    it "breaks each repo's list by day without renumbering it" do
+      monday  = Time.zone.local(2026, 10, 5, 9)
+      tuesday = monday + 1.day
+      items = [
+        described_class::Item.new(entry_type: "shipped", title: "late fix", repo_name: "me/app", sha: "c", occurred_at: tuesday),
+        described_class::Item.new(entry_type: "shipped", title: "second", repo_name: "me/app", sha: "b", occurred_at: monday + 2.hours),
+        described_class::Item.new(entry_type: "shipped", title: "first", repo_name: "me/app", sha: "a", occurred_at: monday)
+      ]
+      draft = described_class.new(username: "me", items: items)
+
+      days = draft.candidates_by_repo_and_day["app"]
+      expect(days.keys).to eq([ tuesday.to_date, monday.to_date ])
+      expect(days.values.flatten.map(&:index)).to eq(draft.candidates.map(&:index))
+      expect(days[monday.to_date].map(&:title)).to eq([ "second", "first" ])
+    end
+
     it "drops duplicate commits that arrive from forks" do
       dupes = [
         item("shipped", "one change", "owner/app", sha: "abc"),

@@ -44,8 +44,8 @@ class RecapDraft
   # Squash-merge appends "(#123)" to the subject; GitHub wrote that, not the user.
   PR_SUFFIX = /\s*\(#\d+\)\z/
 
-  Item      = Struct.new(:entry_type, :title, :repo_name, :sha, :merge, keyword_init: true)
-  Candidate = Struct.new(:index, :repo, :title, :noise, keyword_init: true)
+  Item      = Struct.new(:entry_type, :title, :repo_name, :sha, :merge, :occurred_at, keyword_init: true)
+  Candidate = Struct.new(:index, :repo, :title, :noise, :day, keyword_init: true)
 
   # Entry records carry the commit SHA in external_id and no parent count, so
   # merges coming from the database are caught by message alone. GitHub-sourced
@@ -57,7 +57,8 @@ class RecapDraft
         title:      entry.title,
         repo_name:  entry.repo_name,
         sha:        entry.external_id,
-        merge:      false
+        merge:      false,
+        occurred_at: entry.occurred_at
       )
     end
   end
@@ -110,7 +111,8 @@ class RecapDraft
                  index: i + 1,
                  repo:  short_repo(item.repo_name),
                  title: clean_title(item.title),
-                 noise: noise?(item)
+                 noise: noise?(item),
+                 day:   item.occurred_at&.to_date
                )
              end
     end
@@ -122,6 +124,12 @@ class RecapDraft
 
   def candidates_by_repo
     candidates.group_by(&:repo)
+  end
+
+  # A busy week runs past a hundred candidates, so each repo's list breaks by
+  # day. Grouping only: the order and the numbers stay the same.
+  def candidates_by_repo_and_day
+    candidates_by_repo.transform_values { |list| list.group_by(&:day) }
   end
 
   def quiet?

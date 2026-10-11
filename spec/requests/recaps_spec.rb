@@ -80,6 +80,12 @@ RSpec.describe "Recaps", type: :request do
           expect(response.body).not_to include("Merge branch &#39;main&#39; into feature")
         end
 
+        it "heads each day's commits with the day" do
+          get "/recap"
+
+          expect(response.body).to include(1.day.ago.to_date.strftime("%a %-d %b"))
+        end
+
         it "reveals tooling commits behind the toggle" do
           get "/recap", params: { noise: "1" }
 

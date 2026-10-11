@@ -65,20 +65,25 @@
         </h2>
 
         <div class="space-y-4">
-          <% @draft.candidates_by_repo.each do |repo, list| %>
+          <% @draft.candidates_by_repo_and_day.each do |repo, days| %>
             <div>
-              <p class="text-sm font-medium text-gray-900 mb-1"><%= repo %> <span class="text-gray-400 font-normal">(<%= list.size %>)</span></p>
-              <div class="space-y-0.5">
-                <% list.each do |candidate| %>
-                  <label class="flex items-start gap-2.5 px-2 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer">
-                    <%= check_box_tag "picks[]", candidate.index, @picks.include?(candidate.index),
-                          id: "pick_#{candidate.index}",
-                          class: "mt-0.5 rounded border-gray-300 text-gray-900 focus:ring-gray-900",
-                          data: { action: "change->recap-editor#guard change->autosubmit#submit" } %>
-                    <span class="text-sm text-gray-700 leading-snug"><%= candidate.title %></span>
-                  </label>
+              <p class="text-sm font-medium text-gray-900 mb-1"><%= repo %> <span class="text-gray-400 font-normal">(<%= days.values.sum(&:size) %>)</span></p>
+              <% days.each do |day, list| %>
+                <% if day %>
+                  <p class="text-xs text-gray-400 px-2 mt-2 mb-0.5"><%= day.strftime("%a %-d %b") %></p>
                 <% end %>
-              </div>
+                <div class="space-y-0.5">
+                  <% list.each do |candidate| %>
+                    <label class="flex items-start gap-2.5 px-2 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer">
+                      <%= check_box_tag "picks[]", candidate.index, @picks.include?(candidate.index),
+                            id: "pick_#{candidate.index}",
+                            class: "mt-0.5 rounded border-gray-300 text-gray-900 focus:ring-gray-900",
+                            data: { action: "change->recap-editor#guard change->autosubmit#submit" } %>
+                      <span class="text-sm text-gray-700 leading-snug"><%= candidate.title %></span>
+                    </label>
+                  <% end %>
+                </div>
+              <% end %>
             </div>
           <% end %>
         </div>
