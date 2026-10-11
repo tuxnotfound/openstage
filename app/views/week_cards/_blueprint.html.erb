@@ -1,0 +1,110 @@
+<%# The Blueprint card. Plain SVG, so the editor shows it as is and the
+    download draws this same picture to a PNG in the browser. Fonts are the
+    page's @font-face faces; the download embeds them. %>
+<% wc = card.week_card %>
+<% user = card.user %>
+<% c = WeekCardsHelper::CARD %>
+<% days = wc.layout == "active" && card.days.any?(&:active) ? card.days.select(&:active) : card.days %>
+<% columns = card_columns(days) %>
+<% scale = card_bar_scale(days) %>
+<% merged = !wc.shows?("projects") %>
+<% name_left = wc.shows?("avatar") ? 116 : 52 %>
+<% mono = "font-family=\"'IBM Plex Mono', monospace\"".html_safe %>
+<% cond = "font-family=\"'IBM Plex Sans Condensed', sans-serif\"".html_safe %>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675" role="img" aria-label="<%= card.label %> card for <%= user.display_name %>" data-week-card="1">
+  <defs>
+    <pattern id="wc-grid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="<%= c[:line] %>" stroke-opacity="0.07"/></pattern>
+    <pattern id="wc-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="7" fill="<%= c[:line] %>"/></pattern>
+    <pattern id="wc-dots" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.4" fill="<%= c[:line] %>"/></pattern>
+    <pattern id="wc-cross" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 0L8 8M8 0L0 8" stroke="<%= c[:line] %>" stroke-width="1"/></pattern>
+    <clipPath id="wc-avatar"><circle cx="78" cy="74" r="26"/></clipPath>
+  </defs>
+
+  <rect width="1200" height="675" fill="<%= c[:ground] %>"/>
+  <rect width="1200" height="675" fill="url(#wc-grid)"/>
+  <rect x="20.75" y="20.75" width="1158.5" height="633.5" fill="none" stroke="<%= c[:line] %>" stroke-opacity="0.55" stroke-width="1.5"/>
+
+  <%# Who %>
+  <% if wc.shows?("avatar") && user.avatar_url.present? %>
+    <image href="<%= user.avatar_url %>" x="52" y="48" width="52" height="52" clip-path="url(#wc-avatar)" preserveAspectRatio="xMidYMid slice"/>
+    <circle cx="78" cy="74" r="26" fill="none" stroke="<%= c[:line] %>" stroke-width="2"/>
+  <% end %>
+  <% if wc.shows?("name") %>
+    <text x="<%= name_left %>" y="<%= wc.shows?("github") ? 72 : 82 %>" <%= cond %> font-size="26" font-weight="700" fill="<%= c[:text] %>"><%= user.display_name.to_s.truncate(24) %></text>
+    <% if user.pro? %>
+      <% badge_x = name_left + (user.display_name.to_s.truncate(24).length * 12.5).round + 12 %>
+      <rect x="<%= badge_x %>" y="<%= wc.shows?("github") ? 55 : 65 %>" width="38" height="19" fill="none" stroke="<%= c[:line] %>" stroke-width="1.5"/>
+      <text x="<%= badge_x + 19 %>" y="<%= wc.shows?("github") ? 69 : 79 %>" text-anchor="middle" <%= mono %> font-size="11" letter-spacing="1.6" fill="<%= c[:line] %>">PRO</text>
+    <% end %>
+  <% end %>
+  <% if wc.shows?("github") %>
+    <text x="<%= name_left %>" y="<%= wc.shows?("name") ? 95 : 80 %>" <%= mono %> font-size="13" fill="<%= c[:muted] %>">GitHub @<%= user.github_username %></text>
+  <% end %>
+
+  <%# When %>
+  <text x="1148" y="<%= wc.shows?("streak") ? 72 : 82 %>" text-anchor="end" <%= cond %> font-size="30" font-weight="700" letter-spacing="0.6" fill="<%= c[:text] %>"><%= card.label.upcase %> · <%= card.dates.upcase %></text>
+  <% if wc.shows?("streak") %>
+    <% run = card.best_run.positive? ? "BEST RUN THIS WEEK #{card.best_run} #{'day'.pluralize(card.best_run).upcase}" : nil %>
+    <% streak = card.streak.to_i.positive? ? "STREAK #{card.streak} #{'day'.pluralize(card.streak).upcase}" : nil %>
+    <text x="1148" y="95" text-anchor="end" <%= mono %> font-size="13" letter-spacing="1.3" fill="<%= c[:muted] %>"><%= [ streak, run ].compact.join(" · ") %></text>
+  <% end %>
+
+  <%# The week in numbers %>
+  <line x1="52" y1="118" x2="1148" y2="118" stroke="<%= c[:line] %>" stroke-opacity="0.35"/>
+  <line x1="52" y1="152" x2="1148" y2="152" stroke="<%= c[:line] %>" stroke-opacity="0.35"/>
+  <% if wc.shows?("totals") %>
+    <text x="52" y="141" <%= mono %> font-size="15" fill="<%= c[:muted] %>"><% if card.totals.shipped.positive? %><tspan fill="<%= c[:text] %>" font-weight="600"><%= card.totals.shipped %></tspan> shipped · <% end %><tspan fill="<%= c[:text] %>" font-weight="600"><%= card.totals.commits %></tspan> <%= "commit".pluralize(card.totals.commits) %> · <tspan fill="<%= c[:text] %>" font-weight="600"><%= card.totals.active_days %></tspan> of 7 days building</text>
+  <% end %>
+  <% if wc.shows?("projects") %>
+    <% card_legend(card.projects).each do |item| %>
+      <rect x="<%= item[:x] %>" y="128" width="22" height="14" fill="<%= card_fill(item[:project].pattern) %>" stroke="<%= c[:line] %>" stroke-width="1.5"/>
+      <text x="<%= item[:x] + 30 %>" y="140" <%= mono %> font-size="14" fill="<%= c[:text] %>"><%= item[:project].name %> <tspan fill="<%= c[:muted] %>"><%= item[:project].n %></tspan></text>
+    <% end %>
+  <% end %>
+
+  <%# The days %>
+  <line x1="30" y1="369" x2="1170" y2="369" stroke="<%= c[:line] %>" stroke-opacity="0.55" stroke-width="1.5"/>
+  <% columns.each do |col| %>
+    <% day = col[:day] %>
+    <% cx = col[:cx] %>
+    <% headline = wc.shows?("headlines") ? day.headline : nil %>
+    <text x="<%= cx %>" y="188" text-anchor="middle" <%= mono %> font-size="13" letter-spacing="1.3" fill="<%= c[:muted] %>"><%= day.label %><% if day.total.positive? %> <tspan <%= cond %> font-size="20" font-weight="700" fill="<%= c[:text] %>"><%= day.total %></tspan><% end %></text>
+    <% card_bar(day, scale, merged: merged).each do |bar| %>
+      <rect x="<%= cx - 23 %>" y="<%= bar[:y] %>" width="46" height="<%= bar[:height] %>" fill="<%= card_fill(bar[:segment].pattern) %>" stroke="<%= c[:line] %>" stroke-width="1.5"/>
+      <% if bar[:height] >= 20 && !merged %>
+        <rect x="<%= cx - 11 %>" y="<%= bar[:y] + (bar[:height] / 2) - 8 %>" width="22" height="16" fill="<%= c[:ground] %>"/>
+        <text x="<%= cx %>" y="<%= bar[:y] + (bar[:height] / 2) + 4 %>" text-anchor="middle" <%= mono %> font-size="12" fill="<%= c[:text] %>"><%= bar[:segment].n %></text>
+      <% end %>
+    <% end %>
+    <% shipped = headline&.kind == "shipped" %>
+    <circle cx="<%= cx %>" cy="369" r="<%= shipped ? 9 : 6 %>" fill="<%= headline ? c[:line] : c[:ground] %>" stroke="<%= headline ? c[:line] : c[:line] %>" stroke-opacity="<%= headline ? 1 : 0.35 %>" stroke-width="1.5"/>
+    <% if headline %>
+      <line x1="<%= cx %>" y1="<%= shipped ? 380 : 377 %>" x2="<%= cx %>" y2="394" stroke="<%= c[:line] %>" stroke-width="1.5" stroke-dasharray="4 4"/>
+      <text x="<%= cx %>" y="412" text-anchor="middle" <%= mono %> font-size="11" letter-spacing="1.5" fill="<%= c[:line] %>"><%= headline.kind.upcase %></text>
+      <%# The type shrinks until the longest word fits the column, so a domain
+          like playwheelsoff.com is never cut. %>
+      <% base = shipped ? 22 : 17 %>
+      <% longest = [ headline.text.split.map(&:length).max.to_i, 1 ].max %>
+      <% size = ((col[:width] - 14) / (longest * 0.47)).floor.clamp(13, base) %>
+      <% lines = card_lines(headline.text, chars: ((col[:width] - 14) / (size * 0.47)).floor, max_lines: 4) %>
+      <% lines.each_with_index do |line, i| %>
+        <text x="<%= cx %>" y="<%= 436 + (i * (size + 4)) %>" text-anchor="middle" <%= cond %> font-size="<%= size %>" font-weight="<%= shipped ? 700 : 600 %>" fill="<%= shipped ? c[:line] : c[:text] %>"><%= line %></text>
+      <% end %>
+      <% if headline.project.present? && headline.source != :count %>
+        <text x="<%= cx %>" y="<%= 436 + (lines.size * (size + 4)) + 6 %>" text-anchor="middle" <%= mono %> font-size="12" fill="<%= c[:muted] %>"><%= headline.project.to_s.truncate(22) %></text>
+      <% end %>
+    <% elsif !day.active %>
+      <text x="<%= cx %>" y="412" text-anchor="middle" <%= mono %> font-size="13" fill="<%= c[:quiet] %>">quiet</text>
+    <% end %>
+  <% end %>
+
+  <%# The link %>
+  <% link = "openstage.dev/#{user.username}" %>
+  <% link_width = (link.length * 10.4).round + 28 %>
+  <% sheet = "SHEET W#{wc.week_start.cweek} / #{wc.week_start.cwyear}" %>
+  <% sheet_width = (sheet.length * 8) + 28 %>
+  <rect x="<%= 1148 - link_width - sheet_width %>" y="596" width="<%= link_width + sheet_width %>" height="36" fill="<%= c[:ground] %>" stroke="<%= c[:line] %>" stroke-opacity="0.55" stroke-width="1.5"/>
+  <line x1="<%= 1148 - link_width %>" y1="596" x2="<%= 1148 - link_width %>" y2="632" stroke="<%= c[:line] %>" stroke-opacity="0.35"/>
+  <text x="<%= 1148 - link_width - sheet_width + 14 %>" y="619" <%= mono %> font-size="13" fill="<%= c[:muted] %>"><%= sheet %></text>
+  <text x="<%= 1148 - link_width + 14 %>" y="621" <%= cond %> font-size="20" font-weight="600" fill="<%= c[:line] %>"><%= link %></text>
+</svg>

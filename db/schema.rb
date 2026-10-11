@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_11_000003) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_12_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -288,6 +288,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_11_000003) do
     t.index ["username"], name: "index_users_on_username", unique: true
   end
 
+  create_table "week_cards", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.date "week_start", null: false
+    t.string "style", default: "blueprint", null: false
+    t.string "layout", default: "week", null: false
+    t.jsonb "hidden_sections", default: [], null: false
+    t.jsonb "hidden_projects", default: [], null: false
+    t.jsonb "headlines", default: {}, null: false
+    t.text "post_text"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "week_start"], name: "index_week_cards_on_user_id_and_week_start", unique: true
+  end
+
   add_foreign_key "badge_impressions", "users"
   add_foreign_key "dismissed_commits", "users", on_delete: :cascade
   add_foreign_key "entries", "users"
@@ -304,4 +318,5 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_11_000003) do
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "subscriptions", "users"
   add_foreign_key "sync_logs", "users"
+  add_foreign_key "week_cards", "users", on_delete: :cascade
 end
