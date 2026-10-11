@@ -110,10 +110,6 @@ class User < ApplicationRecord
     sync_logs.where(source: source, status: :success).maximum(:ran_at)
   end
 
-  def pro?
-    pro
-  end
-
   # Gates the owner-only surfaces (/recap, /_deploy_check). Temporary: C1 opens
   # the recap picker to every user and this shrinks back to diagnostics.
   #
