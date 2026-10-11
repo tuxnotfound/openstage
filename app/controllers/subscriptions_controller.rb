@@ -33,7 +33,11 @@ class SubscriptionsController < ApplicationController
     redirect_to profile_path(subscription.user.username), notice: "Confirmed. You will get #{subscription.user.display_name}'s updates."
   end
 
-  # GET for the link in the mail, POST for List-Unsubscribe-Post clients.
+  def confirm_unsubscribe
+    @subscription = Subscription.find_by(token: params[:token])
+    redirect_to(root_path, notice: "Already unsubscribed.") unless @subscription
+  end
+
   def unsubscribe
     subscription = Subscription.find_by(token: params[:token])
     builder      = subscription&.user

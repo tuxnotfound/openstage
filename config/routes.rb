@@ -56,10 +56,14 @@ Rails.application.routes.draw do
   # profile catch-all; "subscriptions" is a reserved username.
   post "/:username/subscribe", to: "subscriptions#create", as: :profile_subscribe, constraints: { username: /[a-zA-Z0-9_-]+/ }
   get "/subscriptions/:token/confirm", to: "subscriptions#confirm", as: :confirm_subscription
-  match "/subscriptions/:token/unsubscribe", to: "subscriptions#unsubscribe", as: :unsubscribe_subscription, via: [ :get, :post ]
+  # Mail scanners open every link in a mail, so a GET only asks; the POST
+  # (the page's button, or a client's RFC 8058 one-click) unsubscribes.
+  get "/subscriptions/:token/unsubscribe", to: "subscriptions#confirm_unsubscribe", as: :unsubscribe_subscription
+  post "/subscriptions/:token/unsubscribe", to: "subscriptions#unsubscribe"
 
-  # The stop link in the builder's weekly email (F2)
-  match "/weekly_email/unsubscribe", to: "weekly_emails#unsubscribe", as: :weekly_email_unsubscribe, via: [ :get, :post ]
+  # The stop link in the builder's weekly email (F2), same two steps
+  get "/weekly_email/unsubscribe", to: "weekly_emails#confirm_unsubscribe", as: :weekly_email_unsubscribe
+  post "/weekly_email/unsubscribe", to: "weekly_emails#unsubscribe"
 
   # Global feed
   get "/feed", to: "feed#index", as: :feed

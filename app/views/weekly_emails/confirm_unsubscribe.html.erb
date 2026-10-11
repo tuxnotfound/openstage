@@ -1,0 +1,9 @@
+<div class="max-w-md mx-auto py-16">
+  <h1 class="text-2xl font-bold mb-2">Stop the weekly email?</h1>
+  <p class="text-gray-500 text-sm mb-8">
+    No more Friday email with your week. Settings turns it back on.
+  </p>
+
+  <%= button_to "Stop the weekly email", weekly_email_unsubscribe_path, method: :post, params: { token: @token },
+      class: "w-full bg-gray-900 text-white py-2 rounded-md text-sm font-medium hover:bg-gray-700 cursor-pointer" %>
+</div>

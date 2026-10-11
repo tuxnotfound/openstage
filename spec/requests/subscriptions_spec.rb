@@ -88,11 +88,18 @@ RSpec.describe "Email subscribe", type: :request do
       expect(response).to redirect_to("/builder")
     end
 
-    it "unsubscribes in one click and forgets the address" do
+    # Mail scanners open every link, so the link in the mail only asks.
+    it "asks on the link and unsubscribes on the button, forgetting the address" do
       sub.confirm!
-      expect { get "/subscriptions/#{sub.token}/unsubscribe" }.to change { Subscription.count }.by(-1)
+      expect { get "/subscriptions/#{sub.token}/unsubscribe" }.not_to change { Subscription.count }
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("reader@example.com")
+
+      expect { post "/subscriptions/#{sub.token}/unsubscribe" }.to change { Subscription.count }.by(-1)
       expect(response).to redirect_to("/builder")
 
+      get "/subscriptions/#{sub.token}/unsubscribe"
+      expect(response).to redirect_to(root_path)
       post "/subscriptions/#{sub.token}/unsubscribe"
       expect(response).to redirect_to(root_path)
     end

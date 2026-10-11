@@ -4,9 +4,13 @@ RSpec.describe "Weekly email", type: :request do
   let(:user) { create(:user) }
   let(:token) { user.signed_id(purpose: :weekly_email) }
 
-  it "turns the email off from the link, signed in or not" do
+  # Mail scanners open every link, so the link in the mail only asks.
+  it "asks on the link and turns the email off on the button, signed in or not" do
     get weekly_email_unsubscribe_path(token: token)
+    expect(response).to have_http_status(:ok)
+    expect(user.reload.weekly_email).to be(true)
 
+    post weekly_email_unsubscribe_path, params: { token: token }
     expect(response).to redirect_to(root_path)
     expect(user.reload.weekly_email).to be(false)
   end
@@ -24,7 +28,9 @@ RSpec.describe "Weekly email", type: :request do
 
   it "refuses a forged or foreign token" do
     get weekly_email_unsubscribe_path(token: "#{token}x")
-    get weekly_email_unsubscribe_path(token: user.signed_id(purpose: :something_else))
+    expect(response).to redirect_to(root_path)
+    post weekly_email_unsubscribe_path, params: { token: "#{token}x" }
+    post weekly_email_unsubscribe_path, params: { token: user.signed_id(purpose: :something_else) }
 
     expect(user.reload.weekly_email).to be(true)
   end

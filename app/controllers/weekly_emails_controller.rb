@@ -4,10 +4,16 @@ class WeeklyEmailsController < ApplicationController
   # no session and so no CSRF token.
   skip_forgery_protection only: :unsubscribe
 
-  # GET for the link in the mail, POST for List-Unsubscribe-Post clients.
+  INVALID = "That link is no longer valid. Turn the email off in Settings.".freeze
+
+  def confirm_unsubscribe
+    @token = params[:token].to_s
+    redirect_to(root_path, alert: INVALID) unless User.find_signed(@token, purpose: :weekly_email)
+  end
+
   def unsubscribe
     user = User.find_signed(params[:token].to_s, purpose: :weekly_email)
-    return redirect_to(root_path, alert: "That link is no longer valid. Turn the email off in Settings.") unless user
+    return redirect_to(root_path, alert: INVALID) unless user
 
     user.update!(weekly_email: false)
     redirect_to root_path, notice: "Done. No more weekly emails. Settings turns them back on."
