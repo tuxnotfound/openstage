@@ -4,6 +4,7 @@
   <div class="flex items-center justify-between px-5 py-3">
     <div class="min-w-0 flex-1">
       <p class="text-sm font-medium text-gray-800 truncate">
+        <% unless repo.owned_by_user? %><span class="font-normal text-gray-400"><%= repo.owner_login %> /</span><% end %>
         <%= repo.name %>
         <% if repo.private_repo? %>
           <span class="ml-1 text-xs font-normal px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">private</span>

@@ -97,6 +97,20 @@ RSpec.describe "Settings", type: :request do
         expect(response.body).to include("Private repos are excluded by default")
         expect(response.body).to include("your build is public while your code stays private")
       end
+
+      it "names the owner of repos that share a name, unless the repo is the builder's own" do
+        user.update!(github_username: "Builder")
+        create(:github_repo, user: user, name: "si2018-design", full_name: "da-silva-gomes/si2018-design")
+        create(:github_repo, user: user, name: "si2018-design", full_name: "anarafaelaferro/si2018-design")
+        create(:github_repo, user: user, name: "mine", full_name: "builder/mine")
+
+        sign_in_as(user)
+        get settings_path
+
+        expect(response.body).to include("da-silva-gomes /</span>")
+        expect(response.body).to include("anarafaelaferro /</span>")
+        expect(response.body).not_to include("builder /</span>")
+      end
     end
   end
 
