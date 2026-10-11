@@ -217,6 +217,15 @@ RSpec.describe GithubSyncJob, type: :job do
       expect(captured_since).to be_within(1.minute).of(1.year.ago)
     end
 
+    # A rescan from scratch reads the whole window again.
+    it "never imports again a commit the builder deleted" do
+      described_class.new.perform(user.id)
+      Entries::DeleteService.new(entry: Entry.find_by!(external_id: "abc123def456")).call!
+      allow(repo_double).to receive(:default_branch).and_return("trunk")
+
+      expect { travel_to(2.hours.from_now) { described_class.new.perform(user.id) } }.not_to change(Entry, :count)
+    end
+
     it "rescans from INITIAL_SYNC_WINDOW when the repo's default branch changes" do
       described_class.new.perform(user.id)
       initial_synced = GithubRepo.last.last_synced_at

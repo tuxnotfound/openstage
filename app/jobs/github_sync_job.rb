@@ -164,7 +164,7 @@ class GithubSyncJob < ApplicationJob
 
     each_page(fetch_commits) do |commit_page|
       commit_page.each do |commit|
-        next unless authored_by?(commit, user)
+        next if !authored_by?(commit, user) || dismissed_shas(user).include?(commit.sha)
 
         begin
           entry = Entry.find_or_initialize_by(user: user, external_id: commit.sha)
@@ -217,6 +217,11 @@ class GithubSyncJob < ApplicationJob
       # A full last page means anything past the cap went unseen.
       @listing_incomplete = true if page_number == MAX_PAGES
     end
+  end
+
+  # Commits the builder deleted from their page are never imported again.
+  def dismissed_shas(user)
+    @dismissed_shas ||= DismissedCommit.where(user_id: user.id).pluck(:sha).to_set
   end
 
   # GitHub returns `commit.author = nil` whenever the committer email isn't

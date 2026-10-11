@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_11_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_11_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -24,6 +24,14 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_11_000001) do
     t.datetime "updated_at", null: false
     t.index ["user_id", "kind", "viewed_at"], name: "index_badge_impressions_on_user_id_and_kind_and_viewed_at"
     t.index ["user_id"], name: "index_badge_impressions_on_user_id"
+  end
+
+  create_table "dismissed_commits", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "sha", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "sha"], name: "index_dismissed_commits_on_user_id_and_sha", unique: true
   end
 
   create_table "entries", force: :cascade do |t|
@@ -280,6 +288,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_11_000001) do
   end
 
   add_foreign_key "badge_impressions", "users"
+  add_foreign_key "dismissed_commits", "users", on_delete: :cascade
   add_foreign_key "entries", "users"
   add_foreign_key "entry_clicks", "entries"
   add_foreign_key "entry_clicks", "users"

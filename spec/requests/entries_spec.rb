@@ -107,6 +107,16 @@ RSpec.describe "Entries", type: :request do
         expect { delete entry_path(entry) }.to change(Entry, :count).by(-1)
         expect(response).to redirect_to(dashboard_path)
       end
+
+      it "remembers a deleted commit so the sync never brings it back" do
+        commit = create(:entry, user: user, source: "github", external_id: "abc123")
+        note = create(:entry, user: user, source: "manual", entry_type: "note")
+
+        delete entry_path(commit)
+        delete entry_path(note)
+
+        expect(DismissedCommit.where(user: user).pluck(:sha)).to eq([ "abc123" ])
+      end
     end
   end
 end

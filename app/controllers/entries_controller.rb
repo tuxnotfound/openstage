@@ -51,7 +51,9 @@ class EntriesController < ApplicationController
   end
 
   def destroy
-    @entry.destroy
+    service = Entries::DeleteService.new(entry: @entry)
+    return redirect_to(dashboard_path, alert: service.errors.full_messages.to_sentence) unless service.call
+
     redirect_to dashboard_path, notice: "Entry deleted."
   end
 
