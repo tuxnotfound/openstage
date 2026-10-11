@@ -37,9 +37,9 @@ RSpec.describe "Recaps", type: :request do
         expect(response.body).not_to include("Owner only commit")
       end
 
-      it "advertises the page in the nav but not the admin page" do
+      it "advertises the week card in the nav but not the admin page" do
         get "/dashboard"
-        expect(response.body).to include('href="/recap"')
+        expect(response.body).to include('href="/week"')
         expect(response.body).not_to include('href="/admin"')
       end
     end
@@ -47,9 +47,11 @@ RSpec.describe "Recaps", type: :request do
     context "as the owner" do
       before { sign_in_as(owner) }
 
-      it "links the page from the nav" do
+      it "is linked from the week card editor, which the nav opens" do
         get "/dashboard"
-        expect(response.body).to include(">Recap<")
+        expect(response.body).to include(">Your week<")
+
+        get "/week"
         expect(response.body).to include('href="/recap"')
       end
 

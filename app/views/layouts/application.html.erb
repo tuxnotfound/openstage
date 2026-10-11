@@ -56,7 +56,7 @@
               <%# Three places a builder goes: the work, the weekly post, the page
                   itself. Everything else is account plumbing in the menu. %>
               <%= nav_link "Dashboard", dashboard_path %>
-              <%= nav_link "Recap", recap_path %>
+              <%= nav_link "Your week", current_week_card_path %>
               <%= nav_link "My page", profile_path(current_user.username) %>
 
               <details class="relative ml-1" data-controller="dropdown">

@@ -9,10 +9,11 @@ class Event < ApplicationRecord
     ref_visit
     recap_opened recap_quiet recap_picked recap_copied recap_intent
     recap_from_email
+    card_opened card_downloaded
   ].freeze
 
   # Only these may be reported by the browser; the rest are recorded server-side.
-  CLIENT_NAMES = %w[recap_copied recap_intent].freeze
+  CLIENT_NAMES = %w[recap_copied recap_intent card_downloaded].freeze
   INTENT_DETAILS = %w[x bluesky].freeze
 
   validates :name, inclusion: { in: NAMES }

@@ -1,0 +1,7 @@
+<%# The editor's preview. data-card-draft carries the post drafted from this
+    exact card, for "Rebuild from the card". %>
+<%= turbo_frame_tag "card_preview" do %>
+  <div class="rounded-lg overflow-hidden [&_svg]:block [&_svg]:w-full [&_svg]:h-auto" data-card-draft="<%= card.draft %>">
+    <%= render "week_cards/blueprint", card: card %>
+  </div>
+<% end %>

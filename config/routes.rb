@@ -25,6 +25,13 @@ Rails.application.routes.draw do
   get "/admin", to: "admin#show", as: :admin
   post "/admin/test_email", to: "admin#test_email", as: :admin_test_email
 
+  # The week card: what the builder shipped, published and built, as a picture
+  # to post. /week opens the current week.
+  get "/week", to: "week_cards#show", as: :current_week_card
+  get "/week/:week", to: "week_cards#show", as: :week_card, constraints: { week: /\d{4}-W\d{2}/ }
+  patch "/week/:week", to: "week_cards#update", constraints: { week: /\d{4}-W\d{2}/ }
+  get "/week/:week/preview", to: "week_cards#preview", as: :week_card_preview, constraints: { week: /\d{4}-W\d{2}/ }
+
   # Recap picker, open to every signed-in builder
   get "/recap", to: "recaps#show", as: :recap
   post "/recap/posted", to: "recaps#log_post", as: :recap_log_post

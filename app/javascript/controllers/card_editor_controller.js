@@ -1,0 +1,85 @@
+import { Controller } from "@hotwired/stimulus"
+
+// Saves every change to the week card as the builder makes it, then redraws
+// the preview from the server. The post box follows the builder's own text,
+// and the compose links carry it to X and Bluesky.
+export default class extends Controller {
+  static targets = ["form", "post", "counter", "intent", "copyButton"]
+  static values = { saveUrl: String, previewUrl: String, trackUrl: String, limit: { type: Number, default: 280 } }
+
+  connect() {
+    this.count()
+  }
+
+  queue() {
+    clearTimeout(this.timer)
+    this.timer = setTimeout(() => this.save(), 500)
+  }
+
+  async save(event) {
+    event?.preventDefault()
+    clearTimeout(this.timer)
+    const response = await fetch(this.saveUrlValue, {
+      method: "PATCH",
+      body: new FormData(this.formTarget),
+      headers: { Accept: "application/json", "X-CSRF-Token": this.csrfToken }
+    })
+    if (!response.ok) return
+
+    // The frame keeps the old card on screen until the new one arrives.
+    document.getElementById("card_preview").src = `${this.previewUrlValue}?v=${Date.now()}`
+  }
+
+  count() {
+    if (!this.hasPostTarget) return
+
+    const text = this.postTarget.value
+    const length = [...text].length
+    this.counterTarget.textContent = `${length} / ${this.limitValue}`
+    this.counterTarget.classList.toggle("text-red-600", length > this.limitValue)
+    this.intentTargets.forEach((link) => { link.href = link.dataset.base + encodeURIComponent(text) })
+  }
+
+  useDraft() {
+    const draft = document.querySelector("#card_preview [data-card-draft]")?.dataset.cardDraft
+    if (!draft) return
+
+    this.postTarget.value = draft
+    this.count()
+    this.queue()
+  }
+
+  copy() {
+    this.report("recap_copied")
+    navigator.clipboard.writeText(this.postTarget.value)
+      .then(() => this.flash("Copied"))
+      .catch(() => this.flash("Press Cmd+C"))
+  }
+
+  // The compose links open a new tab, so the report must not block the click.
+  intent(event) {
+    this.report("recap_intent", event.currentTarget.dataset.network)
+  }
+
+  report(name, detail = "") {
+    if (!this.trackUrlValue) return
+
+    fetch(this.trackUrlValue, {
+      method: "POST",
+      keepalive: true,
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": this.csrfToken },
+      body: JSON.stringify({ name, detail })
+    }).catch(() => {})
+  }
+
+  flash(message) {
+    const button = this.copyButtonTarget
+    const original = button.textContent
+    button.textContent = message
+    setTimeout(() => { button.textContent = original }, 1500)
+  }
+
+  get csrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.content
+  }
+}
