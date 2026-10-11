@@ -134,6 +134,19 @@ RSpec.describe User, type: :model do
         expect(user.github_access_token).to eq("gho_test_token")
       end
 
+      # C12: once the GitHub App reads private repos, the repo-scoped token is
+      # no longer needed, and a plain sign-in retires it.
+      it "lets a plain sign-in replace the repo-scoped token once the GitHub App is installed" do
+        create(:user, github_uid: "12345", github_access_token: "gho_repo_token",
+                      github_token_scopes: "repo,user:email", github_installation_id: 7)
+        auth.extra = { scope: "user:email" }
+        user = described_class.from_github_omniauth(auth)
+        expect(user.github_access_token).to eq("gho_test_token")
+        expect(user).to be_private_repo_access
+        user.save!
+        expect(user).not_to be_gained_private_repo_access
+      end
+
       it "replaces a token whose scopes were never recorded" do
         create(:user, github_uid: "12345", github_access_token: "gho_unknown", github_token_scopes: nil)
         auth.extra = { scope: "user:email" }

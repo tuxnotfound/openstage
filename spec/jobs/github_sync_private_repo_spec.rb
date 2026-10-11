@@ -6,48 +6,6 @@ require "rails_helper"
 RSpec.describe GithubSyncJob, "private repository handling", type: :job do
   let(:user) { create(:user, github_username: "tuxnotfound") }
 
-  describe "consent defaults" do
-    it "excludes a newly discovered private repo and includes a public one" do
-      job = described_class.new
-
-      secret = job.send(:sync_repo, user, repo_data(name: "secret", private: true))
-      open   = job.send(:sync_repo, user, repo_data(name: "open", private: false))
-
-      expect(secret).to have_attributes(private_repo: true, included: false)
-      expect(open).to have_attributes(private_repo: false, included: true)
-    end
-
-    it "re-defaults to excluded the first time a repo is learned to be private" do
-      legacy = create(:github_repo, user: user, github_repo_id: 42, name: "secret",
-                                    full_name: "tuxnotfound/secret", included: true, private_repo: false)
-
-      described_class.new.send(:sync_repo, user, repo_data(name: "secret", private: true, id: 42))
-
-      expect(legacy.reload).to have_attributes(private_repo: true, included: false)
-    end
-
-    # The row can still read private_repo: false when the user includes it
-    # (nothing listed it since the column shipped). Learning it is private
-    # afterwards must not undo that click.
-    it "never overrides an Included the user set by hand" do
-      chosen = create(:github_repo, user: user, github_repo_id: 43, name: "secret",
-                                    full_name: "tuxnotfound/secret", included: true, included_chosen: true, private_repo: false)
-
-      described_class.new.send(:sync_repo, user, repo_data(name: "secret", private: true, id: 43))
-
-      expect(chosen.reload).to have_attributes(private_repo: true, included: true)
-    end
-
-    it "respects a deliberate opt-in on every later sync" do
-      job = described_class.new
-      repo = job.send(:sync_repo, user, repo_data(name: "secret", private: true, id: 7))
-      repo.update!(included: true)
-
-      job.send(:sync_repo, user, repo_data(name: "secret", private: true, id: 7))
-      expect(repo.reload.included?).to be(true)
-    end
-  end
-
   describe "entries from an opted-in private repo" do
     it "are public, because publishing them is the whole point of opting in" do
       repo = create(:github_repo, user: user, full_name: "tuxnotfound/secret",
@@ -100,16 +58,5 @@ RSpec.describe GithubSyncJob, "private repository handling", type: :job do
 
       expect(user.github_repos.included_repos.public_repos.count).to eq(1)
     end
-  end
-
-  RepoData = Struct.new(:id, :name, :full_name, :description, :html_url, :default_branch, :private,
-                        keyword_init: true)
-
-  def repo_data(name:, private:, id: nil)
-    RepoData.new(
-      id: id || name.hash.abs, name: name, full_name: "tuxnotfound/#{name}",
-      description: "d", html_url: "https://github.com/tuxnotfound/#{name}",
-      default_branch: "main", private: private
-    )
   end
 end

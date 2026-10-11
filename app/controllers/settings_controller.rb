@@ -1,4 +1,6 @@
 class SettingsController < ApplicationController
+  include GithubReposSection
+
   before_action :require_authentication
 
   def show
@@ -42,10 +44,9 @@ class SettingsController < ApplicationController
 
   # show also renders after a failed update, so everything it reads loads here.
   def load_settings
-    @github_repos     = current_user.github_repos.order(:name)
-    @last_github_sync = current_user.last_synced_at(source: :github)
-    @badge_markdown   = "[![openstage](#{profile_badge_url(current_user.username)})](#{profile_url(current_user.username)}?ref=badge)"
-    @embed_script_tag = "<script src=\"#{profile_embed_url(current_user.username)}\"></script>"
+    @github_repos_section = github_repos_section
+    @badge_markdown       = "[![openstage](#{profile_badge_url(current_user.username)})](#{profile_url(current_user.username)}?ref=badge)"
+    @embed_script_tag     = "<script src=\"#{profile_embed_url(current_user.username)}\"></script>"
   end
 
   def profile_params

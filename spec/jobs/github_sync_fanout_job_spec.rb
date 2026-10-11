@@ -7,7 +7,9 @@ RSpec.describe GithubSyncFanoutJob, type: :job do
       create(:user, github_username: "bob", github_access_token: "gho_b").soft_delete!
       create(:user, github_username: "carol", github_access_token: nil)
 
-      expect(GithubSyncJob).to receive(:perform_later).with(active.id).once
+      configured = instance_double(ActiveJob::ConfiguredJob)
+      expect(GithubSyncJob).to receive(:set).with(priority: 10).once.and_return(configured)
+      expect(configured).to receive(:perform_later).with(active.id).once
 
       described_class.new.perform
     end
