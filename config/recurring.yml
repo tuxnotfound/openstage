@@ -20,6 +20,10 @@ production:
   weekly_email_fanout:
     class: WeeklyEmailFanoutJob
     schedule: "0 13 * * 5"
+  # F4: Monday 07:00 UTC, the week's numbers and failed jobs to my inbox.
+  owner_digest:
+    class: OwnerDigestJob
+    schedule: "0 7 * * 1"
   purge_deleted_users:
     class: PurgeDeletedUsersJob
     schedule: every day at 4am
