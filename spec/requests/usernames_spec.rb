@@ -54,7 +54,7 @@ RSpec.describe "Usernames", type: :request do
 
         get "/mynewhandle"
         expect(response.body).not_to include("data-syncing")
-        expect(response.body).to include("Nothing public in the last 90 days")
+        expect(response.body).to include("Nothing public in the last year")
         expect(response.body).to include("Log a milestone")
         expect(response.body).to include(%(href="#{settings_path(tab: "integrations")}"))
       end

@@ -1,8 +1,10 @@
 class GithubSyncJob < ApplicationJob
   queue_as :default
 
-  # How far back to fetch on the very first sync for a repo.
-  INITIAL_SYNC_WINDOW = 3.months
+  # How far back to fetch on the very first sync for a repo: the span of
+  # GitHub's own contribution graph. Three months left builders between
+  # projects with an empty page.
+  INITIAL_SYNC_WINDOW = 1.year
 
   # Overlap window when computing `since` from last_synced_at. GitHub's
   # `since` filter uses committer date, not push date, so commits pushed

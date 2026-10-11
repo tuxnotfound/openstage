@@ -204,6 +204,19 @@ RSpec.describe GithubSyncJob, type: :job do
       expect { described_class.new.perform(user.id) }.to change(Entry, :count).by(1)
     end
 
+    # A builder whose commits are all a few months old must not get an empty page.
+    it "reads a year of commits the first time a repo syncs" do
+      captured_since = nil
+      allow(client).to receive(:commits) do |_full_name, _branch, opts|
+        captured_since = Time.parse(opts[:since])
+        []
+      end
+
+      described_class.new.perform(user.id)
+
+      expect(captured_since).to be_within(1.minute).of(1.year.ago)
+    end
+
     it "rescans from INITIAL_SYNC_WINDOW when the repo's default branch changes" do
       described_class.new.perform(user.id)
       initial_synced = GithubRepo.last.last_synced_at
