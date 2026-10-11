@@ -16,3 +16,6 @@ production:
   github_sync_fanout:
     class: GithubSyncFanoutJob
     schedule: every 2 hours
+  purge_deleted_users:
+    class: PurgeDeletedUsersJob
+    schedule: every day at 4am
