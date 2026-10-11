@@ -50,7 +50,7 @@ class SessionsController < ApplicationController
     else
       last_sync = user.last_synced_at(source: :github)
       GithubSyncJob.perform_later(user.id) if last_sync.nil? || last_sync < 2.hours.ago
-      redirect_to dashboard_path, notice: restored ? RESTORED : "Welcome back, #{user.display_name}!"
+      redirect_to session.delete(:return_to) || dashboard_path, notice: restored ? RESTORED : "Welcome back, #{user.display_name}!"
     end
   end
 end

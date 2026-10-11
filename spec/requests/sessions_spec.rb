@@ -11,6 +11,21 @@ RSpec.describe "Sessions", type: :request do
       end
     end
 
+    context "when a signed-out link asked for a page that needs sign-in" do
+      let!(:user) { create(:user) }
+
+      it "lands there after sign-in, once" do
+        get "/recap", params: { from: "weekly" }
+        expect(response).to redirect_to(root_path)
+
+        sign_in_as(user)
+        expect(response).to redirect_to("/recap?from=weekly")
+
+        sign_in_as(user)
+        expect(response).to redirect_to(dashboard_path)
+      end
+    end
+
     # Settings promises 30 days to come back after deleting the account.
     context "when the account was deleted" do
       let!(:user) { create(:user, deleted_at: 3.days.ago) }

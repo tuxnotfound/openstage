@@ -48,7 +48,12 @@ class ApplicationController < ActionController::Base
     current_user.present?
   end
 
+  # A link from an email (the weekly one opens the recap picker) must land
+  # where it pointed once the builder has signed in, not on the dashboard.
   def require_authentication
-    redirect_to root_path, alert: "Please sign in first." unless user_signed_in?
+    return if user_signed_in?
+
+    session[:return_to] = request.fullpath if request.get?
+    redirect_to root_path, alert: "Please sign in first."
   end
 end
