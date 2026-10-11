@@ -97,6 +97,18 @@ RSpec.describe "Email subscribe", type: :request do
       expect(response).to redirect_to(root_path)
     end
 
+    # RFC 8058: the client POSTs to the List-Unsubscribe URL with no session,
+    # so no CSRF token either.
+    it "accepts a mail client's one-click POST" do
+      sub.confirm!
+      ActionController::Base.allow_forgery_protection = true
+
+      expect { post "/subscriptions/#{sub.token}/unsubscribe", params: { "List-Unsubscribe" => "One-Click" } }
+        .to change { Subscription.count }.by(-1)
+    ensure
+      ActionController::Base.allow_forgery_protection = false
+    end
+
     it "shrugs at a dead token" do
       get "/subscriptions/nope/confirm"
       expect(response).to redirect_to(root_path)
@@ -105,6 +117,7 @@ RSpec.describe "Email subscribe", type: :request do
     it "puts a List-Unsubscribe header and both links in the mail" do
       mail = SubscriptionMailer.confirm(sub)
       expect(mail.header["List-Unsubscribe"].value).to include(sub.token)
+      expect(mail.header["List-Unsubscribe-Post"].value).to eq("List-Unsubscribe=One-Click")
       expect(mail.text_part.body.to_s).to include("/subscriptions/#{sub.token}/confirm")
       expect(mail.html_part.body.to_s).to include("/subscriptions/#{sub.token}/unsubscribe")
     end

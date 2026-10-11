@@ -3,6 +3,9 @@
 # cannot be used to find out who is already subscribed to whom.
 class SubscriptionsController < ApplicationController
   before_action :load_builder, only: :create
+  # The token in the URL is the credential; a mail client's one-click POST
+  # carries no session and so no CSRF token.
+  skip_forgery_protection only: :unsubscribe
 
   def create
     return redirect_to(profile_path(@builder.username)) if bot?

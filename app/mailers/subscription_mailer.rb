@@ -6,6 +6,7 @@ class SubscriptionMailer < ApplicationMailer
     @unsub_url    = unsubscribe_subscription_url(subscription.token)
 
     headers["List-Unsubscribe"] = "<#{@unsub_url}>"
+    headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
 
     mail(to: subscription.email, subject: "Confirm: updates from #{@builder.display_name} on Openstage")
   end
