@@ -14,7 +14,7 @@ module Users
       user.soft_delete!
       return if subscription_id.blank?
 
-      after_commit { StopRenewalJob.perform_later(subscription_id) }
+      after_commit { SetRenewalJob.perform_later(subscription_id, false) }
     end
   end
 end

@@ -2,10 +2,9 @@
 # and timeouts. Its errors come out as ApplicationGateway's, so callers rescue
 # one family whatever the API.
 class StripeGateway < ApplicationGateway
-  # Ends a monthly plan at the close of the period already paid for, so it
-  # never renews.
-  def self.cancel_at_period_end(subscription_id)
-    Stripe::Subscription.update(subscription_id, { cancel_at_period_end: true })
+  # Whether a monthly plan renews at the end of the period already paid for.
+  def self.set_renewal(subscription_id, renew:)
+    Stripe::Subscription.update(subscription_id, { cancel_at_period_end: !renew })
     nil
   rescue Stripe::StripeError => error
     raise translate(error)

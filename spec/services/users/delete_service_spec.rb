@@ -12,14 +12,14 @@ RSpec.describe Users::DeleteService do
   it "takes the account offline and stops its monthly plan from renewing" do
     user = create(:user, pro: true, stripe_subscription_id: "sub_123")
 
-    expect { described_class.new(user: user).call! }.to have_enqueued_job(StopRenewalJob).with("sub_123")
+    expect { described_class.new(user: user).call! }.to have_enqueued_job(SetRenewalJob).with("sub_123", false)
     expect(user.reload).to be_deleted
   end
 
   it "enqueues nothing for an account without a plan" do
     user = create(:user)
 
-    expect { described_class.new(user: user).call! }.not_to have_enqueued_job(StopRenewalJob)
+    expect { described_class.new(user: user).call! }.not_to have_enqueued_job(SetRenewalJob)
     expect(user.reload).to be_deleted
   end
 

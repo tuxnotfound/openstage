@@ -40,6 +40,12 @@ RSpec.describe "Sessions", type: :request do
         get dashboard_path
         expect(response).to have_http_status(:ok)
       end
+
+      it "lets a monthly plan that deletion stopped renew again" do
+        user.update!(pro: true, stripe_subscription_id: "sub_123")
+
+        expect { sign_in_as(user) }.to have_enqueued_job(SetRenewalJob).with("sub_123", true)
+      end
     end
 
     # The Settings button posts scope=user:email,repo. omniauth-github forwards

@@ -38,10 +38,9 @@ class SessionsController < ApplicationController
   # Settings promises 30 days to come back after deleting the account. Signing
   # in is the way back; Users::PurgeDeletedService makes it final after that.
   def sign_in_existing(user)
-    restored = user.deleted?
-    user.deleted_at = nil
     return redirect_to(root_path, alert: "Sign in failed. Please try again.") unless user.save
 
+    restored = user.deleted? && Users::RestoreService.new(user: user).call
     session.delete(:signup_ref)
     session[:user_id] = user.id
     if user.gained_private_repo_access?
