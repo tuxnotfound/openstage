@@ -19,13 +19,13 @@ module OwnerDigests
     end
 
     def funnel_numbers
-      signups = User.active.where(created_at: since..).where.not(id: owner_ids)
+      signups = User.counted.where(created_at: since..).where.not(id: owner_ids)
       {
         signups_by_ref: signups.group(:signup_ref).count.transform_keys { |ref| ref.presence || "unattributed" },
         activated: signups.joins(:entries).distinct.count,
-        subscribes: Subscription.confirmed.where(confirmed_at: since..).count,
+        subscribes: Subscription.confirmed.where(confirmed_at: since.., user_id: User.counted.select(:id)).count,
         recap_intents: builders_who("recap_intent"),
-        weekly_mailed: User.where(weekly_email_sent_at: since..).where.not(id: owner_ids).count,
+        weekly_mailed: User.counted.where(weekly_email_sent_at: since..).where.not(id: owner_ids).count,
         weekly_opened: builders_who("recap_from_email")
       }
     end
@@ -40,7 +40,8 @@ module OwnerDigests
     end
 
     def builders_who(event)
-      Event.since(since).named(event).where.not(user_id: owner_ids).distinct.count(:user_id)
+      Event.since(since).named(event).where(user_id: User.counted.select(:id)).where.not(user_id: owner_ids)
+           .distinct.count(:user_id)
     end
   end
 end

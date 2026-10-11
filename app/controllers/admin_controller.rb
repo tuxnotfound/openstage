@@ -14,12 +14,12 @@ class AdminController < ApplicationController
     load_recap_funnel
     load_weekly_email
 
-    @posted_recaps  = Entry.where(entry_type: :posted, occurred_at: @since..).count
-    @posted_by_user = Entry.where(entry_type: :posted, occurred_at: @since..).joins(:user).distinct.count(:user_id)
-    @total_users    = User.active.count
-    @total_entries  = Entry.publicly_visible.count
-    @pro_users      = User.active.where(pro: true).count
-    @subscribes     = Subscription.confirmed.where(confirmed_at: @since..).count
+    @posted_recaps  = posted_recaps.count
+    @posted_by_user = posted_recaps.distinct.count(:user_id)
+    @total_users    = User.counted.count
+    @total_entries  = Entry.publicly_visible.where(user_id: counted_ids).count
+    @pro_users      = User.counted.where(pro: true).count
+    @subscribes     = Subscription.confirmed.where(confirmed_at: @since.., user_id: counted_ids).count
     @ref_visits     = Event.named("ref_visit").since(@since).group(:detail).count.sort_by { |_ref, count| -count }
     @shared_repos   = shared_repos
   end
@@ -40,8 +40,13 @@ class AdminController < ApplicationController
 
   private
 
+  # Test accounts (internal) are left out of every number on this page.
+  def counted_ids
+    User.counted.select(:id)
+  end
+
   def load_signups
-    @signups_by_ref = User.active
+    @signups_by_ref = User.counted
                           .where(created_at: @since..)
                           .group(:signup_ref)
                           .count
@@ -53,7 +58,7 @@ class AdminController < ApplicationController
   end
 
   def cohort
-    User.active.where(created_at: @since..)
+    User.counted.where(created_at: @since..)
   end
 
   def load_cohort
@@ -73,7 +78,7 @@ class AdminController < ApplicationController
   end
 
   def load_recap_funnel
-    recap_events  = Event.since(@since).where.not(user_id: [ nil, current_user.id ])
+    recap_events  = Event.since(@since).where(user_id: counted_ids).where.not(user_id: current_user.id)
     @recap_funnel = %w[recap_opened recap_picked recap_copied recap_intent].map do |name|
       [ name, recap_events.named(name).distinct.count(:user_id) ]
     end
@@ -83,16 +88,20 @@ class AdminController < ApplicationController
   # F2's funnel. An email open cannot be seen without a tracking pixel, so the
   # first step after sending is the picker opened from the email's link.
   def load_weekly_email
-    @weekly_mailed  = User.active.where(weekly_email_sent_at: @since..).where.not(id: current_user.id).count
-    @weekly_opened  = Event.since(@since).named("recap_from_email").where.not(user_id: current_user.id)
-                           .distinct.count(:user_id)
-    @digests_mailed = Subscription.where(digest_sent_at: @since..).count
+    @weekly_mailed  = User.counted.where(weekly_email_sent_at: @since..).where.not(id: current_user.id).count
+    @weekly_opened  = Event.since(@since).named("recap_from_email").where(user_id: counted_ids)
+                           .where.not(user_id: current_user.id).distinct.count(:user_id)
+    @digests_mailed = Subscription.where(digest_sent_at: @since.., user_id: counted_ids).count
+  end
+
+  def posted_recaps
+    Entry.where(entry_type: :posted, occurred_at: @since.., user_id: counted_ids)
   end
 
   # The earliest honest audience signal: a repo with more than one builder on
   # it means someone was recruited by a teammate, not by the founder.
   def shared_repos
-    Entry.where(source: :github)
+    Entry.where(source: :github, user_id: counted_ids)
          .where.not(repo_name: nil)
          .group(:repo_name)
          .having("COUNT(DISTINCT user_id) > 1")
@@ -103,7 +112,7 @@ class AdminController < ApplicationController
   # Mirrors ProfileView.daily_counts so the two charts read the same way.
   def signups_by_day
     start   = DAYS.days.ago.to_date
-    grouped = User.active
+    grouped = User.counted
                   .where(created_at: start.beginning_of_day..)
                   .group("DATE(created_at AT TIME ZONE 'UTC')")
                   .count

@@ -21,6 +21,9 @@ class User < ApplicationRecord
   has_many :badge_impressions, dependent: :destroy
 
   scope :active, -> { where(deleted_at: nil) }
+  # Everyone the numbers count: test accounts (internal) stay out of /admin,
+  # the owner digest and the gates.
+  scope :counted, -> { active.where(internal: false) }
 
   validates :github_uid, presence: true, uniqueness: true
   validates :username, presence: true, uniqueness: { case_sensitive: false },

@@ -30,6 +30,16 @@ RSpec.describe OwnerDigests::SendService do
     )
   end
 
+  it "leaves test accounts out" do
+    tester = create(:user, signup_ref: "direct", created_at: 1.day.ago, internal: true)
+    Event.track("recap_intent", user: tester)
+
+    service = described_class.new
+    service.call!
+
+    expect(service.numbers).to include(signups_by_ref: {}, recap_intents: 0)
+  end
+
   it "reports failed jobs by class" do
     job = SolidQueue::Job.create!(queue_name: "default", class_name: "WeeklyEmailJob", arguments: {})
     SolidQueue::FailedExecution.create!(job: job, exception: RuntimeError.new("boom"))

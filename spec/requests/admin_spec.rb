@@ -36,6 +36,23 @@ RSpec.describe "Admin", type: :request do
         expect(response.body).to include('data-weekly-step="digests_mailed" data-count="1"')
       end
 
+      it "leaves test accounts out of every number" do
+        tester = create(:user, username: "tester", signup_ref: "direct", created_at: 1.day.ago, internal: true,
+                               weekly_email_sent_at: 1.day.ago)
+        create(:entry, user: tester, repo_name: "shared/repo")
+        create(:entry, user: owner, repo_name: "shared/repo")
+        Event.track("recap_opened", user: tester)
+        create(:user, username: "real", signup_ref: "recap", created_at: 1.day.ago)
+
+        get "/admin"
+        expect(response.body).not_to include('data-ref="direct"')
+        expect(response.body).to include('data-ref="recap" data-count="1"')
+        expect(response.body).to include("0 of 1")
+        expect(response.body).to include('data-recap-step="recap_opened" data-count="0"')
+        expect(response.body).to include('data-weekly-step="weekly_mailed" data-count="0"')
+        expect(response.body).not_to include("shared/repo")
+      end
+
       it "groups signups by first touch" do
         create(:user, username: "fromrecap", signup_ref: "recap", created_at: 2.days.ago)
         active = create(:user, username: "active", signup_ref: "recap", created_at: 3.days.ago)
