@@ -12,6 +12,7 @@ class RecapsController < ApplicationController
     @draft         = build_draft
 
     Event.track(@draft.quiet? ? "recap_quiet" : "recap_opened", user: current_user)
+    Event.track("recap_from_email", user: current_user) if params[:from] == "weekly"
     Event.track("recap_picked", user: current_user) if @picks.any? && !@draft.quiet?
   end
 

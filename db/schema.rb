@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_09_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_11_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -231,6 +231,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_09_000001) do
     t.datetime "confirmation_sent_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "digest_sent_at"
     t.index ["token"], name: "index_subscriptions_on_token", unique: true
     t.index ["user_id", "email"], name: "index_subscriptions_on_user_id_and_email", unique: true
     t.index ["user_id"], name: "index_subscriptions_on_user_id"
@@ -271,6 +272,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_09_000001) do
     t.string "signup_ref"
     t.string "github_token_scopes"
     t.bigint "github_installation_id"
+    t.boolean "weekly_email", default: true, null: false
+    t.datetime "weekly_email_sent_at"
     t.index ["github_uid"], name: "index_users_on_github_uid", unique: true
     t.index ["signup_ref"], name: "index_users_on_signup_ref"
     t.index ["username"], name: "index_users_on_username", unique: true

@@ -52,6 +52,6 @@ class SettingsController < ApplicationController
   end
 
   def profile_params
-    params.require(:user).permit(:display_name, :bio, :website_url, :building_since)
+    params.require(:user).permit(:display_name, :bio, :website_url, :building_since, :weekly_email)
   end
 end

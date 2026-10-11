@@ -24,6 +24,18 @@ RSpec.describe "Admin", type: :request do
         expect(response.body).to include("0% of signups")
       end
 
+      it "shows the weekly email funnel, leaving the owner out" do
+        builder = create(:user, weekly_email_sent_at: 2.days.ago)
+        owner.update!(weekly_email_sent_at: 2.days.ago)
+        Event.track("recap_from_email", user: builder)
+        builder.subscriptions.create!(email: "r@example.com", confirmed_at: 1.week.ago, digest_sent_at: 2.days.ago)
+
+        get "/admin"
+        expect(response.body).to include('data-weekly-step="weekly_mailed" data-count="1"')
+        expect(response.body).to include('data-weekly-step="weekly_opened" data-count="1"')
+        expect(response.body).to include('data-weekly-step="digests_mailed" data-count="1"')
+      end
+
       it "groups signups by first touch" do
         create(:user, username: "fromrecap", signup_ref: "recap", created_at: 2.days.ago)
         active = create(:user, username: "active", signup_ref: "recap", created_at: 3.days.ago)

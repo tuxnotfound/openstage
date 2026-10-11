@@ -12,6 +12,7 @@ class AdminController < ApplicationController
     load_cohort
     load_strangers
     load_recap_funnel
+    load_weekly_email
 
     @posted_recaps  = Entry.where(entry_type: :posted, occurred_at: @since..).count
     @posted_by_user = Entry.where(entry_type: :posted, occurred_at: @since..).joins(:user).distinct.count(:user_id)
@@ -77,6 +78,15 @@ class AdminController < ApplicationController
       [ name, recap_events.named(name).distinct.count(:user_id) ]
     end
     @recap_quiet = recap_events.named("recap_quiet").distinct.count(:user_id)
+  end
+
+  # F2's funnel. An email open cannot be seen without a tracking pixel, so the
+  # first step after sending is the picker opened from the email's link.
+  def load_weekly_email
+    @weekly_mailed  = User.active.where(weekly_email_sent_at: @since..).where.not(id: current_user.id).count
+    @weekly_opened  = Event.since(@since).named("recap_from_email").where.not(user_id: current_user.id)
+                           .distinct.count(:user_id)
+    @digests_mailed = Subscription.where(digest_sent_at: @since..).count
   end
 
   # The earliest honest audience signal: a repo with more than one builder on

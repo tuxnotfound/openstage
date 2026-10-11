@@ -8,6 +8,7 @@ class Event < ApplicationRecord
     seen
     ref_visit
     recap_opened recap_quiet recap_picked recap_copied recap_intent
+    recap_from_email
   ].freeze
 
   # Only these may be reported by the browser; the rest are recorded server-side.

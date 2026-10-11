@@ -16,6 +16,10 @@ production:
   github_sync_fanout:
     class: GithubSyncFanoutJob
     schedule: every 2 hours
+  # F2: Friday 13:00 UTC, morning in the Americas and afternoon in Europe.
+  weekly_email_fanout:
+    class: WeeklyEmailFanoutJob
+    schedule: "0 13 * * 5"
   purge_deleted_users:
     class: PurgeDeletedUsersJob
     schedule: every day at 4am

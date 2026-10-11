@@ -1,0 +1,17 @@
+<%= @builder.display_name %>'s week on Openstage
+
+<%= @draft.skeleton %>
+
+<% @draft.candidates_by_repo.each do |repo, list| %>
+<%= repo %>
+<% list.each do |candidate| %>
+- <%= candidate.title %>
+<% end %>
+
+<% end %>
+Full timeline: <%= @profile_url %>
+
+You subscribed to <%= @builder.display_name %>'s updates on openstage.dev/<%= @builder.username %>.
+Unsubscribe: <%= @unsub_url %>
+
+Openstage turns GitHub commits into a public proof-of-work page. Get yours: <%= @home_url %>

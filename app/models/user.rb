@@ -8,7 +8,7 @@ class User < ApplicationRecord
     sync auth og badge embed embeds claim claim-username sitemap robots favicon
     webhooks sign_out signin signup login logout register admin api app www
     help support docs terms privacy contact status new edit me root public
-    assets up entries github_repos e recap _deploy_check subscriptions subscribe
+    assets up entries github_repos e recap _deploy_check subscriptions subscribe weekly_email
   ].freeze
 
   has_many :entries, dependent: :destroy
@@ -42,8 +42,8 @@ class User < ApplicationRecord
   # is attributed separately from recap posts.
   # "launch" is the tag on the links in the soft-launch posts. A launch venue
   # with a gate read of its own gets its own tag: "peerlist" (the Gate 1
-  # retry) and "producthunt" (the card).
-  REFS = %w[recap badge footer feed claim bio launch peerlist producthunt].freeze
+  # retry) and "producthunt" (the card). "digest" is the subscriber digest.
+  REFS = %w[recap badge footer feed claim bio launch peerlist producthunt digest].freeze
   DEFAULT_REF = "direct".freeze
 
   def self.normalize_ref(value)

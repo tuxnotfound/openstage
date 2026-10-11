@@ -58,6 +58,9 @@ Rails.application.routes.draw do
   get "/subscriptions/:token/confirm", to: "subscriptions#confirm", as: :confirm_subscription
   match "/subscriptions/:token/unsubscribe", to: "subscriptions#unsubscribe", as: :unsubscribe_subscription, via: [ :get, :post ]
 
+  # The stop link in the builder's weekly email (F2)
+  match "/weekly_email/unsubscribe", to: "weekly_emails#unsubscribe", as: :weekly_email_unsubscribe, via: [ :get, :post ]
+
   # Global feed
   get "/feed", to: "feed#index", as: :feed
 

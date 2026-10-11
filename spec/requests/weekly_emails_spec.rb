@@ -1,0 +1,46 @@
+require "rails_helper"
+
+RSpec.describe "Weekly email", type: :request do
+  let(:user) { create(:user) }
+  let(:token) { user.signed_id(purpose: :weekly_email) }
+
+  it "turns the email off from the link, signed in or not" do
+    get weekly_email_unsubscribe_path(token: token)
+
+    expect(response).to redirect_to(root_path)
+    expect(user.reload.weekly_email).to be(false)
+  end
+
+  # RFC 8058: the client POSTs with no session, so no CSRF token either.
+  it "accepts a mail client's one-click POST" do
+    ActionController::Base.allow_forgery_protection = true
+
+    post weekly_email_unsubscribe_path(token: token), params: { "List-Unsubscribe" => "One-Click" }
+
+    expect(user.reload.weekly_email).to be(false)
+  ensure
+    ActionController::Base.allow_forgery_protection = false
+  end
+
+  it "refuses a forged or foreign token" do
+    get weekly_email_unsubscribe_path(token: "#{token}x")
+    get weekly_email_unsubscribe_path(token: user.signed_id(purpose: :something_else))
+
+    expect(user.reload.weekly_email).to be(true)
+  end
+
+  it "turns back on from Settings" do
+    user.update!(weekly_email: false)
+    sign_in_as(user)
+
+    patch settings_path, params: { user: { weekly_email: "1" } }
+
+    expect(user.reload.weekly_email).to be(true)
+  end
+
+  it "counts the picker opened from the email" do
+    sign_in_as(user)
+
+    expect { get recap_path(from: "weekly") }.to change { Event.named("recap_from_email").count }.by(1)
+  end
+end

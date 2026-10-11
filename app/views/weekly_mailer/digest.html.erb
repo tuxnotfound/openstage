@@ -1,0 +1,17 @@
+<p><strong><%= @builder.display_name %>'s week on Openstage</strong></p>
+
+<%= simple_format(@draft.skeleton) %>
+
+<% @draft.candidates_by_repo.each do |repo, list| %>
+  <p><strong><%= repo %></strong></p>
+  <ul>
+    <% list.each do |candidate| %>
+      <li><%= candidate.title %></li>
+    <% end %>
+  </ul>
+<% end %>
+
+<p><%= link_to "Full timeline", @profile_url %></p>
+
+<p style="color: #6b7280; font-size: 12px;">You subscribed to <%= @builder.display_name %>'s updates on openstage.dev/<%= @builder.username %>. <%= link_to "Unsubscribe", @unsub_url %>.</p>
+<p style="color: #6b7280; font-size: 12px;">Openstage turns GitHub commits into a public proof-of-work page. <%= link_to "Get yours", @home_url %>.</p>

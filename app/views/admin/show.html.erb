@@ -110,6 +110,22 @@
     <p class="text-xs text-gray-400 mt-1.5">Distinct builders per step. A page that merely rendered is never counted.</p>
   </section>
 
+  <!-- Weekly email (F2) -->
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Weekly email, builders other than you</h2>
+    <div class="rounded-xl border border-gray-200 divide-y divide-gray-100 text-sm">
+      <% [ [ "weekly_mailed", "Got the weekly email", @weekly_mailed ],
+           [ "weekly_opened", "Opened the picker from it", @weekly_opened ],
+           [ "digests_mailed", "Subscribers sent a digest", @digests_mailed ] ].each do |key, label, count| %>
+        <div class="flex items-center justify-between px-4 py-2.5" data-weekly-step="<%= key %>" data-count="<%= count %>">
+          <span class="text-gray-700"><%= label %></span>
+          <span class="font-medium text-gray-900"><%= count %></span>
+        </div>
+      <% end %>
+    </div>
+    <p class="text-xs text-gray-400 mt-1.5">Last send per builder and per subscriber. The picker step above shows what they did next.</p>
+  </section>
+
   <!-- Repos with more than one builder -->
   <section>
     <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Repos with more than one builder</h2>

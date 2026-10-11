@@ -61,6 +61,14 @@
                 <%= f.date_field :building_since,
                     class: "border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent" %>
               </div>
+
+              <div class="flex items-start gap-2.5">
+                <%= f.check_box :weekly_email, class: "mt-0.5 rounded border-gray-300 text-gray-900 focus:ring-gray-900" %>
+                <%= f.label :weekly_email, class: "text-sm text-gray-700" do %>
+                  Weekly email
+                  <span class="block text-xs text-gray-400">On Fridays, when your week has three or more things in it: your commits, ready to pick from for a post.</span>
+                <% end %>
+              </div>
             </div>
 
             <div class="mt-6">
