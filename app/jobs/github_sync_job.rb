@@ -166,28 +166,30 @@ class GithubSyncJob < ApplicationJob
       commit_page.each do |commit|
         next if !authored_by?(commit, user) || dismissed_shas(user).include?(commit.sha)
 
-        begin
-          entry = Entry.find_or_initialize_by(user: user, external_id: commit.sha)
-          next unless entry.new_record?
-
-          entry.assign_attributes(
-            entry_type: :shipped,
-            source: :github,
-            title: commit.commit.message.split("\n").first.truncate(200),
-            occurred_at: commit.commit.author.date,
-            # Never expose commit links for private repositories.
-            url: private_repo ? nil : commit.html_url,
-            repo_name: repo.full_name
-          )
-          entry.save!
-          added += 1
-        rescue ActiveRecord::RecordNotUnique
-          next
-        end
+        added += 1 if import_commit(user, repo, commit, private_repo: private_repo)
       end
     end
 
     added
+  end
+
+  # True when the commit was new to the builder's page.
+  def import_commit(user, repo, commit, private_repo:)
+    entry = Entry.find_or_initialize_by(user: user, external_id: commit.sha)
+    return false unless entry.new_record?
+
+    entry.assign_attributes(
+      entry_type: :shipped,
+      source: :github,
+      title: commit.commit.message.split("\n").first.truncate(200),
+      occurred_at: commit.commit.author.date,
+      # Never expose commit links for private repositories.
+      url: private_repo ? nil : commit.html_url,
+      repo_name: repo.full_name
+    )
+    entry.save!
+  rescue ActiveRecord::RecordNotUnique
+    false
   end
 
   # Yields each page of a paginated Octokit response so the previous page can
