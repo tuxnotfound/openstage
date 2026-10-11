@@ -176,6 +176,16 @@ RSpec.describe "Settings", type: :request do
         expect(response).to redirect_to(root_path)
         expect(user.reload.deleted_at).not_to be_nil
       end
+
+      it "stops a monthly plan from renewing" do
+        user.update!(pro: true, stripe_subscription_id: "sub_123")
+
+        expect { delete settings_path }.to have_enqueued_job(StopRenewalJob).with("sub_123")
+      end
+
+      it "leaves billing alone for an account without a plan" do
+        expect { delete settings_path }.not_to have_enqueued_job(StopRenewalJob)
+      end
     end
   end
 end

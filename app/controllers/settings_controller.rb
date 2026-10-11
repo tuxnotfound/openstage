@@ -35,7 +35,9 @@ class SettingsController < ApplicationController
   end
 
   def destroy
-    current_user.soft_delete!
+    service = Users::DeleteService.new(user: current_user)
+    return redirect_to(settings_path, alert: service.errors.full_messages.to_sentence) unless service.call
+
     session.delete(:user_id)
     redirect_to root_path, notice: "Your account has been scheduled for deletion. Sign in again within 30 days to restore it."
   end
