@@ -136,6 +136,7 @@ class GithubSyncJob < ApplicationJob
     notes << "not returned by GitHub: #{missing.join(', ')}" if missing.any?
     notes << "no longer readable, removed: #{@dropped.join(', ')}" if @dropped.any?
     notes << "skipped: #{@skipped.join(', ')}" if @skipped.any?
+    notes << "stopped at #{MAX_PAGES * PER_PAGE} commits, older ones not read: #{@capped.join(', ')}" if @capped
     notes.join("; ").presence
   end
 
@@ -162,7 +163,7 @@ class GithubSyncJob < ApplicationJob
       client.commits(repo.full_name, repo.default_branch, since: since.iso8601, per_page: PER_PAGE, page: page)
     end
 
-    each_page(fetch_commits) do |commit_page|
+    capped = each_page(fetch_commits) do |commit_page|
       commit_page.each do |commit|
         next if !authored_by?(commit, user) || dismissed_shas(user).include?(commit.sha)
 
@@ -170,6 +171,8 @@ class GithubSyncJob < ApplicationJob
       end
     end
 
+    # GitHub lists newest first, so a capped read leaves out the oldest ones.
+    (@capped ||= []) << repo.full_name if capped
     added
   end
 
@@ -207,18 +210,17 @@ class GithubSyncJob < ApplicationJob
   # Dormant in practice only because a 2-hourly sync rarely sees 100+ commits;
   # a first backfill on a busy repo would have hung the job.
   #
-  # fetch receives a page number and returns that page.
+  # fetch receives a page number and returns that page. True when the cap
+  # stopped it: a full last page means anything past it went unseen.
   def each_page(fetch)
     (1..MAX_PAGES).each do |page_number|
       page = fetch.call(page_number)
-      break if page.blank?
+      return false if page.blank?
 
       yield page
-      break if page.size < PER_PAGE
-
-      # A full last page means anything past the cap went unseen.
-      @listing_incomplete = true if page_number == MAX_PAGES
+      return false if page.size < PER_PAGE
     end
+    @listing_incomplete = true
   end
 
   # Commits the builder deleted from their page are never imported again.

@@ -46,9 +46,13 @@ RSpec.describe GithubSyncJob, "pagination", type: :job do
       full_page
     end
 
-    job.send(:each_page, endless) { |_page| nil }
+    expect(job.send(:each_page, endless) { |_page| nil }).to be(true)
 
     expect(calls).to eq(GithubSyncJob::MAX_PAGES)
+  end
+
+  it "says it was not cut short when the feed ends on its own" do
+    expect(job.send(:each_page, ->(_page) { [ "only" ] }) { |_page| nil }).to be(false)
   end
 
   it "asks for each page by number" do

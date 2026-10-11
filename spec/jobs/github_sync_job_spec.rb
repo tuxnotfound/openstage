@@ -217,6 +217,16 @@ RSpec.describe GithubSyncJob, type: :job do
       expect(captured_since).to be_within(1.minute).of(1.year.ago)
     end
 
+    # A busy shared repo can hold more than the cap in a year, all authors counted.
+    it "says so in the sync notes when the cap cut a repo's commits short" do
+      full_page = Array.new(described_class::PER_PAGE) { commit_double }
+      allow(client).to receive(:commits).and_return(full_page)
+
+      described_class.new.perform(user.id)
+
+      expect(SyncLog.last.error_message).to include("older ones not read: tuxnotfound/myapp")
+    end
+
     # A rescan from scratch reads the whole window again.
     it "never imports again a commit the builder deleted" do
       described_class.new.perform(user.id)
