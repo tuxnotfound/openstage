@@ -40,8 +40,10 @@ class User < ApplicationRecord
   # recorded as "direct" so the denominator is never silently incomplete.
   # "bio" is the link in the founder's X profile, so reply-first presence on X
   # is attributed separately from recap posts.
-  # "launch" is the tag on the links in the soft-launch and card posts.
-  REFS = %w[recap badge footer feed claim bio launch].freeze
+  # "launch" is the tag on the links in the soft-launch posts. A launch venue
+  # with a gate read of its own gets its own tag: "peerlist" (the Gate 1
+  # retry) and "producthunt" (the card).
+  REFS = %w[recap badge footer feed claim bio launch peerlist producthunt].freeze
   DEFAULT_REF = "direct".freeze
 
   def self.normalize_ref(value)
