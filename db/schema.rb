@@ -71,15 +71,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_09_000001) do
     t.index ["user_id"], name: "index_events_on_user_id"
   end
 
-  create_table "follows", force: :cascade do |t|
-    t.bigint "follower_id", null: false
-    t.bigint "followee_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["followee_id"], name: "index_follows_on_followee_id"
-    t.index ["follower_id", "followee_id"], name: "index_follows_on_follower_id_and_followee_id", unique: true
-  end
-
   create_table "github_repos", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "github_repo_id", null: false
@@ -290,8 +281,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_09_000001) do
   add_foreign_key "entry_clicks", "entries"
   add_foreign_key "entry_clicks", "users"
   add_foreign_key "events", "users"
-  add_foreign_key "follows", "users", column: "followee_id"
-  add_foreign_key "follows", "users", column: "follower_id"
   add_foreign_key "github_repos", "users"
   add_foreign_key "profile_views", "users"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
