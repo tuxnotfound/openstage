@@ -1,10 +1,10 @@
 # F2's two emails. Both rebuild the week when they are sent, from the builder's
 # public entries only, so nothing private reaches a subscriber.
 class WeeklyMailer < ApplicationMailer
-  # The builder's own week, and one link: the picker. It never posts.
+  # The builder's own week, and one link: the week card editor. It never posts.
   def week_ready(user)
     @draft      = RecapDraft.for_user(user, days: 7)
-    @picker_url = recap_url(from: "weekly")
+    @card_url   = current_week_card_url(from: "weekly")
     @stop_url   = weekly_email_unsubscribe_url(token: user.signed_id(purpose: :weekly_email))
     one_click_unsubscribe(@stop_url)
 

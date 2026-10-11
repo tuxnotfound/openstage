@@ -16,13 +16,13 @@ RSpec.describe WeeklyMailer do
   describe "#week_ready" do
     let(:mail) { described_class.week_ready(builder) }
 
-    it "sends the builder their week with one link to the picker" do
+    it "sends the builder their week with one link to the week card editor" do
       expect(mail.to).to eq([ "mia@example.com" ])
       expect(mail.subject).to eq("Your week is ready to review")
       body = mail.text_part.body.to_s
       expect(body).to include("Opened the beta", "Add billing", "Fix login")
-      expect(body).to include("https://openstage.dev/recap?from=weekly")
-      expect(mail.html_part.body.to_s).to include("https://openstage.dev/recap?from=weekly")
+      expect(body).to include("https://openstage.dev/week?from=weekly")
+      expect(mail.html_part.body.to_s).to include("https://openstage.dev/week?from=weekly")
     end
 
     it "carries a stop link that works in one click" do
