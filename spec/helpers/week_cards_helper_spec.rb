@@ -24,18 +24,6 @@ RSpec.describe WeekCardsHelper, type: :helper do
     end
   end
 
-  describe "#card_headline_size" do
-    it "shrinks the type until the longest word fits" do
-      expect(helper.card_headline_size("playwheelsoff.com is live", 120, base: 15, weight: 700)).to be < 15
-      expect(helper.card_headline_size("Ship it", 120, base: 15, weight: 700)).to eq(15)
-    end
-  end
-
-  it "never lets one commit stand taller than twelve pixels" do
-    days = [ Struct.new(:total).new(2), Struct.new(:total).new(1) ]
-    expect(helper.card_bar_scale(days, 194)).to eq(12)
-  end
-
   describe "#card_delta" do
     it "says how a number moved, as a percentage or a difference" do
       expect(helper.card_delta(74, 32, percent: true)).to eq([ "↑ 131%", :up ])

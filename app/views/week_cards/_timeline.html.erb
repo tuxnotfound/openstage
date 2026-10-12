@@ -11,8 +11,8 @@
 <% band = card_bands(card, cells) %>
 <% days = wc.layout == "active" && card.days.any?(&:active) ? card.days.select(&:active) : card.days %>
 <% columns = card_columns(days) %>
-<% bars_bottom = band[:axis] - 8 %>
-<% scale = card_bar_scale(days, bars_bottom - band[:top] - 38) %>
+<% line = band[:line] %>
+<% scale = card_bar_scale(days, line - band[:top] - WeekCardTimelineHelper::BAR_CAP) %>
 <% merged = !wc.shows?("projects") %>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="<%= card.label %> card for <%= user.display_name %>" data-week-card="1">
   <defs>
@@ -66,39 +66,48 @@
     <% end %>
   <% end %>
 
-  <%# The days %>
+  <%# The days: bars grow from the line, up and down in turn, and each day's
+      words sit on the other side, inside the day's column. %>
   <rect x="26.5" y="<%= band[:top] + 0.5 %>" width="1147" height="<%= band[:bottom] - band[:top] - 1 %>" rx="16" fill="<%= t[:panel] %>" stroke="<%= t[:border] %>"/>
-  <line x1="40" y1="<%= band[:axis] %>" x2="1160" y2="<%= band[:axis] %>" stroke="<%= t[:axis] %>" stroke-width="1.5"/>
+  <line x1="40" y1="<%= line %>" x2="1160" y2="<%= line %>" stroke="<%= t[:axis] %>" stroke-width="2"/>
   <% columns.each do |col| %>
     <% day = col[:day] %>
     <% cx = col[:cx] %>
+    <% up = col[:up] %>
     <% headline = wc.shows?("headlines") ? day.headline : nil %>
     <% shipped = headline&.kind == "shipped" %>
-    <text x="<%= cx %>" y="<%= band[:top] + 25 %>" text-anchor="middle" <%= mono %> font-size="11" letter-spacing="0.88" fill="<%= t[:muted] %>"><%= day.label %><% if day.total.positive? %><tspan dx="6" <%= sans %> font-size="15" font-weight="700" letter-spacing="0" fill="<%= t[:text] %>"><%= day.total %></tspan><% end %></text>
-    <% card_bar(day, scale, bottom: bars_bottom, merged: merged).each do |block| %>
+    <% blocks = card_bar(day, scale, line: line, up: up, merged: merged) %>
+    <% blocks.each_with_index do |block, i| %>
       <% color = card_project_color(block[:segment].slot) %>
-      <% if block[:top] %>
-        <path d="<%= card_top_block(cx - 19, block[:y], 38, block[:height]) %>" fill="<%= color %>"/>
+      <% if i == blocks.size - 1 %>
+        <path d="<%= card_block_path(cx - 13, block[:y], WeekCardTimelineHelper::BAR_WIDTH, block[:height], up: up) %>" fill="<%= color %>"/>
       <% else %>
-        <rect x="<%= cx - 19 %>" y="<%= block[:y] %>" width="38" height="<%= block[:height] %>" fill="<%= color %>"/>
-      <% end %>
-      <% if block[:height] >= 16 && !merged %>
-        <text x="<%= cx %>" y="<%= block[:y] + (block[:height] / 2) + 4 %>" text-anchor="middle" <%= sans %> font-size="11" font-weight="700" fill="<%= card_on_color(color) %>"><%= block[:segment].n %></text>
+        <rect x="<%= cx - 13 %>" y="<%= block[:y] %>" width="<%= WeekCardTimelineHelper::BAR_WIDTH %>" height="<%= block[:height] %>" fill="<%= color %>"/>
       <% end %>
     <% end %>
-    <% radius = shipped ? 7 : 4.5 %>
-    <circle cx="<%= cx %>" cy="<%= band[:axis] %>" r="<%= radius %>" fill="<%= headline ? t[:text] : t[:panel] %>" stroke="<%= headline ? t[:text] : t[:axis] %>" stroke-width="2"/>
+    <% if day.active || headline %>
+      <%# The day and its commits at the bar's far end, or by the line without a bar. %>
+      <% far = blocks.any? ? (up ? blocks.last[:y] - 8 : blocks.last[:y] + blocks.last[:height] + 18) : (up ? line - 9 : line + 19) %>
+      <text x="<%= cx %>" y="<%= far %>" text-anchor="middle" <%= mono %> font-size="11" letter-spacing="0.88" fill="<%= shipped ? t[:text] : t[:muted] %>"><%= day.label %><% if day.total.positive? %><tspan dx="6" <%= sans %> font-size="15" font-weight="700" letter-spacing="0" fill="<%= t[:text] %>"><%= day.total %></tspan><% end %></text>
+    <% else %>
+      <%# A quiet day says so on the side its words would take, which is empty. %>
+      <text x="<%= cx %>" y="<%= up ? line + 19 : line - 9 %>" text-anchor="middle" <%= mono %> font-size="11" letter-spacing="0.88" fill="<%= t[:quiet] %>"><%= day.label %><tspan dx="6" <%= sans %> letter-spacing="0">quiet</tspan></text>
+    <% end %>
     <% if headline %>
-      <% width = col[:width] - 12 %>
-      <% base, weight = shipped ? [ 15, 700 ] : [ 13, 600 ] %>
-      <% size = card_headline_size(headline.text, width, base: base, weight: weight) %>
-      <line x1="<%= cx %>" y1="<%= band[:axis] + radius + 2 %>" x2="<%= cx %>" y2="<%= band[:axis] + 18 %>" stroke="<%= t[:axis] %>" stroke-width="1.5" stroke-dasharray="3 3"/>
-      <text x="<%= cx %>" y="<%= band[:axis] + 31 %>" text-anchor="middle" <%= mono %> font-size="9" letter-spacing="1.08" fill="<%= shipped ? t[:text] : t[:muted] %>"><%= headline.kind.upcase %></text>
-      <% card_wrap(headline.text, width, max_lines: 3, size: size, weight: weight).each_with_index do |line, i| %>
-        <text x="<%= cx %>" y="<%= (band[:axis] + 36 + size + (i * size * 1.18)).round(1) %>" text-anchor="middle" <%= sans %> font-size="<%= size %>" font-weight="<%= weight %>" fill="<%= headline.source == :count ? t[:muted] : t[:text] %>"><%= line %></text>
+      <% words = card_day_words(day, headline, width: col[:width] - (2 * WeekCardTimelineHelper::WORDS_PADDING), merged: merged) %>
+      <% top = up ? line + WeekCardTimelineHelper::WORDS_GAP : line - WeekCardTimelineHelper::WORDS_GAP - words[:height] %>
+      <% words[:rows].each do |row| %>
+        <% if row[:kind] %>
+          <text x="<%= cx %>" y="<%= top + row[:y] %>" text-anchor="middle" <%= mono %> font-size="9" letter-spacing="1.08" fill="<%= shipped ? t[:text] : card_project_ink(day.segments.first&.slot, wc.theme) || t[:muted] %>"><%= row[:kind] %></text>
+        <% elsif row[:line] %>
+          <text x="<%= cx %>" y="<%= top + row[:y] %>" text-anchor="middle" <%= sans %> font-size="<%= row[:size] %>" font-weight="<%= row[:weight] %>" fill="<%= headline.source == :count ? t[:muted] : t[:text] %>"><%= row[:line] %></text>
+        <% else %>
+          <% row[:chips].each do |chip| %>
+            <rect x="<%= cx + chip[:x] %>" y="<%= top + row[:y] - 8 %>" width="8" height="8" rx="2" fill="<%= card_project_color(chip[:slot]) %>"/>
+            <text x="<%= cx + chip[:x] + 12 %>" y="<%= top + row[:y] %>" <%= sans %> font-size="12" fill="<%= t[:muted] %>"><%= chip[:text] %></text>
+          <% end %>
+        <% end %>
       <% end %>
-    <% elsif !day.active %>
-      <text x="<%= cx %>" y="<%= band[:axis] + 30 %>" text-anchor="middle" <%= sans %> font-size="12" fill="<%= t[:quiet] %>">quiet</text>
     <% end %>
   <% end %>
 

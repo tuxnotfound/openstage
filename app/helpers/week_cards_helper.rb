@@ -13,8 +13,6 @@ module WeekCardsHelper
   PROJECT_COLORS = %w[#1D9BF0 #00BA7C #FFB020 #8B5CF6 #EC4899 #14B8A6].freeze
   OTHER_COLOR = "#7A8691".freeze
   CELL_WEIGHTS = { goal: 1.15, audience: 1, hours: 1.25, code: 1.2, repos: 1.2 }.freeze
-  # Thin weeks keep honest bars: one commit never stands taller than this.
-  BAR_PER_COMMIT = 12
 
   def card_theme(card)
     CARD_THEMES.fetch(card.week_card.theme, CARD_THEMES["light"])
@@ -24,53 +22,18 @@ module WeekCardsHelper
     (mono ? "font-family=\"'DM Mono', monospace\"" : "font-family=\"'DM Sans', sans-serif\"").html_safe
   end
 
-  # Where the strip, the timeline and its axis sit. Without extras cells the
-  # timeline takes their room; without a strip it moves up.
+  # Where the strip and the timeline sit, and the timeline's line, halfway
+  # down. Without extras cells the timeline takes their room; without a strip
+  # it moves up.
   def card_bands(card, cells)
     strip = card.week_card.shows?("totals") || card.week_card.shows?("projects")
     top = strip ? 130 : 82
     bottom = cells.any? ? 462 : 576
-    { strip: strip, top: top, bottom: bottom, axis: bottom - 98 }
-  end
-
-  def card_columns(days)
-    width = 1120.0 / days.size
-    days.each_with_index.map { |day, i| { day: day, cx: (40 + (width * (i + 0.5))).round, width: width } }
-  end
-
-  def card_bar_scale(days, height)
-    most = days.map(&:total).max.to_i
-    most.zero? ? 0 : [ height.to_f / most, BAR_PER_COMMIT ].min
-  end
-
-  # Bottom-up blocks for one day's bar: one per project, or one for the day
-  # when the card hides projects.
-  def card_bar(day, scale, bottom:, merged:)
-    segments = day.segments
-    segments = [ WeekCards::TallyService::Segment.new(project: nil, n: day.total, slot: 0) ] if merged && day.total.positive?
-    segments.each_with_index.map do |segment, i|
-      height = [ (segment.n * scale).round, 4 ].max
-      bottom -= height
-      block = { segment: segment, y: bottom, height: height, top: i == segments.size - 1 }
-      bottom -= 2
-      block
-    end
-  end
-
-  # A rectangle with its top corners rounded, for the top block of a bar.
-  def card_top_block(x, y, width, height)
-    r = [ 5, height / 2.0 ].min
-    "M#{x} #{y + height}V#{y + r}Q#{x} #{y} #{x + r} #{y}H#{x + width - r}" \
-      "Q#{x + width} #{y} #{x + width} #{y + r}V#{y + height}Z"
+    { strip: strip, top: top, bottom: bottom, line: (top + bottom) / 2 }
   end
 
   def card_project_color(slot)
     slot ? PROJECT_COLORS.fetch(slot, OTHER_COLOR) : OTHER_COLOR
-  end
-
-  # White numbers read on every project colour but the amber.
-  def card_on_color(color)
-    color == "#FFB020" ? "#0F1419" : "#FFFFFF"
   end
 
   # Cuts text to a width, ending in an ellipsis when cut.
@@ -94,15 +57,6 @@ module WeekCardsHelper
     return lines if lines.size <= max_lines
 
     lines.first(max_lines).tap { |kept| kept[-1] = card_fit("#{kept[-1]} #{lines[max_lines]}", width, **font) }
-  end
-
-  # The type shrinks until the longest word fits, so a domain like
-  # playwheelsoff.com is never cut.
-  def card_headline_size(text, width, base:, weight:)
-    longest = text.to_s.split.max_by { |word| CardText.width(word, size: base, weight: weight) }.to_s
-    size = base
-    size -= 1 while size > 11 && CardText.width(longest, size: size, weight: weight) > width
-    size
   end
 
   # The strip's numbers, left to right, each as { x:, value:, label:, delta: }
