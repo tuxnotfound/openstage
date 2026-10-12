@@ -5,7 +5,11 @@ class GithubAppGateway < ApplicationGateway
   PER_PAGE = 100
 
   # A repo as GitHub lists it, with the fields Openstage keeps.
-  Repo = Data.define(:id, :name, :full_name, :description, :html_url, :default_branch, :private)
+  Repo = Data.define(:id, :name, :full_name, :description, :html_url, :default_branch, :private, :stargazers_count) do
+    def initialize(stargazers_count: nil, **fields)
+      super
+    end
+  end
 
   # The App's own credentials are wrong: a key that does not parse, or a key and
   # client ID that sign as another App. Never read as "not installed", which

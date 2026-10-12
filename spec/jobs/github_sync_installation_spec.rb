@@ -150,7 +150,7 @@ RSpec.describe GithubSyncJob, "private repos through the GitHub App", type: :job
 
   def repo(id:, name:, private:)
     double(id: id, name: name, full_name: "tuxnotfound/#{name}", description: nil,
-           html_url: "https://github.com/tuxnotfound/#{name}", default_branch: "main", private: private)
+           html_url: "https://github.com/tuxnotfound/#{name}", default_branch: "main", private: private, stargazers_count: 0)
   end
 
   def commit(sha)
