@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_12_000003) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_12_000004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -82,6 +82,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_12_000003) do
     t.index ["name", "day"], name: "index_events_on_name_and_day"
     t.index ["user_id", "name", "detail", "day"], name: "index_events_once_per_user_per_day", unique: true
     t.index ["user_id"], name: "index_events_on_user_id"
+  end
+
+  create_table "github_activities", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "github_repo_id", null: false
+    t.string "kind", null: false
+    t.bigint "external_id", null: false
+    t.datetime "occurred_at", null: false
+    t.string "title"
+    t.string "environment"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["github_repo_id", "kind", "external_id"], name: "index_github_activities_once", unique: true
+    t.index ["user_id", "kind", "occurred_at"], name: "index_github_activities_on_user_kind_time"
   end
 
   create_table "github_repo_star_counts", force: :cascade do |t|
@@ -326,6 +340,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_12_000003) do
   add_foreign_key "entry_clicks", "entries"
   add_foreign_key "entry_clicks", "users"
   add_foreign_key "events", "users"
+  add_foreign_key "github_activities", "github_repos", on_delete: :cascade
+  add_foreign_key "github_activities", "users", on_delete: :cascade
   add_foreign_key "github_repo_star_counts", "github_repos", on_delete: :cascade
   add_foreign_key "github_repos", "users"
   add_foreign_key "profile_views", "users"

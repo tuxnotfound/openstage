@@ -12,7 +12,7 @@ module WeekCardsHelper
   }.freeze
   PROJECT_COLORS = %w[#1D9BF0 #00BA7C #FFB020 #8B5CF6 #EC4899 #14B8A6].freeze
   OTHER_COLOR = "#7A8691".freeze
-  CELL_WEIGHTS = { goal: 1.15, audience: 1, hours: 1.25, code: 1.2, repos: 1 }.freeze
+  CELL_WEIGHTS = { goal: 1.15, audience: 1, hours: 1.25, code: 1.2, repos: 1.2 }.freeze
   # Thin weeks keep honest bars: one commit never stands taller than this.
   BAR_PER_COMMIT = 12
 

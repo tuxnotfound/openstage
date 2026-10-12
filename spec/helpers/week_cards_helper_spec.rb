@@ -54,7 +54,7 @@ RSpec.describe WeekCardsHelper, type: :helper do
     let(:week_card) { WeekCard.new(user: user, week_start: Date.new(2026, 10, 5), hidden_sections: []) }
     let(:extras) do
       WeekCards::ExtrasService::Extras.new(building: nil, audience: nil, hours: WeekCards::ExtrasService::Hours.new(counts: [ 1 ] * 24, peak_from: 0, peak_to: 2),
-                                           code: nil, repos: WeekCards::ExtrasService::Repos.new(releases: 1, stars: 0))
+                                           code: nil, repos: WeekCards::ExtrasService::Repos.new(merged_prs: 0, releases: 1, deploys: 0, stars: 0))
     end
 
     def cells

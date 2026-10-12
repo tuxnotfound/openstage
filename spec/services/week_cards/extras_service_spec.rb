@@ -87,13 +87,28 @@ RSpec.describe WeekCards::ExtrasService do
   describe "repos" do
     let(:repo) { create(:github_repo, user: user, full_name: "tux/app") }
 
+    def activity(kind, at, on: repo)
+      GithubActivity.create!(user: user, github_repo: on, kind: kind, external_id: GithubActivity.count + 1, occurred_at: at)
+    end
+
     it "counts the week's releases and the stars it brought" do
       create(:entry, user: user, source: "github", entry_type: "released", title: "app v1", occurred_at: Time.utc(2026, 10, 8))
       GithubRepoStarCount.create!(github_repo: repo, recorded_on: Date.new(2026, 10, 1), stars: 10)
       GithubRepoStarCount.create!(github_repo: repo, recorded_on: Date.new(2026, 10, 9), stars: 14)
       GithubRepoStarCount.create!(github_repo: repo, recorded_on: Date.new(2026, 10, 13), stars: 20)
 
-      expect(extras.repos).to have_attributes(releases: 1, stars: 4)
+      expect(extras.repos).to have_attributes(merged_prs: 0, releases: 1, deploys: 0, stars: 4)
+    end
+
+    it "counts the week's merged pull requests and deploys on included repos" do
+      hidden = create(:github_repo, user: user, full_name: "tux/hidden", included: false)
+      2.times { activity("pull_request", Time.utc(2026, 10, 6, 12)) }
+      activity("pull_request", Time.utc(2026, 10, 4, 12))
+      activity("pull_request", Time.utc(2026, 10, 7, 12), on: hidden)
+      3.times { activity("deployment", Time.utc(2026, 10, 11, 12)) }
+      activity("deployment", Time.utc(2026, 10, 12, 12))
+
+      expect(extras.repos).to have_attributes(merged_prs: 2, releases: 0, deploys: 3, stars: 0)
     end
 
     it "counts from the first snapshot for a repo first seen this week" do
@@ -103,8 +118,10 @@ RSpec.describe WeekCards::ExtrasService do
       expect(extras.repos.stars).to eq(2)
     end
 
-    it "is nothing in a week without either" do
+    it "is nothing in a week GitHub counted nothing" do
       GithubRepoStarCount.create!(github_repo: repo, recorded_on: Date.new(2026, 10, 6), stars: 3)
+      activity("deployment", Time.utc(2026, 9, 30, 12))
+      activity("pull_request", Time.utc(2026, 10, 6, 12), on: create(:github_repo, user: user, included: false))
 
       expect(extras.repos).to be_nil
     end

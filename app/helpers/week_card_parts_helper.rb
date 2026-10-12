@@ -78,9 +78,13 @@ module WeekCardPartsHelper
   end
 
   # What GitHub counted this week, each as [number, label], zeros left out.
+  # Items sit two to a row; the cell's weight in WeekCardsHelper::CELL_WEIGHTS
+  # is what leaves room for "99 PRs merged".
   def card_repo_items(repos)
     items = []
+    items << [ repos.merged_prs.to_s, "#{'PR'.pluralize(repos.merged_prs)} merged" ] if repos.merged_prs.positive?
     items << [ repos.releases.to_s, "release".pluralize(repos.releases) ] if repos.releases.positive?
+    items << [ repos.deploys.to_s, "deploy".pluralize(repos.deploys) ] if repos.deploys.positive?
     items << [ "+#{repos.stars}", "star".pluralize(repos.stars) ] if repos.stars.positive?
     items
   end

@@ -1,15 +1,16 @@
 module WeekCards
   # The facts around a week card's timeline: how long the builder has been at
   # it, who came to look, when they build, how much code moved, and what GitHub
-  # counted (releases, stars). Each is nil when there is nothing to show, so the
-  # card leaves its cell out rather than print a zero.
+  # counted (pull requests merged, releases, deploys, stars). Each is nil when
+  # there is nothing to show, so the card leaves its cell out rather than print
+  # a zero.
   class ExtrasService < ApplicationService
     Extras = Data.define(:building, :audience, :hours, :code, :repos)
     Building = Data.define(:since, :week)
     Audience = Data.define(:visitors, :visitors_before, :subscribers)
     Hours = Data.define(:counts, :peak_from, :peak_to)
     Code = Data.define(:additions, :deletions, :files, :languages)
-    Repos = Data.define(:releases, :stars)
+    Repos = Data.define(:merged_prs, :releases, :deploys, :stars)
 
     # commits: the week's shown commits, from TallyService.
     attr_accessor :week_card, :commits
@@ -84,8 +85,17 @@ module WeekCards
 
     def repos
       releases = user.entries.publicly_visible.where(source: :github, entry_type: :released, occurred_at: week_card.time_range).count
-      stars = stars_gained
-      Repos.new(releases: releases, stars: stars) if releases.positive? || stars.positive?
+      activities = activity_counts
+      counts = Repos.new(merged_prs: activities["pull_request"].to_i, releases: releases,
+                         deploys: activities["deployment"].to_i, stars: stars_gained)
+      counts if counts.to_h.values.any?(&:positive?)
+    end
+
+    # The week's merged pull requests and deploys, by kind, on the repos the
+    # builder still includes.
+    def activity_counts
+      GithubActivity.where(user_id: user.id, github_repo_id: user.github_repos.included_repos.select(:id),
+                           occurred_at: week_card.time_range).group(:kind).count
     end
 
     # Each included repo's last count on or before Sunday, less its last count

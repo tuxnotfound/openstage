@@ -42,4 +42,46 @@ RSpec.describe GithubGateway do
         .to have_attributes(id: 7, tag_name: "v1.0", author_login: "tux", published_at: "2026-10-08T18:00:00Z", draft: false)
     end
   end
+
+  describe ".merged_pulls" do
+    it "lists recently closed pull requests that were merged, leaving out the ones closed without a merge" do
+      stub_request(:get, "https://api.github.com/repos/tux/app/pulls?state=closed&sort=updated&direction=desc&per_page=50")
+        .with(headers: { "Authorization" => "Bearer t" })
+        .to_return(status: 200, headers: json, body: [ { id: 11, number: 4, title: "Arcade mode", merged_at: "2026-10-08T18:00:00Z", user: { login: "tux" } },
+                                                       { id: 12, number: 5, title: "Abandoned", merged_at: nil, user: { login: "tux" } } ].to_json)
+
+      expect(described_class.merged_pulls("tux/app", token: "t")).to eq([
+        GithubGateway::PullRequest.new(id: 11, number: 4, title: "Arcade mode", merged_at: "2026-10-08T18:00:00Z", author_login: "tux")
+      ])
+    end
+  end
+
+  describe ".deployments" do
+    it "lists a repo's latest deployments" do
+      stub_request(:get, "https://api.github.com/repos/tux/app/deployments?per_page=50")
+        .to_return(status: 200, headers: json, body: [ { id: 21, environment: "production", created_at: "2026-10-08T18:00:00Z",
+                                                         creator: { login: "vercel[bot]" } } ].to_json)
+
+      expect(described_class.deployments("tux/app", token: "t"))
+        .to eq([ GithubGateway::Deployment.new(id: 21, environment: "production", created_at: "2026-10-08T18:00:00Z") ])
+    end
+  end
+
+  describe "a 403" do
+    let(:url) { "https://api.github.com/repos/tux/app/deployments?per_page=50" }
+
+    it "means out of calls when GitHub says none remain" do
+      stub_request(:get, url).to_return(status: 403, headers: json.merge("X-RateLimit-Remaining" => "0"), body: "{}")
+
+      expect { described_class.deployments("tux/app", token: "t") }.to raise_error(ApplicationGateway::RateLimited) { |error|
+        expect(error.status).to eq(403)
+      }
+    end
+
+    it "means no access to the repo otherwise" do
+      stub_request(:get, url).to_return(status: 403, headers: json.merge("X-RateLimit-Remaining" => "4999"), body: "{}")
+
+      expect { described_class.deployments("tux/app", token: "t") }.to raise_error(ApplicationGateway::Unauthorized)
+    end
+  end
 end
