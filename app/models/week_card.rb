@@ -1,18 +1,31 @@
-# A builder's card for one week (Monday to Sunday, UTC). Everything shows by
-# default, so a row stores only what the builder turned off, the headlines they
-# wrote and the post. Deleted with the user by the database (on_delete).
+# A builder's card for one week, Monday to Sunday in the card's time zone.
+# Almost everything shows by default, so a row stores only what the builder
+# turned off, the headlines and goal they wrote, and the post. Deleted with the
+# user by the database (on_delete).
 class WeekCard < ApplicationRecord
-  STYLES = %w[blueprint].freeze
+  STYLES = %w[timeline].freeze
+  THEMES = %w[light dark].freeze
   LAYOUTS = %w[week active].freeze
-  SECTIONS = %w[avatar name github streak totals projects headlines].freeze
+  SECTIONS = %w[avatar name github building streak totals compare projects headlines goal audience hours code repos].freeze
+  # Small numbers can work against a builder, so audience starts off.
+  HIDDEN_AT_FIRST = %w[audience].freeze
   KINDS = %w[built shipped published].freeze
   HEADLINE_LENGTH = 80
+  GOAL_LENGTH = 60
   WEEK_PARAM = /\A(\d{4})-W(\d{2})\z/
 
   belongs_to :user
 
+  attribute :hidden_sections, :jsonb, default: -> { HIDDEN_AT_FIRST.dup }
+
+  normalizes :next_goal, with: ->(goal) { goal.to_s.squish.first(GOAL_LENGTH).presence }
+  # The browser names the zone. One Rails does not know falls back to UTC
+  # rather than stop the card from saving.
+  normalizes :time_zone, with: ->(zone) { ActiveSupport::TimeZone[zone.to_s] ? zone.to_s : nil }
+
   validates :week_start, presence: true
   validates :style, inclusion: { in: STYLES }
+  validates :theme, inclusion: { in: THEMES }
   validates :layout, inclusion: { in: LAYOUTS }
   validates :post_text, length: { maximum: 2000 }
   validate :week_starts_on_monday
@@ -31,12 +44,29 @@ class WeekCard < ApplicationRecord
     week_start.strftime("%G-W%V")
   end
 
+  # The zone of the builder's last saved card, so a new week starts in it.
+  def self.last_time_zone_for(user)
+    where(user: user).where.not(time_zone: nil).order(updated_at: :desc).pick(:time_zone)
+  end
+
   def to_param
     self.class.param_for(week_start)
   end
 
   def days
     (week_start..(week_start + 6)).to_a
+  end
+
+  # The browser's zone when the builder last saved; UTC until then.
+  def zone
+    ActiveSupport::TimeZone[time_zone.to_s] || ActiveSupport::TimeZone["UTC"]
+  end
+
+  # Monday 00:00 to the next Monday 00:00 in the card's zone; adding calendar
+  # days keeps a daylight-saving change inside the week.
+  def time_range
+    start = zone.local(week_start.year, week_start.month, week_start.day)
+    start...(start + 7.days)
   end
 
   def shows?(section)

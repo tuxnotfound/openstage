@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_12_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_12_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -49,6 +49,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_12_000001) do
     t.datetime "updated_at", null: false
     t.boolean "pinned", default: false, null: false
     t.string "visibility", default: "public", null: false
+    t.integer "additions"
+    t.integer "deletions"
+    t.integer "files_changed"
+    t.jsonb "languages"
+    t.datetime "stats_fetched_at"
     t.index ["user_id", "external_id"], name: "index_entries_on_user_id_and_external_id", unique: true
     t.index ["user_id", "occurred_at"], name: "index_entries_on_user_id_and_occurred_at"
     t.index ["user_id", "pinned"], name: "index_entries_on_user_id_and_pinned"
@@ -79,6 +84,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_12_000001) do
     t.index ["user_id"], name: "index_events_on_user_id"
   end
 
+  create_table "github_repo_star_counts", force: :cascade do |t|
+    t.bigint "github_repo_id", null: false
+    t.date "recorded_on", null: false
+    t.integer "stars", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["github_repo_id", "recorded_on"], name: "index_star_counts_on_repo_and_day", unique: true
+  end
+
   create_table "github_repos", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "github_repo_id", null: false
@@ -93,6 +107,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_12_000001) do
     t.datetime "updated_at", null: false
     t.boolean "private_repo", default: false, null: false
     t.boolean "included_chosen", default: false, null: false
+    t.integer "stars_count"
     t.index ["user_id", "github_repo_id"], name: "index_github_repos_on_user_id_and_github_repo_id", unique: true
     t.index ["user_id"], name: "index_github_repos_on_user_id"
   end
@@ -291,7 +306,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_12_000001) do
   create_table "week_cards", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.date "week_start", null: false
-    t.string "style", default: "blueprint", null: false
+    t.string "style", default: "timeline", null: false
     t.string "layout", default: "week", null: false
     t.jsonb "hidden_sections", default: [], null: false
     t.jsonb "hidden_projects", default: [], null: false
@@ -299,6 +314,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_12_000001) do
     t.text "post_text"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "theme", default: "light", null: false
+    t.string "next_goal"
+    t.string "time_zone"
     t.index ["user_id", "week_start"], name: "index_week_cards_on_user_id_and_week_start", unique: true
   end
 
@@ -308,6 +326,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_12_000001) do
   add_foreign_key "entry_clicks", "entries"
   add_foreign_key "entry_clicks", "users"
   add_foreign_key "events", "users"
+  add_foreign_key "github_repo_star_counts", "github_repos", on_delete: :cascade
   add_foreign_key "github_repos", "users"
   add_foreign_key "profile_views", "users"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

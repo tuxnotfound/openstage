@@ -45,6 +45,48 @@ RSpec.describe WeekCard, type: :model do
     end
   end
 
+  it "starts with audience off, since small numbers can work against a builder" do
+    expect(card.shows?("audience")).to be(false)
+    expect(card.shows?("hours")).to be(true)
+  end
+
+  it "is light or dark" do
+    card.theme = "neon"
+    expect(card).not_to be_valid
+  end
+
+  it "keeps next week's goal short and tidy" do
+    card.next_goal = "  Launch   on Product Hunt #{'!' * 80}"
+    expect(card.next_goal).to start_with("Launch on Product Hunt")
+    expect(card.next_goal.length).to eq(WeekCard::GOAL_LENGTH)
+
+    card.next_goal = "   "
+    expect(card.next_goal).to be_nil
+  end
+
+  describe "time zone" do
+    it "runs the week from Monday to Monday in the card's zone" do
+      card.time_zone = "Asia/Tokyo"
+
+      expect(card.time_range.begin).to eq(Time.utc(2026, 10, 4, 15))
+      expect(card.time_range.end).to eq(Time.utc(2026, 10, 11, 15))
+    end
+
+    it "falls back to UTC for a zone Rails does not know" do
+      card.time_zone = "Mars/Olympus"
+
+      expect(card.time_zone).to be_nil
+      expect(card.zone.name).to eq("UTC")
+    end
+
+    it "remembers the builder's last zone for the next card" do
+      described_class.create!(user: user, week_start: monday - 7, time_zone: "Europe/Lisbon")
+      described_class.create!(user: create(:user), week_start: monday, time_zone: "Asia/Tokyo")
+
+      expect(described_class.last_time_zone_for(user)).to eq("Europe/Lisbon")
+    end
+  end
+
   it "goes with the user" do
     card.save!
     user.destroy!

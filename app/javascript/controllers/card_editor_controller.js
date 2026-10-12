@@ -4,11 +4,33 @@ import { Controller } from "@hotwired/stimulus"
 // the preview from the server. The post box follows the builder's own text,
 // and the compose links carry it to X and Bluesky.
 export default class extends Controller {
-  static targets = ["form", "post", "counter", "intent", "copyButton"]
+  static targets = ["form", "post", "counter", "intent", "copyButton", "zone"]
   static values = { saveUrl: String, previewUrl: String, trackUrl: String, limit: { type: Number, default: 280 } }
 
   connect() {
     this.count()
+    this.adoptZone()
+  }
+
+  // The card counts days in the builder's own time zone. The first time the
+  // browser's zone differs from the card's, save it alone and redraw the
+  // editor, so the days and their suggestions move with it.
+  async adoptZone() {
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    if (!this.hasZoneTarget || !zone || this.zoneTarget.value === zone) return
+
+    this.zoneTarget.value = zone
+    const body = new FormData()
+    body.append("week_card[time_zone]", zone)
+    const response = await fetch(this.saveUrlValue, {
+      method: "PATCH",
+      body,
+      headers: { Accept: "application/json", "X-CSRF-Token": this.csrfToken }
+    })
+    if (!response.ok) return
+
+    const saved = await response.json()
+    if (saved.time_zone === zone) window.Turbo?.visit(window.location.href, { action: "replace" })
   }
 
   queue() {

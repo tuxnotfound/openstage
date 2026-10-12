@@ -26,9 +26,10 @@ export default class extends Controller {
   }
 
   async render(svg) {
+    const { width, height } = svg.viewBox.baseVal
     const clone = svg.cloneNode(true)
-    clone.setAttribute("width", "1200")
-    clone.setAttribute("height", "675")
+    clone.setAttribute("width", width)
+    clone.setAttribute("height", height)
 
     const faces = await Promise.all(this.fontsValue.map(async (font) =>
       `@font-face{font-family:'${font.family}';font-weight:${font.weight};src:url(${await this.dataUrl(font.url)}) format('woff2');}`))
@@ -49,8 +50,8 @@ export default class extends Controller {
     await picture.decode()
 
     const canvas = document.createElement("canvas")
-    canvas.width = 2400
-    canvas.height = 1350
+    canvas.width = width * 2
+    canvas.height = height * 2
     canvas.getContext("2d").drawImage(picture, 0, 0, canvas.width, canvas.height)
     return new Promise((resolve) => canvas.toBlob(resolve, "image/png"))
   }

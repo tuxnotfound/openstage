@@ -28,7 +28,7 @@ RSpec.describe WeekCards::ComposeService do
     card = compose
     tuesday = card.days[1]
     expect(tuesday.label).to eq("TUE 6")
-    expect(tuesday.segments.map { |s| [ s.project, s.n, s.pattern ] }).to eq([ [ "wheels-off", 2, "solid" ], [ "openstage", 1, "hatch" ] ])
+    expect(tuesday.segments.map { |s| [ s.project, s.n, s.slot ] }).to eq([ [ "wheels-off", 2, 0 ], [ "openstage", 1, 1 ] ])
     expect(card.totals).to have_attributes(commits: 4, active_days: 2, projects: 2)
     expect(card.projects.map(&:name)).to eq(%w[wheels-off openstage])
   end
@@ -103,11 +103,41 @@ RSpec.describe WeekCards::ComposeService do
     expect(compose.best_run).to eq(4)
   end
 
-  it "drafts a post from the card's own facts" do
+  it "drafts a post from the card's own facts, ending on next week's goal" do
     commit("A", "me/app", 1)
     logged("milestone", "Trained on me is live!!", 3)
+    week_card.next_goal = "Launch on Product Hunt"
 
-    expect(compose.draft).to eq("Week 41: 1 commit on 2 of 7 days.\n- Trained on me is live!!")
+    expect(compose.draft).to eq("Week 41: 1 commit on 2 of 7 days.\n- Trained on me is live!!\nNext: Launch on Product Hunt")
+  end
+
+  it "counts days in the card's time zone" do
+    # 23:30 on Sunday in Lisbon is already Monday in UTC.
+    create(:entry, user: user, source: "github", entry_type: "shipped", title: "late", repo_name: "me/app",
+                   occurred_at: Time.utc(2026, 10, 11, 22, 30))
+    create(:entry, user: user, source: "github", entry_type: "shipped", title: "next week", repo_name: "me/app",
+                   occurred_at: Time.utc(2026, 10, 11, 23, 30))
+    week_card.time_zone = "Europe/Lisbon"
+
+    card = compose
+    expect(card.days.last.total).to eq(1)
+    expect(card.totals.commits).to eq(1)
+  end
+
+  it "counts the week before the same way, for the change from last week" do
+    commit("A", "me/app", 1)
+    commit("B", "me/app", -6)
+    commit("C", "me/hidden", -6)
+    week_card.projects = { "hidden" => "0" }
+
+    expect(compose.previous.totals).to have_attributes(commits: 1, active_days: 1)
+  end
+
+  it "uses the headlines written on last week's own card" do
+    WeekCard.create!(user: user, week_start: monday - 7,
+                     headlines: { "2026-09-29" => { "text" => "Shipped the blog", "kind" => "shipped" } })
+
+    expect(compose.previous.totals.shipped).to eq(1)
   end
 
   it "shows the current streak only on the current week" do

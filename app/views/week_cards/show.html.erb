@@ -1,19 +1,25 @@
 <% content_for :title, "Your week" %>
+<% fonts = [
+     { family: "DM Sans", weight: "100 1000", url: asset_path("dm-sans.woff2") },
+     { family: "DM Mono", weight: "400", url: asset_path("dm-mono-400.woff2") },
+     { family: "DM Mono", weight: "500", url: asset_path("dm-mono-500.woff2") }
+   ] %>
 <% content_for :head do %>
   <style>
-    @font-face { font-family: 'IBM Plex Sans Condensed'; font-weight: 600; font-display: swap; src: url('<%= asset_path("ibm-plex-sans-condensed-600.woff2") %>') format('woff2'); }
-    @font-face { font-family: 'IBM Plex Sans Condensed'; font-weight: 700; font-display: swap; src: url('<%= asset_path("ibm-plex-sans-condensed-700.woff2") %>') format('woff2'); }
-    @font-face { font-family: 'IBM Plex Mono'; font-weight: 400; font-display: swap; src: url('<%= asset_path("ibm-plex-mono-400.woff2") %>') format('woff2'); }
-    @font-face { font-family: 'IBM Plex Mono'; font-weight: 500; font-display: swap; src: url('<%= asset_path("ibm-plex-mono-500.woff2") %>') format('woff2'); }
+    <% fonts.each do |font| %>
+      @font-face { font-family: '<%= font[:family] %>'; font-weight: <%= font[:weight] %>; font-display: swap; src: url('<%= font[:url] %>') format('woff2'); }
+    <% end %>
   </style>
 <% end %>
 <% wc = @card.week_card %>
-<% fonts = [
-     { family: "IBM Plex Sans Condensed", weight: 600, url: asset_path("ibm-plex-sans-condensed-600.woff2") },
-     { family: "IBM Plex Sans Condensed", weight: 700, url: asset_path("ibm-plex-sans-condensed-700.woff2") },
-     { family: "IBM Plex Mono", weight: 400, url: asset_path("ibm-plex-mono-400.woff2") },
-     { family: "IBM Plex Mono", weight: 500, url: asset_path("ibm-plex-mono-500.woff2") }
-   ] %>
+<% sections = {
+     "Who" => { "avatar" => "Profile picture", "name" => "Name and Pro badge", "github" => "GitHub handle",
+                "building" => "How long you have been building", "streak" => "Streak and best run" },
+     "The week" => { "totals" => "Week totals", "compare" => "Change from last week", "projects" => "Commits per project",
+                     "headlines" => "Day headlines" },
+     "Around it" => { "goal" => "Next week's goal", "audience" => "Visitors and new subscribers", "hours" => "When you build",
+                      "code" => "Lines and languages", "repos" => "Releases and stars" }
+   } %>
 <% previous_week = wc.week_start - 7 %>
 <% next_week = wc.week_start + 7 %>
 <% field = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" %>
@@ -47,6 +53,17 @@
         data: { card_editor_target: "form", action: "input->card-editor#queue change->card-editor#queue submit->card-editor#save" } do %>
 
     <div class="space-y-5">
+      <%= hidden_field_tag "week_card[time_zone]", wc.time_zone, id: nil, data: { card_editor_target: "zone" } %>
+      <fieldset class="rounded-xl border border-gray-200 bg-white px-5 pt-3 pb-4">
+        <legend class="<%= legend %>">Look</legend>
+        <% [ [ "light", "Light" ], [ "dark", "Dark" ] ].each do |value, label| %>
+          <label class="flex items-center gap-3 min-h-10 text-sm cursor-pointer">
+            <%= radio_button_tag "week_card[theme]", value, wc.theme == value, class: "text-gray-900 focus:ring-gray-900" %>
+            <%= label %>
+          </label>
+        <% end %>
+      </fieldset>
+
       <fieldset class="rounded-xl border border-gray-200 bg-white px-5 pt-3 pb-4">
         <legend class="<%= legend %>">Days</legend>
         <% [ [ "week", "All seven days" ], [ "active", "Only the days I worked" ] ].each do |value, label| %>
@@ -59,14 +76,17 @@
 
       <fieldset class="rounded-xl border border-gray-200 bg-white px-5 pt-3 pb-4">
         <legend class="<%= legend %>">On the card</legend>
-        <% { "avatar" => "Profile picture", "name" => "Name and Pro badge", "github" => "GitHub handle", "streak" => "Streak",
-             "totals" => "Week totals", "projects" => "Commits per project", "headlines" => "Day headlines" }.each do |section, label| %>
-          <label class="flex items-center gap-3 min-h-10 text-sm cursor-pointer">
-            <%= hidden_field_tag "week_card[sections][#{section}]", "0", id: nil %>
-            <%= check_box_tag "week_card[sections][#{section}]", "1", wc.shows?(section), id: "section_#{section}", class: "rounded border-gray-300 text-gray-900 focus:ring-gray-900" %>
-            <%= label %>
-          </label>
+        <% sections.each do |group, choices| %>
+          <p class="text-xs text-gray-400 pt-2"><%= group %></p>
+          <% choices.each do |section, label| %>
+            <label class="flex items-center gap-3 min-h-10 text-sm cursor-pointer">
+              <%= hidden_field_tag "week_card[sections][#{section}]", "0", id: nil %>
+              <%= check_box_tag "week_card[sections][#{section}]", "1", wc.shows?(section), id: "section_#{section}", class: "rounded border-gray-300 text-gray-900 focus:ring-gray-900" %>
+              <%= label %>
+            </label>
+          <% end %>
         <% end %>
+        <p class="text-xs text-gray-400 mt-2">A part with nothing to show this week stays off the card.</p>
       </fieldset>
 
       <fieldset class="rounded-xl border border-gray-200 bg-white px-5 pt-3 pb-4">
@@ -128,6 +148,13 @@
             </div>
           <% end %>
         </div>
+      </section>
+
+      <section class="rounded-xl border border-gray-200 bg-white px-5 py-4">
+        <label for="next_goal" class="text-sm font-semibold">Next week's goal</label>
+        <p class="text-xs text-gray-500 mt-1">One thing, up to <%= WeekCard::GOAL_LENGTH %> characters. It also ends your post's draft.</p>
+        <%= text_field_tag "week_card[next_goal]", wc.next_goal, id: "next_goal", maxlength: WeekCard::GOAL_LENGTH,
+              placeholder: "Launch on Product Hunt", class: "#{field} mt-3" %>
       </section>
 
       <section class="rounded-xl border border-gray-200 bg-white px-5 py-4 space-y-3">

@@ -1,65 +1,171 @@
-# Layout for the week card's SVG. The card is 1200x675 and is drawn on the
-# server, so the editor's preview and the downloaded PNG are the same picture.
+# Layout for the week card's SVG, 1200x630, drawn on the server so the
+# editor's preview and the downloaded PNG are the same picture. SVG cannot flow
+# text, so text is measured with CardText and placed here.
 module WeekCardsHelper
-  CARD = { ground: "#0C2A4D", line: "#8FD3FF", text: "#F2F7FC", muted: "#A9C3DE", quiet: "#6F8BAA" }.freeze
-  CARD_LEFT = 52
-  CARD_RIGHT = 1148
-  BAR_HEIGHT = 150
+  CARD_LEFT = 26
+  CARD_RIGHT = 1174
+  CARD_THEMES = {
+    "light" => { ground: "#F3F5F8", panel: "#FFFFFF", border: "#DCE1E7", axis: "#C3CBD4", text: "#0F1419",
+                 muted: "#5B6670", quiet: "#A3ACB5", faint: "#E3E7EC", up: "#00875A", down: "#D3214F" },
+    "dark" => { ground: "#0B0D10", panel: "#15181D", border: "#2A2F37", axis: "#3A4049", text: "#E7E9EA",
+                muted: "#8B929B", quiet: "#4A5058", faint: "#262B32", up: "#00BA7C", down: "#F4212E" }
+  }.freeze
+  PROJECT_COLORS = %w[#1D9BF0 #00BA7C #FFB020 #8B5CF6 #EC4899 #14B8A6].freeze
+  OTHER_COLOR = "#7A8691".freeze
+  CELL_WEIGHTS = { goal: 1.15, audience: 1, hours: 1.25, code: 1.2, repos: 1 }.freeze
   # Thin weeks keep honest bars: one commit never stands taller than this.
-  BAR_PER_COMMIT = 10
+  BAR_PER_COMMIT = 12
+
+  def card_theme(card)
+    CARD_THEMES.fetch(card.week_card.theme, CARD_THEMES["light"])
+  end
+
+  def card_face(mono: false)
+    (mono ? "font-family=\"'DM Mono', monospace\"" : "font-family=\"'DM Sans', sans-serif\"").html_safe
+  end
+
+  # Where the strip, the timeline and its axis sit. Without extras cells the
+  # timeline takes their room; without a strip it moves up.
+  def card_bands(card, cells)
+    strip = card.week_card.shows?("totals") || card.week_card.shows?("projects")
+    top = strip ? 130 : 82
+    bottom = cells.any? ? 462 : 576
+    { strip: strip, top: top, bottom: bottom, axis: bottom - 98 }
+  end
 
   def card_columns(days)
-    width = (CARD_RIGHT - CARD_LEFT).to_f / days.size
-    days.each_with_index.map { |day, i| { day: day, cx: (CARD_LEFT + (width * (i + 0.5))).round, width: width } }
+    width = 1120.0 / days.size
+    days.each_with_index.map { |day, i| { day: day, cx: (40 + (width * (i + 0.5))).round, width: width } }
   end
 
-  def card_bar_scale(days)
+  def card_bar_scale(days, height)
     most = days.map(&:total).max.to_i
-    most.zero? ? 0 : [ BAR_HEIGHT.to_f / most, BAR_PER_COMMIT ].min
+    most.zero? ? 0 : [ height.to_f / most, BAR_PER_COMMIT ].min
   end
 
-  # Bottom-up rectangles for one day's bar, one per project.
-  def card_bar(day, scale, merged:)
-    segments = merged && day.total.positive? ? [ WeekCards::ComposeService::Segment.new(project: nil, n: day.total, pattern: "solid") ] : day.segments
-    bottom = 360
-    segments.map do |segment|
+  # Bottom-up blocks for one day's bar: one per project, or one for the day
+  # when the card hides projects.
+  def card_bar(day, scale, bottom:, merged:)
+    segments = day.segments
+    segments = [ WeekCards::TallyService::Segment.new(project: nil, n: day.total, slot: 0) ] if merged && day.total.positive?
+    segments.each_with_index.map do |segment, i|
       height = [ (segment.n * scale).round, 4 ].max
       bottom -= height
-      top = bottom
+      block = { segment: segment, y: bottom, height: height, top: i == segments.size - 1 }
       bottom -= 2
-      { segment: segment, y: top, height: height }
+      block
     end
   end
 
-  def card_fill(pattern)
-    { "solid" => CARD[:line], "hatch" => "url(#wc-hatch)", "dots" => "url(#wc-dots)", "cross" => "url(#wc-cross)" }
-      .fetch(pattern, "rgba(143, 211, 255, 0.10)")
+  # A rectangle with its top corners rounded, for the top block of a bar.
+  def card_top_block(x, y, width, height)
+    r = [ 5, height / 2.0 ].min
+    "M#{x} #{y + height}V#{y + r}Q#{x} #{y} #{x + r} #{y}H#{x + width - r}" \
+      "Q#{x + width} #{y} #{x + width} #{y + r}V#{y + height}Z"
   end
 
-  # Breaks a headline into lines that fit a column, by character count: the
-  # card's condensed face is narrow and even enough for that to hold.
-  def card_lines(text, chars:, max_lines:)
-    lines = text.to_s.split.each_with_object([ +"" ]) do |word, result|
-      word = word.truncate(chars, omission: "…")
-      if result.last.empty? then result.last << word
-      elsif result.last.length + word.length < chars then result.last << " " << word
-      else result << word.dup
+  def card_project_color(slot)
+    slot ? PROJECT_COLORS.fetch(slot, OTHER_COLOR) : OTHER_COLOR
+  end
+
+  # White numbers read on every project colour but the amber.
+  def card_on_color(color)
+    color == "#FFB020" ? "#0F1419" : "#FFFFFF"
+  end
+
+  # Cuts text to a width, ending in an ellipsis when cut.
+  def card_fit(text, width, **font)
+    text = text.to_s
+    return text if CardText.width(text, **font) <= width
+
+    text = text[0...-1] while text.length > 1 && CardText.width("#{text.rstrip}…", **font) > width
+    "#{text.rstrip}…"
+  end
+
+  # Breaks text into lines of a width, at most max_lines; the last line ends
+  # in an ellipsis when there was more.
+  def card_wrap(text, width, max_lines:, **font)
+    lines = text.to_s.split.each_with_object([]) do |word, result|
+      joined = [ result.last, word ].compact.join(" ")
+      if result.any? && CardText.width(joined, **font) <= width then result[-1] = joined
+      else result << card_fit(word, width, **font)
       end
     end
     return lines if lines.size <= max_lines
 
-    lines.first(max_lines).tap { |kept| kept[-1] = "#{kept[-1].truncate(chars - 1, omission: '')}…" }
+    lines.first(max_lines).tap { |kept| kept[-1] = card_fit("#{kept[-1]} #{lines[max_lines]}", width, **font) }
   end
 
-  # Legend items laid out leftward from the card's right edge.
-  def card_legend(projects)
-    right = CARD_RIGHT
-    projects.select(&:shown).first(5).reverse.map do |project|
-      width = 22 + 8 + (project.name.length * 8.4) + 8 + (project.n.to_s.length * 8.4)
-      right -= width
-      item = { project: project, x: right.round }
-      right -= 22
-      item
-    end.reverse
+  # The type shrinks until the longest word fits, so a domain like
+  # playwheelsoff.com is never cut.
+  def card_headline_size(text, width, base:, weight:)
+    longest = text.to_s.split.max_by { |word| CardText.width(word, size: base, weight: weight) }.to_s
+    size = base
+    size -= 1 while size > 11 && CardText.width(longest, size: size, weight: weight) > width
+    size
+  end
+
+  # The strip's numbers, left to right, each as { x:, value:, label:, delta: }
+  # with a divider before all but the first.
+  def card_facts(card)
+    x = CARD_LEFT + 16.0
+    card_fact_values(card).map do |value, label, delta|
+      width = CardText.width(value, size: 14, weight: 700) + 5 + CardText.width(label, size: 14)
+      width += 5 + CardText.width(delta.first, size: 12, weight: 500) if delta
+      fact = { x: x.round, value: value, label: label, delta: delta, right: (x + width).round }
+      x += width + 28
+      fact
+    end
+  end
+
+  def card_fact_values(card)
+    now = card.totals
+    before = card.week_card.shows?("compare") ? card.previous&.totals : nil
+    facts = []
+    facts << [ now.shipped.to_s, "shipped", card_delta(now.shipped, before&.shipped) ] if now.shipped.positive?
+    facts << [ now.commits.to_s, "commit".pluralize(now.commits), card_delta(now.commits, before&.commits, percent: true) ] if now.commits.positive?
+    facts << [ "#{now.active_days}/7", "days building", card_delta(now.active_days, before&.active_days) ]
+    facts << [ now.published.to_s, "published", card_delta(now.published, before&.published) ] if now.published.positive?
+    facts
+  end
+
+  # ["↑ 131%", :up] or ["↓ 2", :down]; nil with nothing to compare or no change.
+  def card_delta(now, before, percent: false)
+    return if before.nil? || (percent && before.zero?)
+
+    change = percent ? ((now - before) * 100.0 / before).round : now - before
+    return if change.zero?
+
+    [ "#{change.positive? ? '↑' : '↓'} #{change.abs}#{'%' if percent}", change.positive? ? :up : :down ]
+  end
+
+  # Legend items, busiest project first, as many as fit between the numbers
+  # and the strip's right edge, which the last one ends on.
+  def card_legend(projects, after:)
+    room = CARD_RIGHT - 16.0 - after - 20
+    items = projects.select(&:shown).each_with_object([]) do |project, kept|
+      name = card_fit(project.name, 150, size: 12, weight: 500)
+      width = 22 + CardText.width(name, size: 12, weight: 500) + 4 + CardText.width(project.n.to_s, size: 12)
+      break kept if (room -= width + 14) < -14
+
+      kept << { project: project, name: name, width: width }
+    end
+    x = CARD_RIGHT - 16.0 - items.sum { |item| item[:width] + 14 } + 14
+    items.map { |item| item.merge(x: x.round).tap { x += item[:width] + 14 } }
+  end
+
+  # The extras cells the card shows, left to right, sized by weight.
+  def card_cells(card)
+    wc = card.week_card
+    data = card.extras.to_h.merge(goal: wc.next_goal)
+    kinds = CELL_WEIGHTS.keys.select { |kind| wc.shows?(kind.to_s) && data[kind] }
+    total = kinds.sum { |kind| CELL_WEIGHTS[kind] }
+    left = CARD_LEFT.to_f
+    kinds.map do |kind|
+      width = (CARD_RIGHT - CARD_LEFT) * CELL_WEIGHTS[kind] / total
+      cell = { kind: kind, x: left.round, width: width.round, data: data[kind] }
+      left += width
+      cell
+    end
   end
 end

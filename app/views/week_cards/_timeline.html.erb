@@ -1,0 +1,127 @@
+<%# The timeline card, 1200x630. Plain SVG, so the editor shows it as is and
+    the download draws this same picture to a PNG in the browser. Fonts are
+    the page's DM Sans and DM Mono; the download embeds them. Text stays on
+    one line inside each <text>: a line break there would print as a space. %>
+<% wc = card.week_card %>
+<% user = card.user %>
+<% t = card_theme(card) %>
+<% sans = card_face %>
+<% mono = card_face(mono: true) %>
+<% cells = card_cells(card) %>
+<% band = card_bands(card, cells) %>
+<% days = wc.layout == "active" && card.days.any?(&:active) ? card.days.select(&:active) : card.days %>
+<% columns = card_columns(days) %>
+<% bars_bottom = band[:axis] - 8 %>
+<% scale = card_bar_scale(days, bars_bottom - band[:top] - 38) %>
+<% merged = !wc.shows?("projects") %>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="<%= card.label %> card for <%= user.display_name %>" data-week-card="1">
+  <defs>
+    <clipPath id="wc-avatar"><circle cx="52" cy="46" r="26"/></clipPath>
+  </defs>
+  <rect width="1200" height="630" fill="<%= t[:ground] %>"/>
+
+  <%# Who, and which week %>
+  <% avatar = wc.shows?("avatar") && user.avatar_url.present? %>
+  <% name_left = avatar ? 91 : 26 %>
+  <% identity = card_identity_line(card) %>
+  <% streak = card_streak_line(card) %>
+  <% title = "#{card.label} · #{card.dates}" %>
+  <% room = 1174 - CardText.width(title, size: 25, weight: 700) - 40 - name_left %>
+  <% if avatar %>
+    <image href="<%= user.avatar_url %>" x="26" y="20" width="52" height="52" clip-path="url(#wc-avatar)" preserveAspectRatio="xMidYMid slice"/>
+  <% end %>
+  <% if wc.shows?("name") %>
+    <% name_y = identity.present? ? 43 : 54 %>
+    <% name = card_fit(user.display_name, [ room - 60, 420 ].min, size: 23, weight: 700) %>
+    <text x="<%= name_left %>" y="<%= name_y %>" <%= sans %> font-size="23" font-weight="700" fill="<%= t[:text] %>"><%= name %></text>
+    <% if user.pro? %>
+      <% pro_x = (name_left + CardText.width(name, size: 23, weight: 700) + 8).round %>
+      <rect x="<%= pro_x %>" y="<%= name_y - 17 %>" width="<%= (CardText.width("PRO", size: 11, weight: 700, spacing: 0.66) + 16).round %>" height="18" rx="9" fill="<%= t[:text] %>"/>
+      <text x="<%= pro_x + 8 %>" y="<%= name_y - 4 %>" <%= sans %> font-size="11" font-weight="700" letter-spacing="0.66" fill="<%= t[:ground] %>">PRO</text>
+    <% end %>
+  <% end %>
+  <% if identity.present? %>
+    <text x="<%= name_left %>" y="<%= wc.shows?("name") ? 63 : 50 %>" <%= mono %> font-size="12" fill="<%= t[:muted] %>"><%= card_fit(identity, room, size: 12, mono: true) %></text>
+  <% end %>
+  <text x="1174" y="<%= streak.present? ? 44 : 54 %>" text-anchor="end" <%= sans %> font-size="25" font-weight="700" fill="<%= t[:text] %>"><%= title %></text>
+  <% if streak.present? %>
+    <text x="1174" y="63" text-anchor="end" <%= mono %> font-size="12" letter-spacing="0.96" fill="<%= t[:muted] %>"><%= streak %></text>
+  <% end %>
+
+  <%# The week in numbers, and the projects' colours %>
+  <% if band[:strip] %>
+    <% facts = wc.shows?("totals") ? card_facts(card) : [] %>
+    <rect x="26.5" y="82.5" width="1147" height="37" rx="12" fill="<%= t[:panel] %>" stroke="<%= t[:border] %>"/>
+    <% facts.each_with_index do |fact, i| %>
+      <% if i.positive? %>
+        <line x1="<%= fact[:x] - 14 %>" y1="92" x2="<%= fact[:x] - 14 %>" y2="110" stroke="<%= t[:border] %>"/>
+      <% end %>
+      <text x="<%= fact[:x] %>" y="106" <%= sans %> font-size="14" fill="<%= t[:muted] %>"><tspan font-weight="700" fill="<%= t[:text] %>"><%= fact[:value] %></tspan><tspan dx="5"><%= fact[:label] %></tspan><% if fact[:delta] %><tspan dx="5" font-size="12" font-weight="500" fill="<%= t[fact[:delta].last] %>"><%= fact[:delta].first %></tspan><% end %></text>
+    <% end %>
+    <% if wc.shows?("projects") %>
+      <% card_legend(card.projects, after: facts.last ? facts.last[:right] : 42).each do |item| %>
+        <rect x="<%= item[:x] %>" y="96" width="16" height="9" rx="3" fill="<%= card_project_color(item[:project].slot) %>"/>
+        <text x="<%= item[:x] + 22 %>" y="105" <%= sans %> font-size="12" font-weight="500" fill="<%= t[:text] %>"><%= item[:name] %><tspan dx="4" font-weight="400" fill="<%= t[:muted] %>"><%= item[:project].n %></tspan></text>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%# The days %>
+  <rect x="26.5" y="<%= band[:top] + 0.5 %>" width="1147" height="<%= band[:bottom] - band[:top] - 1 %>" rx="16" fill="<%= t[:panel] %>" stroke="<%= t[:border] %>"/>
+  <line x1="40" y1="<%= band[:axis] %>" x2="1160" y2="<%= band[:axis] %>" stroke="<%= t[:axis] %>" stroke-width="1.5"/>
+  <% columns.each do |col| %>
+    <% day = col[:day] %>
+    <% cx = col[:cx] %>
+    <% headline = wc.shows?("headlines") ? day.headline : nil %>
+    <% shipped = headline&.kind == "shipped" %>
+    <text x="<%= cx %>" y="<%= band[:top] + 25 %>" text-anchor="middle" <%= mono %> font-size="11" letter-spacing="0.88" fill="<%= t[:muted] %>"><%= day.label %><% if day.total.positive? %><tspan dx="6" <%= sans %> font-size="15" font-weight="700" letter-spacing="0" fill="<%= t[:text] %>"><%= day.total %></tspan><% end %></text>
+    <% card_bar(day, scale, bottom: bars_bottom, merged: merged).each do |block| %>
+      <% color = card_project_color(block[:segment].slot) %>
+      <% if block[:top] %>
+        <path d="<%= card_top_block(cx - 19, block[:y], 38, block[:height]) %>" fill="<%= color %>"/>
+      <% else %>
+        <rect x="<%= cx - 19 %>" y="<%= block[:y] %>" width="38" height="<%= block[:height] %>" fill="<%= color %>"/>
+      <% end %>
+      <% if block[:height] >= 16 && !merged %>
+        <text x="<%= cx %>" y="<%= block[:y] + (block[:height] / 2) + 4 %>" text-anchor="middle" <%= sans %> font-size="11" font-weight="700" fill="<%= card_on_color(color) %>"><%= block[:segment].n %></text>
+      <% end %>
+    <% end %>
+    <% radius = shipped ? 7 : 4.5 %>
+    <circle cx="<%= cx %>" cy="<%= band[:axis] %>" r="<%= radius %>" fill="<%= headline ? t[:text] : t[:panel] %>" stroke="<%= headline ? t[:text] : t[:axis] %>" stroke-width="2"/>
+    <% if headline %>
+      <% width = col[:width] - 12 %>
+      <% base, weight = shipped ? [ 15, 700 ] : [ 13, 600 ] %>
+      <% size = card_headline_size(headline.text, width, base: base, weight: weight) %>
+      <line x1="<%= cx %>" y1="<%= band[:axis] + radius + 2 %>" x2="<%= cx %>" y2="<%= band[:axis] + 18 %>" stroke="<%= t[:axis] %>" stroke-width="1.5" stroke-dasharray="3 3"/>
+      <text x="<%= cx %>" y="<%= band[:axis] + 31 %>" text-anchor="middle" <%= mono %> font-size="9" letter-spacing="1.08" fill="<%= shipped ? t[:text] : t[:muted] %>"><%= headline.kind.upcase %></text>
+      <% card_wrap(headline.text, width, max_lines: 3, size: size, weight: weight).each_with_index do |line, i| %>
+        <text x="<%= cx %>" y="<%= (band[:axis] + 36 + size + (i * size * 1.18)).round(1) %>" text-anchor="middle" <%= sans %> font-size="<%= size %>" font-weight="<%= weight %>" fill="<%= headline.source == :count ? t[:muted] : t[:text] %>"><%= line %></text>
+      <% end %>
+    <% elsif !day.active %>
+      <text x="<%= cx %>" y="<%= band[:axis] + 30 %>" text-anchor="middle" <%= sans %> font-size="12" fill="<%= t[:quiet] %>">quiet</text>
+    <% end %>
+  <% end %>
+
+  <%# Around the week %>
+  <% if cells.any? %>
+    <rect x="26.5" y="472.5" width="1147" height="103" rx="16" fill="<%= t[:panel] %>" stroke="<%= t[:border] %>"/>
+    <% cells.each_with_index do |cell, i| %>
+      <% if i.positive? %>
+        <line x1="<%= cell[:x] %>" y1="473" x2="<%= cell[:x] %>" y2="575" stroke="<%= t[:border] %>"/>
+      <% end %>
+      <%= render "week_cards/cell", cell: cell, card: card, t: t, sans: sans, mono: mono %>
+    <% end %>
+  <% end %>
+
+  <%# The link %>
+  <% sheet = "W#{wc.week_start.cweek} / #{wc.week_start.cwyear}" %>
+  <% link = "openstage.dev/#{user.username}" %>
+  <% link_width = (CardText.width(link, size: 15, weight: 700) + 24).round %>
+  <% sheet_width = (CardText.width(sheet, size: 11, mono: true, spacing: 0.66) + 20).round %>
+  <% block_x = 1174 - link_width - sheet_width %>
+  <text x="26" y="605" <%= sans %> font-size="12" fill="<%= t[:muted] %>">Built in public with Openstage</text>
+  <rect x="<%= block_x + 0.5 %>" y="586.5" width="<%= link_width + sheet_width - 1 %>" height="27" rx="9" fill="<%= t[:panel] %>" stroke="<%= t[:border] %>"/>
+  <line x1="<%= block_x + sheet_width %>" y1="587" x2="<%= block_x + sheet_width %>" y2="613" stroke="<%= t[:border] %>"/>
+  <text x="<%= block_x + 10 %>" y="604" <%= mono %> font-size="11" letter-spacing="0.66" fill="<%= t[:muted] %>"><%= sheet %></text>
+  <text x="<%= block_x + sheet_width + 12 %>" y="605" <%= sans %> font-size="15" font-weight="700" fill="<%= t[:text] %>"><%= link %></text>
+</svg>

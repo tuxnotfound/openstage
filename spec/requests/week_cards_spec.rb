@@ -22,7 +22,7 @@ RSpec.describe "Week cards", type: :request do
         expect { get "/week" }.to change { Event.named("card_opened").count }.by(1)
         expect(response).to have_http_status(:ok)
         expect(response.body).to include("data-week-card")
-        expect(response.body).to include("WEEK 41 · OCT 5 – 11, 2026")
+        expect(response.body).to include("Week 41 · Oct 5 – 11, 2026")
         expect(response.body).to include("openstage.dev/tux")
         expect(response.body).to include("1 commit in wheels-off")
         expect(response.body).to include("Serve the game at playwheelsoff.com")
@@ -32,7 +32,7 @@ RSpec.describe "Week cards", type: :request do
     it "opens a past week by its ISO name, and refuses a future or malformed one" do
       travel_to(Time.zone.local(2026, 10, 9, 12)) do
         get "/week/2026-W40"
-        expect(response.body).to include("WEEK 40 · SEP 28 – OCT 4, 2026")
+        expect(response.body).to include("Week 40 · Sep 28 – Oct 4, 2026")
 
         get "/week/2026-W50"
         expect(response).to redirect_to("/week")
@@ -47,20 +47,40 @@ RSpec.describe "Week cards", type: :request do
         commit("Serve the game at playwheelsoff.com", "me/wheels-off", Time.zone.local(2026, 10, 8, 10))
 
         patch "/week/2026-W41", params: { week_card: {
-          layout: "active",
+          layout: "active", theme: "dark", next_goal: "Launch on Product Hunt", time_zone: "Europe/Lisbon",
           sections: { "avatar" => "0", "streak" => "1" },
           headlines: { "2026-10-08" => { "text" => "playwheelsoff.com is live", "kind" => "shipped" } },
           post_text: "Week 41, my words."
         } }, headers: { "Accept" => "application/json" }
-        expect(response).to have_http_status(:no_content)
+        expect(response.parsed_body).to eq("time_zone" => "Europe/Lisbon")
 
         card = WeekCard.find_by!(user: user, week_start: Date.new(2026, 10, 5))
-        expect(card).to have_attributes(layout: "active", hidden_sections: [ "avatar" ], post_text: "Week 41, my words.")
+        expect(card).to have_attributes(layout: "active", theme: "dark", next_goal: "Launch on Product Hunt",
+                                        hidden_sections: [ "avatar" ], post_text: "Week 41, my words.")
 
         get "/week/2026-W41/preview"
         expect(response.body).to include("playwheelsoff.com is live")
         expect(response.body).to include("SHIPPED")
+        expect(response.body).to include("Launch on Product Hunt")
+        expect(response.body).to include(WeekCardsHelper::CARD_THEMES["dark"][:ground])
         expect(response.body).not_to include("<image")
+      end
+    end
+
+    it "keeps no zone Rails does not know, and tells the editor so it does not redraw" do
+      travel_to(Time.zone.local(2026, 10, 9, 12)) do
+        patch "/week/2026-W41", params: { week_card: { time_zone: "Mars/Olympus" } }, headers: { "Accept" => "application/json" }
+      end
+
+      expect(response.parsed_body).to eq("time_zone" => nil)
+    end
+
+    it "starts a new week in the zone of the builder's last card" do
+      WeekCard.create!(user: user, week_start: Date.new(2026, 9, 28), time_zone: "America/New_York")
+
+      travel_to(Time.zone.local(2026, 10, 9, 12)) do
+        get "/week"
+        expect(response.body).to include('value="America/New_York"')
       end
     end
 

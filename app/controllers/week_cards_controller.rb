@@ -19,9 +19,10 @@ class WeekCardsController < ApplicationController
     @week_card.assign_attributes(week_card_params)
     return head(:unprocessable_entity) unless @week_card.save
 
-    # The editor saves with fetch and then reloads its preview frame.
+    # The editor saves with fetch and then reloads its preview frame. The zone
+    # comes back so the editor knows whether the browser's zone was kept.
     respond_to do |format|
-      format.json { head :no_content }
+      format.json { render json: { time_zone: @week_card.time_zone } }
       format.html { redirect_to week_card_path(@week_card) }
     end
   end
@@ -43,9 +44,11 @@ class WeekCardsController < ApplicationController
     return redirect_to(current_week_card_path) if week_start > Date.current
 
     @week_card = WeekCard.find_or_initialize_by(user: current_user, week_start: week_start)
+    @week_card.time_zone ||= WeekCard.last_time_zone_for(current_user)
   end
 
   def week_card_params
-    params.require(:week_card).permit(:layout, :post_text, sections: {}, projects: {}, headlines: {})
+    params.require(:week_card).permit(:layout, :theme, :next_goal, :time_zone, :post_text,
+                                      sections: {}, projects: {}, headlines: {})
   end
 end
