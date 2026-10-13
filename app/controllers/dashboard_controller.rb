@@ -6,12 +6,7 @@ class DashboardController < ApplicationController
   def index
     # Paginated and searchable. This used to load every entry (178 for the
     # owner), so acting on an old one meant scrolling the whole history.
-    @query       = params[:q].to_s.strip
-    @type_filter = params[:type].presence_in(Entry.entry_types.keys)
-
-    scope = current_user.entries.visible.chronological
-    scope = scope.where(entry_type: @type_filter) if @type_filter
-    scope = scope.search(@query) if @query.present?
+    scope = filtered_entries
 
     @entries        = scope.page(params[:page]).per(PER_PAGE)
     @filtered_count = scope.count
@@ -62,5 +57,23 @@ class DashboardController < ApplicationController
       # flash only appeared on the next full load and page 1 was appended again.
       format.turbo_stream if params[:page].present?
     end
+  end
+
+  private
+
+  # Search, type and repo narrow the list. Only repos with entries are offered,
+  # and an unknown type or repo is ignored rather than emptying the page.
+  def filtered_entries
+    @query        = params[:q].to_s.strip
+    @type_filter  = params[:type].presence_in(Entry.entry_types.keys)
+    @repo_options = current_user.entries.visible.repo_names
+    @repo_filter  = params[:repo].presence_in(@repo_options)
+    @filtering    = @query.present? || @type_filter.present? || @repo_filter.present?
+
+    scope = current_user.entries.visible.chronological
+    scope = scope.where(entry_type: @type_filter) if @type_filter
+    scope = scope.where(repo_name: @repo_filter) if @repo_filter
+    scope = scope.search(@query) if @query.present?
+    scope
   end
 end
