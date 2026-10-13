@@ -55,14 +55,9 @@ module CardLayout
     def self.palette(theme)
       dark = theme == "dark"
       base = PALETTES.fetch(dark ? "dark" : "light")
-      levels = LEVELS.fetch(dark ? "dark" : "light").each_with_index.to_h { |share, i| [ :"lvl#{i + 1}", mix(base[:bg], base[:accent], share) ] }
-      base.merge(levels, wash: dark ? mix(base[:bg], base[:accent], 0.13) : "#E1F0E8", pill_a: dark ? 0.1 : 0.065,
-                         pill_text: mix(base[:muted], base[:ink], 0.25))
-    end
-
-    def self.mix(from, to, share)
-      from, to = [ from, to ].map { |hex| hex.delete("#").scan(/../).map { |pair| pair.to_i(16) } }
-      "##{from.zip(to).map { |a, b| format('%02X', (a + ((b - a) * share)).round) }.join}"
+      levels = LEVELS.fetch(dark ? "dark" : "light").each_with_index.to_h { |share, i| [ :"lvl#{i + 1}", Paint.mix(base[:bg], base[:accent], share) ] }
+      base.merge(levels, wash: dark ? Paint.mix(base[:bg], base[:accent], 0.13) : "#E1F0E8", pill_a: dark ? 0.1 : 0.065,
+                         pill_text: Paint.mix(base[:muted], base[:ink], 0.25))
     end
 
     def initialize(card)
