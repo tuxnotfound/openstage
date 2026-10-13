@@ -13,7 +13,15 @@ Each mock is a design-canvas component. Its `renderVals` holds the layout logic 
 ```
 doc/week_cards/tools/shot.sh doc/week_cards/mocks/changelog.dc.html '{"week":"w41","theme":"light"}' /tmp/changelog-w41-light.png
 ```
-It needs Node (through nvm) and Google Chrome. Fonts load from Google Fonts. To screenshot an HTML page of the app's own card, use `tools/htmlshot.sh <page.html> <out.png>`.
+It needs Node (through nvm) and Google Chrome. Fonts load from Google Fonts.
+
+## Rendering the app's card
+`script/week_card_render.rb` draws the same week as the app does, from `mocks/data.json`, in a transaction it rolls back. Then `tools/htmlshot.sh` screenshots the page:
+```
+bin/rails runner -e test script/week_card_render.rb changelog w41 light "$PWD/tmp/changelog-w41-light.html"
+doc/week_cards/tools/htmlshot.sh "$PWD/tmp/changelog-w41-light.html" /tmp/app-changelog-w41-light.png
+```
+Compare the two at full size and at 500px (`sips -Z 500`).
 
 Props each mock takes:
 - **changelog:**
