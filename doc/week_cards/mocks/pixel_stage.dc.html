@@ -1,0 +1,1253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pixel Stage week card</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;family=Pixelify+Sans:wght@500;600&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiny5&amp;text=0123456789&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 1200px; height: 630px; overflow: hidden; background: {{skyTop}}">
+  <sc-for list="{{layers}}" as="ly" hint-placeholder-count="90">
+    <svg style="position: absolute; left: 0; top: 0" width="1200" height="630" viewBox="0 0 1200 630" shape-rendering="crispEdges" aria-hidden="true"><path d="{{ly.d}}" fill="{{ly.f}}" fill-opacity="{{ly.o}}"></path></svg>
+  </sc-for>
+
+  <img src="/_blob/1e393e927f6a7146a6c82436c6086f9c" alt="Tux's avatar" style="position: absolute; left: 20px; top: 16px; width: 76px; height: 76px; object-fit: cover">
+
+  <sc-for list="{{texts}}" as="tx" hint-placeholder-count="60">
+    <div style="position: absolute; left: {{tx.x}}px; top: {{tx.y}}px; width: {{tx.w}}px; text-align: {{tx.a}}; font-family: {{tx.font}}; font-size: {{tx.s}}px; line-height: {{tx.lh}}px; font-weight: {{tx.wt}}; color: {{tx.c}}; text-shadow: {{tx.sh}}; white-space: nowrap; font-kerning: none; font-variant-ligatures: none; font-synthesis: none">{{tx.t}}</div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"week":{"editor":"enum","options":["w41","w40","w38","zero","wide","edge"],"default":"w41"},"$preview":{"width":1200,"height":630}}'>
+// Pixel Stage: the week is an 8-bit level. Every commit is a block, every launch a flag, every post a
+// broadcast mast, every rest day a campfire. The builder is the player: a little helmeted character;
+// their picture sits in the HUD. On a launch week they plant the flag on the launch tower; on a quiet week they
+// sit by the fire. A stage door leads to next week.
+
+// Advance widths at 100px (Pixelify Sans 500 and 600, printable ASCII from U+0020), measured in Chrome
+// with kerning and ligatures off. Digits come from Tiny5 (loaded for 0-9 only), 0.5em each, because
+// Pixelify Sans draws 5 like S. Press Start 2P is 1em per glyph.
+const PX500 = [20,23.1,47.2,68.2,59.17,87,68.2,27.57,38.13,38.13,27.57,60,27.57,34.43,23.1,53.53,59.17,41.13,59.17,59.17,59.17,59.17,59.17,59.17,59.17,59.17,23.1,27.57,60,60,60,59.17,61.5,59.17,59.17,59.17,59.17,59.17,59.17,59.17,59.17,41.13,59.17,59.17,59.17,77.1,59.17,59.17,59.17,59.17,59.17,59.17,59.17,59.17,59.17,77.1,59.17,59.17,59.17,38.13,53.53,38.13,27.57,44.9,27.43,68.2,59.17,59.17,59.17,59.17,59.17,59.17,59.17,23.1,50.17,59.17,23.1,77.1,59.17,59.17,59.17,59.17,59.17,59.17,68.2,59.17,58.17,77.1,59.17,59.17,59.17,47.07,23.1,47.07,60];
+const PX600 = [20,24,47.9,68.7,59.73,87.3,68.7,28.43,38.87,38.87,28.43,60,28.43,35.57,24,54.17,59.73,41.87,59.73,59.73,59.73,59.73,59.73,59.73,59.73,59.73,24,28.43,60,60,60,59.73,64.4,59.73,59.73,59.73,59.73,59.73,59.73,59.73,59.73,41.87,59.73,59.73,59.73,77.5,59.73,59.73,59.73,59.73,59.73,59.73,59.73,59.73,59.73,77.5,59.73,59.73,59.73,38.87,54.17,38.87,28.43,45.6,28.27,68.7,59.73,59.73,59.73,59.73,59.73,59.73,59.73,24,50.83,59.73,24,77.5,59.73,59.73,59.73,59.73,59.73,59.73,68.7,59.73,58.73,77.5,59.73,59.73,59.73,47.73,24,47.73,60];
+const PX_EXTRA = {"–": [41.03, 41.77], "—": [50.87, 51.53], "·": [23.1, 24], "’": [27.57, 28.43], "‘": [27.57, 28.43], "“": [47.2, 47.9], "”": [47.2, 47.9], "…": [64.83, 65.37], "é": [59.17, 59.73], "×": [60, 60], "•": [26.67, 27.53]};
+
+const PS = "'Press Start 2P', monospace";
+const PXF = "'Tiny5', 'Pixelify Sans', sans-serif";
+
+function adv(ch, wt) {
+  const c = ch.codePointAt(0);
+  if (c >= 48 && c <= 57) return 50;
+  if (c >= 32 && c < 127) return (wt >= 600 ? PX600 : PX500)[c - 32];
+  const e = PX_EXTRA[ch];
+  return e ? e[wt >= 600 ? 1 : 0] : 60;
+}
+function pxw(s, size, wt) { let w = 0; for (const ch of s) w += adv(ch, wt || 500); return (w * size) / 100; }
+function psw(s, size) { return [...s].length * size; }
+// Cut a string to fit `width`, ending it with an ellipsis.
+function clip(s, width, measure) {
+  if (measure(s) <= width) return s;
+  let t = s;
+  while (t.length > 1 && measure(t.replace(/[\s·-]+$/, '') + '…') > width) t = t.slice(0, -1);
+  return t.replace(/[\s·-]+$/, '') + '…';
+}
+
+function mix(a, b, t) {
+  const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [x, y] = [p(a), p(b)];
+  return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+function lum(h) {
+  const c = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+function rng(seed) {
+  return function () {
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function hash(s) { let h = 2166136261; for (const ch of s) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+
+// ---- Headlines.
+// Pieces to set: words, plus (when allowed) the parts of a word after its own hyphens.
+function pieces(text, hyphens) {
+  const out = [];
+  text.split(/\s+/).filter(Boolean).forEach((w, wi) => {
+    (hyphens ? w.split(/(?<=-)/) : [w]).forEach((p, pi) => out.push({ s: p, glue: pi === 0 && wi > 0 ? ' ' : '' }));
+  });
+  return out;
+}
+// Least squared slack over every line but the last, in at most maxLines lines.
+function wrapBalanced(text, size, width, maxLines, hyphens) {
+  const t = pieces(text, hyphens), n = t.length;
+  const W = (s) => pxw(s, size, 500);
+  if (!n || t.some((x) => W(x.s) > width)) return null;
+  const line = (i, j) => t.slice(i, j).map((x, k) => (k ? x.glue : '') + x.s).join('');
+  const best = Array.from({ length: n + 1 }, () => Array(maxLines + 1).fill(null));
+  for (let k = 0; k <= maxLines; k++) best[n][k] = { c: 0, j: n };
+  for (let i = n - 1; i >= 0; i--) {
+    for (let k = 1; k <= maxLines; k++) {
+      let b = null;
+      for (let j = i + 1; j <= n; j++) {
+        const w = W(line(i, j));
+        if (w > width) break;
+        const rest = best[j][k - 1];
+        if (!rest) continue;
+        const slack = (width - w) / width;
+        let c = j === n ? 0 : slack * slack;
+        if (j === n && i > 0 && j - i === 1 && w < width * 0.34) c += 0.12;
+        if (j < n && t[j].glue === '') c += 0.04;
+        c += rest.c;
+        if (!b || c < b.c) b = { c, j };
+      }
+      best[i][k] = b;
+    }
+  }
+  if (!best[0][maxLines]) return null;
+  const lines = [];
+  for (let i = 0, k = maxLines; i < n; k--) { const b = best[i][k]; lines.push(line(i, b.j)); i = b.j; }
+  return { lines, cost: best[0][maxLines].c };
+}
+// Last resort for a word wider than the box: greedy, with an added hyphen (three letters a side).
+function wrapHard(text, size, width) {
+  const W = (s) => pxw(s, size, 500);
+  const lines = [];
+  let cur = '';
+  const place = (piece, glue) => { const next = cur ? cur + glue + piece : piece; if (W(next) <= width) cur = next; else { if (cur) lines.push(cur); cur = piece; } };
+  for (const word of text.split(/\s+/).filter(Boolean)) {
+    let glue = ' ';
+    for (let piece of word.split(/(?<=-)/)) {
+      while (W(piece) > width) {
+        let cut = piece.replace(/-$/, '').length - 3;
+        while (cut > 3 && W(piece.slice(0, cut) + '-') > width) cut--;
+        place(piece.slice(0, cut) + '-', glue);
+        if (cur) lines.push(cur);
+        cur = '';
+        glue = '';
+        piece = piece.slice(cut);
+      }
+      place(piece, glue);
+      glue = '';
+    }
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+// The builder's headline: 14px down to 11px. Every size is tried and the most even wrap wins, with a
+// small cost per step down. Words break at their own hyphens only when nothing else fits.
+function fitHeadline(text, width, maxLines) {
+  for (const hyphens of [false, true]) {
+    let pick = null;
+    for (const size of [14, 13, 12, 11]) {
+      const r = wrapBalanced(text, size, width, maxLines, hyphens);
+      if (!r) continue;
+      const score = r.cost + (14 - size) * 0.3 + r.lines.length * 0.03;
+      if (!pick || score < pick.score) pick = { size, lines: r.lines, score };
+    }
+    if (pick) return pick;
+  }
+  const size = 11;
+  let lines = wrapHard(text, size, width);
+  if (lines.length > maxLines) {
+    lines = lines.slice(0, maxLines);
+    let last = lines[maxLines - 1];
+    while (last.length > 1 && pxw(last + '…', size, 500) > width) last = last.slice(0, -1);
+    lines[maxLines - 1] = last.replace(/[\s-]+$/, '') + '…';
+  }
+  return { size, lines };
+}
+
+const SKIES = {
+  dark: {
+    night: { bands: ['#050816', '#070B1F', '#0A1029', '#0D1633', '#111C3D', '#152347', '#1A2A52', '#20325C', '#273B66'], far: '#1A2550', near: '#111A3A', stars: '#FFF6D8', moon: '#F4E9C8', ground: 'night' },
+    dusk: { bands: ['#160F33', '#1E1340', '#29184B', '#371D55', '#4A225D', '#612865', '#7D2F69', '#9C386B', '#BE4569', '#DE5A62', '#F57A5C', '#FF9E5E'], far: '#3B1F52', near: '#281540', sun: '#FFC46B', sunIn: '#FFE3A1', cloud: '#F59A86', ground: 'dusk' },
+    day: { bands: ['#0B2350', '#0E2C61', '#123672', '#164183', '#1B4C93', '#2058A2', '#2764B0', '#3071BD', '#3A7EC8', '#4A8DD2'], far: '#1B3B74', near: '#132C5C', sun: '#FFE9A6', sunIn: '#FFF6D6', cloud: '#7FA3D8', ground: 'day' },
+    dawn: { bands: ['#0E1430', '#151B3E', '#1F2350', '#2C2A5C', '#3E3166', '#553A6E', '#714575', '#92537A', '#B5647C', '#D77B7C', '#F0987A'], far: '#3A3160', near: '#272248', sun: '#FFD08A', sunIn: '#FFE9BE', cloud: '#E39A93', ground: 'dusk' }
+  },
+  light: {
+    night: { bands: ['#3A4A8C', '#45559A', '#5262A6', '#6170B1', '#727FBB', '#8590C4', '#9AA2CC', '#B0B5D4', '#C7C9DC'], far: '#6874B0', near: '#525E9C', stars: '#FFF6D8', moon: '#FFF8DE', ground: 'lightNight' },
+    dusk: { bands: ['#5B8ED6', '#6C9ADB', '#7FA7DF', '#93B3E2', '#A9BEE2', '#C0C8DF', '#D8D0D8', '#EED4C8', '#FDD3B0', '#FFC995'], far: '#9CA6D2', near: '#7F8BC2', sun: '#FFF1C9', sunIn: '#FFFBEA', cloud: '#FFFFFF', ground: 'light' },
+    day: { bands: ['#4D9FF2', '#5EAAF4', '#70B5F6', '#83C0F7', '#97CBF9', '#ACD6FA', '#C2E1FB', '#D8ECFC'], far: '#9FC3EA', near: '#84B0E0', sun: '#FFF4C2', sunIn: '#FFFCEB', cloud: '#FFFFFF', ground: 'light' },
+    dawn: { bands: ['#7DA8E8', '#91B4EA', '#A6C0EA', '#BCCAE8', '#D2D2E4', '#E6D6DC', '#F6D8D0', '#FFD8C0'], far: '#AAB3DA', near: '#919CCB', sun: '#FFF0C4', sunIn: '#FFFBEA', cloud: '#FFFFFF', ground: 'light' }
+  }
+};
+const GROUND = {
+  night: { hi: '#3F8F4B', grass: '#2C6B37', dirt: '#352116', s1: '#28180F', s2: '#45291B', tuft: '#4FA35A', label: '#FFE7C2', mute: '#E2A98F' },
+  dusk: { hi: '#5AA84E', grass: '#3E7E3B', dirt: '#4A2B1D', s1: '#3A2116', s2: '#5E3725', tuft: '#6CBF5C', label: '#FFE7C2', mute: '#E2A98F' },
+  day: { hi: '#5DB653', grass: '#3E8A3B', dirt: '#4A2D1E', s1: '#3A2217', s2: '#5E3826', tuft: '#72C863', label: '#FFE7C2', mute: '#E2A98F' },
+  light: { hi: '#86D86E', grass: '#58B54E', dirt: '#6E4A2E', s1: '#5E3E25', s2: '#7E5636', tuft: '#9BE281', label: '#FFF1D6', mute: '#F3D2B4' },
+  lightNight: { hi: '#86D86E', grass: '#58B54E', dirt: '#6E4A2E', s1: '#5E3E25', s2: '#7E5636', tuft: '#9BE281', label: '#FFF1D6', mute: '#F3D2B4' }
+};
+
+const CAMPFIRE = [
+  '....y....',
+  '...yy....',
+  '...yoy...',
+  '..yoooy..',
+  '..oorro..',
+  '.oorrroo.',
+  '..orrro..',
+  'lLlLlLlLl',
+  '.lLlLlLl.'
+];
+const SMALLFIRE = [
+  '...y...',
+  '..yoy..',
+  '..oro..',
+  '.orrro.',
+  'lLlLlLl'
+];
+const TENT = [
+  '......t......',
+  '.....ttT.....',
+  '....tttTT....',
+  '...ttttdTT...',
+  '..tttttddTT..',
+  '.ttttttddTTT.',
+  'tttttttddTTTT'
+];
+const CLOUD = [
+  '......cccc......',
+  '...cccccccccc...',
+  '..cccccccccccc..',
+  'cccccccccccccccc',
+  '.cccccccccccccc.'
+];
+const PENNANT = [
+  'fffffffffff',
+  'fffffwfffff',
+  'ffffwwwfff.',
+  'fffwwwwwf..',
+  'ffffwwwfff.',
+  'ffffwfwffff',
+  'FFFFFFFFFFF'
+];
+const TUFT = ['.g.g.', 'g.ggg'];
+// Broadcast arcs on the left of a mast's light (mirrored on the right): an inner and an outer one.
+const WAVE = [
+  '..o..',
+  '.o...',
+  'o..i.',
+  'o.i..',
+  'o.i..',
+  'o..i.',
+  '.o...',
+  '..o..'
+];
+// Pines are solid stepped triangles: every row is as wide as the one above or wider.
+const PINE = ['..t..', '..t..', '.ttt.', '.ttt.', 'ttttt', 'ttttt'];
+const PINE_S = ['.t.', '.t.', 'ttt', 'ttt'];
+// HUD icons, 8x8 cells drawn at 3px to match the 24px digits: a block, a flag, a mast.
+const ICON_BLOCK = ['hhhhhhhh', 'hbbbbbbs', 'hbbbbbbs', 'hbbbbbbs', 'hbbbbbbs', 'hbbbbbbs', 'hbbbbbbs', 'ssssssss'];
+const ICON_FLAG = ['y.......', 'pffffff.', 'pfffff..', 'pffffff.', 'pFFFFF..', 'p.......', 'p.......', 'pp......'];
+const ICON_MAST = ['...rr...', '.a.rr.a.', 'a..pp..a', '.a.pp.a.', '...pp...', '...pp...', '...pp...', '..pppp..'];
+const FIRE_PAL = { y: '#FFE27A', o: '#FFB020', r: '#FF5A1F', l: '#7A4A2A', L: '#5A3320' };
+
+// The player wears a helmet in the colour of the day's top project, with a dark visor ('v', 'V' its
+// glint); the builder's own picture stays in the HUD. Every sprite gets a one-cell outline on the
+// 4-neighbourhood, so its corners stay notched.
+// Stand: one fist up, the other hand on the flagpole (the pole runs through column 17).
+const STAND = [
+  '.....hqqqqqqh.....',
+  '....qHHHhhhhhq....',
+  '...qHHhhhhhhhhq...',
+  'gg.qHhhhhhhhhhq...',
+  'gGqhhvvvvvvvvhsq..',
+  'hhqhaWVVaaWVVasq..',
+  'hhqhaVVVaaVVVasq..',
+  'hhqhhvvvvvvvvhsq..',
+  'Hh.hhhSSSSSShhs...',
+  'Hh.hhhhhhhhhhss...',
+  'Hh..hhhhhhhhss....',
+  'Hh...ssssssss.....',
+  'Hhooooooooooooo...',
+  'HhhHSSSSSSSShhhhgg',
+  '.HHhhhwhhwhhhhssgG',
+  '..Hhhhwhhwhhhsbb..',
+  '..Hhhpppppphhsbb..',
+  '..Hsssssssssssbb..',
+  '...jjjj..jjjJ.....',
+  '...jjjJ..jjjJ.....',
+  '..kkkkK..kkkkK....'
+];
+// Idle: waiting at the stage door, one hand up to say hi.
+const IDLE = [
+  '.....hqqqqqqh....',
+  '....qHHHhhhhhq...',
+  '...qHHhhhhhhhhq..',
+  'gg.qHhhhhhhhhhq..',
+  'gGqhhvvvvvvvvhsq.',
+  'hhqhaWVVaaWVVasq.',
+  'hhqhaVVVaaVVVasq.',
+  'hhqhhvvvvvvvvhsq.',
+  'Hh.hhhSSSSSShhs..',
+  'Hh.hhhhhhhhhhss..',
+  'Hh..hhhhhhhhss...',
+  'Hh...ssssssss....',
+  'Hhooooooooooooo..',
+  'HhhHSSSSSSSShhhh.',
+  '.HHhhhwhhwhhhshh.',
+  '..Hhhhwhhwhhhshs.',
+  '..Hhhpppppphhsgg.',
+  '..Hsssssssssss...',
+  '...jjjj..jjjJ....',
+  '...jjjJ..jjjJ....',
+  '..kkkkK..kkkkK...'
+];
+// Sit: on a log by the fire, toasting a marshmallow (the stick leaves the right glove).
+const SIT = [
+  '....hqqqqqqh.......',
+  '...qHHHhhhhhq......',
+  '..qHHhhhhhhhhq.....',
+  '..qHhhhhhhhhhq.....',
+  '.qhhvvvvvvvvhsq....',
+  '.qhaWVVaaWVVasq....',
+  '.qhaVVVaaVVVasq....',
+  '.qhhvvvvvvvvhsq....',
+  '..hhhSSSSSShhs.....',
+  '..hhhhhhhhhhss.....',
+  '...hhhhhhhhss......',
+  '....ssssssss.......',
+  '..oooooooooooo.....',
+  '..HHSSSSSSSShh.....',
+  '.hHhhwhhwhhhhhhgg..',
+  '.hHhhwhhwhhhhshgG..',
+  '.gHhpppppphhs......',
+  '.gjjjjjjjjjjj......',
+  '..jJjjjjjjJjJ......',
+  '...jjj...jjj.......',
+  '..kkkkK..kkkkK.....'
+];
+const LOG = [
+  'eLLLLLLLLLLLLLLLLLe',
+  'ellllllllllllllllE',
+  'eLlllLllllllLlllle',
+  'eLLLLLLLLLLLLLLLLe'
+];
+
+class Component extends DCLogic {
+  renderVals() {
+    // Three real weeks from data.json, plus invented test weeks (zero, wide and edge).
+    const WEEKS = {
+      w41: {
+        mon: '2026-10-05', goal: 'Launch on Product Hunt', peak: 19, commits: 74, shipped: 2, published: 1,
+        projects: [['wheels-off', 35], ['openstage', 34], ['trained-on', 5]],
+        days: [
+          { c: {} },
+          { c: { 'wheels-off': 4, openstage: 2 }, k: 'built', t: '4 commits in wheels-off', auto: true },
+          { c: { 'wheels-off': 16 }, k: 'built', t: 'Arcade mode: leaderboards, world record, name entry' },
+          { c: { 'wheels-off': 11 }, k: 'shipped', t: 'playwheelsoff.com is live' },
+          { c: { openstage: 11, 'trained-on': 5 }, k: 'published', t: 'Posted on X' },
+          { c: {} },
+          { c: { 'wheels-off': 4, openstage: 21 }, k: 'shipped', t: 'Read-only private repos via a GitHub App' }
+        ]
+      },
+      w40: {
+        mon: '2026-09-28', goal: 'Ship the wheels-off arcade mode', peak: 21, commits: 32, shipped: 1, published: 1,
+        projects: [['trained-on', 23], ['openstage', 9]],
+        days: [
+          { c: { 'trained-on': 13, openstage: 5 }, k: 'built', t: '13 commits in trained-on', auto: true },
+          { c: { openstage: 4, 'trained-on': 2 }, k: 'built', t: 'Redesign: one frame, four-section landing' },
+          { c: { 'trained-on': 6 }, k: 'built', t: '6 commits in trained-on', auto: true },
+          { c: { 'trained-on': 1 }, k: 'shipped', t: 'Trained on me is live!!' },
+          { c: { 'trained-on': 1 }, k: 'published', t: 'Posted on X' },
+          { c: {} },
+          { c: {} }
+        ]
+      },
+      w38: {
+        mon: '2026-09-14', goal: "Ship Story Time's PDF export", peak: 22, commits: 4, shipped: 0, published: 1,
+        projects: [['openstage', 3], ['story_time_v1', 1]],
+        days: [
+          { c: {} },
+          { c: { openstage: 2, story_time_v1: 1 }, k: 'built', t: 'Story Time exports to PDF' },
+          { c: {} },
+          { c: { openstage: 1 }, k: 'built', t: '1 commit in openstage', auto: true },
+          { c: {}, k: 'published', t: 'Posted on X' },
+          { c: {} },
+          { c: {} }
+        ]
+      },
+      // Invented: a week with no commits and one post.
+      zero: {
+        mon: '2026-10-19', goal: 'Get back to wheels-off', peak: null, commits: 0, shipped: 0, published: 1,
+        projects: [],
+        days: [{ c: {} }, { c: {} }, { c: {}, k: 'published', t: 'Wrote up what I learned from three launches' }, { c: {} }, { c: {} }, { c: {} }, { c: {} }]
+      },
+      // Invented stress test: six projects, a long project name, 80-character headlines, a 60-commit day.
+      wide: {
+        mon: '2026-10-12', goal: 'Finish onboarding and invite the first ten paying testers!!', peak: 14, commits: 90, shipped: 1, published: 1,
+        projects: [['payments-reconciliation-service', 31], ['wheels-off', 22], ['openstage', 18], ['trained-on', 9], ['story_time_v1', 6], ['dotfiles', 4]],
+        days: [
+          { c: { 'payments-reconciliation-service': 20, 'wheels-off': 14, openstage: 12, 'trained-on': 6, story_time_v1: 5, dotfiles: 3 }, k: 'built', t: 'Rewrote the whole reconciliation engine so every payout settles in under a second' },
+          { c: { 'payments-reconciliation-service': 8 }, k: 'built', t: 'Supercalifragilisticexpialidocious-internationalization-refactor finally done' },
+          { c: {} },
+          { c: { 'payments-reconciliation-service': 3, 'wheels-off': 8, dotfiles: 1 }, k: 'shipped', t: 'payments-reconciliation-service v2.0 is live for every customer in the EU region' },
+          { c: { 'trained-on': 3, story_time_v1: 1 }, k: 'published', t: 'Wrote a long thread about what three launches in four weeks taught me about pricing' },
+          { c: { openstage: 6 }, k: 'built', t: 'Small fixes' },
+          { c: {} }
+        ]
+      },
+      // Invented stress test: a 27-letter name, a 39-character handle, week 52 of a 53-week year, seven
+      // projects, a 48-commit launch under a six-line headline, and a built day with no commits.
+      edge: {
+        name: 'Alexandra Konstantinopoulou', handle: 'alexandra-konstantinopoulou-builds-apps',
+        mon: '2026-12-21', goal: 'Rest, then plan the Q1 roadmap for every single project', peak: 20, commits: 140, shipped: 3, published: 1,
+        projects: [['alpha-billing-gateway', 50], ['beta-mobile', 30], ['gamma-docs', 25], ['delta', 20], ['epsilon', 10], ['zeta', 3], ['eta', 2]],
+        days: [
+          { c: { 'alpha-billing-gateway': 30, 'beta-mobile': 10, 'gamma-docs': 8 }, k: 'shipped', t: 'Billing gateway v3 is live with invoices, refunds, dunning and tax for EU and US' },
+          { c: { 'beta-mobile': 3 }, k: 'shipped', t: 'Mobile beta is live on TestFlight for the first 200 people on the list' },
+          { c: { 'alpha-billing-gateway': 10, 'gamma-docs': 10, delta: 10 }, k: 'built', t: 'Docs site with search, versioning and a changelog per release' },
+          { c: {}, k: 'published', t: 'Wrote a long post about what a year of building in public taught me' },
+          { c: { 'alpha-billing-gateway': 10, 'beta-mobile': 10, delta: 10, epsilon: 2 }, k: 'built', t: 'Queue layer rewrite: idempotent retries' },
+          { c: {}, k: 'built', t: 'Planned Q1 on paper, no code today' },
+          { c: { epsilon: 8, zeta: 3, eta: 2, 'beta-mobile': 7, 'gamma-docs': 7 }, k: 'shipped', t: 'Epsilon and zeta share one login' }
+        ]
+      }
+    };
+    const PROJ = { 'wheels-off': '#1D9BF0', openstage: '#00BA7C', 'trained-on': '#FFB020', story_time_v1: '#8B5CF6' };
+    // Spare colours for other projects: distinct from each other, the known four, the flag gold and the fire.
+    const SPARE = ['#F4212E', '#E85AAD', '#A3E635', '#22D3EE', '#6366F1', '#E4E6F2'];
+    const OTHER = '#8C92B0';
+
+    const theme = this.props.theme === 'light' ? 'light' : 'dark';
+    const dark = theme === 'dark';
+    const W = WEEKS[this.props.week] || WEEKS.w41;
+    const name = W.name || 'Tux', handle = W.handle || 'tuxnotfound';
+    const P = 4, GY = 520;
+    const R = (x, y, w, h) => (w > 0 && h > 0 ? `M${x} ${y}h${w}v${h}h${-w}z` : '');
+    const snap = (v) => Math.round(v / P) * P;
+    const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+    const rnd = rng(hash(handle) ^ Math.imul(parseInt(W.mon.replace(/-/g, ''), 10), 2654435761));
+    const notch = (x, y, w, h, n = P) => `M${x + n} ${y}H${x + w - n}V${y + n}H${x + w}V${y + h - n}H${x + w - n}V${y + h}H${x + n}V${y + h - n}H${x}V${y + n}H${x + n}Z`;
+    const disc = (cx, cy, r) => {
+      let d = '';
+      for (let yy = -r; yy < r; yy += P) { const hw = snap(Math.sqrt(Math.max(0, r * r - (yy + 2) ** 2))); d += R(cx - hw, cy + yy, 2 * hw, P); }
+      return d;
+    };
+    const raster = (x0, y0, x1, y1, on) => {
+      let d = '';
+      for (let y = y0; y < y1; y += P) {
+        let run = -1;
+        for (let x = x0; x <= x1; x += P) {
+          const v = x < x1 && on(x + 2, y + 2);
+          if (v && run < 0) run = x;
+          if (!v && run >= 0) { d += R(run, y, x - run, P); run = -1; }
+        }
+      }
+      return d;
+    };
+
+    // ---- Dates: everything comes from the week's Monday, as the server would (Ruby: monday.cweek).
+    const DAY = 86400000;
+    const DOW = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const parse = (s) => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); };
+    const isoWeek = (t) => {
+      const th = t + (4 - (new Date(t).getUTCDay() || 7)) * DAY;
+      const y = new Date(th).getUTCFullYear();
+      return { y, w: Math.ceil(((th - Date.UTC(y, 0, 1)) / DAY + 1) / 7) };
+    };
+    const mon = parse(W.mon), sun = mon + 6 * DAY;
+    const iso = isoWeek(mon), nextIso = isoWeek(mon + 7 * DAY);
+    const dm = (t) => { const d = new Date(t); return { m: MONTH[d.getUTCMonth()], d: d.getUTCDate(), y: d.getUTCFullYear() }; };
+    const a = dm(mon), b = dm(sun);
+    const dates = a.y !== b.y ? `${a.m} ${a.d}, ${a.y} – ${b.m} ${b.d}, ${b.y}` : a.m !== b.m ? `${a.m} ${a.d} – ${b.m} ${b.d}, ${b.y}` : `${a.m} ${a.d} – ${b.d}, ${b.y}`;
+    const level = Math.floor((mon - parse('2026-03-23')) / (7 * DAY)) + 1;
+
+    // ---- Projects and colours: never two projects in one colour; past six, the smallest merge into "other".
+    let projects = W.projects.slice();
+    const merged = new Set();
+    if (projects.length > 6) {
+      const rest = projects.slice(5);
+      rest.forEach(([p]) => merged.add(p));
+      projects = projects.slice(0, 5).concat([['other', rest.reduce((s, [, n]) => s + n, 0)]]);
+    }
+    const colorOf = {};
+    const used = new Set(projects.filter(([p]) => PROJ[p]).map(([p]) => PROJ[p]));
+    const pool = SPARE.concat(Object.values(PROJ)).filter((c) => !used.has(c));
+    projects.forEach(([p]) => { colorOf[p] = p === 'other' ? OTHER : PROJ[p] || pool.shift() || OTHER; });
+    const proj = (p) => (merged.has(p) ? 'other' : p);
+    const colOf = (p) => colorOf[proj(p)] || OTHER;
+    const rank = (p) => { const i = projects.findIndex(([q]) => q === proj(p)); return i < 0 ? 99 : i; };
+
+    // ---- Sky: the hour the builder commits most picks the palette.
+    const hour = W.peak == null ? 21 : W.peak;
+    const kind = hour >= 21 || hour < 5 ? 'night' : hour >= 17 ? 'dusk' : hour >= 11 ? 'day' : 'dawn';
+    const S = SKIES[theme][kind];
+    const G = GROUND[S.ground];
+    const bandAt = (y) => S.bands[Math.max(0, Math.min(S.bands.length - 1, Math.floor(y / 44)))];
+    // Small text on the sky takes whichever ink reads better on the band behind it.
+    const skyInk = (y, light) => {
+      if (dark) return { c: light || '#FFE7C2', sh: '#000000' };
+      const bg = bandAt(y);
+      return contrast('#1B1F3B', bg) > contrast('#FFFFFF', bg) ? { c: '#1B1F3B', sh: null } : { c: '#FFFFFF', sh: '#1B1F3B' };
+    };
+
+    const stages = [];
+    const stage = () => { const m = new Map(); stages.push(m); return (f, d, o = 1) => { if (!d) return; const k = f + '|' + o; m.set(k, (m.get(k) || '') + d); }; };
+    const bmp = (put, rows, x, y, pal, s = P, o = 1) => rows.forEach((row, j) => [...row].forEach((ch, i) => { if (pal[ch]) put(pal[ch], R(x + i * s, y + j * s, s, s), o); }));
+    const texts = [];
+    const T = (o) => texts.push({ a: 'left', w: 600, lh: o.s, wt: 400, sh: 'none', font: PS, c: '#FFFFFF', ...o });
+    const hardShadow = (size, col) => `${Math.max(1, size / 8)}px ${Math.max(1, size / 8)}px 0 ${col}`;
+
+    const sky = stage(), dith = stage(), deco = stage(), farHills = stage(), sunLayer = stage(), hills = stage(), glow = stage(), ground = stage();
+    const gate = stage(), props = stage(), tBase = stage(), tHi = stage(), tLo = stage(), fxGlow = stage(), fx = stage();
+    const heroBack = stage(), hero = stage(), boxShadow = stage(), boxOuter = stage(), boxMid = stage(), boxInner = stage(), tails = stage();
+    const hud = stage(), strip = stage();
+
+    const BAND = 44;
+    S.bands.forEach((c, i) => sky(c, R(0, i * BAND, 1200, i === S.bands.length - 1 ? GY - i * BAND : BAND)));
+    // a one-cell checker at each band edge, below the HUD so it never runs behind small type
+    for (let i = 1; i < S.bands.length; i++) {
+      const y = i * BAND;
+      if (y < 104) continue;
+      let p = '', q = '';
+      for (let x = 0; x < 1200; x += 2 * P) { p += R(x, y - P, P, P); q += R(x + P, y, P, P); }
+      dith(S.bands[i], p); dith(S.bands[i - 1], q);
+    }
+
+    // ---- The days.
+    const days = W.days.map((d, i) => {
+      const date = new Date(mon + i * DAY).getUTCDate();
+      return {
+        d, i, date, label: `${DOW[i]} ${date}`, total: sum(d.c), cx: snap(93 + 150 * i), zx: 18 + 150 * i,
+        shipped: d.k === 'shipped', posted: d.k === 'published', has: Boolean(d.t)
+      };
+    });
+    days.forEach((x) => { x.rest = !x.total && !x.has; });
+    const restDays = days.filter((x) => x.rest);
+    const maxDay = Math.max(0, ...days.map((x) => x.total));
+    const thin = maxDay <= 6;
+    // Small weeks zoom in: bigger blocks, and the rest props and masts on 8px cells.
+    const BS = maxDay <= 6 ? 40 : maxDay <= 15 ? 32 : 24;
+    const PS2 = thin ? 2 * P : P;
+
+    if (S.stars) {
+      for (let i = 0; i < 56; i++) {
+        const x = snap(rnd() * 1196), y = snap(104 + rnd() * 260);
+        deco(S.stars, R(x, y, P, P), rnd() > 0.5 ? 0.9 : 0.45);
+      }
+      for (let placed = 0, tries = 0; placed < 14 && tries < 80; tries++) {
+        const x = snap(rnd() * 1196), y = snap(8 + rnd() * 88);
+        if ([[8, 4, 420, 100], [430, 4, 340, 84], [880, 4, 316, 72], [1060, 60, 100, 72]].some(([ax, ay, aw, ah]) => x >= ax && x < ax + aw && y >= ay && y < ay + ah)) continue;
+        deco(S.stars, R(x, y, P, P), rnd() > 0.5 ? 0.8 : 0.4);
+        placed++;
+      }
+      [[176, 300], [520, 248], [760, 332], [1012, 272]].forEach(([x, y]) => deco(S.stars, R(x - P, y, 3 * P, P) + R(x, y - P, P, 3 * P), 0.85));
+    }
+    if (S.moon) {
+      const mx = 1124, my = 112, r = 22;
+      let lit = '', dim = '';
+      for (let yy = -r; yy < r; yy += P) for (let xx = -r; xx < r; xx += P) {
+        const inA = (xx + 2) ** 2 + (yy + 2) ** 2 <= r * r;
+        const inB = (xx + 12) ** 2 + (yy - 6) ** 2 <= (r - 4) ** 2;
+        if (inA && !inB) lit += R(mx + xx, my + yy, P, P);
+        if (inA && inB) dim += R(mx + xx, my + yy, P, P);
+      }
+      deco(S.moon, lit);
+      deco(S.moon, dim, 0.12);
+    }
+    if (S.cloud) {
+      [[88, 268, 1], [420, 300, 0.8], [880, 248, 1], [1040, 332, 0.7]].forEach(([x, y, o]) => bmp(deco, CLOUD, x, y, { c: S.cloud }, P, +(0.55 * o).toFixed(2)));
+    }
+
+    // ---- Hills. Thin weeks raise the horizon to match their bigger props.
+    const farBase = thin ? 364 : 400, nearBase = thin ? 448 : 470;
+    const ridgeY = (x, base, amp, f, ph) => snap(base + amp * (Math.sin(x * f + ph) * 0.65 + Math.sin(x * f * 2.7 + ph * 1.9) * 0.35));
+    const ridge = (base, amp, f, ph, step) => {
+      let d = `M0 ${GY}`;
+      for (let x = 0; x < 1200; x += step) d += `V${ridgeY(x, base, amp, f, ph)}H${x + step}`;
+      return d + `V${GY}Z`;
+    };
+    const ph = (hash(handle) % 100) / 10 + iso.w * 0.7;
+    farHills(S.far, ridge(farBase, 46, 0.006, ph, 16));
+    // the sun sets between the two ridges, so half a disc shows above the near one
+    if (S.sun) {
+      const [sx, sy, r] = kind === 'dusk' ? [872, 456, 64] : kind === 'dawn' ? [152, 460, 60] : [1108, 132, 28];
+      let outer = '', inner = '';
+      for (let yy = -r; yy < r; yy += P) {
+        const hw = snap(Math.sqrt(Math.max(0, r * r - (yy + 2) ** 2)));
+        outer += R(sx - hw, sy + yy, 2 * hw, P);
+        const ri = r - 14;
+        if (Math.abs(yy + 2) < ri) { const hi = snap(Math.sqrt(ri * ri - (yy + 2) ** 2)); inner += R(sx - hi, sy + yy, 2 * hi, P); }
+      }
+      (kind === 'day' ? deco : sunLayer)(S.sun, outer, 0.95);
+      (kind === 'day' ? deco : sunLayer)(S.sunIn, inner);
+    }
+    hills(S.near, ridge(nearBase, 24, 0.011, ph * 1.85, 12));
+    const pine = mix(S.near, '#000000', dark ? 0.3 : 0.14);
+    for (let x = 8 + snap(rnd() * 40); x < 1180; x += 36 + snap(rnd() * 64)) {
+      const step = 12, sx = Math.floor(x / step) * step;
+      const y = Math.min(ridgeY(sx, nearBase, 24, 0.011, ph * 1.85), ridgeY(sx + step, nearBase, 24, 0.011, ph * 1.85));
+      const tall = rnd() > 0.5;
+      bmp(hills, tall ? PINE : PINE_S, x, y - (tall ? 20 : 12) + (rnd() > 0.5 ? 4 : 0), { t: pine });
+    }
+
+    ground(G.hi, R(0, GY, 1200, P));
+    ground(G.grass, R(0, GY + P, 1200, 2 * P));
+    ground(G.dirt, R(0, GY + 3 * P, 1200, 630 - GY - 3 * P));
+    for (let i = 0; i < 160; i++) {
+      const x = snap(rnd() * 1196), y = snap(GY + 16 + rnd() * 96);
+      ground(rnd() > 0.5 ? G.s1 : G.s2, R(x, y, P * (rnd() > 0.7 ? 2 : 1), P));
+    }
+    for (let x = 0; x < 1200; x += 24) if (rnd() > 0.35) bmp(ground, TUFT, x + snap(rnd() * 8), GY - 2 * P, { g: G.tuft });
+
+    // ---- Dialog boxes: one per headline in the builder's own words. A count the app wrote for them
+    // ("4 commits in wheels-off") gets no box: the tower and its label already say it.
+    const DW = 142, DTOP = 104, INNER = DW - 28;
+    const makeBox = (x, maxLines) => {
+      const { size, lines } = fitHeadline(x.d.t, INNER, maxLines);
+      const lh = Math.round(size * 1.22);
+      const h = Math.ceil((28 + lines.length * lh + 10) / P) * P;
+      return { x: snap(x.cx - DW / 2), y: DTOP, w: DW, h, size, lh, lines };
+    };
+    days.forEach((x) => { if (x.has && !x.d.auto) x.box = makeBox(x, 6); });
+
+    // The player stands on the week's biggest launch (by that day's commits).
+    let heroDay = null;
+    days.forEach((x) => { if (x.shipped && (!heroDay || x.total >= heroDay.total)) heroDay = x; });
+
+    // ---- Blocks per commit, tower shapes and the player's spot. Each day's tower must leave room for
+    // its flag, mast or player under its box. If a day cannot fit at five blocks a row, every block in
+    // the week stands for more commits; past that, the day's headline gives up lines.
+    let bpr = 2, per = 1;
+    while (Math.ceil(maxDay / per / bpr) > 10) { if (bpr < 5) bpr++; else per++; }
+
+    const unitsFor = (c) => {
+      const agg = {};
+      Object.entries(c).forEach(([p, n]) => { if (n > 0) agg[proj(p)] = (agg[proj(p)] || 0) + n; });
+      const e = Object.entries(agg).sort((p, q) => q[1] - p[1] || rank(p[0]) - rank(q[0]));
+      if (per === 1) return e.flatMap(([p, n]) => Array(n).fill(colOf(p)));
+      const target = Math.max(e.length, Math.round(e.reduce((s, [, n]) => s + n, 0) / per));
+      const al = e.map(([p, n]) => ({ p, q: n / per, k: Math.max(1, Math.floor(n / per)) }));
+      let left = target - al.reduce((s, z) => s + z.k, 0);
+      al.slice().sort((p, q) => (q.q - Math.floor(q.q)) - (p.q - Math.floor(p.q))).forEach((z) => { if (left > 0 && z.q > z.k) { z.k++; left--; } });
+      return al.flatMap((z) => Array(z.k).fill(colOf(z.p)));
+    };
+
+    // Player sprite geometry (stand pose, with its outline): 80x92. The pole runs 72px in from its left.
+    const PW = 80, PH = 92, POLE_DX = 72;
+    const POLE = 84, MAST = 13 * (PS2 / P) * P;
+    // Where the player and the pole go on the launch tower: the highest spot where both feet stand on
+    // blocks, nothing pokes into the body, and the pole sits on a block within reach of the hand.
+    const placeHero = (x, L, limit) => {
+      const n = x.units.length;
+      const heightAt = (px) => { const c = Math.floor((px - L.left) / BS); return n && c >= 0 && c < L.cols && px >= L.left ? L.heights[c] * BS : 0; };
+      const topAt = (px) => GY - heightAt(px);
+      let best = null;
+      const surfaces = [...new Set(L.heights.map((h) => GY - h * BS).concat([GY]))].sort((p, q) => p - q);
+      for (const Sy of surfaces) {
+        for (let px = L.left - PW - 8; px <= L.left + L.tw; px += P) {
+          let ok = true;
+          // both feet on blocks (or grass) of exactly this height
+          for (let fxp = px + 16; fxp < px + 56; fxp += P) if (topAt(fxp) !== Sy) { ok = false; break; }
+          if (!ok) continue;
+          // nothing taller than the surface under the legs; under the arms, at most one 24px step
+          for (let bx = px + 8; bx < px + 64; bx += P) if (topAt(bx) < Sy) { ok = false; break; }
+          for (const bx of [px, px + 4, px + 64, px + 68]) if (topAt(bx) < Sy - 24) ok = false;
+          if (!ok) continue;
+          // the pole stands on the highest block under it, at most 24px above the feet, below the hand
+          let base = GY;
+          for (let qx = px + POLE_DX; qx < px + POLE_DX + 6; qx += 2) base = Math.min(base, topAt(qx));
+          if (base < Sy - 24) continue;
+          if (base === GY && Sy !== GY) continue;
+          const plY = Sy - PH;
+          if (plY - 16 < limit) continue;
+          // on the grass, the whole group stays in the day's column
+          const g0 = Math.min(px, n ? L.left : px), g1 = Math.max(px + PW, n ? L.left + L.tw : px + PW, px + POLE_DX + 52);
+          if (g0 < x.zx - 12 || g1 > x.zx + 150 + 24) continue;
+          const score = Sy * 10 + Math.abs((g0 + g1) / 2 - x.cx);
+          if (!best || score < best.score) best = { score, pl: { x: px, y: plY }, pole: { x: px + POLE_DX, base, top: plY - 8, stone: base === GY } };
+        }
+      }
+      return best;
+    };
+
+    const layDay = (x, limit) => {
+      const n = x.units.length;
+      const isHero = x === heroDay;
+      const lo = n ? Math.min(bpr, n) : 0, hi = n ? Math.min(5, n) : 0;
+      let last = null;
+      for (let cols = lo; cols <= hi; cols++) {
+        const rows = n ? Math.ceil(n / cols) : 0;
+        const k = n && rows > 1 ? n % cols : 0;
+        const tw = cols * BS;
+        // the partial top row sits on the left (on the launch tower it may sit right, by the pole)
+        const shape = (mirror) => Array.from({ length: cols }, (_, c) => (k && (mirror ? c < cols - k : c >= k) ? rows - 1 : rows));
+        const heights = shape(false);
+        const L = { cols, rows, k, tw, heights, mirror: false, top: GY - rows * BS, left: snap(x.cx - tw / 2), pole: null, mast: null, player: null };
+        last = L;
+        let fits = true;
+        if (isHero) {
+          // a narrow tower may slide right so the player can stand beside it
+          let h = null;
+          for (const mirror of k ? [false, true] : [false]) {
+            for (const shift of tw < 64 ? [0, 16, 32, 48] : [0]) {
+              const c = placeHero(x, { ...L, heights: shape(mirror), left: L.left + shift }, limit);
+              if (c && (!h || c.score < h.score)) h = { ...c, left: L.left + shift, mirror };
+            }
+          }
+          if (h) { L.left = h.left; L.player = h.pl; L.pole = h.pole; L.mirror = h.mirror; L.heights = shape(h.mirror); }
+          else if (cols < hi) continue;
+          else {
+            // On the ground beside the tower: the pole planted on a stone base at the player's hand.
+            const groupW = PW + (n ? tw + 4 : 0);
+            const g0 = snap(x.cx - groupW / 2);
+            L.player = { x: g0, y: GY - PH };
+            L.left = g0 + PW + 4;
+            L.pole = { x: g0 + POLE_DX, base: GY - 8, top: GY - PH - 8, stone: true };
+            if (GY - PH - 16 < limit) fits = false;
+            // the pennant flies over the tower, so the tower must stay under it
+            if (n && L.top < GY - PH + 32) fits = false;
+          }
+        } else if (x.shipped) {
+          const base = n ? L.top : GY - 8;
+          const px = n ? L.left + 8 : snap(x.cx - 2);
+          const h = Math.min(POLE, base - 8 - limit);
+          if (h < 64) fits = false;
+          L.pole = { x: px, base, top: base - Math.max(h, 64), stone: !n };
+        }
+        if (x.posted) {
+          const s = PS2 / P;
+          const surf = n ? (k ? { x0: L.left, x1: L.left + k * BS } : { x0: L.left, x1: L.left + tw }) : null;
+          const base = n ? L.top : GY - 3 * PS2;
+          const mx = n ? snap((surf.x0 + surf.x1) / 2 - s * 2) : snap(x.cx - s * 2);
+          const h = Math.min(MAST, base - 5 * PS2 - limit);
+          if (h < 32) fits = false;
+          L.mast = { x: mx, base, h: Math.max(h, 32), stone: !n, s };
+        }
+        if (!x.shipped && !x.posted && x.box && n && L.top - 16 < limit) fits = false;
+        if (!x.box && n && L.top < 112) fits = false;
+        if (fits) return { L, fits: true };
+      }
+      return { L: last, fits: false };
+    };
+
+    let lineCap = {};
+    let layout = null;
+    for (let tries = 0; tries < 60; tries++) {
+      days.forEach((x) => { x.units = unitsFor(x.d.c); });
+      const res = days.map((x) => layDay(x, (x.box ? x.box.y + x.box.h : 96) + 12));
+      const bad = res.findIndex((r) => !r.fits);
+      if (bad < 0) { layout = res; break; }
+      if (per < maxDay) { per++; continue; }
+      // last resort: shorten that day's headline
+      const x = days[bad];
+      const cap = (lineCap[bad] || 6) - 1;
+      if (!x.box || cap < 2) { layout = res; break; }
+      lineCap[bad] = cap;
+      x.box = makeBox(x, cap);
+      per = 1;
+      while (Math.ceil(maxDay / per / bpr) > 10) per++;
+    }
+    days.forEach((x, i) => Object.assign(x, layout[i].L));
+
+    // ---- Towers: one bevelled block per commit, the day's busiest project at the bottom.
+    days.forEach((x) => {
+      if (x.units.length) ground(G.grass, R(x.left - P, GY, x.tw + 2 * P, P));
+      x.units.forEach((c, j) => {
+        const r = Math.floor(j / x.cols);
+        let cIdx = j % x.cols;
+        if (x.mirror && x.k && r === x.rows - 1) cIdx += x.cols - x.k;
+        const bx = x.left + cIdx * BS, by = GY - (r + 1) * BS;
+        tBase(c, R(bx, by, BS, BS));
+        tHi(mix(c, '#FFFFFF', 0.38), R(bx, by, BS, P) + R(bx, by + P, P, BS - P));
+        tLo(mix(c, '#000000', 0.32), R(bx, by + BS - P, BS, P) + R(bx + BS - P, by, P, BS - P));
+      });
+    });
+
+    // ---- Props: flags, masts, signposts, rest days.
+    const poleCol = dark ? '#D9DCEB' : '#F4F5FA', poleShade = dark ? '#8C90AC' : '#9AA0BE';
+    const stoneCol = dark ? '#5C5F7E' : '#8D90AE', stoneHi = dark ? '#7C80A0' : '#B3B6CF', stoneLo = dark ? '#3E405A' : '#6B6E8C';
+    const wave = dark ? '#7FD4FF' : '#1D7FC4';
+    const obstacles = [];
+    const block = (x, y, w, h, m = 0) => obstacles.push({ x: x - m, y: y - m, w: w + 2 * m, h: h + 2 * m });
+    const hit = (o2) => obstacles.some((o) => o2.x < o.x + o.w && o2.x + o2.w > o.x && o2.y < o.y + o.h && o2.y + o2.h > o.y);
+    obstacles.push({ x: 0, y: 0, w: 1200, h: 100 });
+    if (S.moon) block(1098, 86, 52, 52, 4);
+    if (kind === 'day' && S.sun) block(1076, 100, 64, 64, 4);
+
+    // The player: where they stand, sit or wait.
+    let pose = 'stand', pl = null, fireDay = null;
+    if (heroDay) pl = heroDay.player;
+    else if (restDays.length) { pose = 'sit'; fireDay = restDays[restDays.length - 1]; }
+    else pose = 'idle';
+
+    // Firelight: a warm pool on the grass and a few sparks above the flames (a translucent disc on a
+    // navy sky only turns grey).
+    const fireGlow = (cx, s) => {
+      ground('#FFD27A', R(cx - 40 * s, GY, 80 * s, P), dark ? 0.55 : 0.6);
+      ground('#FFB347', R(cx - 28 * s, GY + P, 56 * s, 2 * P), dark ? 0.35 : 0.3);
+      fx('#FFE27A', R(cx - 12 * s, GY - 44 * s, P, P) + R(cx + 10 * s, GY - 52 * s, P, P), 0.9);
+      fx('#FFB020', R(cx + 2 * s, GY - 60 * s, P, P), 0.7);
+    };
+    const campfire = (cx, s) => {
+      bmp(props, CAMPFIRE, cx - 18 * s, GY - 36 * s, FIRE_PAL, P * s);
+      props('#FFB020', R(cx - 28 * s, GY - P, 56 * s, P), 0.25);
+      [[0, -48, 0.32], [4, -60, 0.22], [0, -72, 0.14], [4, -84, 0.08]].forEach(([dx, dy, o]) => props(dark ? '#C9C3D8' : '#FFFFFF', R(cx - 2 * s + dx * s, GY + dy * s, P * s, P * s), o));
+    };
+
+    days.forEach((x) => {
+      if (x.units.length) block(x.left, x.top, x.tw, GY - x.top, 4);
+      if (x.box) block(x.box.x, x.box.y, x.box.w, x.box.h, 8);
+      const pole = x.pole;
+      if (pole) {
+        if (pole.stone) {
+          props(stoneCol, R(pole.x - 8, GY - 8, 20, 8));
+          props(stoneHi, R(pole.x - 8, GY - 8, 20, P));
+        }
+        const h = pole.base - pole.top;
+        props(poleCol, R(pole.x, pole.top, P, h));
+        props(poleShade, R(pole.x + P, pole.top, 2, h));
+        props('#FFD54A', R(pole.x - P, pole.top - 2 * P, 3 * P, 2 * P));
+        props('#FFF3B0', R(pole.x - P, pole.top - 2 * P, P, P));
+        bmp(props, PENNANT, pole.x + P, pole.top + P, { f: '#FFCB2E', F: '#E0950F', w: '#FFFFFF' });
+        x.pennant = { x: pole.x + P, y: pole.top + P, w: 44, h: 28 };
+        x.target = { x: pole.x, y: pole.top - 2 * P };
+        block(pole.x - P, pole.top - 2 * P, 52, h + 2 * P, 4);
+      }
+      const mast = x.mast;
+      if (mast) {
+        const s = mast.s, c = P * s;
+        const top = mast.base - mast.h;
+        if (mast.stone) {
+          props(stoneCol, R(mast.x - 3 * c, mast.base, 7 * c + 2 * s, 3 * c));
+          props(stoneHi, R(mast.x - 3 * c, mast.base, 7 * c + 2 * s, c));
+          props(stoneLo, R(mast.x - 3 * c, mast.base + 2 * c, 7 * c + 2 * s, c));
+        }
+        props(poleCol, R(mast.x, top, c, mast.h));
+        props(poleShade, R(mast.x + c, top, 2 * s, mast.h));
+        props('#FF4D4D', R(mast.x - c, top - 2 * c, 3 * c, 2 * c));
+        props('#FFB3B3', R(mast.x - c, top - 2 * c, c, c));
+        // two concentric arcs a side; on light skies they get a pale halo so they read on lavender hills
+        let inner = '', outer = '';
+        WAVE.forEach((row, j) => [...row].forEach((ch, i) => {
+          if (ch === '.') return;
+          const yy = top - 4 * c + j * c;
+          const l = R(mast.x - c - (WAVE[0].length - i) * c, yy, c, c), r = R(mast.x + 2 * c + (WAVE[0].length - 1 - i) * c + c, yy, c, c);
+          if (ch === 'i') inner += l + r; else outer += l + r;
+        }));
+        if (!dark) {
+          const halo = (d) => d.replace(/M(-?\d+) (-?\d+)h(\d+)v(\d+)h-?\d+z/g, (m0, X, Y, Wd, Ht) => R(+X - P, +Y - P, +Wd + 2 * P, +Ht + 2 * P));
+          props('#FFFFFF', halo(inner + outer), 0.7);
+        }
+        props(wave, inner);
+        props(wave, outer, 0.75);
+        x.target = x.target || { x: mast.x, y: top - 4 * c - 4 };
+        block(mast.x - 7 * c, top - 4 * c, 17 * c, mast.h + 4 * c, 4);
+      }
+      if (x.has && !x.total && !x.posted && !x.shipped) {
+        // a built day with no commits: a signpost on the empty lot, so the box has something to point at
+        const sx = snap(x.cx - 2);
+        props('#7A4A2A', R(sx, GY - 44, P, 44));
+        props('#C98B4E', R(sx - 16, GY - 52, 36, 16));
+        props('#8A5A2E', R(sx - 16, GY - 40, 36, P));
+        props('#6B4423', R(sx - 12, GY - 48, 28, P));
+        x.target = { x: sx, y: GY - 52 };
+        block(sx - 16, GY - 52, 36, 52, 4);
+      }
+      if (!x.target && x.units.length) x.target = { x: snap(x.left + (x.k ? (x.mirror ? x.tw - x.k * BS / 2 : x.k * BS / 2) : x.tw / 2) - 2), y: x.top };
+      if (x.box && x.target) {
+        x.tail = { x: x.target.x, y0: x.box.y + x.box.h + 8, y1: x.target.y - 8 };
+        block(x.tail.x, x.tail.y0, P, Math.max(0, x.tail.y1 - x.tail.y0), 4);
+      }
+      if (x.rest) {
+        const s = PS2 / P;
+        const tent = x.date % 4 === 3 && x !== fireDay;
+        if (x === fireDay) return;
+        if (tent) {
+          const tw2 = 52 * s, tx = snap(x.cx - (thin ? 64 : 40));
+          fireGlow(snap(tx + tw2 + 14), 1);
+          bmp(props, TENT, tx, GY - 28 * s, { t: '#E0603F', T: '#A8402C', d: '#1E1424' }, P * s);
+          bmp(props, SMALLFIRE, tx + tw2 + 4, GY - 20, FIRE_PAL);
+          [[0, -32, 0.28], [4, -44, 0.18], [0, -56, 0.1]].forEach(([dx, dy, o]) => props(dark ? '#C9C3D8' : '#FFFFFF', R(tx + tw2 + 16 + dx, GY + dy, P, P), o));
+          block(tx, GY - 28 * s, tw2 + 32, 28 * s, 0);
+        } else {
+          fireGlow(x.cx, s);
+          campfire(x.cx, s);
+          block(x.cx - 22 * s, GY - 40 * s, 44 * s, 40 * s, 0);
+        }
+      }
+    });
+
+    // TOUCHED GRASS, said out loud: a plank sign by the first fire on weeks with three or more rest days.
+    if (restDays.length >= 3) {
+      const first = restDays.find((x) => x !== fireDay) || restDays[0];
+      const w = 148, h = 60, sx = snap(first.zx + 75 - w / 2), sy = snap(GY - (thin ? 80 : 44) - 24 - h);
+      gate('#5A3320', R(sx + 20, sy + h, 8, GY - sy - h) + R(sx + w - 28, sy + h, 8, GY - sy - h));
+      gate('#03040E', notch(sx - P, sy - P, w + 2 * P, h + 2 * P));
+      gate('#C98B4E', R(sx, sy, w, h));
+      gate('#8A5A2E', R(sx, sy + h - P, w, P) + R(sx, sy + 28, w, P));
+      gate('#E0A86A', R(sx, sy, w, P));
+      T({ x: sx, y: sy + 8, w, a: 'center', s: 16, c: '#FFFFFF', t: 'TOUCHED', sh: hardShadow(16, '#6B4423') });
+      T({ x: sx, y: sy + 36, w, a: 'center', s: 16, c: '#FFFFFF', t: `GRASS ×${restDays.length}`, sh: hardShadow(16, '#6B4423') });
+      block(sx - 8, sy - 8, w + 16, GY - sy + 8, 0);
+    }
+
+    // ---- The stage door to next week: a little theatre with its curtain drawn and the light on.
+    const gx = 1072, gw = 116, gy = 404, gTop = gy - 52;
+    {
+      const frame = dark ? '#3A2346' : '#5B3A63', frameHi = dark ? '#5C3B6A' : '#7E5A88', frameLo = dark ? '#24142E' : '#3F2647';
+      const gold = '#FFCB2E', goldLo = '#C98B4E';
+      gate(frame, R(gx, gy, gw, GY - gy));
+      gate(frameHi, R(gx + P, gy + P, P, GY - gy - P) + R(gx + gw - 4 * P, gy + 4 * P, P, GY - gy - 4 * P));
+      gate(frameLo, R(gx + gw - P, gy, P, GY - gy));
+      gate(gold, R(gx, gy, gw, P));
+      gate(goldLo, R(gx, gy + 3 * P, gw, P));
+      const ox = gx + 16, ow = gw - 32, oy = gy + 16;
+      // the stage behind the curtain is lit: warm at the top, bright on the boards
+      const lit = ['#F29A45', '#FFB65C', '#FFCC73', '#FFDD94', '#FFEBB8', '#FFF6DC'];
+      const bandH = Math.ceil((GY - oy) / lit.length / P) * P;
+      lit.forEach((c, i) => gate(c, R(ox, oy + i * bandH, ow, Math.min(bandH, GY - oy - i * bandH))));
+      // curtains: straight, gathered at the tie-backs, a little flare at the boards
+      const curtain = '#C0283F', fold = '#8C1A2E', shine = '#E04A5E';
+      for (let y = oy; y < GY - 8; y += P) {
+        const t = (y - oy) / (GY - 8 - oy);
+        const w = t > 0.42 && t < 0.56 ? 16 : t >= 0.8 ? snap(20 + 10 * (t - 0.8) / 0.2) : 20;
+        gate(curtain, R(ox, y, w, P) + R(ox + ow - w, y, w, P));
+        gate(fold, R(ox + 8, y, P, P) + R(ox + ow - 12, y, P, P) + R(ox + w - P, y, P, P) + R(ox + ow - w, y, P, P));
+        gate(shine, R(ox + P, y, P, P) + R(ox + ow - w + P, y, P, P));
+      }
+      // tie-backs
+      const tieY = snap(oy + 0.47 * (GY - 8 - oy));
+      gate(gold, R(ox, tieY, 20, 2 * P) + R(ox + ow - 20, tieY, 20, 2 * P));
+      // the valance, scalloped, with a gold fringe
+      gate('#A61F36', R(ox, oy, ow, 12));
+      let sc = '';
+      for (let x = ox; x < ox + ow; x += 12) sc += R(x, oy + 12, 8, P);
+      gate('#A61F36', sc);
+      let fr = '';
+      for (let x = ox + P; x < ox + ow; x += 12) fr += R(x, oy + 16, P, P);
+      gate(gold, fr);
+      // stage boards and footlights
+      gate('#8A5A2E', R(ox - 8, GY - 8, ow + 16, 8));
+      gate('#C98B4E', R(ox - 8, GY - 8, ow + 16, P));
+      let fl = '';
+      for (let x = ox; x < ox + ow; x += 12) fl += R(x + 4, GY - 12, P, P);
+      gate('#FFF3B0', fl);
+      // the marquee: next week's number in lights
+      const mx0 = gx + 12, mw = gw - 24, my0 = gTop, mh = 40;
+      gate('#03040E', notch(mx0 - P, my0 - P, mw + 2 * P, mh + 2 * P));
+      gate('#2A1636', R(mx0, my0, mw, mh));
+      let bulbOn = '', bulbOff = '';
+      let bi = 0;
+      for (let x = mx0 + 4; x < mx0 + mw - 4; x += 8) { const r1 = R(x, my0 + 4, P, P), r2 = R(x, my0 + mh - 8, P, P); if (bi++ % 2) bulbOff += r1 + r2; else bulbOn += r1 + r2; }
+      for (let y = my0 + 12; y < my0 + mh - 8; y += 8) { const r1 = R(mx0 + 4, y, P, P), r2 = R(mx0 + mw - 8, y, P, P); if (bi++ % 2) bulbOn += r1 + r2; else bulbOff += r1 + r2; }
+      gate('#FFE27A', bulbOn);
+      gate('#FF9E3D', bulbOff);
+      gate(frameLo, R(mx0 + 16, my0 + mh + P, P, gy - my0 - mh - P) + R(mx0 + mw - 20, my0 + mh + P, P, gy - my0 - mh - P));
+      ground('#FFE29A', R(gx - 8, GY, gw + 16, P), 0.6);
+      ground('#FFC65C', R(gx + 8, GY + P, gw - 16, 2 * P), 0.35);
+      T({ x: mx0, y: my0 + 12, w: mw, a: 'center', s: 16, c: '#FFFFFF', t: `W${nextIso.w}`, sh: hardShadow(16, '#B3283E') });
+      const ink = skyInk(gTop - 20);
+      T({ x: gx - 24, y: gTop - 20, w: gw + 48, a: 'center', s: 8, c: dark ? '#FFE7C2' : ink.c, t: 'NEXT STAGE', sh: ink.sh ? hardShadow(8, ink.sh) : 'none' });
+      block(gx - 8, gTop - 28, gw + 16, GY - gTop + 28, 0);
+    }
+
+    // ---- The player.
+    const ol = dark ? '#03040E' : '#1B1F3B';
+    const topProj = (c) => { const e = Object.entries(c).sort((p, q) => q[1] - p[1] || rank(p[0]) - rank(q[0])); return e.length ? colOf(e[0][0]) : null; };
+    const hood = (heroDay && topProj(heroDay.d.c)) || (projects.length ? colOf(projects[0][0]) : '#E85AAD');
+    const pal = {
+      g: '#F4F1EA', G: '#C9C2B4', m: '#FFFFFF', a: '#AEB6D6', W: '#FFFFFF', q: '#F4F1EA', b: '#8A5A2E', B: '#6B4422',
+      h: hood, H: mix(hood, '#FFFFFF', 0.3), s: mix(hood, '#000000', 0.3), S: mix(hood, '#000000', 0.48), p: mix(hood, '#000000', 0.18), w: '#FFFFFF',
+      j: '#34407E', J: '#252E60', k: '#F2F2F2', K: '#A9ADCB', e: '#B07A48', E: '#8A5A2E', l: '#7A4A2A', L: '#5A3320',
+      v: dark ? '#26305E' : '#1B2340', V: '#9AD7FF'
+    };
+    const sprite = (put, rows, x, y) => {
+      const H = rows.length, Wd = Math.max(...rows.map((r) => r.length));
+      const on = (c, r) => r >= 0 && r < H && c >= 0 && c < rows[r].length && rows[r][c] !== '.';
+      let od = '';
+      for (let r = -1; r <= H; r++) for (let c = -1; c <= Wd; c++) {
+        if (on(c, r)) { if (rows[r][c] === 'o') od += R(x + c * P, y + r * P, P, P); continue; }
+        if (on(c - 1, r) || on(c + 1, r) || on(c, r - 1) || on(c, r + 1)) od += R(x + c * P, y + r * P, P, P);
+      }
+      put(ol, od);
+      const by = {};
+      rows.forEach((row, j) => [...row].forEach((ch, i) => { if (pal[ch]) by[pal[ch]] = (by[pal[ch]] || '') + R(x + i * P, y + j * P, P, P); }));
+      Object.entries(by).forEach(([f, d]) => put(f, d));
+    };
+    let head;
+    if (pose === 'sit') {
+      // by the last fire of the week, on a log, toasting a marshmallow
+      const s = PS2 / P;
+      const fw = 36 * s;
+      const groupW = 76 + fw;
+      const g0 = snap(fireDay.cx - groupW / 2);
+      const fcx = g0 + 76 + fw / 2;
+      pl = { x: g0, y: GY - PH };
+      fireGlow(fcx, s);
+      campfire(fcx, s);
+      sprite(heroBack, LOG, pl.x - 4, GY - 20);
+      sprite(hero, SIT, pl.x + P, pl.y + P);
+      head = { x: pl.x + 16, y: pl.y + 8 };
+      // the stick, from the right glove up toward the flames, and the marshmallow on it
+      const sx0 = pl.x + 76, sy0 = pl.y + 60;
+      const tx = snap(fcx - 6 * s - 8), ty = snap(GY - 26 * s - 8);
+      let stick = '';
+      let cx = sx0, cy = sy0;
+      while (cx < tx - P || cy > ty + P) {
+        if (cx < tx - P) cx += P;
+        if (cy > ty + P && (cy - ty) >= (tx - cx)) cy -= P;
+        stick += R(cx, cy, P, P);
+      }
+      hero('#8A5A2E', stick);
+      hero(ol, R(cx, cy - 8, 12, 12));
+      hero('#FFF6E0', R(cx + 2, cy - 6, 8, 8));
+      hero('#E8B26A', R(cx + 2, cy - 2, 8, P));
+      block(pl.x - 8, pl.y - 4, groupW + 12, PH + 4, 4);
+    } else if (pose === 'idle') {
+      // no launch and no day off: already on next week's stage, in front of the curtain
+      pl = { x: gx + gw / 2 - 40, y: GY - PH - 4 };
+      sprite(hero, IDLE, pl.x + P, pl.y + P);
+      head = { x: pl.x + 20, y: pl.y + 8 };
+      block(pl.x, pl.y, 72, PH, 4);
+    } else {
+      sprite(hero, STAND, pl.x + P, pl.y + P);
+      head = { x: pl.x + 20, y: pl.y + 8 };
+      block(pl.x, pl.y, PW, PH, 4);
+    }
+
+    // Level clear: a pixel sunburst behind the player on launch weeks. Night skies keep only a warm disc.
+    if (heroDay) {
+      const hcx = pl.x + 40, hcy = pl.y + 32, NR = 12, TAU = Math.PI * 2;
+      const inRay = (r0, r1) => (px, py) => {
+        const dx = px - hcx, dy = py - hcy, dd = Math.hypot(dx, dy);
+        if (dd < r0 || dd >= r1) return false;
+        return ((Math.atan2(dy, dx) + TAU + 0.13) % (TAU / NR)) < TAU / NR / 2;
+      };
+      const x0 = snap(hcx - 168), x1 = snap(hcx + 168), y0 = Math.max(100, snap(hcy - 168)), y1 = Math.min(GY, snap(hcy + 168));
+      const sunCol = dark ? '#FFF3B0' : '#FFFFFF';
+      if (!(kind === 'night' && dark)) {
+        glow(sunCol, disc(snap(hcx), snap(hcy), 52), dark ? 0.1 : 0.22);
+        glow(sunCol, raster(x0, y0, x1, y1, inRay(44, 108)), dark ? 0.12 : 0.3);
+        glow(sunCol, raster(x0, y0, x1, y1, inRay(108, 168)), dark ? 0.06 : 0.16);
+      }
+    }
+
+    // ---- Fireworks: two per launch, in clear sky by the pennant, in that day's colours. They stay in
+    // the day's own column (plus 24px each side) unless nothing fits there.
+    const DIRS8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+    const KNIGHT = [[2, 1], [1, 2], [-1, 2], [-2, 1], [-2, -1], [-1, -2], [1, -2], [2, -1]];
+    // On light skies pale tips and translucent halos vanish, so the bursts go darker at the tips instead.
+    const tipCol = (c) => (dark ? '#FFF3B0' : mix(c, '#1B1F3B', 0.3));
+    const spark = dark ? '#FFF3B0' : '#FFB020';
+    const burst = (cx, cy, r, color) => {
+      const n = Math.round(r / P);
+      const pale = mix(color, '#FFFFFF', dark ? 0.5 : 0.25);
+      if (dark) {
+        fxGlow(color, disc(cx + 2, cy + 2, r + 8), 0.1);
+        fxGlow(color, disc(cx + 2, cy + 2, snap(r * 0.6)), 0.12);
+      }
+      DIRS8.forEach(([dx, dy]) => {
+        const len = dx && dy ? Math.round(n * 0.72) : n;
+        for (let k = 2; k <= len; k++) fx(k === len ? tipCol(color) : k <= 3 ? pale : color, R(cx + dx * k * P, cy + dy * k * P, P, P));
+      });
+      const m = n >= 6 ? 3 : 2;
+      KNIGHT.forEach(([dx, dy]) => {
+        for (let t = 1; t <= m; t++) fx(t === m ? tipCol(color) : color, R(cx + dx * t * P, cy + dy * t * P, P, P), t === m ? 0.7 : 0.85);
+      });
+      fx(dark ? '#FFFFFF' : '#FFD54A', R(cx, cy, P, P));
+      fx(spark, R(cx - P, cy, P, P) + R(cx + P, cy, P, P) + R(cx, cy - P, P, P) + R(cx, cy + P, P, P), 0.8);
+      [0.55, 0.35, 0.2].forEach((o, k) => fx(dark ? pale : color, R(cx, cy + (n + 3 + 2 * k) * P, P, P), o));
+    };
+    days.forEach((x) => {
+      if (!x.pennant) return;
+      const pc = { x: x.pennant.x + 22, y: x.pennant.y + 14 };
+      const palette = [...new Set(x.units)];
+      if (!palette.length) palette.push('#FFD54A');
+      if (palette.length < 2) palette.push(mix(palette[0], '#FFFFFF', 0.35));
+      [[52, -12], [-16, -4], [56, 28], [-20, 24]].filter(([dx, dy]) => {
+        const s = { x: x.pennant.x + dx - P, y: x.pennant.y + dy, w: 3 * P, h: 3 * P };
+        if (hit(s)) return false;
+        obstacles.push(s);
+        return true;
+      }).slice(0, 2).forEach(([dx, dy], i) => {
+        const sx = x.pennant.x + dx, sy = x.pennant.y + dy;
+        fx(spark, R(sx, sy, P, P) + R(sx - P, sy + P, 3 * P, P) + R(sx, sy + 2 * P, P, P), i ? 0.7 : 1);
+      });
+      const cands = [];
+      for (let dy = -112; dy <= 72; dy += 16) for (let dx = -176; dx <= 176; dx += 16) if (Math.abs(dx) >= 40) cands.push({ dx, dy });
+      const picked = [];
+      [[28, 24, 20, 16], [24, 20, 16]].forEach((radii, idx) => {
+        let best = null;
+        for (const [own, strict] of [[true, true], [true, false], [false, true], [false, false]]) {
+          for (const r of radii) {
+            for (const c of cands) {
+              const cx = snap(pc.x + c.dx), cy = snap(pc.y + c.dy);
+              const box = { x: cx - r - 4, y: cy - r - 4, w: 2 * r + 12, h: 2 * r + 40 };
+              if (box.x < 8 || box.x + box.w > 1192 || box.y < 100 || box.y + box.h > GY - 8) continue;
+              if (own && (box.x < x.zx - 24 || box.x + box.w > x.zx + 150 + 24)) continue;
+              if (hit(box)) continue;
+              if (strict && picked.length && Math.sign(c.dx) === Math.sign(picked[0].dx)) continue;
+              const score = Math.hypot(c.dx, c.dy * 1.3) + (c.dy > 8 ? 24 : 0) + (28 - r) * 2;
+              if (!best || score < best.score) best = { ...c, cx, cy, box, r, score };
+            }
+          }
+          if (best) break;
+        }
+        if (best) {
+          burst(best.cx, best.cy, best.r, palette[idx % palette.length]);
+          picked.push(best);
+          obstacles.push(best.box);
+        }
+      });
+    });
+
+    // A shooting star on night skies, where the sky is clear.
+    if (kind === 'night') {
+      for (const [sx, sy] of [[652, 232], [300, 264], [856, 204], [420, 196], [176, 236], [760, 280]]) {
+        const box = { x: sx - 28, y: sy - 28, w: 36, h: 36 };
+        if (hit(box)) continue;
+        for (let k = 0; k < 6; k++) deco('#FFFFFF', R(sx - k * P, sy - k * P, P, P), +(1 - k * 0.15).toFixed(2));
+        deco('#FFFFFF', R(sx + P, sy, P, P) + R(sx, sy + P, P, P), 0.35);
+        break;
+      }
+    }
+
+    // Flowers in the grass, away from the towers, the camp and the door.
+    const flowerCols = dark ? ['#FF8FB1', '#FFE27A', '#E9E6F2'] : ['#FF6F9C', '#FFD23F', '#FFFFFF'];
+    for (let i = 0; i < 18; i++) {
+      const x = snap(16 + rnd() * 1040);
+      const clear = { x: x - 4, y: GY - 12, w: 12, h: 12 };
+      if (hit(clear)) continue;
+      ground(G.tuft, R(x, GY - P, P, P));
+      ground(flowerCols[i % 3], R(x, GY - 2 * P, P, P));
+    }
+
+    // ---- Dialog boxes and their dotted tails. Launch boxes lead in gold; the rest sit back.
+    days.forEach((x) => {
+      const bx = x.box;
+      if (!bx) return;
+      if (x.shipped) {
+        boxShadow(dark ? '#000000' : '#1B1F3B', notch(bx.x + P, bx.y + P, bx.w, bx.h), dark ? 0.4 : 0.25);
+        boxOuter(dark ? '#03040E' : '#1B1F3B', notch(bx.x, bx.y, bx.w, bx.h));
+        boxMid('#FFCB2E', notch(bx.x + P, bx.y + P, bx.w - 2 * P, bx.h - 2 * P));
+        boxInner(dark ? '#141A4A' : '#FFFDF4', notch(bx.x + 2 * P, bx.y + 2 * P, bx.w - 4 * P, bx.h - 4 * P));
+      } else {
+        boxOuter(dark ? '#03040E' : '#1B1F3B', notch(bx.x, bx.y, bx.w, bx.h), dark ? 0.85 : 0.75);
+        boxInner(dark ? '#0B0F2C' : '#FFFFFF', notch(bx.x + P, bx.y + P, bx.w - 2 * P, bx.h - 2 * P), dark ? 0.82 : 0.86);
+      }
+      if (x.tail) {
+        let dots = '';
+        for (let y = x.tail.y0; y + P <= x.tail.y1; y += 12) dots += R(x.tail.x, y, P, P);
+        tails(dark ? '#E9E6F2' : '#1B1F3B', dots, 0.6);
+      }
+      const tag = x.shipped ? 'SHIPPED!' : x.posted ? 'POSTED' : 'BUILT';
+      const tagColor = x.shipped ? (dark ? '#FFD54A' : '#B7791F') : x.posted ? (dark ? '#7FD4FF' : '#1D7FC4') : (dark ? '#9BE38A' : '#2F8A3A');
+      T({ x: bx.x + 14, y: bx.y + 14, w: bx.w - 28, s: 8, c: tagColor, t: tag });
+      const ink = dark ? (x.shipped ? '#FFFFFF' : '#E4E2F0') : '#1B1F3B';
+      bx.lines.forEach((line, li) => T({ x: bx.x + 14, y: bx.y + 26 + li * bx.lh, w: bx.w - 28, s: bx.size, lh: bx.lh, font: PXF, wt: 500, c: ink, t: line }));
+    });
+
+    // ---- Ground labels.
+    days.forEach((x) => {
+      T({ x: x.zx, y: GY + 14, w: 150, a: 'center', s: 16, c: G.label, t: x.label, sh: hardShadow(16, '#000000') });
+      const t = x.total ? `${x.total} COMMIT${x.total === 1 ? '' : 'S'}` : x.has ? 'NO COMMITS' : 'TOUCHED GRASS';
+      T({ x: x.zx, y: GY + 38, w: 150, a: 'center', s: 8, c: x.total ? '#FFD54A' : G.mute, t });
+    });
+
+    // ---- HUD: the builder, the week, and three counters with the scene's own icons.
+    const ink = '#FFFFFF', shade = dark ? '#000000' : '#1B1F3B';
+    const weekTitle = `WEEK ${iso.w}`, dateLine = dates.toUpperCase();
+    hud(shade, R(16, 12, 92, 92), dark ? 0.45 : 0.3);
+    hud(dark ? '#03040E' : '#1B1F3B', R(12, 8, 92, 92));
+    hud('#FFFFFF', R(16, 12, 84, 84));
+    // The name and handle fit between the avatar and the week title (Press Start 2P: 1em a glyph).
+    const titleL = 600 - psw(weekTitle, 32) / 2, dateL = 600 - psw(dateLine, 16) / 2;
+    const nameMax = titleL - 24 - 124, handleMax = Math.min(titleL, dateL) - 24 - 124;
+    const NAME = name.toUpperCase();
+    const nameSize = psw(NAME, 28) <= nameMax ? 28 : psw(NAME, 24) <= nameMax ? 24 : 16;
+    const nameText = clip(NAME, nameMax, (s) => psw(s, nameSize));
+    T({ x: 124, y: nameSize === 16 ? 26 : 20, s: nameSize, c: ink, t: nameText, sh: hardShadow(nameSize, shade) });
+    const lvTail = ` · LV ${level}`;
+    const handleText = clip('@' + handle, handleMax - psw(lvTail, 8), (s) => psw(s, 8)) + lvTail;
+    const hInk = skyInk(58);
+    T({ x: 124, y: 62, s: 8, c: hInk.c, t: handleText, sh: hInk.sh ? hardShadow(8, hInk.sh) : 'none' });
+    T({ x: 300, y: 14, w: 600, a: 'center', s: 32, c: ink, t: weekTitle, sh: hardShadow(32, shade) });
+    const dInk = skyInk(58, '#FFE7C2');
+    T({ x: 300, y: 56, w: 600, a: 'center', s: 16, c: dInk.c, t: dateLine, sh: dInk.sh ? hardShadow(16, dInk.sh) : 'none' });
+    const top1 = projects.length ? colOf(projects[0][0]) : OTHER;
+    const iconPal = {
+      COMMITS: { h: mix(top1, '#FFFFFF', 0.38), b: top1, s: mix(top1, '#000000', 0.32) },
+      SHIPPED: { y: '#FFD54A', p: '#D9DCEB', f: '#FFCB2E', F: '#E0950F' },
+      POSTED: { r: '#FF4D4D', p: '#D9DCEB', a: '#7FD4FF' }
+    };
+    const counters = [['COMMITS', String(W.commits).padStart(3, '0'), ICON_BLOCK], ['SHIPPED', String(W.shipped), ICON_FLAG], ['POSTED', String(W.published), ICON_MAST]];
+    const cw = counters.map(([, v]) => 24 + 6 + psw(v, 24));
+    let cx0 = 1184 - cw.reduce((s, v) => s + v, 0) - 28 * (counters.length - 1);
+    const lInk = skyInk(20);
+    counters.forEach(([label, v, icon], i) => {
+      const w = cw[i];
+      T({ x: cx0 - 20, y: 18, w: w + 40, a: 'center', s: 8, c: lInk.c, t: label, sh: lInk.sh ? hardShadow(8, lInk.sh) : 'none' });
+      const sh = {};
+      Object.keys(iconPal[label]).forEach((k) => { sh[k] = shade; });
+      bmp(hud, icon, cx0 + 3, 37, sh, 3);
+      bmp(hud, icon, cx0, 34, iconPal[label], 3);
+      T({ x: cx0 + 30, y: 34, s: 24, c: i === 1 && W.shipped ? '#FFD54A' : ink, t: v, sh: hardShadow(24, shade) });
+      cx0 += w + 28;
+    });
+
+    // ---- Strip: next week's goal and the link, then the key and the series.
+    strip('#000000', R(0, 578, 1200, 52), dark ? 0.45 : 0.32);
+    T({ x: 18, y: 585, s: 16, c: '#FFD54A', t: 'NEXT' });
+    strip('#FFD54A', R(86, 587, 4, 12) + R(90, 589, 4, 8) + R(94, 591, 4, 4));
+    const link = `openstage.dev/${handle}`;
+    const linkSize = psw(link, 16) <= 480 ? 16 : 12;
+    const linkW = psw(link, linkSize), linkX = 1182 - linkW;
+    const goalX = 108, goalMax = linkX - 24 - goalX;
+    let goalSize = 18;
+    while (goalSize > 14 && pxw(W.goal, goalSize, 600) > goalMax) goalSize--;
+    const goal = clip(W.goal, goalMax, (s) => pxw(s, goalSize, 600));
+    T({ x: goalX, y: 583 + (18 - goalSize) / 2, w: goalMax + 8, s: goalSize, lh: 22, font: PXF, wt: 600, c: '#FFFFFF', t: goal });
+    T({ x: linkX, y: 585 + (16 - linkSize) / 2, w: linkW, a: 'right', s: linkSize, c: '#FFFFFF', t: link });
+    const series = `OPENSTAGE · W${iso.w}/${iso.y}`;
+    T({ x: 1182 - psw(series, 8), y: 611, w: psw(series, 8), a: 'right', s: 8, c: '#FFE7C2', t: series });
+    const keyLabel = projects.length ? `1 BLOCK = ${per} COMMIT${per === 1 ? '' : 'S'}` : '1 FIRE = 1 DAY OFF';
+    T({ x: 18, y: 611, s: 8, c: '#FFE7C2', t: keyLabel });
+    let lx = 18 + psw(keyLabel, 8) + 16;
+    const keyLimit = 1182 - psw(series, 8) - 24;
+    const swatch = (x0, c, sz) => {
+      strip(c, R(x0, 610, sz, sz));
+      strip(mix(c, '#FFFFFF', 0.4), R(x0, 610, sz, 2) + R(x0, 612, 2, sz - 2));
+      strip(mix(c, '#000000', 0.3), R(x0 + 2, 608 + sz, sz - 2, 2) + R(x0 + sz - 2, 612, 2, sz - 4));
+    };
+    let shown = 0;
+    for (const [pname, n] of projects) {
+      const nameW = Math.ceil(pxw(pname, 13, 500)), numW = psw(String(n), 8);
+      const w = 16 + nameW + 6 + numW + 18;
+      const left = projects.length - shown - 1;
+      const restW = left > 0 ? 16 + Math.min(left, 3) * 12 + psw(`+${left} MORE`, 8) : 0;
+      if (shown >= 4 || lx + w + restW > keyLimit) break;
+      swatch(lx, colOf(pname), 10);
+      T({ x: lx + 16, y: 606, w: 400, s: 13, lh: 16, font: PXF, wt: 500, c: '#FFFFFF', t: pname });
+      T({ x: lx + 16 + nameW + 6, y: 611, s: 8, c: '#FFFFFF', t: String(n) });
+      lx += w;
+      shown++;
+    }
+    if (projects.length > shown) {
+      projects.slice(shown, shown + 3).forEach(([pname], i) => swatch(lx + i * 12, colOf(pname), 8));
+      const more = projects.length - shown;
+      T({ x: lx + Math.min(more, 3) * 12 + 4, y: 611, s: 8, c: '#FFE7C2', t: `+${more} MORE` });
+    }
+
+    const layers = [];
+    stages.forEach((m) => m.forEach((d, k) => { const [f, o] = k.split('|'); layers.push({ d, f, o }); }));
+    return { skyTop: S.bands[0], layers, texts, head };
+  }
+}
+</script>
+</body>
+</html>
