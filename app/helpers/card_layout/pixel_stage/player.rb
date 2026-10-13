@@ -1,7 +1,8 @@
 module CardLayout
   class PixelStage
-    # The player: on the launch tower with the flag, on a log by the last fire
-    # toasting a marshmallow, or waving at the stage door. The hood takes the
+    # The player: on the launch tower with the flag, waving on the busiest
+    # tower of a week without a launch, on a log by the last fire toasting a
+    # marshmallow, or waving at the stage door. The hood takes the
     # colour of the launch day's top project. Every sprite gets a one-cell
     # outline on the 4-neighbourhood, so its corners stay notched. Launch weeks
     # get a pixel sunburst behind the player.
@@ -63,10 +64,11 @@ module CardLayout
       end
 
       def stand
+        launch = @stage.hero_day.shipped?
         player = @stage.hero_day.player
-        sprite(:hero, Sprites::STAND, player[:x] + P, player[:y] + P)
+        sprite(:hero, launch ? Sprites::STAND : Sprites::IDLE, player[:x] + P, player[:y] + P)
         @stage.block(player[:x], player[:y], TowerFit::PW, TowerFit::PH, 4)
-        sunburst(player)
+        sunburst(player) if launch
       end
 
       # Already on next week's stage, in front of the curtain.

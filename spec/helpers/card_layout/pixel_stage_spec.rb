@@ -69,6 +69,23 @@ RSpec.describe CardLayout::PixelStage do
     end
   end
 
+  describe "a week with commits but no launch" do
+    subject(:unlaunched) do
+      stage(Date.new(2026, 10, 26), [ {}, { commits: { "wheels-off" => 3 }, kind: "built", words: "Arcade mode" },
+                                      { commits: { "openstage" => 5 }, kind: "published", words: "Wrote up the arcade" }, {} ])
+    end
+
+    it "stands the player on the busiest tower without a mast, with no flag, and points the callout at its head" do
+      hero = unlaunched.hero_day
+
+      expect(unlaunched.pose).to eq(:stand)
+      expect(hero.date).to eq(Date.new(2026, 10, 27))
+      expect(hero.pole).to be_nil
+      expect(hero.target).to eq(x: unlaunched.snap(hero.player[:x] + 36), y: hero.player[:y])
+      expect(unlaunched.fire_day).to be_nil
+    end
+  end
+
   describe "the longest name and handle a card holds, in week 52 of a 53-week year" do
     subject(:edge) do
       user.update!(display_name: "Alexandra Konstantinopoulou", github_username: "alexandra-konstantinopoulou-builds-apps",

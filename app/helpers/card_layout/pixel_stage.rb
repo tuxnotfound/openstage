@@ -159,16 +159,22 @@ module CardLayout
       hour >= 11 ? :day : :dawn
     end
 
-    # On the week's biggest launch (by that day's commits); else by the last
-    # fire; else at the stage door.
+    # On the week's biggest launch (by that day's commits); else on its
+    # busiest tower, leaving a post's mast its tower; else by the last fire;
+    # else at the stage door.
     def setup_pose
-      @hero_day = @days.select(&:shipped?).inject(nil) { |hero, day| hero.nil? || day.total >= hero.total ? day : hero }
+      @hero_day = biggest(@days.select(&:shipped?)) || biggest(@days.select { |day| day.total.positive? && !day.posted? })
       rests = @days.select(&:rest?)
       @pose = if @hero_day then :stand
       elsif rests.any? then :sit
       else :idle
       end
       @fire_day = rests.last if @pose == :sit
+    end
+
+    # The day with the most commits, the later one on a tie.
+    def biggest(days)
+      days.inject(nil) { |hero, day| hero.nil? || day.total >= hero.total ? day : hero }
     end
 
     def setup_projects

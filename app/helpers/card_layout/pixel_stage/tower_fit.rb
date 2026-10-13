@@ -2,8 +2,9 @@ module CardLayout
   class PixelStage
     # One day's tower at the narrowest width that fits under its callout,
     # with its flag, mast or the player placed. The player stands on the
-    # week's biggest launch: the highest spot where both feet stand on blocks,
-    # nothing pokes into the body, and the pole sits within reach of the hand.
+    # week's biggest launch, or its busiest tower without one: the highest
+    # spot where both feet stand on blocks, nothing pokes into the body, and
+    # the pole sits within reach of the hand. Only a launch keeps the pole.
     class TowerFit
       PW = 80 # the player, standing, with its outline
       PH = 92
@@ -51,6 +52,8 @@ module CardLayout
         if day == @stage.hero_day
           fits = hero(day, layout, n, limit, widest)
           return :wider if fits == :wider
+
+          layout[:pole] = nil unless day.shipped?
         elsif day.shipped?
           fits = flag(layout, n, day, limit)
         end

@@ -35,13 +35,19 @@ module CardLayout
         rest(day) if day.rest? && day != @stage.fire_day
       end
 
-      # What the day's callout points at: its flag, its mast, a signpost, or
-      # the top of its tower.
+      # What the day's callout points at: its flag, its mast, a signpost, the
+      # player on top, or the top of its tower.
       def marks(day)
         flag(day) if day.pole
         mast(day) if day.mast
         signpost(day) if day.has? && day.total.zero? && !day.posted? && !day.shipped?
-        day.target ||= tower_top(day) if day.units.any?
+        day.target ||= top_of(day)
+      end
+
+      def top_of(day)
+        return { x: @stage.snap(day.player[:x] + 36), y: day.player[:y] } if day.player
+
+        tower_top(day) if day.units.any?
       end
 
       def flag(day)
