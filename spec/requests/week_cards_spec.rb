@@ -91,9 +91,10 @@ RSpec.describe "Week cards", type: :request do
         expect(page.at_css("input[name='week_card[style]'][checked]")["value"]).to eq("changelog")
         expect(page.css("input[name='week_card[style]']").map { |radio| radio["value"] }).to eq(WeekCardTemplate.keys)
         expect(offered?("label:has(#section_activity)")).to be(true)
-        expect(offered?("label:has(#section_persona)")).to be(false)
+        expect(offered?("label:has(#section_history)")).to be(false)
         expect(offered?("label:has(#section_audience)")).to be(false)
-        expect(page.at_css("label:has(#section_persona)")["data-templates"]).to eq("star_chart")
+        expect(page.at_css("label:has(#section_history)")["data-templates"]).to eq("star_chart")
+        expect(page.at_css("#section_persona")).to be_nil
       end
 
       it "draws a new card as release notes" do

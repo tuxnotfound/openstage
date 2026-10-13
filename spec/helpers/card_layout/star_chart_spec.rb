@@ -111,16 +111,24 @@ RSpec.describe CardLayout::StarChart do
       expect(chart_with.avatar).to be_present
     end
 
-    it "names the week by its number without the persona, and lights no window" do
-      expect(runs(chart_with({ "persona" => "0" }), face: :newsreader_title).first.text).to eq("Week 41")
-      expect(texts(chart_with({ "persona" => "0" }))).not_to include("Most of your building happens after 10 PM")
-      expect(chart_with({ "persona" => "0" }).sky.arc).to be_nil
+    it "always names the week, whatever the builder turned off" do
+      card_text = texts(chart_with({ "headlines" => "0", "totals" => "0", "projects" => "0" }))
+
+      expect(card_text).to include("The Nighthawk", "Most of your building happens after 10 PM")
+      expect(WeekCard::SECTIONS).not_to include("persona")
     end
 
     it "puts a gold star in the centre without the picture, and the handle first without the name" do
       expect(chart_with({ "avatar" => "0" }).avatar).to be_nil
       expect(runs(chart_with({ "name" => "0" })).find { |run| run.text == "@tuxnotfound" }.x).to eq(48)
       expect(texts(chart_with({ "github" => "0" }))).not_to include("@tuxnotfound")
+    end
+
+    it "shows the builder's initials without a picture, and the gold star with the picture turned off" do
+      user.update!(avatar_url: nil, display_name: "Bartholomew Pennington")
+
+      expect(chart_with).to have_attributes(avatar: nil, initials: "BP")
+      expect(chart_with({ "avatar" => "0" }).initials).to be_nil
     end
 
     it "turns the stars to one ink and drops the legend and counts without projects" do

@@ -13,7 +13,6 @@ module CardLayout
       EVIDENCE_S = 15
       EVIDENCE_LS = 0.04
 
-      # persona: the card's, or nil when the builder turned it off.
       # title: { text:, size:, baseline: }, for its starlight.
       attr_reader :persona, :title, :list_top
 
@@ -21,7 +20,7 @@ module CardLayout
         @chart = chart
         @canvas = chart.canvas
         @palette = chart.palette
-        @persona = chart.card.persona if chart.shows?("persona")
+        @persona = chart.card.persona
         identity
         week
         persona_lines
@@ -104,14 +103,13 @@ module CardLayout
         @canvas.put_end(text, :dm_mono_regular, size, 1164, 44, @palette[:title], spacing: spacing)
       end
 
-      # Without the persona, the week names itself.
       def persona_lines
-        text = persona ? persona.title : @chart.card.label
+        text = persona.title
         size = CardText.width(text, size: 48, face: :newsreader_title, spacing: -0.02 * 48) <= 520 ? 48 : 42
         baseline = TITLE_TOP + (size * 0.737).round
         @title = { text: text, size: size, baseline: baseline }
         @canvas.put(text, :newsreader_title, size, 46, baseline, @palette[:title], spacing: -0.02)
-        @list_top = persona ? tagline_and_evidence(baseline + 12) : baseline + 24
+        @list_top = tagline_and_evidence(baseline + 12)
       end
 
       # The second clause prints only when the whole line fits.

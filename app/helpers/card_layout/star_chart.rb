@@ -121,6 +121,15 @@ module CardLayout
       card.week_card.shows?(section)
     end
 
+    # A builder without a picture shows their initials at the pole instead:
+    # the first and last names' first letters. Turned off, a gold star.
+    def initials
+      return unless shows?("avatar") && card.user.avatar_url.blank?
+
+      words = (card.user.display_name.presence || card.user.username).to_s.split
+      [ words.first, words.size > 1 ? words.last : nil ].compact.map { |word| word[0] }.join.upcase
+    end
+
     # The week's projects with commits, busiest first.
     def projects
       @projects ||= card.projects.select(&:shown)
@@ -170,7 +179,7 @@ module CardLayout
       @arrow = foot.arrow
       legend.draw(Rows.new(self).draw(heading.list_top, goal_top - 14 - legend.height))
       @stars = Stars.new(self)
-      @sky = Sky.new(self, persona&.hours)
+      @sky = Sky.new(self, persona.hours)
       @day_labels = DayLabels.new(self)
       @key = Key.new(self)
     end
@@ -178,6 +187,7 @@ module CardLayout
     def avatar?
       shows?("avatar") && card.user.avatar_url.present?
     end
+
 
     def day_of(day, index)
       words = shows?("headlines") && day.headline && day.headline.source != :count ? CardText.clean(day.headline.text) : ""

@@ -6,7 +6,7 @@ class WeekCard < ApplicationRecord
   STYLES = WeekCardTemplate.keys.freeze
   THEMES = %w[light dark].freeze
   LAYOUTS = %w[week active].freeze
-  SECTIONS = %w[avatar name github building streak persona totals compare activity projects headlines goal history
+  SECTIONS = %w[avatar name github building streak totals compare activity projects headlines goal history
                 audience hours code repos].freeze
   # Small numbers can work against a builder, so audience starts off.
   HIDDEN_AT_FIRST = %w[audience].freeze

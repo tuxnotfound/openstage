@@ -21,8 +21,8 @@ RSpec.describe WeekCardTemplate do
   it "says which sections each template draws" do
     expect(described_class.find("changelog")).to have_attributes(partial: "week_cards/changelog")
     expect(described_class.find("changelog").has?("activity")).to be(true)
-    expect(described_class.find("changelog").has?("persona")).to be(false)
-    expect(described_class.find("star_chart").sections).to include("persona", "history")
+    expect(described_class.find("changelog").has?("history")).to be(false)
+    expect(described_class.find("star_chart").sections).to include("history")
     expect(described_class.find("pixel_stage").has?("building")).to be(true)
   end
 

@@ -106,6 +106,9 @@
 
   <% if (avatar = chart.avatar) %>
     <image href="<%= avatar[:url] %>" x="<%= avatar[:x] %>" y="<%= avatar[:y] %>" width="<%= avatar[:size] %>" height="<%= avatar[:size] %>" preserveAspectRatio="xMidYMid slice" clip-path="url(#sc-avatar)"/>
+  <% elsif (initials = chart.initials) %>
+    <circle cx="<%= c[:x] %>" cy="<%= c[:y] %>" r="<%= c[:avatar] / 2 %>" fill="#2C3B72"/>
+    <text x="<%= c[:x] %>" y="<%= num.call(c[:y] - 17 + (34 * 0.737)) %>" text-anchor="middle" class="<%= card_face_class(:newsreader_title) %>" font-size="34" letter-spacing="-0.34" fill="#F2ECDF"><%= initials %></text>
   <% else %>
     <svg x="<%= c[:x] - 10 %>" y="<%= c[:y] - 10 %>" width="20" height="20" viewBox="0 0 24 24"><path d="<%= CardLayout::StarChart::STAR %>" fill="<%= t[:gold] %>"/></svg>
   <% end %>

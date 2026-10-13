@@ -115,10 +115,10 @@ RSpec.describe CardLayout::PixelStage do
       expect(strings(stage_with({ "goal" => "0" }))).not_to include("NEXT", "Launch")
     end
 
-    it "builds every tower in one ink and drops the key's projects without projects" do
+    it "keeps each tower in its projects' colours but drops them from the key without projects" do
       bare = stage_with({ "projects" => "0" })
 
-      expect(bare.layers.map { |_d, fill, _o| fill }).not_to include(WeekCardsHelper::PROJECT_COLORS[1])
+      expect(bare.layers.map { |_d, fill, _o| fill }).to include(*WeekCardsHelper::PROJECT_COLORS.first(2))
       expect(strings(bare)).not_to include("wheels-off")
     end
   end

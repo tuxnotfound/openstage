@@ -49,7 +49,7 @@ WeekCardTemplate::ALL = [
   ),
   WeekCardTemplate.new(
     key: "star_chart", name: "Star Chart", description: "Your week as a night sky, with a persona named from it. Made for X.",
-    sections: %w[avatar name github totals projects headlines persona history goal],
+    sections: %w[avatar name github totals projects headlines history goal],
     families: [ "Newsreader", "DM Sans", "DM Mono" ], days_choice: true
   ),
   # Always seven columns, so the quiet days stay.

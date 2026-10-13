@@ -14,8 +14,6 @@ module CardLayout
     OTHER = "#8C92B0".freeze
     # Ascent and descent, in ems, of the font that sets each face's lines.
     METRICS = { press_start: [ 1.0, 0.0 ], pixelify_medium: [ 0.92, 0.28 ], pixelify_semibold: [ 0.92, 0.28 ] }.freeze
-    # One ink for every block when the builder hides the projects.
-    ONE_INK = WeekCardsHelper::PROJECT_COLORS.first
     # face: :press_start or :pixelify_medium or :pixelify_semibold. align: the
     # box is x to x + w. shadow: [offset, colour], a hard drop shadow.
     Text = Data.define(:text, :x, :y, :w, :align, :size, :lh, :face, :color, :shadow)
@@ -103,11 +101,9 @@ module CardLayout
       @obstacles.any? { |o| box[:x] < o[:x] + o[:w] && box[:x] + box[:w] > o[:x] && box[:y] < o[:y] + o[:h] && box[:y] + box[:h] > o[:y] }
     end
 
-    # The colour of a project's blocks: busiest first, past six the smallest
-    # merge into "other".
+    # The colour of a project's blocks, by its rank in the week, whether or
+    # not the key names the projects. Past six, the smallest merge into "other".
     def color_of(name)
-      return ONE_INK unless shows?("projects")
-
       index = projects.index { |project, _n| project == merged(name) }
       index && merged(name) != "other" ? WeekCardsHelper::PROJECT_COLORS.fetch(index, OTHER) : OTHER
     end
