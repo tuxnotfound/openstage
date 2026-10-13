@@ -43,19 +43,32 @@ RSpec.describe "Week cards", type: :request do
       end
     end
 
-    it "keeps the look in a toolbar and the rest in three tabs beside the card" do
+    it "keeps the look in a labelled toolbar, the card's contents in two tabs, and the post below both" do
       get "/week"
       page = Nokogiri::HTML(response.body)
       tabs = page.at_css("[data-controller='tabs']")
       panel = ->(key) { tabs.at_css("[data-tabs-panel='#{key}']") }
 
-      expect(tabs.css("[role='tab']").map(&:text)).to eq([ "Words", "On the card", "Post" ])
+      expect(page.css("fieldset legend").map(&:text)).to include("Template", "Mode", "Days")
+      expect(tabs.css("[role='tab']").map(&:text)).to eq([ "Your words", "On the card" ])
+      expect(page.at_css("label:has(#section_headlines)").text.strip).to eq("Your words")
       expect(tabs.css("input[name='week_card[style]'], input[name='week_card[theme]'], input[name='week_card[layout]']")).to be_empty
       expect(panel.call("words").css("input[name$='[text]']").size).to eq(7)
       expect(panel.call("words").at_css("#next_goal")).to be_present
-      expect(panel.call("parts").at_css("#section_avatar")).to be_present
-      expect(panel.call("post").at_css("#post_text")).to be_present
+      expect(panel.call("parts").at_css("input#section_avatar[type='checkbox']")).to be_present
+      expect(tabs.at_css("#post_text")).to be_nil
+      expect(page.at_css("form #post_text")).to be_present
       expect(tabs.css("button[data-tabs-target='tab']").map { |button| button["type"] }.uniq).to eq([ "button" ])
+    end
+
+    it "opens a post saved empty on the card's latest draft, so an unedited post follows the card" do
+      travel_to(Time.zone.local(2026, 10, 9, 12)) do
+        patch "/week/2026-W41", params: { week_card: { post_text: "", next_goal: "Launch on Product Hunt" } },
+                                headers: { "Accept" => "application/json" }
+
+        get "/week"
+        expect(Nokogiri::HTML(response.body).at_css("#post_text").text).to end_with("Next: Launch on Product Hunt")
+      end
     end
 
     it "loads every card font, for the preview and for the download" do
