@@ -89,6 +89,13 @@ RSpec.describe WeekCards::ComposeService do
     end
   end
 
+  it "sets the week against the work before it" do
+    commit("Earlier", "me/wheels-off", -3)
+    commit("Serve the game", "me/wheels-off", 3)
+
+    expect(compose.history).to have_attributes(commits_before: 1, best_week: 1, quiet_weeks: 0)
+  end
+
   it "names repos by their full name only when two share a short one" do
     commit("A", "ana/si2018-design", 1)
     commit("B", "dasilva/si2018-design", 1)
