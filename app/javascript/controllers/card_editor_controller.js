@@ -2,10 +2,11 @@ import { Controller } from "@hotwired/stimulus"
 
 // Saves every change to the week card as the builder makes it, then redraws
 // the preview from the server. The post box counts the builder's own text,
-// which they copy out with the downloaded card. Until the builder edits it,
-// the post is the card's own draft and changes with the card.
+// which they copy out or carry to X; the card goes along as a download. Until
+// the builder edits it, the post is the card's own draft and changes with the
+// card.
 export default class extends Controller {
-  static targets = ["form", "post", "counter", "copyButton", "zone", "choice"]
+  static targets = ["form", "post", "counter", "intent", "copyButton", "zone", "choice"]
   static values = { saveUrl: String, previewUrl: String, trackUrl: String, limit: { type: Number, default: 280 } }
 
   connect() {
@@ -96,6 +97,7 @@ export default class extends Controller {
     const length = [...text].length
     this.counterTarget.textContent = `${length} / ${this.limitValue}`
     this.counterTarget.classList.toggle("text-red-600", length > this.limitValue)
+    this.intentTargets.forEach((link) => { link.href = link.dataset.base + encodeURIComponent(text) })
   }
 
   useDraft() {
@@ -113,6 +115,11 @@ export default class extends Controller {
     navigator.clipboard.writeText(this.postTarget.value)
       .then(() => this.flash("Copied"))
       .catch(() => this.flash("Press Cmd+C"))
+  }
+
+  // The compose link opens a new tab, so the report must not block the click.
+  intent(event) {
+    this.report("recap_intent", event.currentTarget.dataset.network)
   }
 
   report(name, detail = "") {

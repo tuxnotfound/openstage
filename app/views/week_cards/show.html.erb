@@ -202,9 +202,11 @@
             class: "#{field} leading-relaxed", data: { card_editor_target: "post", action: "input->card-editor#count" } %>
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
         <button type="button" class="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-700" data-action="card-editor#copy" data-card-editor-target="copyButton">Copy post</button>
+        <a href="https://x.com/intent/post" target="_blank" rel="noopener" class="px-4 py-2 rounded-lg border border-gray-200 text-sm hover:border-gray-400"
+           data-card-editor-target="intent" data-base="https://x.com/intent/post?text=" data-network="x" data-action="card-editor#intent">Post on X</a>
         <p class="text-xs text-gray-500">Drafted from your card, it changes with the card until you edit it. <button type="button" class="underline" data-action="card-editor#useDraft">Rebuild from the card</button></p>
       </div>
-      <p class="text-xs text-gray-400">Attach the downloaded card where you post it. Want the old list of commits? <%= link_to "Open the commit picker", recap_path, class: "underline" %>.</p>
+      <p class="text-xs text-gray-400">Post on X opens X with your text only: download the card and attach it there yourself. Want the old list of commits? <%= link_to "Open the commit picker", recap_path, class: "underline" %>.</p>
     </section>
   <% end %>
 </div>

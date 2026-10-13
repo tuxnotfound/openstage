@@ -30,7 +30,7 @@ RSpec.describe "Week cards", type: :request do
       end
     end
 
-    it "offers each day's commits as a menu to start the words from, and no share link the card cannot ride on" do
+    it "offers each day's commits as a menu to start the words from, and a text-only link to X" do
       travel_to(Time.zone.local(2026, 10, 9, 12)) do
         commit("Serve the game at playwheelsoff.com", "me/wheels-off", 1.day.ago)
 
@@ -38,8 +38,8 @@ RSpec.describe "Week cards", type: :request do
         menu = Nokogiri::HTML(response.body).at_css("select[data-action='change->headline#pick']")
         expect(menu.css("option").map(&:text)).to eq([ "Fill in from a commit or post, then edit it…", "Serve the game at playwheelsoff.com" ])
         expect(menu["name"]).to be_nil
-        expect(response.body).not_to include("x.com/intent", "bsky.app/intent")
-        expect(response.body).to include("Copy post", "Download card")
+        expect(response.body).not_to include("bsky.app/intent")
+        expect(response.body).to include("Copy post", "Download card", "Post on X", "https://x.com/intent/post?text=")
       end
     end
 
