@@ -1,33 +1,25 @@
 require "rails_helper"
+require "support/week_card_weeks"
 
 # The Changelog layout against its mock, doc/week_cards/mocks/changelog.dc.html.
 # The invented weeks and names below are the mock's own; the lines, sizes and
 # pills expected are what its renderVals gives for them.
 RSpec.describe CardLayout::Changelog do
+  include WeekCardWeeks
+
   let(:user) { create(:user, username: "tuxnotfound", display_name: "Tux", github_username: "tuxnotfound", pro: true) }
 
-  # days: from Monday, each with its commits by project and the builder's
-  # words and kind. posts: the days a post was logged.
   def layout_for(monday, days, goal: nil, posts: [], **choices)
     seed(monday, days, posts)
     layout_of(monday, days, goal: goal, **choices)
   end
 
   def seed(monday, days, posts)
-    days.each_with_index do |day, i|
-      day.fetch(:commits, {}).each do |project, n|
-        create_list(:entry, n, user: user, source: "github", entry_type: "shipped", repo_name: "me/#{project}",
-                               occurred_at: (monday + i).to_time(:utc) + 12.hours)
-      end
-    end
-    posts.each { |i| create(:entry, user: user, source: "manual", entry_type: "posted", title: "A post", occurred_at: (monday + i).to_time(:utc) + 18.hours) }
+    seed_week(user, monday, days, posts: posts)
   end
 
-  def layout_of(monday, days, goal: nil, sections: {}, layout: "week")
-    week_card = WeekCard.new(user: user, week_start: monday, next_goal: goal, layout: layout, time_zone: "UTC")
-    week_card.headlines = days.each_with_index.to_h { |day, i| [ (monday + i).iso8601, { "text" => day[:words].to_s, "kind" => day[:kind] } ] }
-    week_card.sections = sections
-    described_class.new(WeekCards::ComposeService.new(week_card: week_card).tap(&:call!).card)
+  def layout_of(monday, days, **choices)
+    described_class.new(compose_week(user, monday, days, **choices))
   end
 
   def runs(layout, face: nil, size: nil)
