@@ -1,9 +1,9 @@
 module CardLayout
   class StarChart
     # The disc itself: a ring per day (a faint solid ring for a day with work,
-    # a dashed one for a quiet day), the horizon, the night half above it and
-    # the day half below, hour ticks on the rim, a crescent above midnight and
-    # a sun below noon, and the window an hour persona is read from, in gold.
+    # a dashed one for a quiet day), the horizon, the day half above it and the
+    # night half below, hour ticks on the rim, a sun above noon and a crescent
+    # below midnight, and the window an hour persona is read from, in gold.
     class Sky
       Label = Data.define(:text, :x, :y, :anchor)
 
@@ -26,11 +26,11 @@ module CardLayout
       end
 
       def night_half
-        "M#{C[:x] - C[:r]} #{C[:y]}A#{C[:r]} #{C[:r]} 0 0 1 #{C[:x] + C[:r]} #{C[:y]}Z"
+        "M#{C[:x] - C[:r]} #{C[:y]}A#{C[:r]} #{C[:r]} 0 0 0 #{C[:x] + C[:r]} #{C[:y]}Z"
       end
 
       def day_half
-        "M#{C[:x] - C[:r]} #{C[:y]}A#{C[:r]} #{C[:r]} 0 0 0 #{C[:x] + C[:r]} #{C[:y]}Z"
+        "M#{C[:x] - C[:r]} #{C[:y]}A#{C[:r]} #{C[:r]} 0 0 1 #{C[:x] + C[:r]} #{C[:y]}Z"
       end
 
       private
@@ -65,12 +65,12 @@ module CardLayout
           x, y = @chart.at(C[:r] + 22, hour)
           Label.new(text: format("%02dh", hour % 24), x: f1(x), y: f1(y + 3.7), anchor: "middle")
         end
-        { d: "M#{f1(from[0])} #{f1(from[1])}A#{radius} #{radius} 0 #{hours.last - hours.first > 12 ? 1 : 0} 1 #{f1(to[0])} #{f1(to[1])}",
+        { d: "M#{f1(from[0])} #{f1(from[1])}A#{radius} #{radius} 0 #{hours.last - hours.first > 12 ? 1 : 0} 0 #{f1(to[0])} #{f1(to[1])}",
           ends: ends, labels: names }
       end
 
       def moon_of
-        x, y = C[:x], C[:y] - C[:r] - 25
+        x, y = C[:x], C[:y] + C[:r] + 25
         outer, inner, ox, oy = 11.5, 9.8, 5.6, -3.4
         d = Math.hypot(ox, oy)
         a = ((outer**2) - (inner**2) + (d**2)) / (2 * d)
@@ -83,7 +83,7 @@ module CardLayout
       end
 
       def sun_of
-        x, y = C[:x], C[:y] + C[:r] + 25
+        x, y = C[:x], C[:y] - C[:r] - 25
         rays = (0...8).map do |k|
           angle = k * Math::PI / 4
           "M#{f1(x + (Math.cos(angle) * 8.4))} #{f1(y + (Math.sin(angle) * 8.4))}L#{f1(x + (Math.cos(angle) * 12))} #{f1(y + (Math.sin(angle) * 12))}"
@@ -93,9 +93,9 @@ module CardLayout
 
       def labels
         top, bottom = C[:y] - C[:r] - 25, C[:y] + C[:r] + 25
-        [ Label.new(text: "00h", x: f1(C[:x] + 20), y: f1(top + 4.2), anchor: "start"),
+        [ Label.new(text: "00h", x: f1(C[:x] + 20), y: f1(bottom + 4.2), anchor: "start"),
           Label.new(text: "06h", x: f1(C[:x] + C[:r] + 34), y: f1(C[:y] + 4.2), anchor: "middle"),
-          Label.new(text: "12h", x: f1(C[:x] + 20), y: f1(bottom + 4.2), anchor: "start"),
+          Label.new(text: "12h", x: f1(C[:x] + 20), y: f1(top + 4.2), anchor: "start"),
           Label.new(text: "18h", x: f1(C[:x] - C[:r] - 34), y: f1(C[:y] + 4.2), anchor: "middle") ]
       end
     end

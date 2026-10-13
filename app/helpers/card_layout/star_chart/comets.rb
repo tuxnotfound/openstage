@@ -1,7 +1,8 @@
 module CardLayout
   class StarChart
     # Each post is a comet: the head at the post's logged time on its day's
-    # ring, the tail trailing back in time (counter-clockwise), as if it moved
+    # ring, the tail trailing back in time (clockwise, since the hours run
+    # anticlockwise), as if it moved
     # with the clock. The tail leans outward, or inward when that crosses
     # fewer stars, and never leaves the disc or crosses the hub.
     class Comets
@@ -39,8 +40,8 @@ module CardLayout
       # The lean that crosses the fewest stars and novas.
       def tail(head, hour, k)
         angle = (hour / 24.0 * Math::PI * 2) - (Math::PI / 2)
-        back = [ Math.sin(angle), -Math.cos(angle) ]
-        out = [ Math.cos(angle), Math.sin(angle) ]
+        back = [ Math.sin(angle), Math.cos(angle) ]
+        out = [ Math.cos(angle), -Math.sin(angle) ]
         tip = ->(length, tilt, lean) { [ 0, 1 ].map { |i| head[i] + (length * ((Math.cos(tilt) * back[i]) + (Math.sin(tilt) * lean * out[i]))) } }
         tried = LEANS.each_with_index.filter_map do |(lean, tilt), order|
           ends = [ tip.call(50 * k, tilt, lean), tip.call(60 * k, tilt + 0.24, lean) ]

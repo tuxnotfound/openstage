@@ -16,7 +16,7 @@
     <style><%= card_face_css(card.week_card.template) %></style>
     <radialGradient id="sc-ground" cx="<%= c[:x] %>" cy="<%= c[:y] %>" r="900" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="<%= t[:g0] %>"/><stop offset="1" stop-color="<%= t[:g1] %>"/></radialGradient>
     <radialGradient id="sc-disc" cx="<%= c[:x] %>" cy="<%= c[:y] %>" r="<%= c[:r] %>" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="<%= t[:disc0] %>"/><stop offset="1" stop-color="<%= t[:disc1] %>"/></radialGradient>
-    <radialGradient id="sc-day" cx="<%= c[:x] %>" cy="<%= c[:y] + c[:r] %>" r="<%= sky[:day_r] %>" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="<%= sky[:day] %>" stop-opacity="<%= t[:day_o] %>"/><stop offset="1" stop-color="<%= sky[:day] %>" stop-opacity="0"/></radialGradient>
+    <radialGradient id="sc-day" cx="<%= c[:x] %>" cy="<%= c[:y] - c[:r] %>" r="<%= sky[:day_r] %>" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="<%= sky[:day] %>" stop-opacity="<%= t[:day_o] %>"/><stop offset="1" stop-color="<%= sky[:day] %>" stop-opacity="0"/></radialGradient>
     <filter id="sc-grain" x="0" y="0" width="100%" height="100%">
       <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" stitchTiles="stitch"/>
       <feColorMatrix type="matrix" values="0 0 0 0 <%= t[:grain_ink] %>  0 0 0 0 <%= t[:grain_ink] %>  0 0 0 0 <%= t[:grain_ink] %>  0 0 0 0.9 0"/>

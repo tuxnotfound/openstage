@@ -1,7 +1,9 @@
 module CardLayout
   # The Star Chart card, 1200x630: the whole week under one sky. On the
-  # right, a disc with a ring per day (Monday inside) and the hours clockwise
-  # from midnight at the top: a star for every hour with commits, a nova for a
+  # right, a disc with a ring per day (Monday inside) and the hours running
+  # from midnight at the bottom, by 6 AM on the right, to noon at the top (the
+  # mock has midnight at the top; flipped 2026-10-13, so the sun sits above
+  # the moon): a star for every hour with commits, a nova for a
   # launch, a comet for a post, and the dust of earlier commits. On the left,
   # the persona the week earns, every day as a row, the projects, and next
   # week's goal. A port of doc/week_cards/mocks/star_chart.dc.html.
@@ -157,10 +159,10 @@ module CardLayout
       71 + (25 * index)
     end
 
-    # A point on the disc at a radius and an hour, midnight at the top.
+    # A point on the disc at a radius and an hour, midnight at the bottom.
     def at(radius, hour)
       angle = (hour / 24.0 * Math::PI * 2) - (Math::PI / 2)
-      [ C[:x] + (radius * Math.cos(angle)), C[:y] + (radius * Math.sin(angle)) ]
+      [ C[:x] + (radius * Math.cos(angle)), C[:y] - (radius * Math.sin(angle)) ]
     end
 
     private
