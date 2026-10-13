@@ -250,25 +250,47 @@ RSpec.describe GithubSyncJob, type: :job do
 
       travel_to(2.hours.from_now) { described_class.new.perform(user.id) }
 
-      # Without the reset, since would be ~initial_synced - SINCE_OVERLAP.
+      # Without the reset, since would be at most initial_synced - SINCE_OVERLAP.
       # With the reset, since is ~INITIAL_SYNC_WINDOW.ago — far older.
-      expect(captured_since).to be < (initial_synced - 1.week)
+      expect(captured_since).to be < (initial_synced - described_class::SINCE_OVERLAP - 1.day)
     end
 
-    it "does not reset last_synced_at when the default branch is unchanged" do
-      described_class.new.perform(user.id)
-      initial_synced = GithubRepo.last.last_synced_at
+    describe "how far back a later sync reads" do
+      let(:sinces) { [] }
 
-      captured_since = nil
-      allow(client).to receive(:commits) do |_full_name, _branch, opts|
-        captured_since = Time.parse(opts[:since])
-        []
+      before do
+        allow(client).to receive(:commits) do |_full_name, _branch, opts|
+          sinces << Time.zone.parse(opts[:since])
+          []
+        end
       end
 
-      travel_to(2.hours.from_now) { described_class.new.perform(user.id) }
+      def sync_at(time)
+        travel_to(time) { described_class.new.perform(user.id) }
+      end
 
-      # Normal sync: since is last_synced_at - 1.day, not the wide window.
-      expect(captured_since).to be_within(2.seconds).of(initial_synced - 1.day)
+      # A branch merged with a merge commit keeps its commits' old dates.
+      it "goes SINCE_OVERLAP back while the default branch is unchanged" do
+        sync_at(Time.utc(2026, 12, 1, 12))
+        sync_at(Time.utc(2026, 12, 1, 14))
+
+        expect(sinces.last).to eq(Time.utc(2026, 12, 1, 12) - described_class::SINCE_OVERLAP)
+      end
+
+      # Older deletes left no record, so reading past them would publish them again.
+      it "stops at the day deleted commits started being remembered" do
+        sync_at(Time.utc(2026, 10, 13, 12))
+        sync_at(Time.utc(2026, 10, 13, 14))
+
+        expect(sinces.last).to eq(described_class::DISMISSALS_RECORDED_FROM)
+      end
+
+      it "still goes a day back from a sync made before that day" do
+        sync_at(Time.utc(2026, 9, 1, 12))
+        sync_at(Time.utc(2026, 10, 13, 12))
+
+        expect(sinces.last).to eq(Time.utc(2026, 8, 31, 12))
+      end
     end
 
     it "does not advance last_synced_at when a repo's commits endpoint errors" do

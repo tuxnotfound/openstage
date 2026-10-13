@@ -8,9 +8,16 @@ class GithubSyncJob < ApplicationJob
 
   # Overlap window when computing `since` from last_synced_at. GitHub's
   # `since` filter uses committer date, not push date, so commits pushed
-  # late (after their committer date) are otherwise missed forever.
-  # Dedup via external_id makes the overlap free.
-  SINCE_OVERLAP = 1.day
+  # late (after their committer date) are otherwise missed forever. A branch
+  # merged with a merge commit keeps its commits' dates, so a one-day overlap
+  # lost every commit made more than a day before its merge (C12's nine).
+  # Dedup via external_id makes reading them again safe.
+  SINCE_OVERLAP = 30.days
+
+  # Deleted commits are remembered (DismissedCommit) only from this day on, so
+  # the overlap stops here: reading further back would bring back a commit
+  # deleted before it. It stops binding once the overlap starts after it.
+  DISMISSALS_RECORDED_FROM = Time.utc(2026, 10, 12)
 
   PER_PAGE = 100
   # Backstop so a pagination bug can never loop indefinitely again.
@@ -156,7 +163,7 @@ class GithubSyncJob < ApplicationJob
   end
 
   def sync_commits(client, user, repo, private_repo: false)
-    since = repo.last_synced_at ? repo.last_synced_at - SINCE_OVERLAP : INITIAL_SYNC_WINDOW.ago
+    since = commits_since(repo)
     added = 0
 
     fetch_commits = lambda do |page|
@@ -174,6 +181,16 @@ class GithubSyncJob < ApplicationJob
     # GitHub lists newest first, so a capped read leaves out the oldest ones.
     (@capped ||= []) << repo.full_name if capped
     added
+  end
+
+  # A repo's first sync reads the full window. Later ones go SINCE_OVERLAP
+  # back, but not past DISMISSALS_RECORDED_FROM, and always at least the day
+  # back they went before, so a repo last synced long ago misses nothing.
+  def commits_since(repo)
+    last = repo.last_synced_at
+    return INITIAL_SYNC_WINDOW.ago unless last
+
+    [ [ last - SINCE_OVERLAP, DISMISSALS_RECORDED_FROM ].max, last - 1.day ].min
   end
 
   # True when the commit was new to the builder's page.
