@@ -1,7 +1,9 @@
 # Advance widths of the week card's faces, so the server can lay out the
 # card's text: SVG has no text flow, and the preview and the PNG must be the
-# same picture. Thousandths of an em, read from DM Sans (by weight) and DM Mono
-# in app/assets/fonts. Regenerate the table if those files change.
+# same picture. Thousandths of an em, read from the files in app/assets/fonts:
+# DM Sans (by weight) and DM Mono below, and the Newsreader and Inter faces in
+# card_text/, which script/card_fonts.py generates. Regenerate a table if its
+# file changes.
 module CardText
   # Every file the cards draw with, in app/assets/fonts beside its licence. The
   # editor's @font-face rules and the PNG download both load this list.
@@ -51,10 +53,28 @@ module CardText
   MONO = 600
   UNKNOWN = 600
 
-  # Width in pixels of text at a font size, with SVG letter-spacing.
-  def self.width(text, size:, weight: 400, mono: false, spacing: 0)
+  # The characters the Newsreader and Inter tables measure, in table order:
+  # Basic Latin, Latin-1, Latin Extended-A and common punctuation.
+  LATIN = ([ *0x20..0x7E, *0xA0..0x17F ].pack("U*") + "–—‘’‚“”„†‡•…‰‹›€™−←↑→↓▲▼").each_char.with_index.to_h.freeze
+  # Each face is one instance of a variable font: family, style, weight,
+  # optical size and features, with its widths. The card pins the same values.
+  FACES = Newsreader::FACES.merge(Inter::FACES).freeze
+  # Any other character in those faces. Wider than every Latin glyph and than
+  # the CJK fallbacks (1.000 to 1.004 em), so unknown text measures safe.
+  WIDE = 1020
+  # Emoji differ by platform and fight the type, so they never reach a card;
+  # neither do invisible characters.
+  PICTOGRAPHS = /[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\u{FE0E}\u{FE0F}\u{200D}\u{20E3}]/
+  INVISIBLE = /[­​‌⁠﻿]/
+
+  # Width in pixels of text at a font size, with SVG letter-spacing after every
+  # character: in one of FACES, or else in DM Sans by weight or DM Mono.
+  def self.width(text, size:, face: nil, weight: 400, mono: false, spacing: 0)
     chars = text.to_s.each_char.to_a
-    units = mono ? chars.size * MONO : chars.sum { |char| advance(char, weight) }
+    units = if face then chars.sum { |char| face_advance(char, FACES.fetch(face)[:widths]) }
+    elsif mono then chars.size * MONO
+    else chars.sum { |char| advance(char, weight) }
+    end
     (units * size / 1000.0) + (chars.size * spacing)
   end
 
@@ -63,5 +83,16 @@ module CardText
     table = SANS[SANS.keys.min_by { |known| (known - weight).abs }]
     index = CHARS[char] || CHARS[char.unicode_normalize(:nfd)[0]]
     index ? table[index] : UNKNOWN
+  end
+
+  def self.face_advance(char, widths)
+    index = LATIN[char] || LATIN[char.unicode_normalize(:nfd)[0]]
+    index ? widths[index] : WIDE
+  end
+
+  # The text as a card prints it: composed accents, no emoji or invisible
+  # characters, single spaces.
+  def self.clean(text)
+    text.to_s.unicode_normalize(:nfc).gsub(PICTOGRAPHS, "").gsub(INVISIBLE, "").gsub(/[[:space:]]+/, " ").strip
   end
 end
