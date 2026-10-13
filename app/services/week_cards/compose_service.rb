@@ -1,11 +1,12 @@
 module WeekCards
   # Everything one week card shows: the week tallied (TallyService), the same
   # tally for the week before so the card can say what changed, the facts
-  # around the days (ExtrasService), and the work before the week
-  # (HistoryService). Public entries only.
+  # around the days (ExtrasService), the work before the week
+  # (HistoryService), and the persona the week earns (PersonaService). Public
+  # entries only.
   class ComposeService < ApplicationService
     Card = Data.define(:week_card, :user, :label, :dates, :days, :projects, :totals, :best_run, :streak,
-                       :previous, :extras, :history, :draft)
+                       :previous, :extras, :history, :persona, :draft)
 
     attr_accessor :week_card
     attr_reader :card
@@ -20,11 +21,16 @@ module WeekCards
       history = run(HistoryService.new(week_card: week_card))&.history
       return unless tally && extras && history
 
-      @card = Card.new(
+      @card = compose(tally, extras, history, previous_tally)
+    end
+
+    def compose(tally, extras, history, previous)
+      persona = run(PersonaService.new(tally: tally, previous: previous&.totals&.commits, history: history))&.persona
+      Card.new(
         week_card: week_card, user: week_card.user, label: "Week #{week_card.week_start.cweek}",
         dates: date_range_label, days: tally.days, projects: tally.projects, totals: tally.totals,
         best_run: tally.best_run, streak: current_week? ? week_card.user.public_activity_streak : nil,
-        previous: previous_tally, extras: extras, history: history, draft: draft(tally)
+        previous: previous, extras: extras, history: history, persona: persona, draft: draft(tally)
       )
     end
 
