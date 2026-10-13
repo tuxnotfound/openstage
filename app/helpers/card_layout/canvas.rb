@@ -6,7 +6,7 @@ module CardLayout
     # spacing is letter-spacing in ems; x is the anchor.
     Run = Data.define(:text, :face, :size, :x, :y, :fill, :spacing, :anchor)
     Dot = Data.define(:cx, :cy, :r, :fill)
-    Icon = Data.define(:x, :y, :size, :view_box, :path, :fill)
+    Icon = Data.define(:x, :y, :size, :view_box, :path, :fill, :opacity)
 
     attr_reader :runs, :paths, :dots, :icons
 
@@ -39,8 +39,8 @@ module CardLayout
       dots << Dot.new(cx: cx, cy: cy, r: r, fill: fill)
     end
 
-    def icon(x, y, size, view_box, path, fill)
-      icons << Icon.new(x: x, y: y, size: size, view_box: view_box, path: path, fill: fill)
+    def icon(x, y, size, view_box, path, fill, opacity: 1)
+      icons << Icon.new(x: x, y: y, size: size, view_box: view_box, path: path, fill: fill, opacity: opacity)
     end
   end
 end
