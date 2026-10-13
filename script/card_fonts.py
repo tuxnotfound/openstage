@@ -55,16 +55,16 @@ UNKNOWN = 1020
 # Every file the cards load: its family and the weights its @font-face rule
 # declares (as CardText::FONTS does), the source it is cut from, the axes it
 # keeps as a range or pins to one value, and the characters it keeps. DM Sans
-# and DM Mono came already cut, so they are only measured here. Press Start 2P
+# stays at the 14 pt optical size the Timeline was first measured at. Press Start 2P
 # has a Reserved Font Name, so a cut copy would need another name: it ships
 # whole, only rewrapped as woff2. Tiny5 keeps only its digits: Pixel Stage
 # takes them over Pixelify Sans, whose 5 reads as an S.
 FILES = {
     "newsreader.woff2": ("Newsreader", "400 700", "Newsreader[opsz,wght].ttf", {"wght": (400, 700)}, LATIN),
     "inter.woff2": ("Inter", "400 700", "Inter[opsz,wght].ttf", {"wght": (400, 700)}, LATIN),
-    "dm-sans.woff2": ("DM Sans", "100 1000", None, None, None),
-    "dm-mono-400.woff2": ("DM Mono", "400", None, None, None),
-    "dm-mono-500.woff2": ("DM Mono", "500", None, None, None),
+    "dm-sans.woff2": ("DM Sans", "100 1000", "DMSans[opsz,wght].ttf", {"wght": (100, 1000), "opsz": 14}, LATIN),
+    "dm-mono-400.woff2": ("DM Mono", "400", "DMMono-Regular.ttf", {}, LATIN),
+    "dm-mono-500.woff2": ("DM Mono", "500", "DMMono-Medium.ttf", {}, LATIN),
     "press-start-2p.woff2": ("Press Start 2P", "400", "PressStart2P-Regular.ttf", None, None),
     "pixelify-sans.woff2": ("Pixelify Sans", "500 600", "PixelifySans[wght].ttf", {"wght": (500, 600)}, LATIN),
     "tiny5.woff2": ("Tiny5", "400", "Tiny5[BLED,JITT,ROND,wdth,wght].ttf",

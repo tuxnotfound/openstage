@@ -60,8 +60,13 @@ RSpec.describe CardText do
       expect(described_class.width("ǎ", size: 10, face: :newsreader_note)).to eq(described_class.width("a", size: 10, face: :newsreader_note))
     end
 
+    it "measures the accented letters of Central European names in DM Sans and DM Mono" do
+      expect(described_class.width("ř", size: 10, face: :dm_mono_regular)).to eq(6.0)
+      expect("Dvořák Łódź Zoë".chars.map { |char| described_class.width(char, size: 10, face: :dm_sans_bold) }).to all(be < 10)
+    end
+
     it "counts a letter a face's files lack as wide, since a fallback font draws it" do
-      expect(described_class.width("ř", size: 10, face: :dm_mono_regular)).to eq(10.2)
+      expect(described_class.width("ĸ", size: 10, face: :dm_mono_regular)).to eq(10.2)
     end
 
     it "counts any other character as wider than an em, so a fit errs safe" do
