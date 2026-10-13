@@ -113,6 +113,26 @@ def seed_totals(user, monday, totals)
   end
 end
 
+# The builder's commits from building_since up to the earliest seeded week,
+# so the earlier history adds up to the Star Chart mock's: 1,131 commits before
+# week 38. Each lands on a weekday and hour of a real commit from data.json,
+# picked at random with a fixed seed: the positions are invented, the rhythm
+# is real.
+def seed_history(user, until_monday)
+  pool = DATA.fetch("weeks").values.flat_map { |week| week["days"].each_with_index.flat_map { |day, i| day["hours"].map { |hour| [ i, hour ] } } }
+  mondays = (Date.parse(BUILDER["building_since"])...until_monday).step(7).to_a
+  total = 1131 - DATA.dig("weeks", "w38", "previous_week", "commits")
+  random = Random.new(41)
+  rows = mondays.each_with_index.flat_map do |monday, w|
+    Array.new(share(total, mondays.size, w)) do |k|
+      day, hour = pool[random.rand(pool.size)]
+      { user_id: user.id, source: "github", entry_type: "shipped", title: "History commit #{w}-#{k}", repo_name: "#{BUILDER['github']}/openstage",
+        occurred_at: at(monday + day, hour, random.rand(60)), visibility: "public", hidden: false }
+    end
+  end
+  Entry.insert_all!(rows)
+end
+
 def page(template, svg)
   faces = template.fonts.map do |font|
     "@font-face{font-family:'#{font[:family]}';font-style:#{font[:style]};font-weight:#{font[:weight]};" \
@@ -131,6 +151,7 @@ ActiveRecord::Base.transaction do
     before = WeekCard.week_start_for(week["iso"]) - 7
     seed_totals(user, before, week["previous_week"]) unless mondays.include?(before)
   end
+  seed_history(user, mondays.min - 7)
 
   card = WeekCard.find_by!(user: user, week_start: WeekCard.week_start_for(weeks.fetch(week_key)["iso"]))
   card.update!(style: template_key, theme: theme)
