@@ -20,6 +20,15 @@ module WeekCards
 
     validates :week_card, presence: true
 
+    # The whole day's commits, busiest project first: "6 commits in wheels-off
+    # and openstage", and past two projects "16 commits in 3 projects".
+    def self.count_line(counts)
+      total = counts.sum { |_name, n| n }
+      names = counts.sort_by.with_index { |(_name, n), i| [ -n, i ] }.map(&:first)
+      where = names.size > 2 ? "#{names.size} projects" : names.join(" and ")
+      "#{total} #{'commit'.pluralize(total)} in #{where}"
+    end
+
     private
 
     def execute
@@ -47,8 +56,8 @@ module WeekCards
       return Headline.new(text: highlight_text(highlight), kind: kind_of(highlight), project: project_of(highlight), source: :entry) if highlight
       return if counts.empty?
 
-      name, n = counts.max_by { |_name, count| count }
-      Headline.new(text: "#{n} #{'commit'.pluralize(n)} in #{name}", kind: "built", project: name, source: :count)
+      name, _n = counts.max_by { |_name, count| count }
+      Headline.new(text: self.class.count_line(counts), kind: "built", project: name, source: :count)
     end
 
     # Starting points for the builder's own words: what they logged, then what
