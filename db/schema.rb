@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_13_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_13_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -331,7 +331,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_13_000001) do
     t.string "theme", default: "light", null: false
     t.string "next_goal"
     t.string "time_zone"
-    t.date "lead_on"
     t.index ["user_id", "week_start"], name: "index_week_cards_on_user_id_and_week_start", unique: true
   end
 

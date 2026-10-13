@@ -29,7 +29,6 @@ class WeekCard < ApplicationRecord
   validates :layout, inclusion: { in: LAYOUTS }
   validates :post_text, length: { maximum: 2000 }
   validate :week_starts_on_monday
-  validate :lead_on_in_week
 
   # "2026-W41" to that week's Monday; nil for anything else.
   def self.week_start_for(param)
@@ -109,9 +108,5 @@ class WeekCard < ApplicationRecord
 
   def week_starts_on_monday
     errors.add(:week_start, "must be a Monday") if week_start && !week_start.monday?
-  end
-
-  def lead_on_in_week
-    errors.add(:lead_on, "must be a day of this week") if lead_on && week_start && !days.include?(lead_on)
   end
 end

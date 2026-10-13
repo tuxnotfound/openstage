@@ -23,15 +23,6 @@ module WeekCardsHelper
     CardText::FONTS.map { |font| font.except(:file).merge(url: asset_path(font[:file])) }
   end
 
-  # The editor's choices for the lead: the card's own rule, or a day with a
-  # headline.
-  def card_lead_options(card)
-    days = card.days.select(&:headline).map do |day|
-      [ "#{day.date.strftime('%a %-d')}: #{day.headline.text.truncate(44)}", day.date.iso8601 ]
-    end
-    [ [ "Automatic", "" ] ] + days
-  end
-
   def card_face(mono: false)
     (mono ? "font-family=\"'DM Mono', monospace\"" : "font-family=\"'DM Sans', sans-serif\"").html_safe
   end
