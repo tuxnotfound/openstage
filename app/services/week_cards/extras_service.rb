@@ -60,7 +60,7 @@ module WeekCards
 
       counts = Array.new(24, 0)
       commits.each { |entry| counts[entry.occurred_at.in_time_zone(week_card.zone).hour] += 1 }
-      peak = (0..23).max_by { |hour| counts[hour] + counts[(hour + 1) % 24] }
+      peak = TallyService.peak_hour(counts)
       Hours.new(counts: counts, peak_from: peak, peak_to: (peak + 2) % 24)
     end
 

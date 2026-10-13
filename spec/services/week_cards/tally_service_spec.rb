@@ -45,6 +45,50 @@ RSpec.describe WeekCards::TallyService do
     end
   end
 
+  describe "when the work happened" do
+    def tally
+      described_class.new(week_card: week_card).tap(&:call!).tally
+    end
+
+    def commit_at(repo, time)
+      create(:entry, user: user, source: "github", entry_type: "shipped", repo_name: repo, occurred_at: time)
+    end
+
+    before { week_card.time_zone = "Europe/Lisbon" }
+
+    it "counts each day's commits by hour and project, in the card's zone" do
+      commit_at("me/openstage", Time.utc(2026, 10, 6, 18, 30))
+      commit_at("me/openstage", Time.utc(2026, 10, 6, 18, 50))
+      commit_at("me/wheels-off", Time.utc(2026, 10, 6, 18, 10))
+      commit_at("me/wheels-off", Time.utc(2026, 10, 6, 23, 30))
+
+      expect(tally.days[1].hours).to eq(19 => { "openstage" => 2, "wheels-off" => 1 })
+      expect(tally.days[2].hours).to eq(0 => { "wheels-off" => 1 })
+    end
+
+    it "keeps each launch and post the builder logged, at its local time" do
+      create(:entry, user: user, source: "manual", entry_type: "milestone", title: "playwheelsoff.com is live",
+                     occurred_at: Time.utc(2026, 10, 8, 16))
+      create(:entry, user: user, source: "manual", entry_type: "posted", title: "Week 41", url: "https://x.com/tux404/status/1",
+                     occurred_at: Time.utc(2026, 10, 9, 15, 5))
+
+      expect(tally.days[3].launches.map { |log| [ log.title, log.at.hour ] }).to eq([ [ "playwheelsoff.com is live", 17 ] ])
+      expect(tally.days[4].posts.first).to have_attributes(url: "https://x.com/tux404/status/1")
+      expect(tally.days[4].posts.first.at.strftime("%H:%M")).to eq("16:05")
+      expect(tally.totals).to have_attributes(launches: 1, posts: 1)
+    end
+
+    it "starts the week's peak at its busiest two hours" do
+      [ 18, 18, 19, 19, 20, 20, 20 ].each { |hour| commit_at("me/app", Time.utc(2026, 10, 7, hour)) }
+
+      expect(tally.totals.peak_hour).to eq(20)
+    end
+
+    it "has no peak without commits" do
+      expect(tally.totals.peak_hour).to be_nil
+    end
+  end
+
   it "needs a card" do
     expect(described_class.new(week_card: nil).call).to be(false)
   end
