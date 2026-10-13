@@ -183,11 +183,9 @@
               class: "#{field} leading-relaxed", data: { card_editor_target: "post", action: "input->card-editor#count" } %>
         <p class="text-xs text-gray-500">Drafted from your card. Every word is yours to change. <button type="button" class="underline" data-action="card-editor#useDraft">Rebuild from the card</button></p>
         <div class="flex flex-wrap gap-2">
-          <a href="https://bsky.app/intent/compose" target="_blank" rel="noopener" class="px-4 py-2.5 rounded-lg border border-gray-200 text-sm hover:border-gray-400"
-             data-card-editor-target="intent" data-base="https://bsky.app/intent/compose?text=" data-network="bluesky" data-action="card-editor#intent">Post on Bluesky</a>
           <button type="button" class="px-4 py-2.5 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-700" data-action="card-editor#copy" data-card-editor-target="copyButton">Copy post</button>
         </div>
-        <p class="text-xs text-gray-500">Download the card, copy your post, and attach the card where you post it: no share link can carry an image.</p>
+        <p class="text-xs text-gray-500">Download the card, copy your post, and attach the card where you post it.</p>
       </section>
       <p class="text-xs text-gray-400 px-1">Want the old list of commits? <%= link_to "Open the commit picker", recap_path, class: "underline" %>.</p>
     </div>
