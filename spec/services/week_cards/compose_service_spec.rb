@@ -89,6 +89,13 @@ RSpec.describe WeekCards::ComposeService do
     end
   end
 
+  it "says what the card leads with" do
+    commit("Serve the game", "me/wheels-off", 3)
+    week_card.headlines = { "2026-10-08" => { "text" => "playwheelsoff.com is live", "kind" => "shipped" } }
+
+    expect(compose.lead).to have_attributes(date: monday + 3, text: "playwheelsoff.com is live", fly: "Shipped on Thursday, Oct 8")
+  end
+
   it "names repos by their full name only when two share a short one" do
     commit("A", "ana/si2018-design", 1)
     commit("B", "dasilva/si2018-design", 1)

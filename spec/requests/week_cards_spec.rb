@@ -76,6 +76,22 @@ RSpec.describe "Week cards", type: :request do
       end
     end
 
+    it "offers the days with a headline to lead with, and saves the pick" do
+      travel_to(Time.zone.local(2026, 10, 9, 12)) do
+        commit("Serve the game at playwheelsoff.com", "me/wheels-off", Time.zone.local(2026, 10, 8, 10))
+
+        get "/week"
+        expect(response.body).to include(%(<option value="">Automatic</option>))
+        expect(response.body).to include(%(<option value="2026-10-08">Thu 8: 1 commit in wheels-off</option>))
+
+        patch "/week/2026-W41", params: { week_card: { lead_on: "2026-10-08" } }, headers: { "Accept" => "application/json" }
+        expect(WeekCard.find_by!(user: user).lead_on).to eq(Date.new(2026, 10, 8))
+
+        patch "/week/2026-W41", params: { week_card: { lead_on: "2026-10-20" } }, headers: { "Accept" => "application/json" }
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+
     it "keeps no zone Rails does not know, and tells the editor so it does not redraw" do
       travel_to(Time.zone.local(2026, 10, 9, 12)) do
         patch "/week/2026-W41", params: { week_card: { time_zone: "Mars/Olympus" } }, headers: { "Accept" => "application/json" }

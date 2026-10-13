@@ -50,6 +50,17 @@ RSpec.describe WeekCard, type: :model do
     expect(card.shows?("hours")).to be(true)
   end
 
+  it "leads only with a day of its own week, or by its own rule" do
+    card.lead_on = monday + 3
+    expect(card).to be_valid
+
+    card.lead_on = monday + 7
+    expect(card).not_to be_valid
+
+    card.lead_on = ""
+    expect(card.lead_on).to be_nil
+  end
+
   it "is light or dark" do
     card.theme = "neon"
     expect(card).not_to be_valid

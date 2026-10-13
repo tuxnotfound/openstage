@@ -51,6 +51,13 @@
     <div class="space-y-5">
       <%= hidden_field_tag "week_card[time_zone]", wc.time_zone, id: nil, data: { card_editor_target: "zone" } %>
       <fieldset class="rounded-xl border border-gray-200 bg-white px-5 pt-3 pb-4">
+        <legend class="<%= legend %>"><label for="lead_on">Lead with</label></legend>
+        <%= select_tag "week_card[lead_on]", options_for_select(card_lead_options(@card), wc.lead_on&.iso8601),
+              id: "lead_on", class: "#{field} mt-1" %>
+        <p class="text-xs text-gray-400 mt-2">Set large at the top of the card. Automatic leads with what you shipped, else your busiest day in your own words, else the week's numbers.</p>
+      </fieldset>
+
+      <fieldset class="rounded-xl border border-gray-200 bg-white px-5 pt-3 pb-4">
         <legend class="<%= legend %>">Look</legend>
         <% [ [ "light", "Light" ], [ "dark", "Dark" ] ].each do |value, label| %>
           <label class="flex items-center gap-3 min-h-10 text-sm cursor-pointer">
