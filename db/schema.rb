@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_13_000002) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_13_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -320,7 +320,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_13_000002) do
   create_table "week_cards", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.date "week_start", null: false
-    t.string "style", default: "timeline", null: false
+    t.string "style", default: "changelog", null: false
     t.string "layout", default: "week", null: false
     t.jsonb "hidden_sections", default: [], null: false
     t.jsonb "hidden_projects", default: [], null: false

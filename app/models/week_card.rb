@@ -3,10 +3,11 @@
 # turned off, the headlines and goal they wrote, and the post. Deleted with the
 # user by the database (on_delete).
 class WeekCard < ApplicationRecord
-  STYLES = %w[timeline].freeze
+  STYLES = WeekCardTemplate.keys.freeze
   THEMES = %w[light dark].freeze
   LAYOUTS = %w[week active].freeze
-  SECTIONS = %w[avatar name github building streak totals compare projects headlines goal audience hours code repos].freeze
+  SECTIONS = %w[avatar name github building streak persona totals compare activity projects headlines goal history
+                audience hours code repos].freeze
   # Small numbers can work against a builder, so audience starts off.
   HIDDEN_AT_FIRST = %w[audience].freeze
   KINDS = %w[built shipped published].freeze
@@ -67,6 +68,10 @@ class WeekCard < ApplicationRecord
   def time_range
     start = zone.local(week_start.year, week_start.month, week_start.day)
     start...(start + 7.days)
+  end
+
+  def template
+    WeekCardTemplate.find(style)
   end
 
   def shows?(section)
