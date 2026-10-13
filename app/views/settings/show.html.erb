@@ -69,6 +69,14 @@
                   <span class="block text-xs text-gray-400">On Fridays, when your week has three or more things in it: your commits, ready to pick from for a post.</span>
                 <% end %>
               </div>
+
+              <div class="flex items-start gap-2.5">
+                <%= f.check_box :branch_commits, class: "mt-0.5 rounded border-gray-300 text-gray-900 focus:ring-gray-900" %>
+                <%= f.label :branch_commits, class: "text-sm text-gray-700" do %>
+                  Commits on other branches
+                  <span class="block text-xs text-gray-400">Work not yet on your default branch shows on your page, marked with its branch, until it merges.</span>
+                <% end %>
+              </div>
             </div>
 
             <div class="mt-6">

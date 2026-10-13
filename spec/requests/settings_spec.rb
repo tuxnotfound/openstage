@@ -124,6 +124,14 @@ RSpec.describe "Settings", type: :request do
         expect(user.reload.display_name).to eq("New Name")
       end
 
+      it "turns branch commits off and on again" do
+        patch settings_path, params: { user: { branch_commits: "0" } }
+        expect(user.reload.branch_commits).to be(false)
+
+        patch settings_path, params: { user: { branch_commits: "1" } }
+        expect(user.reload.branch_commits).to be(true)
+      end
+
       # The re-render used to read instance variables only show set, and 500ed.
       it "re-renders Settings with the reason when a value is rejected" do
         patch settings_path, params: { user: { website_url: "javascript:alert(1)" } }
