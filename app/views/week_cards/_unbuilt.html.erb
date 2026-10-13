@@ -1,9 +1,11 @@
 <%# A template whose drawing is not ported yet: its name and the week on the
-    card's ground, so the editor and the download still work. %>
+    card's ground, in one of its own faces, so the editor and the download
+    still work. %>
 <% t = card_theme(card) %>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="<%= card.label %> card for <%= card.user.display_name %>" data-week-card="<%= card.week_card.template.key %>">
-  <defs></defs>
+<% template = card.week_card.template %>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="<%= card.label %> card for <%= card.user.display_name %>" data-week-card="<%= template.key %>">
+  <defs><style><%= card_face_css(template) %></style></defs>
   <rect width="1200" height="630" fill="<%= t[:ground] %>"/>
-  <text x="600" y="300" text-anchor="middle" <%= card_face %> font-size="40" font-weight="700" fill="<%= t[:text] %>"><%= name %></text>
-  <text x="600" y="345" text-anchor="middle" <%= card_face(mono: true) %> font-size="16" fill="<%= t[:muted] %>"><%= card.label %> · <%= card.dates %></text>
+  <text x="600" y="300" text-anchor="middle" class="<%= card_face_class(face) %>" font-size="40" fill="<%= t[:text] %>"><%= name %></text>
+  <text x="600" y="345" text-anchor="middle" class="<%= card_face_class(face) %>" font-size="16" fill="<%= t[:muted] %>"><%= card.label %> · <%= card.dates %></text>
 </svg>
