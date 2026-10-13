@@ -59,6 +59,14 @@
 
       <fieldset class="rounded-xl border border-gray-200 bg-white px-5 pt-3 pb-4">
         <legend class="<%= legend %>">Look</legend>
+        <p class="text-xs text-gray-400 pt-2">Template</p>
+        <% [ [ "brief", "Weekly Brief" ], [ "timeline", "Timeline" ] ].each do |value, label| %>
+          <label class="flex items-center gap-3 min-h-10 text-sm cursor-pointer">
+            <%= radio_button_tag "week_card[style]", value, wc.style == value, class: "text-gray-900 focus:ring-gray-900" %>
+            <%= label %>
+          </label>
+        <% end %>
+        <p class="text-xs text-gray-400 pt-2">Theme</p>
         <% [ [ "light", "Light" ], [ "dark", "Dark" ] ].each do |value, label| %>
           <label class="flex items-center gap-3 min-h-10 text-sm cursor-pointer">
             <%= radio_button_tag "week_card[theme]", value, wc.theme == value, class: "text-gray-900 focus:ring-gray-900" %>

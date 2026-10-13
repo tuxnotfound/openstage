@@ -1,0 +1,44 @@
+<%# The Weekly Brief, 1200x630. WeekCardBriefHelper places every line; this
+    draws the list it returns, in layers. The faces' classes pin the instances
+    CardText measured, and the download embeds the same files. Text stays on
+    one line inside each <text>: a line break there would print as a space. %>
+<% brief = brief_card(card) %>
+<% t = brief[:theme] %>
+<% avatar = brief[:avatar] %>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="<%= card.label %> card for <%= card.user.display_name %>" data-week-card="1">
+  <defs>
+    <style><%= card_face_css %></style>
+    <% if avatar %>
+      <clipPath id="wb-avatar"><circle cx="<%= avatar[:x] + (avatar[:size] / 2.0) %>" cy="<%= avatar[:y] + (avatar[:size] / 2.0) %>" r="<%= avatar[:size] / 2.0 %>"/></clipPath>
+    <% end %>
+  </defs>
+  <rect width="1200" height="630" fill="<%= t[:paper] %>"/>
+  <% { tracks: t[:track], bars: t[:bar], lead_bar: t[:accent], tag_fill: t[:ink2], up: t[:ink2], down: t[:muted] }.each do |layer, color| %>
+    <% if brief[:paths][layer].any? %><path d="<%= brief[:paths][layer].join %>" fill="<%= color %>"/><% end %>
+  <% end %>
+  <% { hair: t[:rule], strong: t[:ink], tag_line: t[:ink2] }.each do |layer, color| %>
+    <% if brief[:paths][layer].any? %><path d="<%= brief[:paths][layer].join %>" stroke="<%= color %>" stroke-width="1" fill="none"/><% end %>
+  <% end %>
+
+  <% if avatar %>
+    <image href="<%= avatar[:href] %>" x="<%= avatar[:x] %>" y="<%= avatar[:y] %>" width="<%= avatar[:size] %>" height="<%= avatar[:size] %>" clip-path="url(#wb-avatar)" preserveAspectRatio="xMidYMid slice"/>
+    <circle cx="<%= avatar[:x] + (avatar[:size] / 2.0) %>" cy="<%= avatar[:y] + (avatar[:size] / 2.0) %>" r="<%= (avatar[:size] / 2.0) - 0.5 %>" fill="none" stroke="<%= t[:ring] %>" stroke-width="1"/>
+  <% end %>
+  <% brief[:icons].each do |icon| %>
+    <% if icon[:kind] == :github %>
+      <path transform="translate(<%= icon[:x] %> <%= icon[:y] %>) scale(<%= icon[:size] / 16.0 %>)" d="<%= WeekCardBriefHelper::Byline::GITHUB_MARK %>" fill="<%= t[:muted] %>"/>
+    <% else %>
+      <g transform="translate(<%= icon[:x] %> <%= icon[:y] %>) scale(<%= icon[:size] / 512.0 %>)">
+        <path d="<%= WeekCardBriefHelper::Rail::MARK_TILE %>" fill="<%= t[:ink] %>"/>
+        <path d="<%= WeekCardBriefHelper::Rail::MARK_BARS %>" fill="<%= t[:paper] %>"/>
+      </g>
+    <% end %>
+  <% end %>
+  <% brief[:marks].each do |mark| %>
+    <rect x="<%= mark[:x] %>" y="<%= mark[:y] %>" width="7" height="7" rx="2" fill="<%= mark[:color] %>"/>
+  <% end %>
+
+  <% brief[:texts].each do |text| %>
+    <text x="<%= text[:anchor] == :end ? (text[:x] + text[:spacing]).round(3) : text[:x] %>" y="<%= text[:y] %>" class="<%= card_face_class(text[:face]) %>" font-size="<%= text[:size] %>"<% if text[:spacing].nonzero? %> letter-spacing="<%= text[:spacing] %>"<% end %><% if text[:anchor] == :end %> text-anchor="end"<% end %> fill="<%= text[:fill] %>"><%= text[:text] %></text>
+  <% end %>
+</svg>

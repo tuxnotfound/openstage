@@ -3,7 +3,8 @@
 # turned off, the headlines and goal they wrote, and the post. Deleted with the
 # user by the database (on_delete).
 class WeekCard < ApplicationRecord
-  STYLES = %w[timeline].freeze
+  # The templates, each a partial in app/views/week_cards; the first is the default.
+  STYLES = %w[brief timeline].freeze
   THEMES = %w[light dark].freeze
   LAYOUTS = %w[week active].freeze
   SECTIONS = %w[avatar name github building streak totals compare projects headlines goal audience hours code repos].freeze
