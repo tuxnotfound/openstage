@@ -33,6 +33,11 @@ WeekCardTemplate = Data.define(:key, :name, :description, :sections, :families, 
   def fonts
     CardText::FONTS.select { |font| families.include?(font[:family]) }
   end
+
+  # The CardText faces it sets its type in, by name.
+  def faces
+    CardText::FACES.select { |_name, face| face[:families].intersect?(families) }
+  end
 end
 
 # Picker order. The first is the default for new cards.

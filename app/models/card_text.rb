@@ -1,9 +1,9 @@
 # Advance widths of the week card's faces, so the server can lay out the
 # card's text: SVG has no text flow, and the preview and the PNG must be the
 # same picture. Thousandths of an em, read from the files in app/assets/fonts:
-# DM Sans (by weight) and DM Mono below, and the Newsreader and Inter faces in
-# card_text/, which script/card_fonts.py generates. Regenerate a table if its
-# file changes.
+# DM Sans (by weight) and DM Mono below, for the Timeline, and every face of
+# the other templates in card_text/, which script/card_fonts.py generates and
+# checks against Chrome. Regenerate a table if its file changes.
 module CardText
   # Every file the cards draw with, in app/assets/fonts beside its licence. The
   # editor's @font-face rules and the PNG download both load this list.
@@ -12,8 +12,10 @@ module CardText
     { family: "DM Mono", style: "normal", weight: "400", file: "dm-mono-400.woff2" },
     { family: "DM Mono", style: "normal", weight: "500", file: "dm-mono-500.woff2" },
     { family: "Newsreader", style: "normal", weight: "400 700", file: "newsreader.woff2" },
-    { family: "Newsreader", style: "italic", weight: "400 700", file: "newsreader-italic.woff2" },
-    { family: "Inter", style: "normal", weight: "400 700", file: "inter.woff2" }
+    { family: "Inter", style: "normal", weight: "400 700", file: "inter.woff2" },
+    { family: "Press Start 2P", style: "normal", weight: "400", file: "press-start-2p.woff2" },
+    { family: "Pixelify Sans", style: "normal", weight: "500 600", file: "pixelify-sans.woff2" },
+    { family: "Tiny5", style: "normal", weight: "400", file: "tiny5.woff2" }
   ].freeze
   CHARS = ((32..126).map(&:chr) + %w[· – — − ↑ ↓ … × ’]).each_with_index.to_h.freeze
   SANS = {
@@ -53,13 +55,15 @@ module CardText
   MONO = 600
   UNKNOWN = 600
 
-  # The characters the Newsreader and Inter tables measure, in table order:
-  # Basic Latin, Latin-1, Latin Extended-A and common punctuation.
+  # The characters the face tables measure, in table order: Basic Latin,
+  # Latin-1, Latin Extended-A and common punctuation.
   LATIN = ([ *0x20..0x7E, *0xA0..0x17F ].pack("U*") + "–—‘’‚“”„†‡•…‰‹›€™−←↑→↓▲▼").each_char.with_index.to_h.freeze
-  # Each face is one instance of a variable font: family, style, weight,
-  # optical size and features, with its widths. The card pins the same values.
-  FACES = Newsreader::FACES.merge(Inter::FACES).freeze
-  # Any other character in those faces. Wider than every Latin glyph and than
+  # Each face is one instance of its fonts: the families tried for each
+  # character in order, weight, axis values and features, with its widths. The
+  # card pins the same values (WeekCardTypeHelper), so it draws what was measured.
+  FACES = [ Inter, Newsreader, DmSans, DmMono, PressStart, PixelifySans ].map { |table| table::FACES }.reduce(:merge).freeze
+  # Any other character in those faces, and one a face's files lack, which the
+  # browser draws from a fallback font. Wider than every Latin glyph and than
   # the CJK fallbacks (1.000 to 1.004 em), so unknown text measures safe.
   WIDE = 1020
   # Emoji differ by platform and fight the type, so they never reach a card;

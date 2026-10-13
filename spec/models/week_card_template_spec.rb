@@ -26,6 +26,16 @@ RSpec.describe WeekCardTemplate do
     expect(described_class.find("pixel_stage").has?("building")).to be(true)
   end
 
+  it "has a font file and a face for each family it draws with" do
+    described_class.all.each do |template|
+      expect(template.fonts.map { |font| font[:family] }.uniq).to match_array(template.families)
+    end
+    expect(described_class.find("changelog").faces.keys).to include(:inter_medium, :inter_figures, :dm_mono_medium)
+    expect(described_class.find("changelog").faces.keys).not_to include(:newsreader_title)
+    expect(described_class.find("pixel_stage").fonts.map { |font| font[:file] })
+      .to contain_exactly("press-start-2p.woff2", "pixelify-sans.woff2", "tiny5.woff2")
+  end
+
   it "keeps all seven days on Pixel Stage" do
     expect(described_class.all.reject(&:days_choice).map(&:key)).to eq([ "pixel_stage" ])
   end

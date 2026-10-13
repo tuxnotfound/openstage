@@ -130,6 +130,7 @@ RSpec.describe "Week cards", type: :request do
         expect(fonts.keys).to eq(WeekCardTemplate.keys)
         expect(fonts["changelog"].map { |font| font["family"] }.uniq).to contain_exactly("Inter", "DM Mono")
         expect(fonts["timeline"].map { |font| font["family"] }.uniq).to contain_exactly("DM Sans", "DM Mono")
+        expect(fonts["pixel_stage"].map { |font| font["url"] }).to all(match(/(press-start-2p|pixelify-sans|tiny5)-\h+\.woff2/))
       end
     end
 
