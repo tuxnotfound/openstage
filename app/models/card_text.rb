@@ -3,6 +3,16 @@
 # same picture. Thousandths of an em, read from DM Sans (by weight) and DM Mono
 # in app/assets/fonts. Regenerate the table if those files change.
 module CardText
+  # Every file the cards draw with, in app/assets/fonts beside its licence. The
+  # editor's @font-face rules and the PNG download both load this list.
+  FONTS = [
+    { family: "DM Sans", style: "normal", weight: "100 1000", file: "dm-sans.woff2" },
+    { family: "DM Mono", style: "normal", weight: "400", file: "dm-mono-400.woff2" },
+    { family: "DM Mono", style: "normal", weight: "500", file: "dm-mono-500.woff2" },
+    { family: "Newsreader", style: "normal", weight: "400 700", file: "newsreader.woff2" },
+    { family: "Newsreader", style: "italic", weight: "400 700", file: "newsreader-italic.woff2" },
+    { family: "Inter", style: "normal", weight: "400 700", file: "inter.woff2" }
+  ].freeze
   CHARS = ((32..126).map(&:chr) + %w[· – — − ↑ ↓ … × ’]).each_with_index.to_h.freeze
   SANS = {
     400 => [

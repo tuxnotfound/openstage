@@ -1,13 +1,9 @@
 <% content_for :title, "Your week" %>
-<% fonts = [
-     { family: "DM Sans", weight: "100 1000", url: asset_path("dm-sans.woff2") },
-     { family: "DM Mono", weight: "400", url: asset_path("dm-mono-400.woff2") },
-     { family: "DM Mono", weight: "500", url: asset_path("dm-mono-500.woff2") }
-   ] %>
+<% fonts = card_fonts %>
 <% content_for :head do %>
   <style>
     <% fonts.each do |font| %>
-      @font-face { font-family: '<%= font[:family] %>'; font-weight: <%= font[:weight] %>; font-display: swap; src: url('<%= font[:url] %>') format('woff2'); }
+      @font-face { font-family: '<%= font[:family] %>'; font-style: <%= font[:style] %>; font-weight: <%= font[:weight] %>; font-display: swap; src: url('<%= font[:url] %>') format('woff2'); }
     <% end %>
   </style>
 <% end %>

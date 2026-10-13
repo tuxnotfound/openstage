@@ -32,7 +32,7 @@ export default class extends Controller {
     clone.setAttribute("height", height)
 
     const faces = await Promise.all(this.fontsValue.map(async (font) =>
-      `@font-face{font-family:'${font.family}';font-weight:${font.weight};src:url(${await this.dataUrl(font.url)}) format('woff2');}`))
+      `@font-face{font-family:'${font.family}';font-style:${font.style};font-weight:${font.weight};src:url(${await this.dataUrl(font.url)}) format('woff2');}`))
     const style = document.createElementNS("http://www.w3.org/2000/svg", "style")
     style.textContent = faces.join("")
     clone.querySelector("defs").prepend(style)

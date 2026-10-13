@@ -29,6 +29,15 @@ RSpec.describe "Week cards", type: :request do
       end
     end
 
+    it "loads every card font, for the preview and for the download" do
+      get "/week"
+
+      CardText::FONTS.each do |font|
+        expect(response.body).to include("font-family: '#{font[:family]}'; font-style: #{font[:style]}; font-weight: #{font[:weight]};")
+      end
+      expect(response.body).to match(/data-card-export-fonts-value="[^"]*newsreader-italic[^"]*\.woff2/)
+    end
+
     it "opens a past week by its ISO name, and refuses a future or malformed one" do
       travel_to(Time.zone.local(2026, 10, 9, 12)) do
         get "/week/2026-W40"

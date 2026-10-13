@@ -18,6 +18,11 @@ module WeekCardsHelper
     CARD_THEMES.fetch(card.week_card.theme, CARD_THEMES["light"])
   end
 
+  # The card fonts with the URL each loads from, for @font-face and the download.
+  def card_fonts
+    CardText::FONTS.map { |font| font.except(:file).merge(url: asset_path(font[:file])) }
+  end
+
   def card_face(mono: false)
     (mono ? "font-family=\"'DM Mono', monospace\"" : "font-family=\"'DM Sans', sans-serif\"").html_safe
   end
