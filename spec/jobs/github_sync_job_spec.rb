@@ -35,8 +35,11 @@ RSpec.describe GithubSyncJob, type: :job do
     allow(client).to receive(:scopes).and_return([ "repo", "user:email" ])
     allow(client).to receive(:repositories).and_return([ repo_double ])
     allow(client).to receive(:commits).and_return([ commit_double ])
+    allow(client).to receive(:access_token).and_return("gho_token")
     # Single-page stub: no :next rel means each_page yields once and stops.
     allow(client).to receive(:last_response).and_return(double(rels: {}))
+    # Branches other than the default have their own examples below.
+    allow(GithubGateway).to receive(:branches).and_return([])
   end
 
   describe "#perform" do
@@ -290,6 +293,48 @@ RSpec.describe GithubSyncJob, type: :job do
         sync_at(Time.utc(2026, 10, 13, 12))
 
         expect(sinces.last).to eq(Time.utc(2026, 8, 31, 12))
+      end
+    end
+
+    describe "branches other than the default" do
+      let(:branch_commit) do
+        GithubGateway::Commit.new(sha: "branch1", message: "Try a new layout", authored_at: 1.day.ago,
+                                  html_url: "https://github.com/tuxnotfound/myapp/commit/branch1",
+                                  author_login: "tuxnotfound", author_email: nil)
+      end
+
+      before do
+        allow(GithubGateway).to receive(:branches).with("tuxnotfound/myapp", token: "gho_token").and_return(
+          [ GithubGateway::Branch.new(name: "main", sha: "m1"), GithubGateway::Branch.new(name: "layout", sha: "l1") ]
+        )
+        allow(GithubGateway).to receive(:commits_ahead).and_return([ branch_commit ])
+      end
+
+      it "puts the builder's branch commits on the page, tagged with their branch" do
+        described_class.new.perform(user.id)
+
+        expect(user.entries.find_by(external_id: "branch1").branch).to eq("layout")
+        expect(SyncLog.last.entries_added).to eq(2)
+      end
+
+      it "reads no branch once the builder turned branch commits off" do
+        user.update!(branch_commits: false)
+
+        described_class.new.perform(user.id)
+
+        expect(GithubGateway).not_to have_received(:branches)
+        expect(user.entries.pluck(:external_id)).to eq([ "abc123def456" ])
+      end
+
+      it "keeps the default branch's commits and watermark when the branches fail, and says so" do
+        allow(GithubGateway).to receive(:commits_ahead).and_raise(ApplicationGateway::ServerError.new(status: 502))
+
+        described_class.new.perform(user.id)
+
+        expect(user.entries.pluck(:external_id)).to eq([ "abc123def456" ])
+        expect(GithubRepo.last.last_synced_at).to be_present
+        expect(SyncLog.last).to have_attributes(status: "success")
+        expect(SyncLog.last.error_message).to include("skipped: tuxnotfound/myapp (other branches)")
       end
     end
 
