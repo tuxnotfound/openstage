@@ -2,6 +2,6 @@
     exact card, for "Rebuild from the card". %>
 <%= turbo_frame_tag "card_preview" do %>
   <div class="rounded-lg overflow-hidden [&_svg]:block [&_svg]:w-full [&_svg]:h-auto" data-card-draft="<%= card.draft %>">
-    <%= render "week_cards/timeline", card: card %>
+    <%= render card.week_card.template.partial, card: card %>
   </div>
 <% end %>

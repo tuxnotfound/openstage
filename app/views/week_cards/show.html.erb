@@ -8,13 +8,14 @@
   </style>
 <% end %>
 <% wc = @card.week_card %>
+<% template = wc.template %>
 <% sections = {
      "Who" => { "avatar" => "Profile picture", "name" => "Name and Pro badge", "github" => "GitHub handle",
                 "building" => "How long you have been building", "streak" => "Streak and best run" },
-     "The week" => { "totals" => "Week totals", "compare" => "Change from last week", "projects" => "Commits per project",
-                     "headlines" => "Day headlines" },
-     "Around it" => { "goal" => "Next week's goal", "audience" => "Visitors and new subscribers", "hours" => "When you build",
-                      "code" => "Lines and languages", "repos" => "PRs, releases, deploys and stars" }
+     "The week" => { "persona" => "Persona", "totals" => "Week totals", "compare" => "Change from last week",
+                     "activity" => "Commits per day", "projects" => "Commits per project", "headlines" => "Day headlines" },
+     "Around it" => { "goal" => "Next week's goal", "history" => "Your earlier commits", "audience" => "Visitors and new subscribers",
+                      "hours" => "When you build", "code" => "Lines and languages", "repos" => "PRs, releases, deploys and stars" }
    } %>
 <% previous_week = wc.week_start - 7 %>
 <% next_week = wc.week_start + 7 %>
@@ -26,7 +27,7 @@
      data-card-editor-save-url-value="<%= week_card_path(wc) %>"
      data-card-editor-preview-url-value="<%= week_card_preview_path(wc) %>"
      data-card-editor-track-url-value="<%= recap_track_path %>"
-     data-card-export-fonts-value="<%= fonts.to_json %>"
+     data-card-export-fonts-value="<%= card_export_fonts.to_json %>"
      data-card-export-filename-value="openstage-<%= wc.to_param.downcase %>.png"
      data-card-export-track-url-value="<%= recap_track_path %>">
 
@@ -51,6 +52,22 @@
     <div class="space-y-5">
       <%= hidden_field_tag "week_card[time_zone]", wc.time_zone, id: nil, data: { card_editor_target: "zone" } %>
       <fieldset class="rounded-xl border border-gray-200 bg-white px-5 pt-3 pb-4">
+        <legend class="<%= legend %>">Template</legend>
+        <div class="space-y-2 pt-1">
+          <% WeekCardTemplate.all.each do |choice| %>
+            <label class="flex items-start gap-3 rounded-lg border border-gray-200 px-3 py-2.5 cursor-pointer hover:border-gray-400 has-[:checked]:border-gray-900 has-[:checked]:bg-gray-50">
+              <%= radio_button_tag "week_card[style]", choice.key, choice == template, class: "mt-0.5 text-gray-900 focus:ring-gray-900",
+                    data: { action: "change->card-editor#filter" } %>
+              <span>
+                <span class="block text-sm font-medium"><%= choice.name %></span>
+                <span class="block text-xs text-gray-500 mt-0.5"><%= choice.description %></span>
+              </span>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <fieldset class="rounded-xl border border-gray-200 bg-white px-5 pt-3 pb-4">
         <legend class="<%= legend %>">Look</legend>
         <% [ [ "light", "Light" ], [ "dark", "Dark" ] ].each do |value, label| %>
           <label class="flex items-center gap-3 min-h-10 text-sm cursor-pointer">
@@ -60,7 +77,8 @@
         <% end %>
       </fieldset>
 
-      <fieldset class="rounded-xl border border-gray-200 bg-white px-5 pt-3 pb-4">
+      <%= tag.fieldset(class: "rounded-xl border border-gray-200 bg-white px-5 pt-3 pb-4",
+            **card_choice_attributes(WeekCardTemplate.all.select(&:days_choice), template)) do %>
         <legend class="<%= legend %>">Days</legend>
         <% [ [ "week", "All seven days" ], [ "active", "Only the days I worked" ] ].each do |value, label| %>
           <label class="flex items-center gap-3 min-h-10 text-sm cursor-pointer">
@@ -68,18 +86,18 @@
             <%= label %>
           </label>
         <% end %>
-      </fieldset>
+      <% end %>
 
       <fieldset class="rounded-xl border border-gray-200 bg-white px-5 pt-3 pb-4">
         <legend class="<%= legend %>">On the card</legend>
         <% sections.each do |group, choices| %>
-          <p class="text-xs text-gray-400 pt-2"><%= group %></p>
+          <%= tag.p(group, class: "text-xs text-gray-400 pt-2", **card_choice_attributes(WeekCardTemplate.having(*choices.keys), template)) %>
           <% choices.each do |section, label| %>
-            <label class="flex items-center gap-3 min-h-10 text-sm cursor-pointer">
+            <%= tag.label(class: "flex items-center gap-3 min-h-10 text-sm cursor-pointer", **card_choice_attributes(WeekCardTemplate.having(section), template)) do %>
               <%= hidden_field_tag "week_card[sections][#{section}]", "0", id: nil %>
               <%= check_box_tag "week_card[sections][#{section}]", "1", wc.shows?(section), id: "section_#{section}", class: "rounded border-gray-300 text-gray-900 focus:ring-gray-900" %>
               <%= label %>
-            </label>
+            <% end %>
           <% end %>
         <% end %>
         <p class="text-xs text-gray-400 mt-2">A part with nothing to show this week stays off the card.</p>

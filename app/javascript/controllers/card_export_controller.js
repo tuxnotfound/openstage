@@ -5,7 +5,9 @@ import { Controller } from "@hotwired/stimulus"
 // the image is needed, at twice the size for sharp text.
 export default class extends Controller {
   static targets = ["button"]
-  static values = { fonts: Array, filename: String, trackUrl: String }
+  // fonts: each template's fonts, by its key, so the PNG carries only the ones
+  // its template draws with.
+  static values = { fonts: Object, filename: String, trackUrl: String }
 
   async download() {
     const svg = document.querySelector("#card_preview svg[data-week-card]")
@@ -31,7 +33,8 @@ export default class extends Controller {
     clone.setAttribute("width", width)
     clone.setAttribute("height", height)
 
-    const faces = await Promise.all(this.fontsValue.map(async (font) =>
+    const fonts = this.fontsValue[svg.dataset.weekCard] || []
+    const faces = await Promise.all(fonts.map(async (font) =>
       `@font-face{font-family:'${font.family}';font-style:${font.style};font-weight:${font.weight};src:url(${await this.dataUrl(font.url)}) format('woff2');}`))
     const style = document.createElementNS("http://www.w3.org/2000/svg", "style")
     style.textContent = faces.join("")

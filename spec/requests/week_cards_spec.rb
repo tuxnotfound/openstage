@@ -18,6 +18,7 @@ RSpec.describe "Week cards", type: :request do
     it "opens this week's card, drawn from the builder's own work" do
       travel_to(Time.zone.local(2026, 10, 9, 12)) do
         commit("Serve the game at playwheelsoff.com", "me/wheels-off", 1.day.ago)
+        WeekCard.create!(user: user, week_start: Date.new(2026, 10, 5), style: "timeline")
 
         expect { get "/week" }.to change { Event.named("card_opened").count }.by(1)
         expect(response).to have_http_status(:ok)
@@ -35,7 +36,6 @@ RSpec.describe "Week cards", type: :request do
       CardText::FONTS.each do |font|
         expect(response.body).to include("font-family: '#{font[:family]}'; font-style: #{font[:style]}; font-weight: #{font[:weight]};")
       end
-      expect(response.body).to match(/data-card-export-fonts-value="[^"]*newsreader-italic[^"]*\.woff2/)
     end
 
     it "opens a past week by its ISO name, and refuses a future or malformed one" do
@@ -56,7 +56,7 @@ RSpec.describe "Week cards", type: :request do
         commit("Serve the game at playwheelsoff.com", "me/wheels-off", Time.zone.local(2026, 10, 8, 10))
 
         patch "/week/2026-W41", params: { week_card: {
-          layout: "active", theme: "dark", next_goal: "Launch on Product Hunt", time_zone: "Europe/Lisbon",
+          style: "timeline", layout: "active", theme: "dark", next_goal: "Launch on Product Hunt", time_zone: "Europe/Lisbon",
           sections: { "avatar" => "0", "streak" => "1" },
           headlines: { "2026-10-08" => { "text" => "playwheelsoff.com is live", "kind" => "shipped" } },
           post_text: "Week 41, my words."
@@ -73,6 +73,63 @@ RSpec.describe "Week cards", type: :request do
         expect(response.body).to include("Launch on Product Hunt")
         expect(response.body).to include(WeekCardsHelper::CARD_THEMES["dark"][:ground])
         expect(response.body).not_to include("<image")
+      end
+    end
+
+    describe "the template" do
+      def page
+        Nokogiri::HTML(response.body)
+      end
+
+      def offered?(css)
+        page.at_css(css).attributes["hidden"].nil?
+      end
+
+      it "starts a new card on Changelog, and offers only Changelog's sections" do
+        get "/week"
+
+        expect(page.at_css("input[name='week_card[style]'][checked]")["value"]).to eq("changelog")
+        expect(page.css("input[name='week_card[style]']").map { |radio| radio["value"] }).to eq(WeekCardTemplate.keys)
+        expect(offered?("label:has(#section_activity)")).to be(true)
+        expect(offered?("label:has(#section_persona)")).to be(false)
+        expect(offered?("label:has(#section_audience)")).to be(false)
+        expect(page.at_css("label:has(#section_persona)")["data-templates"]).to eq("star_chart")
+      end
+
+      it "hides the Days choice on Pixel Stage, which always draws seven days" do
+        WeekCard.create!(user: user, week_start: Date.current.beginning_of_week, style: "pixel_stage")
+
+        get "/week"
+        expect(offered?("fieldset:has(input[name='week_card[layout]'])")).to be(false)
+        expect(offered?("label:has(#section_building)")).to be(true)
+      end
+
+      it "saves the pick and draws the card with it" do
+        patch "/week/2026-W41", params: { week_card: { style: "star_chart" } }, headers: { "Accept" => "application/json" }
+        expect(WeekCard.find_by!(user: user).style).to eq("star_chart")
+
+        get "/week/2026-W41/preview"
+        expect(response.body).to include(%(data-week-card="star_chart"))
+
+        patch "/week/2026-W41", params: { week_card: { style: "weekly_brief" } }, headers: { "Accept" => "application/json" }
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it "keeps the sections a template hides when the builder switches" do
+        patch "/week/2026-W41", params: { week_card: { style: "timeline", sections: { "audience" => "1", "code" => "0" } } },
+                                headers: { "Accept" => "application/json" }
+        patch "/week/2026-W41", params: { week_card: { style: "changelog" } }, headers: { "Accept" => "application/json" }
+
+        expect(WeekCard.find_by!(user: user).hidden_sections).to eq([ "code" ])
+      end
+
+      it "gives the download only the chosen template's fonts" do
+        get "/week"
+        fonts = JSON.parse(page.at_css("[data-card-export-fonts-value]")["data-card-export-fonts-value"])
+
+        expect(fonts.keys).to eq(WeekCardTemplate.keys)
+        expect(fonts["changelog"].map { |font| font["family"] }.uniq).to contain_exactly("Inter", "DM Mono")
+        expect(fonts["timeline"].map { |font| font["family"] }.uniq).to contain_exactly("DM Sans", "DM Mono")
       end
     end
 

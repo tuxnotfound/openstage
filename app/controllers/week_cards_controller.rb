@@ -48,7 +48,7 @@ class WeekCardsController < ApplicationController
   end
 
   def week_card_params
-    params.require(:week_card).permit(:layout, :theme, :next_goal, :time_zone, :post_text,
+    params.require(:week_card).permit(:style, :layout, :theme, :next_goal, :time_zone, :post_text,
                                       sections: {}, projects: {}, headlines: {})
   end
 end

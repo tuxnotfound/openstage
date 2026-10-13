@@ -4,7 +4,7 @@ import { Controller } from "@hotwired/stimulus"
 // the preview from the server. The post box follows the builder's own text,
 // and the compose links carry it to X and Bluesky.
 export default class extends Controller {
-  static targets = ["form", "post", "counter", "intent", "copyButton", "zone"]
+  static targets = ["form", "post", "counter", "intent", "copyButton", "zone", "choice"]
   static values = { saveUrl: String, previewUrl: String, trackUrl: String, limit: { type: Number, default: 280 } }
 
   connect() {
@@ -31,6 +31,13 @@ export default class extends Controller {
 
     const saved = await response.json()
     if (saved.time_zone === zone) window.Turbo?.visit(window.location.href, { action: "replace" })
+  }
+
+  // Offers only what the chosen template draws. A hidden choice keeps its
+  // value, so switching back finds it as the builder left it.
+  filter() {
+    const chosen = this.formTarget.querySelector("input[name='week_card[style]']:checked")?.value
+    this.choiceTargets.forEach((choice) => { choice.hidden = !choice.dataset.templates.split(" ").includes(chosen) })
   }
 
   queue() {

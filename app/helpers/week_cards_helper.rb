@@ -19,8 +19,8 @@ module WeekCardsHelper
   end
 
   # The card fonts with the URL each loads from, for @font-face and the download.
-  def card_fonts
-    CardText::FONTS.map { |font| font.except(:file).merge(url: asset_path(font[:file])) }
+  def card_fonts(fonts = CardText::FONTS)
+    fonts.map { |font| font.except(:file).merge(url: asset_path(font[:file])) }
   end
 
   def card_face(mono: false)

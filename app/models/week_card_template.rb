@@ -12,6 +12,11 @@ WeekCardTemplate = Data.define(:key, :name, :description, :sections, :families, 
     all.map(&:key)
   end
 
+  # The templates that draw any of these sections.
+  def self.having(*sections)
+    all.select { |template| sections.any? { |section| template.has?(section) } }
+  end
+
   # The template for a stored style; Changelog for anything else.
   def self.find(key)
     all.find { |template| template.key == key } || all.first
