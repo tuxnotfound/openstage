@@ -131,10 +131,10 @@ RSpec.describe CardLayout::StarChart do
       expect(chart_with({ "avatar" => "0" }).initials).to be_nil
     end
 
-    it "turns the stars to one ink and drops the legend and counts without projects" do
+    it "keeps the stars in their colours but drops the legend and counts without projects" do
       bare = chart_with({ "projects" => "0" })
 
-      expect(bare.hues).to be_empty
+      expect(bare.hues.size).to eq(2)
       expect(bare.legend.dots).to be_empty
       expect(texts(bare)).to include("6 commits")
     end

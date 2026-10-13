@@ -113,7 +113,7 @@ module CardLayout
       @palette = PALETTES.fetch(dark ? "dark" : "light")
       @canvas = Canvas.new(LAYERS.keys)
       @days = card.days.each_with_index.map { |day, i| day_of(day, i) }
-      @hues = shows?("projects") ? projects.map { |project| Colors.tones(project_color(project)) } : []
+      @hues = projects.map { |project| Colors.tones(project_color(project)) }
       draw
     end
 
@@ -139,10 +139,10 @@ module CardLayout
       card.totals.commits
     end
 
-    # A project's three tones (halo, core, a dot for paper), or white when the
-    # card shows no project colours.
+    # A project's three tones (halo, core, a dot for paper), by its rank in
+    # the week; white for a week without projects.
     def tones(name)
-      hues[projects.index { |project| project.name == name } || -1] || [ "#FFFFFF", "#FFFFFF", "#888888" ]
+      hues[projects.index { |project| project.name == name } || 0] || [ "#FFFFFF", "#FFFFFF", "#888888" ]
     end
 
     def slot(name)
