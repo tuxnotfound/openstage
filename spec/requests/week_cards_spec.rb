@@ -43,6 +43,21 @@ RSpec.describe "Week cards", type: :request do
       end
     end
 
+    it "keeps the look in a toolbar and the rest in three tabs beside the card" do
+      get "/week"
+      page = Nokogiri::HTML(response.body)
+      tabs = page.at_css("[data-controller='tabs']")
+      panel = ->(key) { tabs.at_css("[data-tabs-panel='#{key}']") }
+
+      expect(tabs.css("[role='tab']").map(&:text)).to eq([ "Words", "On the card", "Post" ])
+      expect(tabs.css("input[name='week_card[style]'], input[name='week_card[theme]'], input[name='week_card[layout]']")).to be_empty
+      expect(panel.call("words").css("input[name$='[text]']").size).to eq(7)
+      expect(panel.call("words").at_css("#next_goal")).to be_present
+      expect(panel.call("parts").at_css("#section_avatar")).to be_present
+      expect(panel.call("post").at_css("#post_text")).to be_present
+      expect(tabs.css("button[data-tabs-target='tab']").map { |button| button["type"] }.uniq).to eq([ "button" ])
+    end
+
     it "loads every card font, for the preview and for the download" do
       get "/week"
 
