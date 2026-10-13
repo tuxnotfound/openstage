@@ -96,6 +96,18 @@ RSpec.describe "Week cards", type: :request do
         expect(page.at_css("label:has(#section_persona)")["data-templates"]).to eq("star_chart")
       end
 
+      it "draws a new card as release notes" do
+        travel_to(Time.zone.local(2026, 10, 9, 12)) do
+          commit("Serve the game at playwheelsoff.com", "me/wheels-off", Time.zone.local(2026, 10, 8, 10))
+          patch "/week/2026-W41", params: { week_card: { headlines: { "2026-10-08" => { "text" => "playwheelsoff.com is live", "kind" => "shipped" } } } },
+                                  headers: { "Accept" => "application/json" }
+
+          get "/week/2026-W41/preview"
+          expect(response.body).to include(%(data-week-card="changelog"), "CHANGELOG · 2026.41", "playwheelsoff.com is live", "SHIPPED",
+                                            "Mon, Tue, Wed, Fri, Sat, Sun · no changes", ".cf-inter-semibold{")
+        end
+      end
+
       it "hides the Days choice on Pixel Stage, which always draws seven days" do
         WeekCard.create!(user: user, week_start: Date.current.beginning_of_week, style: "pixel_stage")
 
