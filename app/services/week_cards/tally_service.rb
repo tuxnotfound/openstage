@@ -7,6 +7,8 @@ module WeekCards
   class TallyService < ApplicationService
     SHIPPED = %w[milestone released].freeze
     PUBLISHED = %w[posted link note].freeze
+    # The most starting points a day's menu offers.
+    SUGGESTIONS = 30
 
     Tally = Data.define(:days, :projects, :totals, :best_run, :commits)
     # hours: each hour of the day with commits, to its commits by project.
@@ -74,12 +76,13 @@ module WeekCards
       Headline.new(text: self.class.count_line(counts), kind: "built", project: name, source: :count)
     end
 
-    # Starting points for the builder's own words: what they logged, then what
-    # they committed. The builder edits; nothing goes on the card as is.
+    # Starting points for the builder's own words, for the day's menu: what
+    # they logged, then what they committed. The builder edits; nothing goes on
+    # the card as is.
     def suggestions_on(date, highlights)
       logged = highlights.map(&:title)
       committed = shown_commits_on(date).map(&:title)
-      (logged + committed).map { |title| title.lines.first.to_s.strip }.reject(&:blank?).uniq.first(5)
+      (logged + committed).map { |title| title.lines.first.to_s.strip }.reject(&:blank?).uniq.first(SUGGESTIONS)
     end
 
     def hours_on(date)
