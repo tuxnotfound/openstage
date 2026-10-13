@@ -29,7 +29,7 @@ class ProfilesController < ApplicationController
     @timeline = TimelineSessions.group(@entries)
 
     @pinned_entries  = @user.entries.publicly_visible.pinned_entries.chronological
-    @available_repos = @user.entries.publicly_visible.where.not(repo_name: nil).distinct.order(:repo_name).pluck(:repo_name)
+    @available_repos = @user.entries.publicly_visible.repo_names
     @has_posted_entries = @user.entries.publicly_visible.posted.exists?
 
     @total_entries = @user.entries.publicly_visible.count

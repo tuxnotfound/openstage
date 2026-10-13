@@ -59,4 +59,14 @@ RSpec.describe Entry, type: :model do
       expect(Entry.chronological.to_a).to eq([ newer, older ])
     end
   end
+
+  describe ".repo_names" do
+    it "lists each repo once, sorted, leaving out entries without one" do
+      create_list(:entry, 2, user: user, repo_name: "user/zeta")
+      create(:entry, user: user, repo_name: "user/alpha")
+      create(:entry, user: user, repo_name: nil)
+
+      expect(Entry.repo_names).to eq([ "user/alpha", "user/zeta" ])
+    end
+  end
 end

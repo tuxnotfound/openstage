@@ -62,4 +62,9 @@ class Entry < ApplicationRecord
     pattern = "%#{sanitize_sql_like(term.to_s.strip)}%"
     where("title ILIKE :q OR body ILIKE :q OR repo_name ILIKE :q", q: pattern)
   }
+
+  # The repos these entries came from, for a repo filter.
+  def self.repo_names
+    where.not(repo_name: nil).distinct.order(:repo_name).pluck(:repo_name)
+  end
 end
