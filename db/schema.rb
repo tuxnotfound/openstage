@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_11_000003) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_13_100001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -49,6 +49,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_11_000003) do
     t.datetime "updated_at", null: false
     t.boolean "pinned", default: false, null: false
     t.string "visibility", default: "public", null: false
+    t.string "branch"
     t.index ["user_id", "external_id"], name: "index_entries_on_user_id_and_external_id", unique: true
     t.index ["user_id", "occurred_at"], name: "index_entries_on_user_id_and_occurred_at"
     t.index ["user_id", "pinned"], name: "index_entries_on_user_id_and_pinned"
@@ -93,6 +94,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_11_000003) do
     t.datetime "updated_at", null: false
     t.boolean "private_repo", default: false, null: false
     t.boolean "included_chosen", default: false, null: false
+    t.jsonb "branch_heads", default: {}, null: false
     t.index ["user_id", "github_repo_id"], name: "index_github_repos_on_user_id_and_github_repo_id", unique: true
     t.index ["user_id"], name: "index_github_repos_on_user_id"
   end
@@ -283,6 +285,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_11_000003) do
     t.boolean "weekly_email", default: true, null: false
     t.datetime "weekly_email_sent_at"
     t.boolean "internal", default: false, null: false
+    t.boolean "branch_commits", default: true, null: false
     t.index ["github_uid"], name: "index_users_on_github_uid", unique: true
     t.index ["signup_ref"], name: "index_users_on_signup_ref"
     t.index ["username"], name: "index_users_on_username", unique: true

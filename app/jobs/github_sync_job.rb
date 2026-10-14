@@ -120,15 +120,17 @@ class GithubSyncJob < ApplicationJob
     repo = GithubRepos::RecordService.new(user: user, listing: repo_data).tap(&:call!).repo
     return unless repo.included?
 
-    @entries_added += sync_commits(client, user, repo, private_repo: repo_data.private)
+    @entries_added += sync_commits(client, user, repo)
     repo.update!(last_synced_at: Time.current)
+    @entries_added += sync_branches(client, user, repo) if user.branch_commits?
   rescue Octokit::Conflict
     # GitHub answers 409 while a repo has no commits yet. Nothing failed, and the
     # watermark stays unset so its first commits get the full window.
     nil
-  rescue Octokit::Error => e
+  rescue Octokit::Error, ApplicationGateway::Error => e
     # Per-repo failure must not advance the watermark, or commits in the
-    # gap are lost forever. Other repos continue to sync.
+    # gap are lost forever. Other repos continue to sync. The gateway errors
+    # come from a squash merge's pull request lookup.
     Rails.logger.warn "[GithubSyncJob] skipping #{repo.full_name}: #{e.message}"
     @skipped << repo.full_name
   end
@@ -162,7 +164,7 @@ class GithubSyncJob < ApplicationJob
     count
   end
 
-  def sync_commits(client, user, repo, private_repo: false)
+  def sync_commits(client, user, repo)
     since = commits_since(repo)
     added = 0
 
@@ -171,11 +173,7 @@ class GithubSyncJob < ApplicationJob
     end
 
     capped = each_page(fetch_commits) do |commit_page|
-      commit_page.each do |commit|
-        next if !authored_by?(commit, user) || dismissed_shas(user).include?(commit.sha)
-
-        added += 1 if import_commit(user, repo, commit, private_repo: private_repo)
-      end
+      commit_page.each { |commit| added += 1 if record_commit(client, user, repo, commit) }
     end
 
     # GitHub lists newest first, so a capped read leaves out the oldest ones.
@@ -194,22 +192,29 @@ class GithubSyncJob < ApplicationJob
   end
 
   # True when the commit was new to the builder's page.
-  def import_commit(user, repo, commit, private_repo:)
-    entry = Entry.find_or_initialize_by(user: user, external_id: commit.sha)
-    return false unless entry.new_record?
+  def record_commit(client, user, repo, commit)
+    record = GithubCommits::RecordService.new(user: user, repo: repo, commit: to_commit(commit), token: client.access_token)
+    record.tap(&:call!).added
+  end
 
-    entry.assign_attributes(
-      entry_type: :shipped,
-      source: :github,
-      title: commit.commit.message.split("\n").first.truncate(200),
-      occurred_at: commit.commit.author.date,
-      # Never expose commit links for private repositories.
-      url: private_repo ? nil : commit.html_url,
-      repo_name: repo.full_name
-    )
-    entry.save!
-  rescue ActiveRecord::RecordNotUnique
-    false
+  # Octokit's commit as the gateway's, so the default branch and the others
+  # are recorded by the same rules.
+  def to_commit(commit)
+    GithubGateway::Commit.new(sha: commit.sha, message: commit.commit.message, authored_at: commit.commit.author.date,
+                              html_url: commit.html_url, author_login: commit.author&.login,
+                              author_email: commit.commit&.author&.email)
+  end
+
+  # Commits only on other branches, tagged with their branch. Off when the
+  # builder turned branch commits off in Settings.
+  def sync_branches(client, user, repo)
+    GithubCommits::ImportBranchesService.new(user: user, repo: repo, token: client.access_token).tap(&:call!).added
+  rescue ApplicationGateway::Error => e
+    # The default branch is in and its watermark set. Unread branches keep
+    # their old heads, so the next run reads them again.
+    Rails.logger.warn "[GithubSyncJob] skipping #{repo.full_name} branches: #{e.message}"
+    @skipped << "#{repo.full_name} (other branches)"
+    0
   end
 
   # Yields each page of a paginated Octokit response so the previous page can
@@ -238,26 +243,5 @@ class GithubSyncJob < ApplicationJob
       return false if page.size < PER_PAGE
     end
     @listing_incomplete = true
-  end
-
-  # Commits the builder deleted from their page are never imported again.
-  def dismissed_shas(user)
-    @dismissed_shas ||= DismissedCommit.where(user_id: user.id).pluck(:sha).to_set
-  end
-
-  # GitHub returns `commit.author = nil` whenever the committer email isn't
-  # tied to a verified account, which silently dropped legitimate commits.
-  # Fall back to matching the GitHub-issued noreply email pattern.
-  def authored_by?(commit, user)
-    username = user.github_username.to_s.downcase
-    return false if username.empty?
-
-    login = commit.author&.login&.downcase
-    return true if login == username
-
-    email = commit.commit&.author&.email.to_s.downcase
-    return false if email.empty?
-
-    email.match?(/\A(?:\d+\+)?#{Regexp.escape(username)}@users\.noreply\.github\.com\z/)
   end
 end
