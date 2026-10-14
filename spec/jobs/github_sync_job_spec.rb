@@ -181,12 +181,68 @@ RSpec.describe GithubSyncJob, type: :job do
       expect(SyncLog.last.error_message).to eq("skipped: tuxnotfound/myapp")
     end
 
-    it "clears recorded scopes on a dead token so the next sign-in replaces it" do
-      user.update!(github_token_scopes: "repo,user:email")
-      allow(client).to receive(:scopes).and_raise(Octokit::Unauthorized)
+    describe "a token GitHub turns down" do
+      before do
+        user.update!(github_token_scopes: "repo,user:email")
+        allow(client).to receive(:scopes).and_raise(Octokit::Unauthorized)
+      end
 
-      expect { described_class.new.perform(user.id) }.to raise_error(Octokit::Unauthorized)
-      expect(user.reload.github_token_scopes).to be_nil
+      def synced_successfully(at)
+        create(:sync_log, user: user, source: :github, status: :success, ran_at: at)
+      end
+
+      it "fails the run with a note to reconnect, without raising" do
+        expect { described_class.new.perform(user.id) }.not_to raise_error
+
+        expect(SyncLog.last).to have_attributes(status: "failed", error_message: SyncLog::TOKEN_REJECTED)
+        expect(SyncLog.last).to be_token_rejected
+      end
+
+      it "keeps the token within a day of a good sync, in case GitHub blipped" do
+        synced_successfully(3.hours.ago)
+
+        described_class.new.perform(user.id)
+
+        expect(user.reload.github_access_token).to eq("gho_token")
+      end
+
+      it "clears the recorded scopes at once so the next sign-in replaces the token" do
+        synced_successfully(3.hours.ago)
+
+        described_class.new.perform(user.id)
+
+        expect(user.reload.github_token_scopes).to be_nil
+      end
+
+      it "drops the token after a day without a good sync, so the fanout skips it" do
+        synced_successfully(25.hours.ago)
+
+        described_class.new.perform(user.id)
+
+        expect(user.reload.github_access_token).to be_nil
+        expect(described_class).not_to receive(:set)
+        GithubSyncFanoutJob.new.perform
+      end
+
+      it "drops it for a builder who never had a good sync, a day after signing up" do
+        user.update_column(:created_at, 2.days.ago)
+
+        described_class.new.perform(user.id)
+
+        expect(user.reload.github_access_token).to be_nil
+      end
+
+      it "keeps a token a sign-in stored while the run was reading the old one" do
+        synced_successfully(25.hours.ago)
+        allow(client).to receive(:scopes) do
+          User.where(id: user.id).update_all(github_access_token: "gho_new", github_token_scopes: "user:email")
+          raise Octokit::Unauthorized
+        end
+
+        described_class.new.perform(user.id)
+
+        expect(user.reload).to have_attributes(github_access_token: "gho_new", github_token_scopes: "user:email")
+      end
     end
 
     it "does not create duplicate entries on re-sync" do

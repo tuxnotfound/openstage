@@ -19,6 +19,15 @@ class GithubSyncJob < ApplicationJob
   # deleted before it. It stops binding once the overlap starts after it.
   DISMISSALS_RECORDED_FROM = Time.utc(2026, 10, 12)
 
+  # GitHub turns down a revoked token at the first call, GET /user. One 401
+  # could be a blip on GitHub's side, so the token is dropped only after a day
+  # with no good sync, and the fanout then stops enqueuing it. Signing in again
+  # stores a new one. Neither case raises: a dead token is the builder's state,
+  # not a broken job, and raising filled the failed jobs F4 counts.
+  TOKEN_GRACE = 1.day
+
+  class TokenRejected < StandardError; end
+
   PER_PAGE = 100
   # Backstop so a pagination bug can never loop indefinitely again.
   MAX_PAGES = 20
@@ -33,9 +42,9 @@ class GithubSyncJob < ApplicationJob
       sync(user)
       log.update!(status: :success, entries_added: @entries_added, error_message: sync_notes(user))
       Rails.logger.info "[GithubSyncJob] user=#{user.username} repos=#{@listed_ids.size} entries_added=#{@entries_added}"
+    rescue TokenRejected
+      reject_token(user, log)
     rescue => e
-      # A dead token must not stop the next sign-in from replacing it.
-      user.update_column(:github_token_scopes, nil) if e.is_a?(Octokit::Unauthorized)
       log.update!(status: :failed, error_message: e.message)
       Rails.logger.error "[GithubSyncJob] user=#{user.username} error=#{e.message}"
       raise
@@ -53,8 +62,8 @@ class GithubSyncJob < ApplicationJob
     client = Octokit::Client.new(access_token: user.github_access_token)
 
     # One header read. Keeps Settings honest about private-repo access
-    # without waiting for a sign-in; a revoked token raises here.
-    user.update_column(:github_token_scopes, client.scopes.join(","))
+    # without waiting for a sign-in.
+    user.update_column(:github_token_scopes, token_scopes(client).join(","))
 
     # Every repo the user can push to, not just the ones they own. `type: "owner"`
     # silently dropped org repos and any shared project owned by a teammate,
@@ -76,6 +85,25 @@ class GithubSyncJob < ApplicationJob
     # Runs off our own table, not the GitHub listing, so it still works after
     # the "repo" scope is revoked and private repos vanish from the API.
     hide_excluded_private_entries(user)
+  end
+
+  def token_scopes(client)
+    client.scopes
+  rescue Octokit::Unauthorized
+    raise TokenRejected
+  end
+
+  def reject_token(user, log)
+    log.update!(status: :failed, error_message: SyncLog::TOKEN_REJECTED)
+    Rails.logger.warn "[GithubSyncJob] user=#{user.username} token rejected by GitHub"
+
+    # Only the token this run read: a sign-in meanwhile may have stored a new one.
+    same_token = User.where(id: user.id, github_access_token: user.github_access_token)
+    # The scopes go at once, or a sign-in would keep a dead repo-scoped token over its new one.
+    same_token.update_all(github_token_scopes: nil)
+    return if (user.last_synced_at(source: :github) || user.created_at) > TOKEN_GRACE.ago
+
+    same_token.update_all(github_access_token: nil)
   end
 
   # fetch receives a page number and returns that page of repos.

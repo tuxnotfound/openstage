@@ -31,6 +31,16 @@ RSpec.describe "Dashboard", type: :request do
         expect(card).to include("Sync now")
       end
 
+      it "offers to reconnect GitHub instead of syncing once GitHub turned the token down" do
+        create(:sync_log, user: user, status: "failed", error_message: SyncLog::TOKEN_REJECTED)
+
+        get "/dashboard"
+
+        card = response.body[/<section[^>]*data-page-card.*?<\/section>/m]
+        expect(card).to include("Reconnect GitHub", "Reconnect GitHub to resume syncing.")
+        expect(card).not_to include("Sync now")
+      end
+
       it "points a quiet week at the composer instead of the recap" do
         get "/dashboard"
 
