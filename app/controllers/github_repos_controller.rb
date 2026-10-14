@@ -26,9 +26,9 @@ class GithubReposController < ApplicationController
     if !@repo.included?
       scope.update_all(hidden: true)
     elsif @repo.private_repo?
-      # Including a private repo publishes its commit messages, which is the
-      # point of the opt-in. Commit URLs stay stripped: they 404 for visitors
-      # and only confirm the repo path.
+      # Including a private repo publishes its commit messages and releases,
+      # which is the point of the opt-in. Their URLs stay stripped: they 404
+      # for visitors and only confirm the repo path.
       scope.update_all(hidden: false, url: nil)
     else
       scope.update_all(hidden: false)

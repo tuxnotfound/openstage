@@ -13,9 +13,9 @@
       <% if repo.private_repo? %>
         <p class="text-xs <%= repo.included? ? "text-amber-700" : "text-gray-400" %>">
           <% if repo.included? %>
-            Commit messages from this private repo are public on your profile. Code and commit links are not.
+            Commit messages and releases from this private repo are public on your profile. Code and links are not.
           <% else %>
-            Excluded. Include it to publish its commit messages (your code stays private).
+            Excluded. Include it to publish its commit messages and releases (your code stays private).
           <% end %>
         </p>
       <% elsif repo.description.present? %>
