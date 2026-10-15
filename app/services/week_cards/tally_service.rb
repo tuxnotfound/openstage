@@ -5,8 +5,8 @@ module WeekCards
   # one; otherwise what they shipped or published that day; otherwise a plain
   # count. Never a bare commit message: those mean little without context.
   class TallyService < ApplicationService
-    SHIPPED = %w[milestone released].freeze
-    PUBLISHED = %w[posted link note].freeze
+    SHIPPED = Entry::SHIPPED_TYPES
+    PUBLISHED = Entry::PUBLISHED_TYPES
     # The most starting points a day's menu offers.
     SUGGESTIONS = 30
 

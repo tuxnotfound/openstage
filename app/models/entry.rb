@@ -12,6 +12,11 @@ class Entry < ApplicationRecord
     posted: "posted"
   }
 
+  # What a builder shipped and what they published, as the week card and the
+  # progress section count them. A commit is neither.
+  SHIPPED_TYPES = %w[milestone released].freeze
+  PUBLISHED_TYPES = %w[posted link note].freeze
+
   enum :source, {
     github: "github",
     twitter: "twitter",
