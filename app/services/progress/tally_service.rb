@@ -1,0 +1,105 @@
+module Progress
+  # Counts a builder's public work over one period of the progress section:
+  # commits per project in each bucket, active days, what they shipped and
+  # published, and the same counts over the same span of the period before.
+  # With a repo, only that project's commits and the entries tagged with it
+  # count; nothing is inferred from text. Days are in the zone of the
+  # builder's last saved week card, else UTC.
+  class TallyService < ApplicationService
+    # A shipped or published entry on its day in the builder's zone.
+    Item = Data.define(:entry, :date, :kind) do
+      delegate :id, :title, :body, :repo_name, :pinned?, to: :entry
+
+      def shipped?
+        kind == :shipped
+      end
+    end
+    # counts: commits by repo, the selected repo's only under a filter.
+    Bucket = Data.define(:span, :counts, :total, :items)
+    # all_commits counts every project's, for the selected one's share.
+    Totals = Data.define(:shipped, :published, :commits, :all_commits, :active_days, :counts) do
+      def projects
+        counts.count { |repo, n| repo && n.positive? }
+      end
+
+      def share
+        all_commits.zero? ? 0 : (100.0 * commits / all_commits).round
+      end
+    end
+
+    attr_accessor :user, :range, :offset, :repo
+    attr_reader :zone, :period, :projects, :items, :buckets, :totals, :previous_totals, :first_active_day
+
+    validates :user, presence: true
+
+    private
+
+    def execute
+      @zone = ActiveSupport::TimeZone[WeekCard.last_time_zone_for(user).to_s] || ActiveSupport::TimeZone["UTC"]
+      @projects = Projects.new(public_entries)
+      @period = Period.new(range: range, offset: offset, today: Time.current.in_time_zone(zone).to_date, first_activity: first_activity)
+      @items = items_on(period.first..period.last_day)
+      @buckets = period.buckets.map { |bucket| tally_bucket(bucket) }
+      @totals = totals_on(period.first..period.last_day)
+      @previous_totals = totals_on(period.comparison) if period.comparison
+      @first_active_day = (selected_commits_on(period.first..period.last_day).map(&:first) + items.map(&:date)).min
+    end
+
+    def public_entries
+      @public_entries ||= user.entries.publicly_visible.without_tooling_noise
+    end
+
+    def first_activity
+      first = public_entries.commits.or(public_entries.highlights).minimum(:occurred_at)
+      first&.in_time_zone(zone)&.to_date
+    end
+
+    def tally_bucket(bucket)
+      days = bucket.first..bucket.last
+      counts = tally(selected_commits_on(days))
+      Bucket.new(span: bucket, counts: counts, total: counts.values.sum, items: items.select { |item| days.cover?(item.date) })
+    end
+
+    def totals_on(days)
+      selected = selected_commits_on(days)
+      shown = items_on(days)
+      Totals.new(shipped: shown.count(&:shipped?), published: shown.count { |item| !item.shipped? },
+                 commits: selected.size, all_commits: commits_on(days).size,
+                 active_days: (selected.map(&:first) + shown.map(&:date)).uniq.size, counts: tally(selected))
+    end
+
+    def tally(commits)
+      commits.group_by(&:last).transform_values(&:size)
+    end
+
+    def selected_commits_on(days)
+      commits_on(days).select { |_date, commit_repo| repo.nil? || commit_repo == repo }
+    end
+
+    def commits_on(days)
+      window_commits.select { |date, _repo| days.cover?(date) }
+    end
+
+    def items_on(days)
+      window_items.select { |item| days.cover?(item.date) && (repo.nil? || item.repo_name == repo) }
+    end
+
+    # [date, repo] for every public commit from the comparison's start to today.
+    def window_commits
+      @window_commits ||= public_entries.commits.where(occurred_at: window).pluck(:occurred_at, :repo_name)
+                                        .map { |at, commit_repo| [ at.in_time_zone(zone).to_date, commit_repo ] }
+    end
+
+    def window_items
+      @window_items ||= public_entries.highlights.where(occurred_at: window).order(:occurred_at, :id).map do |entry|
+        Item.new(entry: entry, date: entry.occurred_at.in_time_zone(zone).to_date,
+                 kind: Entry::SHIPPED_TYPES.include?(entry.entry_type) ? :shipped : :published)
+      end
+    end
+
+    def window
+      from = [ period.first, period.comparison&.first ].compact.min
+      from.in_time_zone(zone)...(period.last_day + 1).in_time_zone(zone)
+    end
+  end
+end
