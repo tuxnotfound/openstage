@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Progress card (Footnotes)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=DM+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 1200px; height: 630px; overflow: hidden; background: {{t.bg}}; color: {{t.ink}}; font-family: Inter, sans-serif">
+
+  <svg width="1200" height="630" viewBox="0 0 1200 630" style="position: absolute; left: 0; top: 0" aria-hidden="true">
+    <defs>
+      <clipPath id="pc-avatar"><circle cx="88" cy="80" r="28"></circle></clipPath>
+    </defs>
+    <circle cx="88" cy="80" r="30" fill="{{t.ring}}"></circle>
+    <image href="/_blob/59b36a5d4069a14bd0e0e68e44a14127" x="60" y="52" width="56" height="56" clip-path="url(#pc-avatar)" preserveAspectRatio="xMidYMid slice"></image>
+    <path d="M60,136H1140" stroke="{{t.rule}}" stroke-width="1"></path>
+    <path d="M650.5,166V580" stroke="{{t.rule}}" stroke-width="1"></path>
+    <path d="{{c.gridD}}" stroke="{{t.rule}}" stroke-width="1" fill="none"></path>
+    <path d="{{c.baseD}}" stroke="{{t.ruleStrong}}" stroke-width="1" fill="none"></path>
+    <path d="{{c.fills.0.d}}" fill="{{c.fills.0.fill}}"></path>
+    <path d="{{c.fills.1.d}}" fill="{{c.fills.1.fill}}"></path>
+    <path d="{{c.fills.2.d}}" fill="{{c.fills.2.fill}}"></path>
+    <path d="{{c.fills.3.d}}" fill="{{c.fills.3.fill}}"></path>
+    <path d="{{c.fills.4.d}}" fill="{{c.fills.4.fill}}"></path>
+    <path d="{{c.fills.5.d}}" fill="{{c.fills.5.fill}}"></path>
+    <path d="{{c.fills.6.d}}" fill="{{c.fills.6.fill}}"></path>
+  </svg>
+
+  <div style="position: absolute; left: 132px; top: 52px; display: flex; align-items: center; gap: 10px">
+    <span style="font-size: 26px; font-weight: 600; letter-spacing: -0.01em; line-height: 30px">Tux</span>
+    <span style="font-family: 'DM Mono', monospace; font-size: 10.5px; font-weight: 500; letter-spacing: 0.12em; line-height: 14px; padding: 2px 6px; border: 1px solid {{t.ruleStrong}}; border-radius: 4px; color: {{t.muted}}">PRO</span>
+  </div>
+  <div style="position: absolute; left: 132px; top: 88px; font-family: 'DM Mono', monospace; font-size: 14px; line-height: 18px; color: {{t.muted}}">@tuxnotfound</div>
+  <div style="position: absolute; right: 60px; top: 70px; font-size: 16px; font-weight: 500; line-height: 20px; letter-spacing: -0.005em"><span style="color: {{t.muted}}">openstage.dev/</span>tuxnotfound</div>
+
+  <div style="position: absolute; left: 60px; top: 166px; font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.14em; line-height: 14px; color: {{t.accent}}">{{names.tag}}</div>
+  <div style="position: absolute; left: 58px; top: 184px; font-size: 46px; font-weight: 600; letter-spacing: -0.02em; line-height: 54px; white-space: nowrap">{{names.title}}</div>
+  <div style="position: absolute; left: 60px; top: 244px; display: flex; align-items: center; font-size: 16px; line-height: 20px; color: {{t.muted}}; white-space: nowrap">
+    <sc-if value="{{dateline.project}}" hint-placeholder-val="{{ false }}">
+      <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex-shrink: 0; margin-right: 8px"><circle cx="5" cy="5" r="5" fill="{{dateline.dot}}"></circle></svg>
+      <span style="font-weight: 500; color: {{t.ink}}">{{dateline.slug}}</span><span style="white-space: pre"> · </span>
+    </sc-if>
+    <span>{{dateline.text}}</span>
+  </div>
+
+  <sc-for list="{{ticks}}" as="tk" hint-placeholder-count="3">
+    <div style="position: absolute; left: 88px; top: {{tk.top}}px; transform: translate(-100%, -50%); font-family: 'DM Mono', monospace; font-size: 11px; line-height: 12px; color: {{t.faint}}; font-variant-numeric: tabular-nums">{{tk.v}}</div>
+  </sc-for>
+  <sc-for list="{{xls}}" as="xl" hint-placeholder-count="7">
+    <div style="position: absolute; left: {{xl.left}}px; top: 536px; transform: translateX(-50%); font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; line-height: 12px; white-space: nowrap; color: {{xl.color}}">{{xl.text}}</div>
+  </sc-for>
+  <sc-for list="{{discs}}" as="d" hint-placeholder-count="5">
+    <div style="position: absolute; box-sizing: border-box; display: flex; align-items: center; justify-content: center; left: {{d.left}}px; top: {{d.top}}px; width: {{d.w}}px; height: 20px; border-radius: 10px; background: {{d.bg}}; border: {{d.border}}; box-shadow: 0 0 0 2px {{t.bg}}; color: {{d.fg}}; font-size: 12px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap">{{d.label}}</div>
+  </sc-for>
+
+  <div style="position: absolute; left: 60px; top: 562px; display: flex; align-items: center; gap: 22px; line-height: 18px; white-space: nowrap">
+    <sc-for list="{{legend}}" as="lg" hint-placeholder-count="4">
+      <span style="display: inline-flex; align-items: center; gap: 8px">
+        <span style="display: inline-block; width: 11px; height: 11px; border-radius: 3px; background: {{lg.color}}"></span>
+        <span style="font-size: 13px; font-weight: 500">{{lg.name}}</span>
+        <span style="font-family: 'DM Mono', monospace; font-size: 12px; color: {{t.muted}}">{{lg.n}}</span>
+      </span>
+    </sc-for>
+    <sc-if value="{{legendMore.show}}" hint-placeholder-val="{{ false }}">
+      <span style="font-size: 13px; color: {{t.muted}}">{{legendMore.text}}</span>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{head.show}}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; left: 680px; top: 166px; display: flex; align-items: center; gap: 22px; font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.14em; line-height: 14px; color: {{t.muted}}; white-space: nowrap">
+      <sc-if value="{{head.ship.show}}" hint-placeholder-val="{{ true }}">
+        <span style="display: inline-flex; align-items: center; gap: 8px">
+          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="{{t.ink}}"></circle></svg>{{head.ship.text}}
+        </span>
+      </sc-if>
+      <sc-if value="{{head.post.show}}" hint-placeholder-val="{{ true }}">
+        <span style="display: inline-flex; align-items: center; gap: 8px">
+          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.1" fill="{{t.bg}}" stroke="{{t.ink}}" stroke-width="1.5"></circle></svg>{{head.post.text}}
+        </span>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <sc-for list="{{notes}}" as="nt" hint-placeholder-count="6">
+    <div style="position: absolute; box-sizing: border-box; display: flex; align-items: center; justify-content: center; left: 680px; top: {{nt.discTop}}px; width: 20px; height: 20px; border-radius: 10px; background: {{nt.bg}}; border: {{nt.border}}; color: {{nt.fg}}; font-size: 12px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums">{{nt.n}}</div>
+    <div style="position: absolute; left: 716px; top: {{nt.top}}px; width: 424px; font-size: {{nt.size}}px; font-weight: 500; line-height: {{nt.lh}}px; white-space: nowrap">
+      <sc-for list="{{nt.lines}}" as="ln" hint-placeholder-count="2">
+        <div style="height: {{nt.lh}}px">{{ln.text}}<sc-if value="{{ln.star}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 24 24" aria-hidden="true" style="width: 0.62em; height: 0.62em; margin-left: 0.2em; vertical-align: 0.02em"><path fill="{{t.ink}}" d="M11.05 2.93c.3-.92 1.6-.92 1.9 0l1.52 4.67a1 1 0 00.95.69h4.91c.97 0 1.37 1.24.59 1.81l-3.98 2.89a1 1 0 00-.36 1.12l1.52 4.67c.3.92-.76 1.69-1.54 1.12l-3.98-2.89a1 1 0 00-1.17 0l-3.98 2.89c-.78.57-1.84-.2-1.54-1.12l1.52-4.67a1 1 0 00-.36-1.12L2.07 10.1c-.78-.57-.38-1.81.59-1.81h4.91a1 1 0 00.95-.69l1.53-4.67z"></path></svg></sc-if><sc-if value="{{ln.hasRun}}" hint-placeholder-val="{{ false }}"><span style="font-weight: 400; color: {{t.muted}}; white-space: pre">{{ln.run}}</span></sc-if></div>
+      </sc-for>
+    </div>
+  </sc-for>
+
+  <sc-if value="{{empty.show}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 680px; top: 196px; width: 424px; font-size: 24px; font-weight: 500; line-height: 30px; color: {{t.muted}}; white-space: nowrap">
+      <sc-for list="{{empty.lines}}" as="el" hint-placeholder-count="2">
+        <div style="height: 30px">{{el.text}}</div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{footer.show}}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; left: 680px; top: 560px; font-size: 14px; line-height: 18px; color: {{t.muted}}; white-space: nowrap">{{footer.text}}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"range":{"editor":"enum","options":["week","month","year","all"],"default":"year"},"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"offset":{"editor":"int","default":0,"min":-60,"max":0},"project":{"editor":"text","default":""},"tags":{"editor":null,"default":"{}"},"feature":{"editor":null,"default":""},"$preview":{"width":1200,"height":630}}'>
+/*CORE_JS*/
+
+// ===== Footnotes card =====
+// Left: the period's bars with numbered discs on them. Right: the same numbers
+// start the notes, set as large as they all fit (32, 28, 24 or 20px).
+const G = { L: 96, R: 620, T: 318, B: 528, disc: 20, pill: 32, lift: 4, gap: 2 };
+const NOTES = { w: 424, top: 196, bottom: 548, sizes: [32, 28, 24, 20], maxLines: 3 };
+const LEFT_W = 560;
+
+// ----- Chart helpers. This block is identical in section.js and card.src.dc.html
+// (the assembler pastes only core.js into the card), so edit both together.
+
+function niceTicks(max) {
+  const raw = max / 3; const p = Math.pow(10, Math.floor(Math.log10(raw))); const m = raw / p;
+  const step = (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p;
+  const top = Math.ceil(max / step - 1e-9) * step; const out = [];
+  for (let v = 0; v <= top + 1e-9; v += step) out.push(Math.round(v * 10) / 10);
+  return out;
+}
+function box(x, y, w, h) { return 'M' + r1(x) + ',' + r1(y) + 'h' + r1(w) + 'v' + r1(h) + 'h' + r1(-w) + 'Z'; }
+function roundTop(x, y, w, h, r) {
+  r = Math.max(0, Math.min(r, h, w / 2));
+  return 'M' + r1(x) + ',' + r1(y + h) + 'V' + r1(y + r) + 'Q' + r1(x) + ',' + r1(y) + ' ' + r1(x + r) + ',' + r1(y) + 'H' + r1(x + w - r) + 'Q' + r1(x + w) + ',' + r1(y) + ' ' + r1(x + w) + ',' + r1(y + r) + 'V' + r1(y + h) + 'Z';
+}
+
+// Stacked bars, one path per project; a 2px gap is carved off the top of
+// every segment under another one. cols[i] holds a bar's centre and top.
+function barsOf(bs, g, surface) {
+  const slot = (g.R - g.L) / bs.length; const bw = Math.max(3, Math.min(24, slot * 0.62));
+  const ticks = niceTicks(Math.max(4, ...bs.map(b => b.total))); const top = ticks[ticks.length - 1];
+  const y = v => g.B - (v / top) * (g.B - g.T);
+  const paths = DATA.projects.map(() => '');
+  const cols = bs.map((b, i) => {
+    const cx = g.L + slot * (i + 0.5); const x = cx - bw / 2;
+    const segs = b.counts.map((v, pi) => [pi, v]).filter(s => s[1] > 0); let acc = 0;
+    segs.forEach(([pi, v], k) => {
+      const yb = y(acc), yt = y(acc + v); acc += v; const last = k === segs.length - 1;
+      const yTop = last ? yt : Math.min(yt + 2, yb - 1);
+      paths[pi] += last ? roundTop(x, yTop, bw, yb - yTop, 4) : box(x, yTop, bw, yb - yTop);
+    });
+    return { cx, x, top: y(b.total) };
+  });
+  return { slot, bw, cols, grid: ticks.slice(1).map(v => ({ v, y: r1(y(v)) })), fills: paths.map((d, pi) => ({ d, fill: colorOf(pi, surface) })) };
+}
+
+// The highest bar a disc standing at x would touch, with 1px to spare.
+function reachTop(x, w, bars) {
+  let top = Infinity;
+  bars.cols.forEach(c => { if (c.x < x + w / 2 + 1 && c.x + bars.bw > x - w / 2 - 1) top = Math.min(top, c.top); });
+  return top;
+}
+
+// Where each disc stands. A disc sits just above its own bar; other discs and
+// taller neighbouring bars push it sideways. Every spot within two pills of the
+// bar's centre is weighed by the distance moved (squared) plus 4 for each unit a
+// taller bar would still lift the disc. The cheapest row of spots that keeps
+// every pair of discs `gap` apart wins, so a disc moves only as far as it must
+// and floats above its bar only when no spot beside it is clear.
+function place(ds, bars, g) {
+  const STEP = 0.5, LIFT = 4, N = Math.round(2 * g.pill / STEP);
+  ds.forEach(d => { d.x = bars.cols[d.i].cx; });
+  if (!ds.length) return;
+  const spots = ds.map(d => {
+    const own = bars.cols[d.i]; const row = [];
+    for (let q = -N; q <= N; q++) {
+      const x = own.cx + q * STEP;
+      if (x - d.w / 2 >= g.L && x + d.w / 2 <= g.R) row.push({ x, cost: (q * STEP) * (q * STEP) + LIFT * Math.max(0, own.top - reachTop(x, d.w, bars)) });
+    }
+    return row;
+  });
+  // best[k][j]: the cheapest way to stand discs 0..k with disc k on its j-th spot.
+  const best = [], from = [];
+  spots.forEach((row, k) => {
+    best.push([]); from.push([]);
+    const apart = (ds[k - 1] ? (ds[k - 1].w + ds[k].w) / 2 : 0) + g.gap;
+    let p = 0, low = Infinity, at = -1;
+    row.forEach((s, j) => {
+      if (k === 0) { best[k].push(s.cost); from[k].push(-1); return; }
+      while (p < spots[k - 1].length && spots[k - 1][p].x <= s.x - apart + 1e-9) { if (best[k - 1][p] < low) { low = best[k - 1][p]; at = p; } p++; }
+      best[k].push(at < 0 ? Infinity : low + s.cost); from[k].push(at);
+    });
+  });
+  const end = best[ds.length - 1]; let j = end.indexOf(Math.min(...end));
+  if (j < 0 || end[j] === Infinity) return;
+  for (let k = ds.length - 1; k >= 0; k--) { ds[k].x = spots[k][j].x; j = from[k][j]; }
+}
+
+// One disc per bucket that holds notes, numbered in the notes' date order;
+// several notes in one bucket share a pill such as "2–3".
+function discsOf(bs, notes, bars, g) {
+  const ds = [];
+  notes.forEach((x, k) => {
+    const t = ms(x.d); const i = bs.findIndex(b => t >= b.s && t <= b.e); if (i < 0) return;
+    let d = ds.find(o => o.i === i);
+    if (!d) { d = { i, notes: [] }; ds.push(d); }
+    d.notes.push({ n: k + 1, x });
+  });
+  ds.sort((a, b) => a.i - b.i).forEach(d => {
+    d.first = d.notes[0].n; d.last = d.notes[d.notes.length - 1].n;
+    d.label = d.notes.length > 1 ? d.first + '–' + d.last : String(d.first);
+    d.w = d.notes.length > 1 ? g.pill : g.disc;
+    d.ship = d.notes.some(o => o.x.k === 's');
+  });
+  place(ds, bars, g);
+  ds.forEach(d => { d.cy = reachTop(d.x, d.w, bars) - g.lift - g.disc / 2; });
+  return ds;
+}
+
+// Year labels name months, so the month holding today is the current one.
+function toneOf(p, bs, i) {
+  const b = bs[i];
+  if (p.range !== 'year') return b.today ? 'now' : b.future ? 'future' : 'past';
+  const q = parts(b.mon + 3 * DAY); const s = Date.UTC(q.y, q.m, 1); const e = Date.UTC(q.y, q.m + 1, 1) - DAY;
+  return s <= T0 && T0 <= e ? 'now' : s > T0 ? 'future' : 'past';
+}
+
+// ----- end of chart helpers -----
+
+// Shipped is a filled disc, published a ring; both keep a halo from the page.
+function discStyle(ship, t) {
+  return ship ? { bg: t.ink, fg: t.bg, border: '0' } : { bg: t.bg, fg: t.ink, border: '1.75px solid ' + t.ink };
+}
+
+// "Jan 1 – Oct 15, so far · 380 commits on 64 days".
+function datelineOf(names, cur) {
+  return names.sub.replace(' · so far', ', so far') + ' · ' + plural(cur.total, 'commit') + ' on ' + plural(cur.active, 'day');
+}
+
+// As many projects as fit in the column, then "+N more".
+function legendOf(counts, surface) {
+  const order = counts.map((n, pi) => ({ n, pi })).filter(o => o.n > 0).sort((a, b) => b.n - a.n);
+  const wide = o => 11 + 8 + measure(DATA.projects[o.pi], 500, 13, 0) + 8 + monoW(String(o.n), 12, 0);
+  const more = k => measure('+' + (order.length - k) + ' more', 400, 13, 0);
+  const total = k => order.slice(0, k).reduce((a, o, i) => a + wide(o) + (i ? 22 : 0), 0) + (k < order.length ? (k ? 22 : 0) + more(k) : 0);
+  let k = order.length;
+  while (k > 0 && total(k) > LEFT_W) k--;
+  return {
+    legend: order.slice(0, k).map(o => ({ name: DATA.projects[o.pi], n: o.n, color: colorOf(o.pi, surface) })),
+    legendMore: { show: k < order.length, text: '+' + (order.length - k) + ' more' }
+  };
+}
+
+// A title that ends in ":" goes on into its own body. The run-in follows the
+// title word by word onto the note's next lines (3 in all) and is cut at a word
+// with "…". It is dropped when fewer than 6 characters fit.
+function flowRun(words, used, first, size) {
+  const W = s => measure(s, 400, size, 0);
+  const lead = row => (row.words.length || row.at === first ? ' ' : '');
+  const rows = [{ at: first, words: [], used }];
+  let cut = false;
+  for (const word of words) {
+    let row = rows[rows.length - 1];
+    if (row.used + W(lead(row) + word) > NOTES.w) {
+      if (row.at + 1 >= NOTES.maxLines) { cut = true; break; }
+      row = { at: row.at + 1, words: [], used: 0 }; rows.push(row);
+    }
+    row.used += W(lead(row) + word); row.words.push(word);
+  }
+  const last = rows[rows.length - 1];
+  if (cut) while (last.words.length && last.used + W('…') > NOTES.w) last.used -= W(' ' + last.words.pop());
+  const kept = rows.filter(r => r.words.length);
+  if (Array.from(kept.map(r => r.words.join(' ')).join(' ')).length < 6) return [];
+  return kept.map(r => {
+    const text = r.words.join(' ');
+    return { at: r.at, text: (r.at === first ? ' ' : '') + (cut && r === last ? text.replace(/[\s,;:·–—-]+$/, '') + '…' : text) };
+  });
+}
+
+// One note at one size: the title balanced over at most 3 lines, then its
+// run-in. A pinned note ends in a star, which needs room on its last line.
+function noteAt(x, size) {
+  const title = stripEmoji(x.t) || x.t;
+  const star = x.pin ? Math.round(size * 0.2) + Math.round(size * 0.62) : 0;
+  let wrap = wrapText(title, 500, size, NOTES.w, NOTES.maxLines, 0);
+  const lastW = () => wrap.widths[wrap.widths.length - 1];
+  if (star && lastW() + star > NOTES.w) wrap = wrapText(title, 500, size, NOTES.w - star, NOTES.maxLines, 0);
+  const lines = wrap.lines.map(text => ({ text, run: '', star: false }));
+  lines[lines.length - 1].star = !!x.pin;
+  const words = wrap.cut ? [] : stripEmoji(runInOf(x)).split(/\s+/).filter(Boolean);
+  flowRun(words, lastW() + star, lines.length - 1, size).forEach(r => {
+    if (r.at < lines.length) lines[r.at].run = r.text; else lines.push({ text: '', run: r.text, star: false });
+  });
+  return { lines, h: lines.length * size * 1.25 };
+}
+
+// The largest step where every note fits. If they do not fit at 20px, the
+// lowest-ranked note that is not pinned or swapped in goes.
+function layoutNotes(kept, rank, keep) {
+  let items = kept.slice();
+  while (items.length) {
+    for (const size of NOTES.sizes) {
+      const blocks = items.map(x => noteAt(x, size)); const gap = size / 2;
+      const h = blocks.reduce((a, b) => a + b.h, 0) + gap * (blocks.length - 1);
+      if (h <= NOTES.bottom - NOTES.top) return { size, gap, items, blocks };
+    }
+    const low = rank.slice().reverse().filter(x => items.indexOf(x) >= 0);
+    const drop = low.find(x => !x.pin && keep.indexOf(x.id) < 0) || low[0] || items[items.length - 1];
+    items = items.filter(x => x !== drop);
+  }
+  return { size: NOTES.sizes[0], gap: 0, items: [], blocks: [] };
+}
+
+// Props arrive as strings; anything unreadable falls back to its default.
+function propsOf(props) {
+  const range = ['week', 'month', 'year', 'all'].indexOf(props.range) >= 0 ? props.range : 'year';
+  const offset = range === 'all' ? 0 : Math.min(0, Math.round(Number(props.offset)) || 0);
+  const pj = props.project === '' || props.project == null ? NaN : Number(props.project);
+  let tags = {};
+  try { const v = typeof props.tags === 'string' ? JSON.parse(props.tags || '{}') : props.tags; if (v && typeof v === 'object' && !Array.isArray(v)) tags = v; } catch (e) { tags = {}; }
+  return {
+    range, offset, tags, theme: props.theme === 'dark' ? 'dark' : 'light',
+    proj: Number.isInteger(pj) && pj >= 0 && pj < DATA.projects.length ? pj : null,
+    feature: String(props.feature || '').split(',').map(Number).filter(n => Number.isInteger(n) && n > 0)
+  };
+}
+
+// The notes, stacked from the top of the right column; each leads with its disc.
+function notesView(fit, t) {
+  let y = NOTES.top; const lh = fit.size * 1.25;
+  return fit.items.map((x, k) => {
+    const b = fit.blocks[k]; const top = y; y += b.h + fit.gap;
+    return Object.assign({ n: String(k + 1), top: r1(top), discTop: r1(top + lh / 2 - 10), size: fit.size, lh }, discStyle(x.k === 's', t), {
+      lines: b.lines.map(l => ({ text: l.text, star: l.star, run: l.run, hasRun: l.run !== '' }))
+    });
+  });
+}
+
+// The left column's chart: gridlines, bars, axis labels and the discs.
+function chartView(p, bs, bars, ds, t) {
+  return {
+    c: { gridD: bars.grid.map(g => 'M' + G.L + ',' + (g.y + 0.5) + 'H' + G.R).join(''), baseD: 'M' + G.L + ',' + (G.B + 0.5) + 'H' + G.R, fills: bars.fills },
+    ticks: bars.grid.map(g => ({ v: g.v, top: g.y })),
+    xls: bs.map((b, i) => ({ text: axisLabel(p, bs, i).toUpperCase(), tone: toneOf(p, bs, i), left: r1(bars.cols[i].cx) })).filter(l => l.text)
+      .map(l => ({ text: l.text, left: l.left, color: l.tone === 'now' ? t.ink : l.tone === 'future' ? t.ruleStrong : t.faint })),
+    discs: ds.map(d => Object.assign({ left: r1(d.x - d.w / 2), top: r1(d.cy - G.disc / 2), w: d.w, label: d.label }, discStyle(d.ship, t)))
+  };
+}
+
+// The line that stands where the notes would be.
+function emptyOf(proj, range, names) {
+  const text = proj == null ? names.empty : 'No entries tagged ' + DATA.projects[proj] + ' ' + (range === 'all' ? 'yet' : names.word + (names.running ? ' yet' : '')) + '.';
+  return wrapText(text, 500, 24, NOTES.w, 3, 0).lines.map(line => ({ text: line }));
+}
+
+class Component extends DCLogic {
+  renderVals() {
+    const { range, offset, tags, theme, proj, feature } = propsOf(this.props || {});
+    const t = THEMES[theme];
+    const ents = entriesWith(tags);
+    const p = periodOf(range, offset);
+    const names = namesOf(p, proj);
+    const cur = tally(p.start, p.end, proj, ents);
+    const picks = pick(p, proj, 6, ents, feature);
+    const fit = layoutNotes(picks.kept, picks.rank || [], feature);
+    const bs = bucketsOf(p, proj, ents);
+    const bars = barsOf(bs, G, theme);
+    const ds = discsOf(bs, fit.items, bars, G);
+    const more = picks.kept.length + picks.left.length - fit.items.length;
+    const kind = (n, word) => ({ show: n > 0, text: n + ' ' + word });
+
+    return Object.assign({
+      t, names, notes: notesView(fit, t),
+      dateline: { project: proj != null, slug: proj == null ? '' : DATA.projects[proj], dot: proj == null ? t.faint : colorOf(proj, theme), text: datelineOf(names, cur) },
+      head: { show: cur.shipped + cur.published > 0, ship: kind(cur.shipped, 'SHIPPED'), post: kind(cur.published, 'PUBLISHED') },
+      empty: { show: fit.items.length === 0, lines: emptyOf(proj, range, names) },
+      footer: { show: more > 0, text: '+' + more + ' more at openstage.dev/tuxnotfound' }
+    }, chartView(p, bs, bars, ds, t), proj == null ? legendOf(cur.counts, theme) : { legend: [], legendMore: { show: false, text: '' } });
+  }
+}
+</script>
+</body>
+</html>

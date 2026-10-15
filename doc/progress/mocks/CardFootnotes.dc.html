@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Progress card (Footnotes)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=DM+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 1200px; height: 630px; overflow: hidden; background: {{t.bg}}; color: {{t.ink}}; font-family: Inter, sans-serif">
+
+  <svg width="1200" height="630" viewBox="0 0 1200 630" style="position: absolute; left: 0; top: 0" aria-hidden="true">
+    <defs>
+      <clipPath id="pc-avatar"><circle cx="88" cy="80" r="28"></circle></clipPath>
+    </defs>
+    <circle cx="88" cy="80" r="30" fill="{{t.ring}}"></circle>
+    <image href="/_blob/59b36a5d4069a14bd0e0e68e44a14127" x="60" y="52" width="56" height="56" clip-path="url(#pc-avatar)" preserveAspectRatio="xMidYMid slice"></image>
+    <path d="M60,136H1140" stroke="{{t.rule}}" stroke-width="1"></path>
+    <path d="M650.5,166V580" stroke="{{t.rule}}" stroke-width="1"></path>
+    <path d="{{c.gridD}}" stroke="{{t.rule}}" stroke-width="1" fill="none"></path>
+    <path d="{{c.baseD}}" stroke="{{t.ruleStrong}}" stroke-width="1" fill="none"></path>
+    <path d="{{c.fills.0.d}}" fill="{{c.fills.0.fill}}"></path>
+    <path d="{{c.fills.1.d}}" fill="{{c.fills.1.fill}}"></path>
+    <path d="{{c.fills.2.d}}" fill="{{c.fills.2.fill}}"></path>
+    <path d="{{c.fills.3.d}}" fill="{{c.fills.3.fill}}"></path>
+    <path d="{{c.fills.4.d}}" fill="{{c.fills.4.fill}}"></path>
+    <path d="{{c.fills.5.d}}" fill="{{c.fills.5.fill}}"></path>
+    <path d="{{c.fills.6.d}}" fill="{{c.fills.6.fill}}"></path>
+  </svg>
+
+  <div style="position: absolute; left: 132px; top: 52px; display: flex; align-items: center; gap: 10px">
+    <span style="font-size: 26px; font-weight: 600; letter-spacing: -0.01em; line-height: 30px">Tux</span>
+    <span style="font-family: 'DM Mono', monospace; font-size: 10.5px; font-weight: 500; letter-spacing: 0.12em; line-height: 14px; padding: 2px 6px; border: 1px solid {{t.ruleStrong}}; border-radius: 4px; color: {{t.muted}}">PRO</span>
+  </div>
+  <div style="position: absolute; left: 132px; top: 88px; font-family: 'DM Mono', monospace; font-size: 14px; line-height: 18px; color: {{t.muted}}">@tuxnotfound</div>
+  <div style="position: absolute; right: 60px; top: 70px; font-size: 16px; font-weight: 500; line-height: 20px; letter-spacing: -0.005em"><span style="color: {{t.muted}}">openstage.dev/</span>tuxnotfound</div>
+
+  <div style="position: absolute; left: 60px; top: 166px; font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.14em; line-height: 14px; color: {{t.accent}}">{{names.tag}}</div>
+  <div style="position: absolute; left: 58px; top: 184px; font-size: 46px; font-weight: 600; letter-spacing: -0.02em; line-height: 54px; white-space: nowrap">{{names.title}}</div>
+  <div style="position: absolute; left: 60px; top: 244px; display: flex; align-items: center; font-size: 16px; line-height: 20px; color: {{t.muted}}; white-space: nowrap">
+    <sc-if value="{{dateline.project}}" hint-placeholder-val="{{ false }}">
+      <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex-shrink: 0; margin-right: 8px"><circle cx="5" cy="5" r="5" fill="{{dateline.dot}}"></circle></svg>
+      <span style="font-weight: 500; color: {{t.ink}}">{{dateline.slug}}</span><span style="white-space: pre"> · </span>
+    </sc-if>
+    <span>{{dateline.text}}</span>
+  </div>
+
+  <sc-for list="{{ticks}}" as="tk" hint-placeholder-count="3">
+    <div style="position: absolute; left: 88px; top: {{tk.top}}px; transform: translate(-100%, -50%); font-family: 'DM Mono', monospace; font-size: 11px; line-height: 12px; color: {{t.faint}}; font-variant-numeric: tabular-nums">{{tk.v}}</div>
+  </sc-for>
+  <sc-for list="{{xls}}" as="xl" hint-placeholder-count="7">
+    <div style="position: absolute; left: {{xl.left}}px; top: 536px; transform: translateX(-50%); font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; line-height: 12px; white-space: nowrap; color: {{xl.color}}">{{xl.text}}</div>
+  </sc-for>
+  <sc-for list="{{discs}}" as="d" hint-placeholder-count="5">
+    <div style="position: absolute; box-sizing: border-box; display: flex; align-items: center; justify-content: center; left: {{d.left}}px; top: {{d.top}}px; width: {{d.w}}px; height: 20px; border-radius: 10px; background: {{d.bg}}; border: {{d.border}}; box-shadow: 0 0 0 2px {{t.bg}}; color: {{d.fg}}; font-size: 12px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap">{{d.label}}</div>
+  </sc-for>
+
+  <div style="position: absolute; left: 60px; top: 562px; display: flex; align-items: center; gap: 22px; line-height: 18px; white-space: nowrap">
+    <sc-for list="{{legend}}" as="lg" hint-placeholder-count="4">
+      <span style="display: inline-flex; align-items: center; gap: 8px">
+        <span style="display: inline-block; width: 11px; height: 11px; border-radius: 3px; background: {{lg.color}}"></span>
+        <span style="font-size: 13px; font-weight: 500">{{lg.name}}</span>
+        <span style="font-family: 'DM Mono', monospace; font-size: 12px; color: {{t.muted}}">{{lg.n}}</span>
+      </span>
+    </sc-for>
+    <sc-if value="{{legendMore.show}}" hint-placeholder-val="{{ false }}">
+      <span style="font-size: 13px; color: {{t.muted}}">{{legendMore.text}}</span>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{head.show}}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; left: 680px; top: 166px; display: flex; align-items: center; gap: 22px; font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.14em; line-height: 14px; color: {{t.muted}}; white-space: nowrap">
+      <sc-if value="{{head.ship.show}}" hint-placeholder-val="{{ true }}">
+        <span style="display: inline-flex; align-items: center; gap: 8px">
+          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="{{t.ink}}"></circle></svg>{{head.ship.text}}
+        </span>
+      </sc-if>
+      <sc-if value="{{head.post.show}}" hint-placeholder-val="{{ true }}">
+        <span style="display: inline-flex; align-items: center; gap: 8px">
+          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.1" fill="{{t.bg}}" stroke="{{t.ink}}" stroke-width="1.5"></circle></svg>{{head.post.text}}
+        </span>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <sc-for list="{{notes}}" as="nt" hint-placeholder-count="6">
+    <div style="position: absolute; box-sizing: border-box; display: flex; align-items: center; justify-content: center; left: 680px; top: {{nt.discTop}}px; width: 20px; height: 20px; border-radius: 10px; background: {{nt.bg}}; border: {{nt.border}}; color: {{nt.fg}}; font-size: 12px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums">{{nt.n}}</div>
+    <div style="position: absolute; left: 716px; top: {{nt.top}}px; width: 424px; font-size: {{nt.size}}px; font-weight: 500; line-height: {{nt.lh}}px; white-space: nowrap">
+      <sc-for list="{{nt.lines}}" as="ln" hint-placeholder-count="2">
+        <div style="height: {{nt.lh}}px">{{ln.text}}<sc-if value="{{ln.star}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 24 24" aria-hidden="true" style="width: 0.62em; height: 0.62em; margin-left: 0.2em; vertical-align: 0.02em"><path fill="{{t.ink}}" d="M11.05 2.93c.3-.92 1.6-.92 1.9 0l1.52 4.67a1 1 0 00.95.69h4.91c.97 0 1.37 1.24.59 1.81l-3.98 2.89a1 1 0 00-.36 1.12l1.52 4.67c.3.92-.76 1.69-1.54 1.12l-3.98-2.89a1 1 0 00-1.17 0l-3.98 2.89c-.78.57-1.84-.2-1.54-1.12l1.52-4.67a1 1 0 00-.36-1.12L2.07 10.1c-.78-.57-.38-1.81.59-1.81h4.91a1 1 0 00.95-.69l1.53-4.67z"></path></svg></sc-if><sc-if value="{{ln.hasRun}}" hint-placeholder-val="{{ false }}"><span style="font-weight: 400; color: {{t.muted}}; white-space: pre">{{ln.run}}</span></sc-if></div>
+      </sc-for>
+    </div>
+  </sc-for>
+
+  <sc-if value="{{empty.show}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 680px; top: 196px; width: 424px; font-size: 24px; font-weight: 500; line-height: 30px; color: {{t.muted}}; white-space: nowrap">
+      <sc-for list="{{empty.lines}}" as="el" hint-placeholder-count="2">
+        <div style="height: 30px">{{el.text}}</div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{footer.show}}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; left: 680px; top: 560px; font-size: 14px; line-height: 18px; color: {{t.muted}}; white-space: nowrap">{{footer.text}}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"range":{"editor":"enum","options":["week","month","year","all"],"default":"year"},"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"offset":{"editor":"int","default":0,"min":-60,"max":0},"project":{"editor":"text","default":""},"tags":{"editor":null,"default":"{}"},"feature":{"editor":null,"default":""},"$preview":{"width":1200,"height":630}}'>
+// ===== Openstage progress draft: shared core =====
+// Data (Tux's live page, to 2026-10-14), periods, the shared pick, the project
+// filter with tag overrides, colors, and card text fitting with the server's
+// Inter width tables. Paste verbatim at the top of every artboard script.
+const DATA = {
+  projects: ['openstage', 'wheels-off', 'goal_atlas', 'story_time_v1', 'trained-on', 'watchtower', 'trained-on-dataset'],
+  days: {"2026-03-26":[[0,5]],"2026-03-27":[[0,1]],"2026-03-28":[[0,9]],"2026-03-31":[[0,1]],"2026-04-04":[[0,1]],"2026-04-29":[[0,1]],"2026-04-30":[[3,2]],"2026-05-01":[[3,1]],"2026-05-02":[[0,1],[3,3]],"2026-05-04":[[0,10]],"2026-05-05":[[0,15]],"2026-05-06":[[0,2],[3,19]],"2026-05-07":[[0,4]],"2026-05-08":[[0,2]],"2026-05-09":[[0,2]],"2026-05-10":[[3,1]],"2026-05-13":[[0,1]],"2026-05-14":[[3,3]],"2026-05-19":[[0,2],[2,1]],"2026-05-26":[[2,3]],"2026-05-27":[[0,1],[2,1]],"2026-06-03":[[0,1],[2,1]],"2026-06-04":[[0,1],[2,1]],"2026-06-05":[[0,1]],"2026-06-10":[[2,11]],"2026-06-11":[[2,10]],"2026-06-13":[[2,5]],"2026-06-14":[[0,1],[2,2]],"2026-06-15":[[2,1]],"2026-06-16":[[2,1]],"2026-06-17":[[2,7]],"2026-06-18":[[2,1]],"2026-06-19":[[2,1]],"2026-06-20":[[2,2]],"2026-06-21":[[3,2]],"2026-06-25":[[2,2]],"2026-06-29":[[2,1]],"2026-06-30":[[2,6]],"2026-07-28":[[2,3]],"2026-09-10":[[0,2]],"2026-09-11":[[0,18]],"2026-09-15":[[0,2],[3,1]],"2026-09-17":[[0,1]],"2026-09-21":[[0,4]],"2026-09-22":[[0,1]],"2026-09-23":[[0,1]],"2026-09-24":[[4,1]],"2026-09-25":[[1,12],[4,1]],"2026-09-26":[[1,3]],"2026-09-28":[[0,5],[4,13]],"2026-09-29":[[0,4],[4,2]],"2026-09-30":[[4,6]],"2026-10-01":[[4,1]],"2026-10-02":[[4,1]],"2026-10-06":[[0,2],[1,4]],"2026-10-07":[[1,19]],"2026-10-08":[[1,8]],"2026-10-09":[[0,2],[4,5]],"2026-10-11":[[0,25],[1,4]],"2026-10-12":[[0,5],[1,2]],"2026-10-13":[[0,39],[1,10],[4,1],[5,11],[6,3]],"2026-10-14":[[0,3],[5,5]]},
+  // k: 's' shipped (milestone, release), 'p' published (post, note, link).
+  // r: project index when the entry is tagged. pin: pinned by the builder.
+  entries: [
+    { id: 1, d: '2026-03-23', k: 'p', t: "why i'm building this" },
+    { id: 2, d: '2026-03-26', k: 's', t: 'day 1: it boots' },
+    { id: 3, d: '2026-03-26', k: 'p', t: 'on picking rails in 2026' },
+    { id: 4, d: '2026-03-27', k: 'p', t: 'the demo solves itself' },
+    { id: 5, d: '2026-03-28', k: 's', t: 'We are live!!' },
+    { id: 6, d: '2026-03-28', k: 'p', t: 'from idea to live' },
+    { id: 7, d: '2026-03-31', k: 's', t: 'live on Hacker News' },
+    { id: 8, d: '2026-04-29', k: 's', t: 'Pro tier shipped 🎉' },
+    { id: 9, d: '2026-05-06', k: 's', t: 'First user signed up 🥳🥳🥳' },
+    { id: 10, d: '2026-05-07', k: 's', t: 'story time is live! 🚀🚀🚀' },
+    { id: 11, d: '2026-05-08', k: 's', t: 'Share on 𝕏 !' },
+    { id: 12, d: '2026-06-11', k: 's', t: 'launched The Goal Atlas 🌍 — just in time for 2026' },
+    { id: 13, d: '2026-09-11', k: 'p', t: "This week's build log: 5 commits in openstage.", b: "This week's build log: 5 commits in openstage.\n- Rebirth begins 🚀" },
+    { id: 14, d: '2026-09-11', k: 's', t: 'Rebirth begins 🚀', pin: 1 },
+    { id: 15, d: '2026-09-18', k: 'p', t: 'This week I went back to Story Time by adding a export to pdf feature. Also a lot of work on synchronising private github repos on Openstage. Fun fun!' },
+    { id: 16, d: '2026-09-23', k: 'p', t: "Needed help to summarize my week's work and an easy way to publicly share what I've been building. Built a recap feature, and it's live." },
+    { id: 17, d: '2026-09-25', k: 'p', t: 'Shipped this week:', b: "- A new feature in OpenStage to help me recap my week's work\n- A new project to keep track of each AI tool trained on your inputs\n- A skateboarding game proof of concept was brought closer to life" },
+    { id: 18, d: '2026-10-01', k: 's', t: 'Trained on me is live!!', pin: 1, r: 4, b: "Is AI training on my prompts? Was it ever? And which vendors are?\nLet's find out!" },
+    { id: 19, d: '2026-10-02', k: 'p', t: "This week's build log:", b: "- Trained on me is live!!\n\nopenstage\n- UI cleanup\n- Landing page redesign\n\nwheels-off\n- Rider improvement: chibi look, finer ink lines, board animation\n- Kickflip move\n- Smoother distance edges (MSAA + FXAA)" },
+    { id: 20, d: '2026-10-09', k: 'p', t: 'What I worked on this week: 40 commits across 3 repos.', b: "wheels-off\n- Serve the game at playwheelsoff.com, workers.dev off\n- Serve the leaderboard API from the Worker\n\ntrained-on\n- Press page, and a citation on every change page\n\nopenstage\n- Blog: the relaunch story" }
+  ],
+  identity: { name: 'Tux', handle: 'tuxnotfound', avatar: '/_blob/59b36a5d4069a14bd0e0e68e44a14127' }
+};
+const TODAY = '2026-10-15';
+const DAY = 86400000;
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const WD = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+// Colors. Project colors are fixed by all-time commits (DATA.projects order).
+const PAL = { light: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300'], dark: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300'] };
+const THEMES = {
+  light: { bg: '#F8F7F3', ink: '#14171A', muted: '#62665F', faint: '#8A8E86', rule: '#E4E3DC', ruleStrong: '#CDCBC1', accent: '#00875A', ring: '#D9D7CE' },
+  dark: { bg: '#0E1012', ink: '#ECEEEF', muted: '#8E959A', faint: '#6B7378', rule: '#22272B', ruleStrong: '#394046', accent: '#00BA7C', ring: '#2A3035' }
+};
+const PAGE = { ink: '#111827', ink2: '#374151', muted: '#6B7280', faint: '#9CA3AF', quiet: '#D1D5DB', rule: '#F3F4F6', grid: '#F0F1F3', axis: '#D1D5DB', wash: '#F9FAFB', star: '#F59E0B', up: '#15803D', border: '#E5E7EB' };
+// surface: 'page' | 'light' | 'dark'. The 7th project and later are gray.
+function colorOf(pi, surface) {
+  if (pi == null) return surface === 'page' ? PAGE.faint : THEMES[surface].faint;
+  if (pi < 6) return PAL[surface === 'dark' ? 'dark' : 'light'][pi];
+  return surface === 'page' ? PAGE.faint : THEMES[surface].faint;
+}
+
+function ms(s) { const p = s.split('-'); return Date.UTC(+p[0], +p[1] - 1, +p[2]); }
+function iso(t) { return new Date(t).toISOString().slice(0, 10); }
+function parts(t) { const d = new Date(t); return { y: d.getUTCFullYear(), m: d.getUTCMonth(), d: d.getUTCDate(), wd: (d.getUTCDay() + 6) % 7 }; }
+function mStart(y, m) { return Date.UTC(y, m, 1); }
+function weekNo(t) { const thu = t + (3 - parts(t).wd) * DAY; const j4 = Date.UTC(parts(thu).y, 0, 4); const w1 = j4 - parts(j4).wd * DAY; return 1 + Math.floor((thu - w1) / (7 * DAY)); }
+function r1(v) { return Math.round(v * 10) / 10; }
+function fmtDay(t) { const q = parts(t); return MON[q.m] + ' ' + q.d; }
+function span(a, b) { const x = parts(a), y = parts(b); if (a === b) return fmtDay(a); return x.m === y.m ? MON[x.m] + ' ' + x.d + '–' + y.d : fmtDay(a) + ' – ' + fmtDay(b); }
+function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
+
+const T0 = ms(TODAY);
+const FIRST = Math.min(ms(Object.keys(DATA.days).sort()[0]), ...DATA.entries.map(e => ms(e.d)));
+
+// Entries with the owner's tag choices applied: tags maps id to a project
+// index, or -1 for "No project". Nothing is ever inferred from text.
+function entriesWith(tags) {
+  const t = tags || {};
+  return DATA.entries.map(e => {
+    const o = Object.assign({}, e);
+    if (Object.prototype.hasOwnProperty.call(t, e.id)) { if (t[e.id] === -1) { delete o.r; o.none = true; } else o.r = t[e.id]; }
+    return o;
+  });
+}
+
+// Calendar periods: ISO week, calendar month, calendar year, all time.
+function periodOf(range, offset) {
+  const t = parts(T0);
+  if (range === 'week') { const s = T0 - t.wd * DAY + offset * 7 * DAY; return { range, offset, start: s, end: s + 6 * DAY, unit: 'day' }; }
+  if (range === 'month') { const s = mStart(t.y, t.m + offset); return { range, offset, start: s, end: mStart(t.y, t.m + offset + 1) - DAY, unit: 'day' }; }
+  if (range === 'year') { const y = t.y + offset; return { range, offset, start: Date.UTC(y, 0, 1), end: Date.UTC(y, 11, 31), unit: 'week' }; }
+  const f = parts(FIRST);
+  return { range: 'all', offset: 0, start: mStart(f.y, f.m), end: mStart(t.y, t.m + 1) - DAY, unit: 'month' };
+}
+function running(p) { return p.start <= T0 && T0 <= p.end; }
+function lastDay(p) { return Math.min(p.end, T0); }
+
+// Counts for [s, e] (capped at today). proj: a project index, or null for all.
+function tally(s, e, proj, ents) {
+  const counts = DATA.projects.map(() => 0); const days = new Set(); let total = 0, all = 0; const end = Math.min(e, T0);
+  Object.keys(DATA.days).forEach(k => {
+    const t = ms(k); if (t < s || t > end) return; let hit = false;
+    DATA.days[k].forEach(([pi, n]) => { all += n; if (proj != null && pi !== proj) return; counts[pi] += n; total += n; hit = true; });
+    if (hit) days.add(k);
+  });
+  const hl = ents.filter(x => { const t = ms(x.d); return t >= s && t <= end && (proj == null || x.r === proj); });
+  hl.forEach(x => days.add(x.d));
+  return { counts, total, all, active: days.size, hl, shipped: hl.filter(x => x.k === 's').length, published: hl.filter(x => x.k === 'p').length, projects: counts.filter(n => n > 0).length };
+}
+
+// Buckets: a day each for Week and Month, an ISO week for Year, a month for All.
+function bucketsOf(p, proj, ents) {
+  const out = [];
+  if (p.unit === 'day') { for (let s = p.start; s <= p.end; s += DAY) out.push({ s, e: s, mon: s }); }
+  else if (p.unit === 'week') { for (let w = p.start - parts(p.start).wd * DAY; w <= p.end; w += 7 * DAY) out.push({ s: Math.max(w, p.start), e: Math.min(w + 6 * DAY, p.end), mon: w }); }
+  else { let s = p.start; while (s <= p.end) { const q = parts(s); const e = mStart(q.y, q.m + 1) - DAY; out.push({ s, e, mon: s }); s = e + DAY; } }
+  return out.map((b, i) => Object.assign(b, tally(b.s, b.e, proj, ents), { i, future: b.s > T0, today: b.s <= T0 && T0 <= b.e }));
+}
+// One label per bucket, or '' where the axis stays quiet.
+function axisLabel(p, bs, i) {
+  const b = bs[i]; const q = parts(b.s);
+  if (p.range === 'week') return WD[q.wd] + ' ' + q.d;
+  if (p.range === 'month') return [1, 8, 15, 22, 29].indexOf(q.d) >= 0 ? (q.d === 1 ? MON[q.m] + ' 1' : String(q.d)) : (b.today ? String(q.d) : '');
+  if (p.range === 'year') { const m = parts(b.mon + 3 * DAY).m; return (i === 0 || m !== parts(bs[i - 1].mon + 3 * DAY).m) ? MON[m] : ''; }
+  return MON[q.m] + (i === 0 || q.m === 0 ? ' ' + q.y : '');
+}
+// The bucket title for tooltips.
+function bucketTitle(p, b) {
+  const q = parts(b.s);
+  if (p.unit === 'day') return WD[q.wd] + ', ' + MON[q.m] + ' ' + q.d;
+  if (p.unit === 'week') return 'Week of ' + span(b.s, b.e);
+  return MONTH[q.m] + ' ' + q.y;
+}
+
+function namesOf(p, proj) {
+  const run = running(p); const q = parts(p.start); const last = lastDay(p);
+  const project = proj == null ? null : DATA.projects[proj];
+  let n;
+  if (p.range === 'week') { const w = weekNo(p.start); n = { title: 'Week ' + w, sub: span(p.start, p.end) + ', ' + parts(p.end).y + (run ? ' · so far' : ''), nav: 'Week ' + w + ' · ' + span(p.start, p.end), tag: 'PROGRESS · WEEK', word: run ? 'this week' : 'in Week ' + w, short: 'Week ' + w, file: parts(p.start + 3 * DAY).y + '-w' + String(w).padStart(2, '0') }; }
+  else if (p.range === 'month') n = { title: MONTH[q.m] + ' ' + q.y, sub: run ? span(p.start, last) + ' · so far' : span(p.start, p.end), nav: MONTH[q.m] + ' ' + q.y, tag: 'PROGRESS · MONTH', word: 'in ' + MONTH[q.m], short: MONTH[q.m], file: q.y + '-' + String(q.m + 1).padStart(2, '0') };
+  else if (p.range === 'year') n = { title: String(q.y), sub: run ? 'Jan 1 – ' + fmtDay(last) + ' · so far' : 'Jan 1 – Dec 31', nav: String(q.y), tag: 'PROGRESS · YEAR', word: 'in ' + q.y, short: String(q.y), file: String(q.y) };
+  else { const f = parts(FIRST); n = { title: 'All time', sub: 'Since ' + MONTH[f.m] + ' ' + f.y, nav: 'Since ' + MON[f.m] + ' ' + f.y, tag: 'PROGRESS · ALL TIME', word: 'so far', short: 'All time', file: 'all-time' }; }
+  return Object.assign(n, { running: run, project, empty: 'Nothing shipped or published ' + n.word + (run && p.range !== 'all' ? ' yet' : '') + '.', emptyTagged: project ? 'No entries tagged ' + project + ' ' + (p.range === 'all' ? 'yet' : n.word) + '.' : '' });
+}
+
+function summaryOf(p, proj, ents) {
+  const cur = tally(p.start, p.end, proj, ents); let prev = null, vs = '';
+  if (p.range !== 'all') {
+    const q = periodOf(p.range, p.offset - 1); const run = running(p);
+    const qEnd = run ? Math.min(q.end, q.start + (T0 - p.start)) : q.end;
+    if (q.end >= FIRST) {
+      prev = tally(q.start, qEnd, proj, ents);
+      if (p.range === 'week') vs = run ? 'vs Mon–' + WD[parts(T0).wd] + ' last week' : 'vs Week ' + weekNo(q.start);
+      else if (p.range === 'month') vs = run ? 'vs ' + span(q.start, qEnd) : 'vs ' + MONTH[parts(q.start).m];
+      else vs = run ? 'vs ' + parts(q.start).y + ' to ' + fmtDay(qEnd) : 'vs ' + parts(q.start).y;
+    }
+  }
+  return { cur, prev, vs, share: cur.all ? Math.round(100 * cur.total / cur.all) : 0 };
+}
+function deltaOf(c, p) { if (p == null) return null; const d = c - p; return { text: d > 0 ? '+' + d : d < 0 ? '−' + Math.abs(d) : '±0', up: d > 0 }; }
+
+// Entries in the period with no project that the owner has not marked "No project".
+function untaggedOf(p, ents) { const end = lastDay(p); return ents.filter(x => { const t = ms(x.d); return t >= p.start && t <= end && x.r == null && !x.none; }); }
+
+// The shared pick: who gets words. It never reads the text.
+// 1. Pins first, always kept. 2. Six equal day spans over the active domain.
+// 3. Shipped in rounds, one per span per round (a span holding a pin skips
+// round 1), newer first within a round. 4. Published the same way while room
+// is left (round 1 skips spans already holding an entry). 5. Display in date
+// order. feature: ids the owner swapped in on the card; each replaces the
+// lowest-ranked unpinned entry.
+function pick(p, proj, cap, ents, feature) {
+  const end = lastDay(p);
+  const pool = ents.filter(x => { const t = ms(x.d); return t >= p.start && t <= end && (proj == null || x.r === proj); });
+  if (!pool.length) return { kept: [], left: [], ids: new Set() };
+  let first = Infinity;
+  Object.keys(DATA.days).forEach(k => { const t = ms(k); if (t < p.start || t > end) return; if (proj == null || DATA.days[k].some(c => c[0] === proj)) first = Math.min(first, t); });
+  pool.forEach(x => { first = Math.min(first, ms(x.d)); });
+  const days = Math.round((end - first) / DAY) + 1;
+  const spanOf = x => Math.min(5, Math.floor(6 * Math.round((ms(x.d) - first) / DAY) / days));
+  const newest = (a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : b.id - a.id);
+  const ranked = pool.filter(x => x.pin).sort(newest).slice(0, Math.max(cap, 0));
+  const held = new Set(ranked.map(spanOf));
+  ['s', 'p'].forEach(kind => {
+    const lanes = [0, 1, 2, 3, 4, 5].map(s => pool.filter(x => !x.pin && x.k === kind && spanOf(x) === s).sort(newest));
+    const at = [0, 0, 0, 0, 0, 0];
+    for (let round = 0; ranked.length < cap; round++) {
+      const batch = [];
+      for (let s = 0; s < 6; s++) { if (round === 0 && held.has(s)) continue; if (at[s] < lanes[s].length) batch.push(lanes[s][at[s]++]); }
+      if (!batch.length && lanes.every((l, s) => at[s] >= l.length)) break;
+      batch.sort(newest).forEach(x => { if (ranked.length < cap) { ranked.push(x); held.add(spanOf(x)); } });
+    }
+  });
+  // A swap never pushes out a pin or an earlier swap.
+  const swapped = new Set();
+  (feature || []).forEach(id => {
+    if (ranked.some(x => x.id === id)) return;
+    const f = pool.find(x => x.id === id); if (!f) return;
+    for (let i = ranked.length - 1; i >= 0; i--) { if (!ranked[i].pin && !swapped.has(ranked[i].id)) { ranked.splice(i, 1); break; } }
+    if (ranked.length < cap) { ranked.push(f); swapped.add(f.id); }
+  });
+  const ids = new Set(ranked.map(x => x.id));
+  const byDate = (a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.id - b.id);
+  return { kept: ranked.slice().sort(byDate), left: pool.filter(x => !ids.has(x.id)).sort(byDate), ids, rank: ranked };
+}
+
+// Projects for the filter: commits or tagged entries, in all-time order.
+function projectOptions(ents) {
+  const totals = DATA.projects.map(() => 0);
+  Object.values(DATA.days).forEach(list => list.forEach(([pi, n]) => { totals[pi] += n; }));
+  return DATA.projects.map((slug, pi) => ({ pi, slug, n: totals[pi], label: slug + ' · ' + totals[pi] })).filter(o => o.n > 0 || ents.some(x => x.r === o.pi));
+}
+// Commits per project on one day, busiest first (orders the tag buttons).
+function commitsOn(day) { return (DATA.days[day] || []).map(([pi, n]) => ({ pi, n })).sort((a, b) => b.n - a.n); }
+
+// ----- Card text: the server measures with these Inter tables (thousandths
+// of an em, ASCII 0x20-0x7E plus a few marks). DM Mono is 600 per character.
+const INTER = {"400":{"base":[282,288,466,634,642,982,645,300,365,365,501,662,289,460,289,361,631,407,610,618,646,594,621,566,619,621,289,302,662,662,662,512,966,690,655,731,722,602,591,747,744,269,571,672,566,904,754,765,639,765,644,642,646,745,690,986,683,679,629,365,361,365,472,457,323,562,613,572,613,584,371,614,592,243,243,549,243,876,591,600,613,613,377,528,328,592,563,819,546,563,553,427,333,427,662],"extra":{"·":289,"–":500,"—":1000,"‘":261,"’":261,"“":441,"”":441,"…":865,"•":563,"×":662}},"500":{"base":[267,305,495,639,646,994,654,313,369,369,521,668,304,463,304,370,646,415,617,627,657,603,630,572,630,630,304,316,668,668,668,528,983,709,657,734,722,604,590,748,745,273,576,688,566,913,757,767,642,769,648,646,653,741,709,1003,701,697,641,369,370,369,477,463,337,568,619,577,619,588,380,620,602,252,252,560,252,889,602,605,619,619,387,539,341,602,575,829,558,576,560,441,346,441,668],"extra":{"·":304,"–":500,"—":1000,"‘":278,"’":278,"“":474,"”":471,"…":911,"•":534,"×":668}},"600":{"base":[252,322,523,644,651,1005,663,326,373,373,540,674,319,466,319,379,660,424,623,637,667,613,640,577,641,640,319,330,674,674,674,544,1000,728,660,737,723,606,589,750,746,277,580,704,566,923,760,769,645,773,653,651,661,737,728,1021,720,714,653,373,379,373,482,470,352,575,625,583,625,592,389,626,613,262,262,570,262,901,612,609,625,625,397,550,354,613,588,840,569,589,566,455,359,455,674],"extra":{"·":319,"–":500,"—":1000,"‘":294,"’":294,"“":507,"”":502,"…":957,"•":504,"×":674}}};
+// The card strips emoji, as the week cards do; 𝕏 is a letter and stays.
+function stripEmoji(s) { return s.replace(/\p{Extended_Pictographic}/gu, '').replace(/[︎️‍]/g, '').replace(/\s{2,}/g, ' ').trim(); }
+function charW(ch, weight) {
+  const c = ch.codePointAt(0); const t = INTER[String(weight)] || INTER['400'];
+  if (c >= 0x20 && c <= 0x7E) return t.base[c - 0x20];
+  if (t.extra[ch] != null) return t.extra[ch];
+  return c === 0x1D54F ? 1020 : 600;
+}
+// Width in px of Inter text at size px; ls is letter-spacing in em.
+function measure(s, weight, size, ls) { let w = 0, n = 0; for (const ch of s) { w += charW(ch, weight); n++; } return w / 1000 * size + (ls || 0) * size * n; }
+function monoW(s, size, ls) { return Array.from(s).length * size * (0.6 + (ls || 0)); }
+
+// A title ending in ":" continues into its own body: bullets stripped, empty
+// lines and lines equal to the title or a project slug dropped, joined by " · ".
+function runInOf(x) {
+  const t = x.t.trim(); if (!t.endsWith(':') || !x.b) return '';
+  return x.b.split('\n').map(l => l.replace(/^\s*[-*•]\s*/, '').trim()).filter(l => l && l !== t && DATA.projects.indexOf(l) < 0).join(' · ');
+}
+
+// Balanced wrapping: the fewest lines that fit, then the narrowest measure
+// that keeps that count. Past maxLines, cut at a word with "…" (never
+// mid-word, unless a single word is wider than the measure).
+function wrapText(text, weight, size, width, maxLines, ls) {
+  // A lone dash never starts a line: it stays with the word before it.
+  const words = text.split(/\s+/).filter(Boolean).reduce((acc, w) => { if (/^[—–-]$/.test(w) && acc.length) acc[acc.length - 1] += ' ' + w; else acc.push(w); return acc; }, []);
+  const W = s => measure(s, weight, size, ls);
+  // Lines as arrays of tokens, so a cut knows exactly which words it used.
+  const greedy = lim => { const out = []; let cur = []; words.forEach(w => { const t = cur.concat(w).join(' '); if (!cur.length || W(t) <= lim) cur.push(w); else { out.push(cur); cur = [w]; } }); if (cur.length) out.push(cur); return out; };
+  let rows = greedy(width);
+  if (rows.length <= maxLines) {
+    if (rows.length > 1) {
+      let lo = Math.max(...words.map(W)), hi = width; const n = rows.length;
+      for (let k = 0; k < 14; k++) { const mid = (lo + hi) / 2; if (greedy(mid).length <= n) hi = mid; else lo = mid; }
+      rows = greedy(hi);
+    }
+    const lines = rows.map(r => r.join(' '));
+    return { lines, cut: false, widths: lines.map(W) };
+  }
+  const keep = rows.slice(0, maxLines - 1).map(r => r.join(' '));
+  const used = rows.slice(0, maxLines - 1).reduce((n, r) => n + r.length, 0);
+  let last = '';
+  for (const w of words.slice(used)) { const t = last ? last + ' ' + w : w; if (W(t + '…') <= width) last = t; else break; }
+  if (!last) { const chars = Array.from(words[used] || ''); while (chars.length && W(chars.join('') + '…') > width) chars.pop(); last = chars.join(''); }
+  keep.push(last.replace(/[\s,;:·–—.\-]+$/, '') + '…');
+  return { lines: keep, cut: true, widths: keep.map(W) };
+}
+// The run-in only fills what is left of the title's last line, cut at a word
+// with "…"; it is dropped when fewer than 6 characters fit.
+function fitRunIn(runIn, room, weight, size, ls) {
+  if (!runIn || room <= 0) return '';
+  if (measure(runIn, weight, size, ls) <= room) return runIn;
+  let out = '';
+  for (const w of runIn.split(/\s+/)) { const t = out ? out + ' ' + w : w; if (measure(t + '…', weight, size, ls) <= room) out = t; else break; }
+  out = out.replace(/[\s,;:·–—.\-]+$/, '');
+  return Array.from(out).length >= 6 ? out + '…' : '';
+}
+// ===== end of shared core =====
+
+
+// ===== Footnotes card =====
+// Left: the period's bars with numbered discs on them. Right: the same numbers
+// start the notes, set as large as they all fit (32, 28, 24 or 20px).
+const G = { L: 96, R: 620, T: 318, B: 528, disc: 20, pill: 32, lift: 4, gap: 2 };
+const NOTES = { w: 424, top: 196, bottom: 548, sizes: [32, 28, 24, 20], maxLines: 3 };
+const LEFT_W = 560;
+
+// ----- Chart helpers. This block is identical in section.js and card.src.dc.html
+// (the assembler pastes only core.js into the card), so edit both together.
+
+function niceTicks(max) {
+  const raw = max / 3; const p = Math.pow(10, Math.floor(Math.log10(raw))); const m = raw / p;
+  const step = (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p;
+  const top = Math.ceil(max / step - 1e-9) * step; const out = [];
+  for (let v = 0; v <= top + 1e-9; v += step) out.push(Math.round(v * 10) / 10);
+  return out;
+}
+function box(x, y, w, h) { return 'M' + r1(x) + ',' + r1(y) + 'h' + r1(w) + 'v' + r1(h) + 'h' + r1(-w) + 'Z'; }
+function roundTop(x, y, w, h, r) {
+  r = Math.max(0, Math.min(r, h, w / 2));
+  return 'M' + r1(x) + ',' + r1(y + h) + 'V' + r1(y + r) + 'Q' + r1(x) + ',' + r1(y) + ' ' + r1(x + r) + ',' + r1(y) + 'H' + r1(x + w - r) + 'Q' + r1(x + w) + ',' + r1(y) + ' ' + r1(x + w) + ',' + r1(y + r) + 'V' + r1(y + h) + 'Z';
+}
+
+// Stacked bars, one path per project; a 2px gap is carved off the top of
+// every segment under another one. cols[i] holds a bar's centre and top.
+function barsOf(bs, g, surface) {
+  const slot = (g.R - g.L) / bs.length; const bw = Math.max(3, Math.min(24, slot * 0.62));
+  const ticks = niceTicks(Math.max(4, ...bs.map(b => b.total))); const top = ticks[ticks.length - 1];
+  const y = v => g.B - (v / top) * (g.B - g.T);
+  const paths = DATA.projects.map(() => '');
+  const cols = bs.map((b, i) => {
+    const cx = g.L + slot * (i + 0.5); const x = cx - bw / 2;
+    const segs = b.counts.map((v, pi) => [pi, v]).filter(s => s[1] > 0); let acc = 0;
+    segs.forEach(([pi, v], k) => {
+      const yb = y(acc), yt = y(acc + v); acc += v; const last = k === segs.length - 1;
+      const yTop = last ? yt : Math.min(yt + 2, yb - 1);
+      paths[pi] += last ? roundTop(x, yTop, bw, yb - yTop, 4) : box(x, yTop, bw, yb - yTop);
+    });
+    return { cx, x, top: y(b.total) };
+  });
+  return { slot, bw, cols, grid: ticks.slice(1).map(v => ({ v, y: r1(y(v)) })), fills: paths.map((d, pi) => ({ d, fill: colorOf(pi, surface) })) };
+}
+
+// The highest bar a disc standing at x would touch, with 1px to spare.
+function reachTop(x, w, bars) {
+  let top = Infinity;
+  bars.cols.forEach(c => { if (c.x < x + w / 2 + 1 && c.x + bars.bw > x - w / 2 - 1) top = Math.min(top, c.top); });
+  return top;
+}
+
+// Where each disc stands. A disc sits just above its own bar; other discs and
+// taller neighbouring bars push it sideways. Every spot within two pills of the
+// bar's centre is weighed by the distance moved (squared) plus 4 for each unit a
+// taller bar would still lift the disc. The cheapest row of spots that keeps
+// every pair of discs `gap` apart wins, so a disc moves only as far as it must
+// and floats above its bar only when no spot beside it is clear.
+function place(ds, bars, g) {
+  const STEP = 0.5, LIFT = 4, N = Math.round(2 * g.pill / STEP);
+  ds.forEach(d => { d.x = bars.cols[d.i].cx; });
+  if (!ds.length) return;
+  const spots = ds.map(d => {
+    const own = bars.cols[d.i]; const row = [];
+    for (let q = -N; q <= N; q++) {
+      const x = own.cx + q * STEP;
+      if (x - d.w / 2 >= g.L && x + d.w / 2 <= g.R) row.push({ x, cost: (q * STEP) * (q * STEP) + LIFT * Math.max(0, own.top - reachTop(x, d.w, bars)) });
+    }
+    return row;
+  });
+  // best[k][j]: the cheapest way to stand discs 0..k with disc k on its j-th spot.
+  const best = [], from = [];
+  spots.forEach((row, k) => {
+    best.push([]); from.push([]);
+    const apart = (ds[k - 1] ? (ds[k - 1].w + ds[k].w) / 2 : 0) + g.gap;
+    let p = 0, low = Infinity, at = -1;
+    row.forEach((s, j) => {
+      if (k === 0) { best[k].push(s.cost); from[k].push(-1); return; }
+      while (p < spots[k - 1].length && spots[k - 1][p].x <= s.x - apart + 1e-9) { if (best[k - 1][p] < low) { low = best[k - 1][p]; at = p; } p++; }
+      best[k].push(at < 0 ? Infinity : low + s.cost); from[k].push(at);
+    });
+  });
+  const end = best[ds.length - 1]; let j = end.indexOf(Math.min(...end));
+  if (j < 0 || end[j] === Infinity) return;
+  for (let k = ds.length - 1; k >= 0; k--) { ds[k].x = spots[k][j].x; j = from[k][j]; }
+}
+
+// One disc per bucket that holds notes, numbered in the notes' date order;
+// several notes in one bucket share a pill such as "2–3".
+function discsOf(bs, notes, bars, g) {
+  const ds = [];
+  notes.forEach((x, k) => {
+    const t = ms(x.d); const i = bs.findIndex(b => t >= b.s && t <= b.e); if (i < 0) return;
+    let d = ds.find(o => o.i === i);
+    if (!d) { d = { i, notes: [] }; ds.push(d); }
+    d.notes.push({ n: k + 1, x });
+  });
+  ds.sort((a, b) => a.i - b.i).forEach(d => {
+    d.first = d.notes[0].n; d.last = d.notes[d.notes.length - 1].n;
+    d.label = d.notes.length > 1 ? d.first + '–' + d.last : String(d.first);
+    d.w = d.notes.length > 1 ? g.pill : g.disc;
+    d.ship = d.notes.some(o => o.x.k === 's');
+  });
+  place(ds, bars, g);
+  ds.forEach(d => { d.cy = reachTop(d.x, d.w, bars) - g.lift - g.disc / 2; });
+  return ds;
+}
+
+// Year labels name months, so the month holding today is the current one.
+function toneOf(p, bs, i) {
+  const b = bs[i];
+  if (p.range !== 'year') return b.today ? 'now' : b.future ? 'future' : 'past';
+  const q = parts(b.mon + 3 * DAY); const s = Date.UTC(q.y, q.m, 1); const e = Date.UTC(q.y, q.m + 1, 1) - DAY;
+  return s <= T0 && T0 <= e ? 'now' : s > T0 ? 'future' : 'past';
+}
+
+// ----- end of chart helpers -----
+
+// Shipped is a filled disc, published a ring; both keep a halo from the page.
+function discStyle(ship, t) {
+  return ship ? { bg: t.ink, fg: t.bg, border: '0' } : { bg: t.bg, fg: t.ink, border: '1.75px solid ' + t.ink };
+}
+
+// "Jan 1 – Oct 15, so far · 380 commits on 64 days".
+function datelineOf(names, cur) {
+  return names.sub.replace(' · so far', ', so far') + ' · ' + plural(cur.total, 'commit') + ' on ' + plural(cur.active, 'day');
+}
+
+// As many projects as fit in the column, then "+N more".
+function legendOf(counts, surface) {
+  const order = counts.map((n, pi) => ({ n, pi })).filter(o => o.n > 0).sort((a, b) => b.n - a.n);
+  const wide = o => 11 + 8 + measure(DATA.projects[o.pi], 500, 13, 0) + 8 + monoW(String(o.n), 12, 0);
+  const more = k => measure('+' + (order.length - k) + ' more', 400, 13, 0);
+  const total = k => order.slice(0, k).reduce((a, o, i) => a + wide(o) + (i ? 22 : 0), 0) + (k < order.length ? (k ? 22 : 0) + more(k) : 0);
+  let k = order.length;
+  while (k > 0 && total(k) > LEFT_W) k--;
+  return {
+    legend: order.slice(0, k).map(o => ({ name: DATA.projects[o.pi], n: o.n, color: colorOf(o.pi, surface) })),
+    legendMore: { show: k < order.length, text: '+' + (order.length - k) + ' more' }
+  };
+}
+
+// A title that ends in ":" goes on into its own body. The run-in follows the
+// title word by word onto the note's next lines (3 in all) and is cut at a word
+// with "…". It is dropped when fewer than 6 characters fit.
+function flowRun(words, used, first, size) {
+  const W = s => measure(s, 400, size, 0);
+  const lead = row => (row.words.length || row.at === first ? ' ' : '');
+  const rows = [{ at: first, words: [], used }];
+  let cut = false;
+  for (const word of words) {
+    let row = rows[rows.length - 1];
+    if (row.used + W(lead(row) + word) > NOTES.w) {
+      if (row.at + 1 >= NOTES.maxLines) { cut = true; break; }
+      row = { at: row.at + 1, words: [], used: 0 }; rows.push(row);
+    }
+    row.used += W(lead(row) + word); row.words.push(word);
+  }
+  const last = rows[rows.length - 1];
+  if (cut) while (last.words.length && last.used + W('…') > NOTES.w) last.used -= W(' ' + last.words.pop());
+  const kept = rows.filter(r => r.words.length);
+  if (Array.from(kept.map(r => r.words.join(' ')).join(' ')).length < 6) return [];
+  return kept.map(r => {
+    const text = r.words.join(' ');
+    return { at: r.at, text: (r.at === first ? ' ' : '') + (cut && r === last ? text.replace(/[\s,;:·–—-]+$/, '') + '…' : text) };
+  });
+}
+
+// One note at one size: the title balanced over at most 3 lines, then its
+// run-in. A pinned note ends in a star, which needs room on its last line.
+function noteAt(x, size) {
+  const title = stripEmoji(x.t) || x.t;
+  const star = x.pin ? Math.round(size * 0.2) + Math.round(size * 0.62) : 0;
+  let wrap = wrapText(title, 500, size, NOTES.w, NOTES.maxLines, 0);
+  const lastW = () => wrap.widths[wrap.widths.length - 1];
+  if (star && lastW() + star > NOTES.w) wrap = wrapText(title, 500, size, NOTES.w - star, NOTES.maxLines, 0);
+  const lines = wrap.lines.map(text => ({ text, run: '', star: false }));
+  lines[lines.length - 1].star = !!x.pin;
+  const words = wrap.cut ? [] : stripEmoji(runInOf(x)).split(/\s+/).filter(Boolean);
+  flowRun(words, lastW() + star, lines.length - 1, size).forEach(r => {
+    if (r.at < lines.length) lines[r.at].run = r.text; else lines.push({ text: '', run: r.text, star: false });
+  });
+  return { lines, h: lines.length * size * 1.25 };
+}
+
+// The largest step where every note fits. If they do not fit at 20px, the
+// lowest-ranked note that is not pinned or swapped in goes.
+function layoutNotes(kept, rank, keep) {
+  let items = kept.slice();
+  while (items.length) {
+    for (const size of NOTES.sizes) {
+      const blocks = items.map(x => noteAt(x, size)); const gap = size / 2;
+      const h = blocks.reduce((a, b) => a + b.h, 0) + gap * (blocks.length - 1);
+      if (h <= NOTES.bottom - NOTES.top) return { size, gap, items, blocks };
+    }
+    const low = rank.slice().reverse().filter(x => items.indexOf(x) >= 0);
+    const drop = low.find(x => !x.pin && keep.indexOf(x.id) < 0) || low[0] || items[items.length - 1];
+    items = items.filter(x => x !== drop);
+  }
+  return { size: NOTES.sizes[0], gap: 0, items: [], blocks: [] };
+}
+
+// Props arrive as strings; anything unreadable falls back to its default.
+function propsOf(props) {
+  const range = ['week', 'month', 'year', 'all'].indexOf(props.range) >= 0 ? props.range : 'year';
+  const offset = range === 'all' ? 0 : Math.min(0, Math.round(Number(props.offset)) || 0);
+  const pj = props.project === '' || props.project == null ? NaN : Number(props.project);
+  let tags = {};
+  try { const v = typeof props.tags === 'string' ? JSON.parse(props.tags || '{}') : props.tags; if (v && typeof v === 'object' && !Array.isArray(v)) tags = v; } catch (e) { tags = {}; }
+  return {
+    range, offset, tags, theme: props.theme === 'dark' ? 'dark' : 'light',
+    proj: Number.isInteger(pj) && pj >= 0 && pj < DATA.projects.length ? pj : null,
+    feature: String(props.feature || '').split(',').map(Number).filter(n => Number.isInteger(n) && n > 0)
+  };
+}
+
+// The notes, stacked from the top of the right column; each leads with its disc.
+function notesView(fit, t) {
+  let y = NOTES.top; const lh = fit.size * 1.25;
+  return fit.items.map((x, k) => {
+    const b = fit.blocks[k]; const top = y; y += b.h + fit.gap;
+    return Object.assign({ n: String(k + 1), top: r1(top), discTop: r1(top + lh / 2 - 10), size: fit.size, lh }, discStyle(x.k === 's', t), {
+      lines: b.lines.map(l => ({ text: l.text, star: l.star, run: l.run, hasRun: l.run !== '' }))
+    });
+  });
+}
+
+// The left column's chart: gridlines, bars, axis labels and the discs.
+function chartView(p, bs, bars, ds, t) {
+  return {
+    c: { gridD: bars.grid.map(g => 'M' + G.L + ',' + (g.y + 0.5) + 'H' + G.R).join(''), baseD: 'M' + G.L + ',' + (G.B + 0.5) + 'H' + G.R, fills: bars.fills },
+    ticks: bars.grid.map(g => ({ v: g.v, top: g.y })),
+    xls: bs.map((b, i) => ({ text: axisLabel(p, bs, i).toUpperCase(), tone: toneOf(p, bs, i), left: r1(bars.cols[i].cx) })).filter(l => l.text)
+      .map(l => ({ text: l.text, left: l.left, color: l.tone === 'now' ? t.ink : l.tone === 'future' ? t.ruleStrong : t.faint })),
+    discs: ds.map(d => Object.assign({ left: r1(d.x - d.w / 2), top: r1(d.cy - G.disc / 2), w: d.w, label: d.label }, discStyle(d.ship, t)))
+  };
+}
+
+// The line that stands where the notes would be.
+function emptyOf(proj, range, names) {
+  const text = proj == null ? names.empty : 'No entries tagged ' + DATA.projects[proj] + ' ' + (range === 'all' ? 'yet' : names.word + (names.running ? ' yet' : '')) + '.';
+  return wrapText(text, 500, 24, NOTES.w, 3, 0).lines.map(line => ({ text: line }));
+}
+
+class Component extends DCLogic {
+  renderVals() {
+    const { range, offset, tags, theme, proj, feature } = propsOf(this.props || {});
+    const t = THEMES[theme];
+    const ents = entriesWith(tags);
+    const p = periodOf(range, offset);
+    const names = namesOf(p, proj);
+    const cur = tally(p.start, p.end, proj, ents);
+    const picks = pick(p, proj, 6, ents, feature);
+    const fit = layoutNotes(picks.kept, picks.rank || [], feature);
+    const bs = bucketsOf(p, proj, ents);
+    const bars = barsOf(bs, G, theme);
+    const ds = discsOf(bs, fit.items, bars, G);
+    const more = picks.kept.length + picks.left.length - fit.items.length;
+    const kind = (n, word) => ({ show: n > 0, text: n + ' ' + word });
+
+    return Object.assign({
+      t, names, notes: notesView(fit, t),
+      dateline: { project: proj != null, slug: proj == null ? '' : DATA.projects[proj], dot: proj == null ? t.faint : colorOf(proj, theme), text: datelineOf(names, cur) },
+      head: { show: cur.shipped + cur.published > 0, ship: kind(cur.shipped, 'SHIPPED'), post: kind(cur.published, 'PUBLISHED') },
+      empty: { show: fit.items.length === 0, lines: emptyOf(proj, range, names) },
+      footer: { show: more > 0, text: '+' + more + ' more at openstage.dev/tuxnotfound' }
+    }, chartView(p, bs, bars, ds, t), proj == null ? legendOf(cur.counts, theme) : { legend: [], legendMore: { show: false, text: '' } });
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tux on Openstage: progress (Footnotes)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=DM+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#6B7280;text-decoration:none}a:hover{color:#111827}
+.os-grid{display:grid;grid-template-columns:16rem minmax(0,1fr);gap:32px;align-items:start}
+.os-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.os-cardbox{width:600px;height:315px}
+.os-cardscale{transform:scale(.5);transform-origin:0 0}
+.os-clamp2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media (max-width:900px){.os-grid{grid-template-columns:minmax(0,1fr)}.os-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:700px){.os-cardbox{width:320px;height:168px}.os-cardscale{transform:scale(.2667)}}
+</style>
+</helmet>
+<div style="min-height: 100%; background: #ffffff; color: #111827; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased">
+
+  <header style="border-bottom: 1px solid #E5E7EB">
+    <nav style="max-width: 1024px; margin: 0 auto; padding: 0 16px; height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+      <a href="#" style="font-weight: 600; color: #111827">Openstage</a>
+      <sc-if value="{{owner}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; align-items: center; gap: 4px; font-size: 14px">
+          <a href="#" style="padding: 6px 10px; border-radius: 6px; color: #4B5563">Dashboard</a>
+          <a href="#" style="padding: 6px 10px; border-radius: 6px; color: #4B5563">Recap</a>
+          <a href="#" style="padding: 6px 10px; border-radius: 6px; color: #111827; background: #F3F4F6; font-weight: 500">My page</a>
+          <img src="/_blob/59b36a5d4069a14bd0e0e68e44a14127" alt="Account menu" style="width: 28px; height: 28px; border-radius: 9999px; margin-left: 8px">
+        </div>
+      </sc-if>
+      <sc-if value="{{visitor}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: center; gap: 16px; font-size: 14px">
+          <a href="#" style="color: #4B5563">Pricing</a>
+          <a href="#" style="color: #4B5563">Blog</a>
+          <a href="#" style="background: #111827; color: #ffffff; padding: 6px 12px; border-radius: 6px">Sign in with GitHub</a>
+        </div>
+      </sc-if>
+    </nav>
+  </header>
+
+  <main style="box-sizing: border-box; max-width: 1024px; margin: 0 auto; padding: 32px 16px 48px">
+    <div class="os-grid">
+
+      <aside style="display: flex; flex-direction: column; gap: 20px">
+        <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 16px">
+          <img src="/_blob/59b36a5d4069a14bd0e0e68e44a14127" alt="Tux" style="width: 96px; height: 96px; border-radius: 9999px; box-shadow: 0 0 0 2px #F3F4F6">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <h1 style="margin: 0; font-size: 20px; font-weight: 700; color: #111827">Tux</h1>
+              <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; background: #FEF3C7; color: #B45309; padding: 2px 8px; border-radius: 9999px">✦ Pro</span>
+            </div>
+            <p style="margin: 2px 0 0; font-size: 14px; color: #9CA3AF; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">@tuxnotfound</p>
+          </div>
+        </div>
+        <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #4B5563; white-space: pre-line">currently: relaunching Openstage in public.
+indie dev. ships things. moves on.</p>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: #6B7280">
+          <a href="#" style="display: flex; align-items: center; gap: 6px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path></svg>
+            tuxnotfound
+          </a>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 16px 0; border-top: 1px solid #E5E7EB; border-bottom: 1px solid #E5E7EB">
+          <div><div style="font-size: 20px; font-weight: 700">407</div><div style="font-size: 12px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em">entries</div></div>
+          <div><div style="font-size: 20px; font-weight: 700">5</div><div style="font-size: 12px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em">repos</div></div>
+          <div><div style="font-size: 20px; font-weight: 700">8</div><div style="font-size: 12px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em">milestones</div></div>
+          <div><div style="font-size: 20px; font-weight: 700">4</div><div style="font-size: 12px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em">day streak</div></div>
+        </div>
+        <sc-if value="{{visitor}}" hint-placeholder-val="{{ false }}">
+          <form style="margin: 0">
+            <label for="subscribe-email" style="display: block; font-size: 14px; font-weight: 500; color: #111827; margin-bottom: 8px">Get Tux's updates by email</label>
+            <div style="display: flex; gap: 8px">
+              <input id="subscribe-email" type="email" placeholder="you@example.com" style="flex: 1; min-width: 0; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px; font-size: 14px; font-family: inherit">
+              <button type="button" style="padding: 8px 12px; font-size: 14px; border-radius: 8px; background: #111827; color: #ffffff; border: 0; font-family: inherit">Subscribe</button>
+            </div>
+            <p style="margin: 6px 0 0; font-size: 12px; color: #9CA3AF">Double opt-in, one-click unsubscribe. Your address goes to Tux, not to a list of ours.</p>
+          </form>
+        </sc-if>
+      </aside>
+
+      <div style="min-width: 0">
+        <section aria-label="Progress" style="padding-bottom: 24px; border-bottom: 1px solid #E5E7EB">
+
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+              <div role="tablist" aria-label="Time range" style="display: inline-flex; padding: 3px; background: #F3F4F6; border-radius: 10px; gap: 2px">
+                <sc-for list="{{tabs}}" as="tab" hint-placeholder-count="4">
+                  <button type="button" role="tab" aria-selected="{{tab.on}}" onClick="{{tab.pick}}" style="border: 0; border-radius: 8px; padding: 6px 14px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; background: {{tab.bg}}; color: {{tab.fg}}; box-shadow: {{tab.shadow}}">{{tab.label}}</button>
+                </sc-for>
+              </div>
+              <label style="display: inline-flex; align-items: center; gap: 8px; border: 1px solid #E5E7EB; border-radius: 8px; padding: 0 4px 0 10px; height: 34px; background: #ffffff">
+                <span style="display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: {{projSel.color}}"></span>
+                <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Project</span>
+                <select onChange="{{projSel.change}}" value="{{projSel.value}}" style="border: 0; background: transparent; font-size: 13px; color: #111827; font-family: inherit; height: 32px; cursor: pointer; outline: none">
+                  <sc-for list="{{projSel.options}}" as="o" hint-placeholder-count="4">
+                    <option value="{{o.value}}">{{o.label}}</option>
+                  </sc-for>
+                </select>
+              </label>
+            </div>
+            <sc-if value="{{owner}}" hint-placeholder-val="{{ true }}">
+              <button type="button" onClick="{{openModal}}" style="display: inline-flex; align-items: center; gap: 8px; background: #111827; color: #ffffff; border: 0; border-radius: 8px; padding: 0 14px; height: 40px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 15l5-5 4 4 3-3 6 6"></path></svg>
+                Make a card
+              </button>
+            </sc-if>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 6px; margin-top: 16px">
+            <sc-if value="{{nav.show}}" hint-placeholder-val="{{ true }}">
+              <button type="button" aria-label="Previous period" onClick="{{nav.prev}}" disabled="{{nav.prevOff}}" style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid #E5E7EB; border-radius: 8px; background: #ffffff; cursor: {{nav.prevCursor}}; color: {{nav.prevColor}}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+              </button>
+              <button type="button" aria-label="Next period" onClick="{{nav.next}}" disabled="{{nav.nextOff}}" style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid #E5E7EB; border-radius: 8px; background: #ffffff; cursor: {{nav.nextCursor}}; color: {{nav.nextColor}}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+              </button>
+            </sc-if>
+            <h2 style="margin: 0 0 0 6px; font-size: 18px; font-weight: 600; color: #111827; white-space: nowrap">{{names.nav}}</h2>
+          </div>
+
+          <div class="os-kpis" style="margin-top: 20px">
+            <sc-for list="{{tiles}}" as="t" hint-placeholder-count="5">
+              <div style="min-width: 0">
+                <div style="font-size: 24px; font-weight: 700; color: #111827; line-height: 1.15">{{t.value}}</div>
+                <div style="display: flex; align-items: center; gap: 5px; font-size: 11px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px">
+                  <sc-if value="{{t.diamond}}" hint-placeholder-val="{{ false }}"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0.5L9.5 5L5 9.5L0.5 5Z" fill="#111827"></path></svg></sc-if>
+                  <sc-if value="{{t.ring}}" hint-placeholder-val="{{ false }}"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.7" fill="#ffffff" stroke="#111827" stroke-width="1.6"></circle></svg></sc-if>
+                  <sc-if value="{{t.disc}}" hint-placeholder-val="{{ false }}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#111827"></circle></svg></sc-if>
+                  <sc-if value="{{t.hollow}}" hint-placeholder-val="{{ false }}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.9" fill="#ffffff" stroke="#111827" stroke-width="1.3"></circle></svg></sc-if>
+                  {{t.label}}
+                </div>
+                <sc-if value="{{t.has}}" hint-placeholder-val="{{ true }}">
+                  <div style="font-size: 12px; margin-top: 2px; font-weight: 500; color: {{t.dColor}}">{{t.dText}}</div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{vs.show}}" hint-placeholder-val="{{ true }}">
+            <p style="margin: 8px 0 0; font-size: 12px; color: #9CA3AF">Changes {{vs.text}}</p>
+          </sc-if>
+
+          <div style="position: relative; margin-top: 18px; width: 100%; aspect-ratio: 704 / 220; container-type: inline-size" onMouseLeave="{{opt.leave}}">
+            <svg viewBox="0 0 704 220" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible" role="img" aria-label="{{opt.chartLabel}}">
+              <path d="{{opt.c.gridD}}" stroke="#F0F1F3" stroke-width="1" fill="none"></path>
+              <path d="{{opt.c.washD}}" fill="#111827" opacity="0.05"></path>
+              <path d="{{opt.c.baseD}}" stroke="#D1D5DB" stroke-width="1" fill="none"></path>
+              <path d="{{opt.c.fills.0.d}}" fill="{{opt.c.fills.0.fill}}"></path>
+              <path d="{{opt.c.fills.1.d}}" fill="{{opt.c.fills.1.fill}}"></path>
+              <path d="{{opt.c.fills.2.d}}" fill="{{opt.c.fills.2.fill}}"></path>
+              <path d="{{opt.c.fills.3.d}}" fill="{{opt.c.fills.3.fill}}"></path>
+              <path d="{{opt.c.fills.4.d}}" fill="{{opt.c.fills.4.fill}}"></path>
+              <path d="{{opt.c.fills.5.d}}" fill="{{opt.c.fills.5.fill}}"></path>
+              <path d="{{opt.c.fills.6.d}}" fill="{{opt.c.fills.6.fill}}"></path>
+            </svg>
+            <sc-for list="{{opt.ticks}}" as="tk" hint-placeholder-count="3">
+              <span style="position: absolute; left: 3.41%; top: {{tk.top}}; transform: translate(-100%, -50%); font-size: 10px; line-height: 1; color: #9CA3AF; font-variant-numeric: tabular-nums">{{tk.v}}</span>
+            </sc-for>
+            <sc-for list="{{opt.xls}}" as="xl" hint-placeholder-count="7">
+              <span style="position: absolute; top: 93.18%; left: {{xl.left}}; transform: translateX(-50%); font-size: {{xl.size}}; line-height: 1; white-space: nowrap; color: {{xl.color}}; font-weight: {{xl.fw}}">{{xl.text}}</span>
+            </sc-for>
+            <sc-for list="{{opt.hits}}" as="h" hint-placeholder-count="12">
+              <div onMouseEnter="{{h.enter}}" onClick="{{h.enter}}" style="position: absolute; top: 0; bottom: 0; left: {{h.left}}; width: {{h.width}}"></div>
+            </sc-for>
+            <sc-for list="{{opt.discs}}" as="d" hint-placeholder-count="3">
+              <a href="{{d.href}}" aria-label="{{d.aria}}" onMouseEnter="{{d.enter}}" onFocus="{{d.enter}}" onBlur="{{d.blur}}" onClick="{{d.go}}" style="position: absolute; z-index: 2; left: {{d.left}}; top: {{d.top}}; width: {{d.hit}}; height: 24px; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; border-radius: 9999px; outline: none">
+                <span aria-hidden="true" style="box-sizing: border-box; display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: {{d.w}}; height: clamp(8px, calc((100cqw - 599px) * 1000), 16px); border-radius: 9999px; background: {{d.bg}}; border: {{d.border}}; box-shadow: {{d.shadow}}; color: {{d.fg}}; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: clamp(0px, calc((100cqw - 599px) * 1000), 10px); font-weight: 600; line-height: 1; letter-spacing: 0; font-variant-numeric: tabular-nums; white-space: nowrap">{{d.label}}</span>
+              </a>
+            </sc-for>
+            <sc-if value="{{opt.tip.show}}" hint-placeholder-val="{{ false }}">
+              <div style="position: absolute; z-index: 5; pointer-events: none; top: 4px; left: {{opt.tip.left}}; width: 220px; box-sizing: border-box; background: #111827; color: #F9FAFB; border-radius: 8px; padding: 10px 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); font-size: 12px; line-height: 1.4">
+                <div style="color: #9CA3AF">{{opt.tip.title}}</div>
+                <div style="font-size: 15px; font-weight: 600; margin-top: 2px">{{opt.tip.total}}</div>
+                <sc-for list="{{opt.tip.rows}}" as="r" hint-placeholder-count="2">
+                  <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px">
+                    <span style="display: inline-block; width: 12px; height: 3px; border-radius: 2px; background: {{r.color}}"></span>
+                    <span style="flex: 1; color: #D1D5DB">{{r.name}}</span>
+                    <span style="font-weight: 600; font-variant-numeric: tabular-nums">{{r.n}}</span>
+                  </div>
+                </sc-for>
+                <sc-if value="{{opt.tip.hasEntries}}" hint-placeholder-val="{{ true }}">
+                  <div style="margin-top: 8px; padding-top: 4px; border-top: 1px solid #374151">
+                    <sc-for list="{{opt.tip.entries}}" as="te" hint-placeholder-count="2">
+                      <div style="display: flex; align-items: flex-start; gap: 8px; margin-top: 4px; font-weight: {{te.fw}}; color: {{te.color}}">
+                        <span style="box-sizing: border-box; flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 14px; height: 14px; margin-top: 1.5px; border-radius: 9999px; background: {{te.bg}}; border: {{te.border}}; color: {{te.fg}}; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: {{te.ms}}; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums">{{te.mark}}</span>
+                        <span class="os-clamp2" style="min-width: 0">{{te.t}}</span>
+                      </div>
+                    </sc-for>
+                    <sc-if value="{{opt.tip.more}}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top: 4px; padding-left: 22px; color: #9CA3AF">{{opt.tip.moreText}}</div>
+                    </sc-if>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{opt.legendShow}}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin-top: 14px; font-size: 12px; color: #4B5563">
+              <sc-for list="{{opt.legend}}" as="lg" hint-placeholder-count="4">
+                <button type="button" onClick="{{lg.pick}}" title="{{lg.hint}}" style="display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; padding: 0; font: inherit; color: inherit; cursor: pointer">
+                  <span style="display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: {{lg.color}}"></span>
+                  {{lg.name}}
+                  <span style="color: #9CA3AF; font-variant-numeric: tabular-nums">{{lg.n}}</span>
+                </button>
+              </sc-for>
+              <sc-if value="{{opt.legendMore.show}}" hint-placeholder-val="{{ false }}">
+                <button type="button" onClick="{{opt.legendMore.toggle}}" style="border: 0; background: transparent; padding: 0; font: inherit; color: #9CA3AF; cursor: pointer">{{opt.legendMore.text}}</button>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <div style="margin-top: 20px">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 16px; padding-bottom: 8px">
+              <h3 style="margin: 0; font-size: 11px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em">{{opt.list.title}}</h3>
+              <sc-if value="{{opt.list.key}}" hint-placeholder-val="{{ true }}">
+                <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #6B7280">
+                  <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#111827"></circle></svg>
+                  shipped
+                  <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="margin-left: 8px"><circle cx="5" cy="5" r="3.9" fill="#ffffff" stroke="#111827" stroke-width="1.3"></circle></svg>
+                  published
+                </span>
+              </sc-if>
+            </div>
+            <ol style="list-style: none; margin: 0; padding: 0">
+              <sc-for list="{{opt.list.notes}}" as="nt" hint-placeholder-count="3">
+                <li id="{{nt.id}}" tabIndex="-1" style="border-top: 1px solid #F3F4F6; outline: none">
+                  <div onMouseEnter="{{nt.enter}}" onMouseLeave="{{nt.leave}}" onTransitionEnd="{{nt.next}}" style="position: relative; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 2px 12px; margin: 0 -8px; padding: 8px 8px 8px 36px; border-radius: 8px; background: {{nt.bg}}; transition: background-color {{nt.fade}}">
+                    <span aria-hidden="true" style="position: absolute; left: 8px; top: 10px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 9999px; background: {{nt.dbg}}; border: {{nt.dborder}}; color: {{nt.dfg}}; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 10px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums">{{nt.n}}</span>
+                    <a href="{{nt.href}}" onFocus="{{nt.enter}}" onBlur="{{nt.leave}}" style="flex: 1 1 200px; min-width: 0; font-size: 14px; line-height: 20px; font-weight: 500; color: #111827; overflow-wrap: anywhere">{{nt.title}}<sc-if value="{{nt.hasRun}}" hint-placeholder-val="{{ false }}"><span style="font-weight: 400; color: #6B7280"> {{nt.run}}</span></sc-if></a>
+                    <span style="display: inline-flex; align-items: center; gap: 8px; min-height: 20px; margin-left: auto; flex-shrink: 0">
+                      <sc-if value="{{nt.chip}}" hint-placeholder-val="{{ false }}">
+                        <button type="button" onClick="{{nt.chipPick}}" title="{{nt.chipHint}}" style="display: inline-flex; align-items: center; gap: 6px; height: 20px; padding: 0 8px; border: 1px solid #E5E7EB; border-radius: 9999px; background: #ffffff; font-family: inherit; font-size: 12px; color: #374151; cursor: pointer">
+                          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: {{nt.chipColor}}"></span>{{nt.chipName}}
+                        </button>
+                      </sc-if>
+                      <sc-if value="{{nt.pin}}" hint-placeholder-val="{{ false }}">
+                        <svg width="12" height="12" viewBox="0 0 24 24" aria-label="Pinned" role="img" style="flex-shrink: 0"><path fill="#F59E0B" d="M11.05 2.93c.3-.92 1.6-.92 1.9 0l1.52 4.67a1 1 0 00.95.69h4.91c.97 0 1.37 1.24.59 1.81l-3.98 2.89a1 1 0 00-.36 1.12l1.52 4.67c.3.92-.76 1.69-1.54 1.12l-3.98-2.89a1 1 0 00-1.17 0l-3.98 2.89c-.78.57-1.84-.2-1.54-1.12l1.52-4.67a1 1 0 00-.36-1.12L2.07 10.1c-.78-.57-.38-1.81.59-1.81h4.91a1 1 0 00.95-.69l1.53-4.67z"></path></svg>
+                      </sc-if>
+                      <span style="width: 44px; text-align: right; font-size: 12px; color: #9CA3AF; white-space: nowrap; font-variant-numeric: tabular-nums">{{nt.date}}</span>
+                    </span>
+                  </div>
+                </li>
+              </sc-for>
+            </ol>
+            <sc-if value="{{opt.list.empty}}" hint-placeholder-val="{{ false }}">
+              <p style="margin: 0; padding: 12px 0 2px; border-top: 1px solid #F3F4F6; font-size: 14px; color: #6B7280">{{opt.list.emptyText}}<sc-if value="{{opt.list.log}}" hint-placeholder-val="{{ true }}"> <a href="#" style="color: #111827; text-decoration: underline">Log an entry</a></sc-if></p>
+            </sc-if>
+            <sc-if value="{{opt.list.hasRest}}" hint-placeholder-val="{{ true }}">
+              <button type="button" onClick="{{opt.list.toggleRest}}" aria-expanded="{{opt.list.restOpen}}" style="display: block; width: 100%; text-align: left; border: 0; border-top: 1px solid #F3F4F6; background: transparent; padding: 8px 0 0; font-size: 12px; line-height: 16px; color: #6B7280; cursor: pointer; font-family: inherit">{{opt.list.restText}}<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="margin-left: 6px; vertical-align: -1px; transform: {{opt.list.chevron}}"><path d="M2 3.5L5 6.5L8 3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+            </sc-if>
+            <sc-if value="{{opt.list.restOpen}}" hint-placeholder-val="{{ false }}">
+              <ul style="list-style: none; margin: 8px 0 0; padding: 0">
+                <sc-for list="{{opt.list.rest}}" as="rs" hint-placeholder-count="3">
+                  <li style="border-top: 1px solid #F3F4F6">
+                    <div style="position: relative; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 2px 12px; padding: 8px 0 8px 28px">
+                      <sc-if value="{{rs.ship}}" hint-placeholder-val="{{ true }}">
+                        <svg width="10" height="10" viewBox="0 0 10 10" aria-label="Shipped" role="img" style="position: absolute; left: 3px; top: 13px"><circle cx="5" cy="5" r="4.5" fill="#111827"></circle></svg>
+                      </sc-if>
+                      <sc-if value="{{rs.post}}" hint-placeholder-val="{{ false }}">
+                        <svg width="10" height="10" viewBox="0 0 10 10" aria-label="Published" role="img" style="position: absolute; left: 3px; top: 13px"><circle cx="5" cy="5" r="3.9" fill="#ffffff" stroke="#111827" stroke-width="1.3"></circle></svg>
+                      </sc-if>
+                      <a href="{{rs.href}}" style="flex: 1 1 200px; min-width: 0; font-size: 14px; line-height: 20px; color: #374151; overflow-wrap: anywhere">{{rs.title}}<sc-if value="{{rs.hasRun}}" hint-placeholder-val="{{ false }}"><span style="color: #6B7280"> {{rs.run}}</span></sc-if></a>
+                      <span style="display: inline-flex; align-items: center; gap: 8px; min-height: 20px; margin-left: auto; flex-shrink: 0">
+                        <sc-if value="{{rs.chip}}" hint-placeholder-val="{{ false }}">
+                          <button type="button" onClick="{{rs.chipPick}}" title="{{rs.chipHint}}" style="display: inline-flex; align-items: center; gap: 6px; height: 20px; padding: 0 8px; border: 1px solid #E5E7EB; border-radius: 9999px; background: #ffffff; font-family: inherit; font-size: 12px; color: #374151; cursor: pointer">
+                            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: {{rs.chipColor}}"></span>{{rs.chipName}}
+                          </button>
+                        </sc-if>
+                        <sc-if value="{{rs.pin}}" hint-placeholder-val="{{ false }}">
+                          <svg width="12" height="12" viewBox="0 0 24 24" aria-label="Pinned" role="img" style="flex-shrink: 0"><path fill="#F59E0B" d="M11.05 2.93c.3-.92 1.6-.92 1.9 0l1.52 4.67a1 1 0 00.95.69h4.91c.97 0 1.37 1.24.59 1.81l-3.98 2.89a1 1 0 00-.36 1.12l1.52 4.67c.3.92-.76 1.69-1.54 1.12l-3.98-2.89a1 1 0 00-1.17 0l-3.98 2.89c-.78.57-1.84-.2-1.54-1.12l1.52-4.67a1 1 0 00-.36-1.12L2.07 10.1c-.78-.57-.38-1.81.59-1.81h4.91a1 1 0 00.95-.69l1.53-4.67z"></path></svg>
+                        </sc-if>
+                        <span style="width: 44px; text-align: right; font-size: 12px; color: #9CA3AF; white-space: nowrap; font-variant-numeric: tabular-nums">{{rs.date}}</span>
+                      </span>
+                    </div>
+                  </li>
+                </sc-for>
+              </ul>
+            </sc-if>
+          </div>
+
+
+          <sc-if value="{{untag.show}}" hint-placeholder-val="{{ false }}">
+            <p style="margin: 14px 0 0; font-size: 12px; color: #6B7280">{{untag.text}} <button type="button" onClick="{{untag.toggle}}" style="border: 0; background: transparent; padding: 0; font-size: 12px; color: #111827; text-decoration: underline; cursor: pointer; font-family: inherit">{{untag.button}}</button></p>
+          </sc-if>
+          <sc-if value="{{untag.open}}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top: 10px; border: 1px solid #E5E7EB; border-radius: 12px; padding: 4px 14px 10px">
+              <sc-for list="{{untag.rows}}" as="row" hint-placeholder-count="3">
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 0; border-bottom: 1px solid #F3F4F6">
+                  <div style="display: flex; align-items: center; gap: 10px; flex: 1 1 260px; min-width: 0">
+                    <sc-if value="{{row.ship}}" hint-placeholder-val="{{ true }}"><svg width="10" height="10" viewBox="0 0 10 10" aria-label="Shipped" role="img" style="flex-shrink: 0"><path d="M5 0.5L9.5 5L5 9.5L0.5 5Z" fill="#111827"></path></svg></sc-if>
+                    <sc-if value="{{row.post}}" hint-placeholder-val="{{ false }}"><svg width="10" height="10" viewBox="0 0 10 10" aria-label="Published" role="img" style="flex-shrink: 0"><circle cx="5" cy="5" r="3.7" fill="#ffffff" stroke="#111827" stroke-width="1.6"></circle></svg></sc-if>
+                    <span style="width: 48px; flex-shrink: 0; font-size: 12px; font-weight: 500; color: #6B7280; text-transform: uppercase; font-variant-numeric: tabular-nums">{{row.date}}</span>
+                    <span class="os-clamp2" style="font-size: 14px; color: #111827; min-width: 0">{{row.t}}</span>
+                  </div>
+                  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
+                    <sc-for list="{{row.buttons}}" as="b" hint-placeholder-count="2">
+                      <button type="button" onClick="{{b.pick}}" style="display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 10px; border: 1px solid #E5E7EB; border-radius: 8px; background: #ffffff; font-size: 12px; color: #111827; cursor: pointer; font-family: inherit">
+                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: {{b.color}}"></span>{{b.label}}
+                      </button>
+                    </sc-for>
+                    <select aria-label="Other project" onChange="{{row.other}}" value="" style="min-height: 30px; padding: 0 6px; border: 1px solid #E5E7EB; border-radius: 8px; background: #ffffff; font-size: 12px; color: #374151; font-family: inherit; cursor: pointer">
+                      <option value="">Other…</option>
+                      <sc-for list="{{untag.others}}" as="o" hint-placeholder-count="3">
+                        <option value="{{o.value}}">{{o.label}}</option>
+                      </sc-for>
+                    </select>
+                    <button type="button" onClick="{{row.none}}" style="min-height: 30px; padding: 0 10px; border: 0; border-radius: 8px; background: #F3F4F6; font-size: 12px; color: #374151; cursor: pointer; font-family: inherit">No project</button>
+                  </div>
+                </div>
+              </sc-for>
+              <sc-if value="{{untag.more}}" hint-placeholder-val="{{ false }}">
+                <button type="button" onClick="{{untag.showMore}}" style="margin-top: 8px; border: 0; background: transparent; padding: 0; font-size: 13px; color: #374151; cursor: pointer; font-family: inherit">{{untag.moreText}}</button>
+              </sc-if>
+              <sc-if value="{{untag.done}}" hint-placeholder-val="{{ false }}">
+                <p style="margin: 10px 0 0; font-size: 13px; color: #6B7280">Every entry here has a project now.</p>
+              </sc-if>
+            </div>
+          </sc-if>
+        </section>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; border-bottom: 1px solid #F3F4F6">
+          <div style="display: flex; gap: 4px; overflow-x: auto">
+            <a href="#" style="padding: 8px 16px; font-size: 14px; font-weight: 500; color: #111827; border-bottom: 2px solid #111827; margin-bottom: -1px; white-space: nowrap">All</a>
+            <a href="#" style="padding: 8px 16px; font-size: 14px; font-weight: 500; color: #6B7280; white-space: nowrap">Shipped</a>
+            <a href="#" style="padding: 8px 16px; font-size: 14px; font-weight: 500; color: #6B7280; white-space: nowrap">Posted</a>
+            <a href="#" style="padding: 8px 16px; font-size: 14px; font-weight: 500; color: #6B7280; white-space: nowrap">Milestones</a>
+            <a href="#" style="padding: 8px 16px; font-size: 14px; font-weight: 500; color: #6B7280; white-space: nowrap">Notes</a>
+          </div>
+          <span style="flex-shrink: 0; font-size: 12px; color: #6B7280; border: 1px solid #E5E7EB; border-radius: 8px; padding: 6px 10px">{{timelineRepo}}</span>
+        </div>
+        <div style="margin-top: 8px">
+          <div style="display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid #F3F4F6">
+            <div style="width: 28px; height: 28px; border-radius: 9999px; background: #F3F4F6; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #6B7280"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.5"></circle><path d="M12 3v5.5M12 15.5V21"></path></svg></div>
+            <div style="flex: 1; min-width: 0">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px"><span style="font-size: 12px; font-weight: 500; color: #6B7280; background: #F3F4F6; padding: 2px 8px; border-radius: 9999px">recap-card</span><span style="font-size: 12px; color: #9CA3AF">openstage</span></div>
+              <p style="margin: 0; font-size: 14px; font-weight: 500; color: #111827">Stop claiming Openstage reads only public activity</p>
+            </div>
+            <span style="font-size: 12px; color: #9CA3AF; white-space: nowrap">about 20 hours ago</span>
+          </div>
+          <div style="display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid #F3F4F6">
+            <div style="width: 28px; height: 28px; border-radius: 9999px; background: #F3F4F6; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #6B7280"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.5"></circle><path d="M12 3v5.5M12 15.5V21"></path></svg></div>
+            <div style="flex: 1; min-width: 0">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px"><span style="font-size: 12px; font-weight: 500; color: #2563EB; background: #EFF6FF; padding: 2px 8px; border-radius: 9999px">shipped</span><span style="font-size: 12px; color: #9CA3AF">watchtower · 5 commits</span></div>
+              <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: #111827">
+                <li>Solve drift: show the session the Mac started</li>
+                <li>Docs read in the app, synced from the Mac</li>
+                <li>Solve drift: an ask for Claude from the app</li>
+              </ul>
+              <p style="margin: 4px 0 0; font-size: 12px; color: #9CA3AF">2 more commits that day</p>
+            </div>
+            <span style="font-size: 12px; color: #9CA3AF; white-space: nowrap">1 day ago</span>
+          </div>
+          <div style="margin-top: 24px; text-align: center">
+            <a href="#" style="display: inline-block; font-size: 14px; color: #6B7280; border: 1px solid #E5E7EB; border-radius: 8px; padding: 10px 20px">Load more</a>
+          </div>
+        </div>
+
+        <footer style="margin-top: 48px; padding-top: 24px; border-top: 1px solid #F3F4F6; text-align: center; display: flex; flex-direction: column; gap: 8px; font-size: 14px">
+          <a href="#">Explore other builders</a>
+          <sc-if value="{{visitor}}" hint-placeholder-val="{{ false }}">
+            <a href="#">Get your own proof-of-work page →</a>
+          </sc-if>
+        </footer>
+      </div>
+    </div>
+  </main>
+
+  <sc-if value="{{modal.show}}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 50; background: rgba(17,24,39,0.55); display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto">
+      <div role="dialog" aria-modal="true" aria-label="Make a card" style="background: #ffffff; border-radius: 16px; width: 100%; max-width: 648px; box-sizing: border-box; padding: 24px; box-shadow: 0 24px 60px rgba(0,0,0,0.28)">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px">
+          <div>
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700">Your card</h2>
+            <p style="margin: 4px 0 0; font-size: 14px; color: #6B7280">{{modal.sub}}</p>
+          </div>
+          <button type="button" aria-label="Close" onClick="{{closeModal}}" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 0; border-radius: 8px; background: #F3F4F6; color: #374151; cursor: pointer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+        </div>
+        <div class="os-cardbox" style="margin-top: 16px; border-radius: 10px; overflow: hidden; box-shadow: 0 0 0 1px #E5E7EB; position: relative">
+          <div class="os-cardscale" style="width: 1200px; height: 630px">
+            <dc-import name="CardFootnotes" range="{{modal.range}}" theme="{{modal.theme}}" offset="{{modal.offset}}" project="{{modal.project}}" tags="{{modal.tags}}" feature="{{modal.feature}}" hint-size="1200px,630px"></dc-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px">
+          <div role="radiogroup" aria-label="Card theme" style="display: inline-flex; padding: 3px; background: #F3F4F6; border-radius: 10px; gap: 2px">
+            <sc-for list="{{themes}}" as="th" hint-placeholder-count="2">
+              <button type="button" role="radio" aria-checked="{{th.on}}" onClick="{{th.pick}}" style="border: 0; border-radius: 8px; padding: 6px 14px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; background: {{th.bg}}; color: {{th.fg}}; box-shadow: {{th.shadow}}">{{th.label}}</button>
+            </sc-for>
+          </div>
+          <div style="display: flex; gap: 8px">
+            <button type="button" onClick="{{modal.copy}}" style="min-height: 40px; padding: 0 14px; font-size: 14px; font-weight: 500; border-radius: 8px; border: 1px solid #E5E7EB; background: #ffffff; color: #111827; cursor: pointer; font-family: inherit">{{modal.copyLabel}}</button>
+            <button type="button" onClick="{{modal.save}}" style="min-height: 40px; padding: 0 14px; font-size: 14px; font-weight: 500; border-radius: 8px; border: 0; background: #111827; color: #ffffff; cursor: pointer; font-family: inherit">{{modal.saveLabel}}</button>
+          </div>
+        </div>
+        <sc-if value="{{modal.saved}}" hint-placeholder-val="{{ false }}">
+          <p style="margin: 8px 0 0; font-size: 12px; color: #6B7280; text-align: right">{{modal.fileName}}</p>
+        </sc-if>
+        <sc-if value="{{modal.warn}}" hint-placeholder-val="{{ false }}">
+          <p style="margin: 14px 0 0; font-size: 13px; color: #92400E; background: #FFFBEB; border-radius: 8px; padding: 8px 12px">{{modal.warnText}}</p>
+        </sc-if>
+        <sc-if value="{{modal.hasLeft}}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top: 16px">
+            <p style="margin: 0 0 4px; font-size: 12px; font-weight: 600; color: #6B7280">Not on the card</p>
+            <sc-for list="{{modal.left}}" as="l" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid #F3F4F6; font-size: 13px">
+                <span style="width: 48px; flex-shrink: 0; font-size: 12px; color: #6B7280; text-transform: uppercase; font-variant-numeric: tabular-nums">{{l.date}}</span>
+                <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #111827">{{l.t}}</span>
+                <button type="button" onClick="{{l.swap}}" style="flex-shrink: 0; min-height: 28px; padding: 0 10px; border: 1px solid #E5E7EB; border-radius: 8px; background: #ffffff; font-size: 12px; color: #111827; cursor: pointer; font-family: inherit">Swap in</button>
+              </div>
+            </sc-for>
+            <sc-if value="{{modal.leftMore}}" hint-placeholder-val="{{ false }}">
+              <p style="margin: 4px 0 0; font-size: 12px; color: #9CA3AF">{{modal.leftMoreText}}</p>
+            </sc-if>
+          </div>
+        </sc-if>
+        <div style="margin-top: 16px">
+          <p style="margin: 0 0 6px; font-size: 12px; font-weight: 600; color: #6B7280">Post to go with it</p>
+          <div style="white-space: pre-line; font-size: 14px; line-height: 1.5; color: #111827; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px; padding: 12px 14px">{{modal.draft}}</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"viewer":{"editor":"enum","options":["owner","visitor"],"default":"owner"},"$preview":{"width":1280,"height":1300}}'>
+// ===== Openstage progress draft: shared core =====
+// Data (Tux's live page, to 2026-10-14), periods, the shared pick, the project
+// filter with tag overrides, colors, and card text fitting with the server's
+// Inter width tables. Paste verbatim at the top of every artboard script.
+const DATA = {
+  projects: ['openstage', 'wheels-off', 'goal_atlas', 'story_time_v1', 'trained-on', 'watchtower', 'trained-on-dataset'],
+  days: {"2026-03-26":[[0,5]],"2026-03-27":[[0,1]],"2026-03-28":[[0,9]],"2026-03-31":[[0,1]],"2026-04-04":[[0,1]],"2026-04-29":[[0,1]],"2026-04-30":[[3,2]],"2026-05-01":[[3,1]],"2026-05-02":[[0,1],[3,3]],"2026-05-04":[[0,10]],"2026-05-05":[[0,15]],"2026-05-06":[[0,2],[3,19]],"2026-05-07":[[0,4]],"2026-05-08":[[0,2]],"2026-05-09":[[0,2]],"2026-05-10":[[3,1]],"2026-05-13":[[0,1]],"2026-05-14":[[3,3]],"2026-05-19":[[0,2],[2,1]],"2026-05-26":[[2,3]],"2026-05-27":[[0,1],[2,1]],"2026-06-03":[[0,1],[2,1]],"2026-06-04":[[0,1],[2,1]],"2026-06-05":[[0,1]],"2026-06-10":[[2,11]],"2026-06-11":[[2,10]],"2026-06-13":[[2,5]],"2026-06-14":[[0,1],[2,2]],"2026-06-15":[[2,1]],"2026-06-16":[[2,1]],"2026-06-17":[[2,7]],"2026-06-18":[[2,1]],"2026-06-19":[[2,1]],"2026-06-20":[[2,2]],"2026-06-21":[[3,2]],"2026-06-25":[[2,2]],"2026-06-29":[[2,1]],"2026-06-30":[[2,6]],"2026-07-28":[[2,3]],"2026-09-10":[[0,2]],"2026-09-11":[[0,18]],"2026-09-15":[[0,2],[3,1]],"2026-09-17":[[0,1]],"2026-09-21":[[0,4]],"2026-09-22":[[0,1]],"2026-09-23":[[0,1]],"2026-09-24":[[4,1]],"2026-09-25":[[1,12],[4,1]],"2026-09-26":[[1,3]],"2026-09-28":[[0,5],[4,13]],"2026-09-29":[[0,4],[4,2]],"2026-09-30":[[4,6]],"2026-10-01":[[4,1]],"2026-10-02":[[4,1]],"2026-10-06":[[0,2],[1,4]],"2026-10-07":[[1,19]],"2026-10-08":[[1,8]],"2026-10-09":[[0,2],[4,5]],"2026-10-11":[[0,25],[1,4]],"2026-10-12":[[0,5],[1,2]],"2026-10-13":[[0,39],[1,10],[4,1],[5,11],[6,3]],"2026-10-14":[[0,3],[5,5]]},
+  // k: 's' shipped (milestone, release), 'p' published (post, note, link).
+  // r: project index when the entry is tagged. pin: pinned by the builder.
+  entries: [
+    { id: 1, d: '2026-03-23', k: 'p', t: "why i'm building this" },
+    { id: 2, d: '2026-03-26', k: 's', t: 'day 1: it boots' },
+    { id: 3, d: '2026-03-26', k: 'p', t: 'on picking rails in 2026' },
+    { id: 4, d: '2026-03-27', k: 'p', t: 'the demo solves itself' },
+    { id: 5, d: '2026-03-28', k: 's', t: 'We are live!!' },
+    { id: 6, d: '2026-03-28', k: 'p', t: 'from idea to live' },
+    { id: 7, d: '2026-03-31', k: 's', t: 'live on Hacker News' },
+    { id: 8, d: '2026-04-29', k: 's', t: 'Pro tier shipped 🎉' },
+    { id: 9, d: '2026-05-06', k: 's', t: 'First user signed up 🥳🥳🥳' },
+    { id: 10, d: '2026-05-07', k: 's', t: 'story time is live! 🚀🚀🚀' },
+    { id: 11, d: '2026-05-08', k: 's', t: 'Share on 𝕏 !' },
+    { id: 12, d: '2026-06-11', k: 's', t: 'launched The Goal Atlas 🌍 — just in time for 2026' },
+    { id: 13, d: '2026-09-11', k: 'p', t: "This week's build log: 5 commits in openstage.", b: "This week's build log: 5 commits in openstage.\n- Rebirth begins 🚀" },
+    { id: 14, d: '2026-09-11', k: 's', t: 'Rebirth begins 🚀', pin: 1 },
+    { id: 15, d: '2026-09-18', k: 'p', t: 'This week I went back to Story Time by adding a export to pdf feature. Also a lot of work on synchronising private github repos on Openstage. Fun fun!' },
+    { id: 16, d: '2026-09-23', k: 'p', t: "Needed help to summarize my week's work and an easy way to publicly share what I've been building. Built a recap feature, and it's live." },
+    { id: 17, d: '2026-09-25', k: 'p', t: 'Shipped this week:', b: "- A new feature in OpenStage to help me recap my week's work\n- A new project to keep track of each AI tool trained on your inputs\n- A skateboarding game proof of concept was brought closer to life" },
+    { id: 18, d: '2026-10-01', k: 's', t: 'Trained on me is live!!', pin: 1, r: 4, b: "Is AI training on my prompts? Was it ever? And which vendors are?\nLet's find out!" },
+    { id: 19, d: '2026-10-02', k: 'p', t: "This week's build log:", b: "- Trained on me is live!!\n\nopenstage\n- UI cleanup\n- Landing page redesign\n\nwheels-off\n- Rider improvement: chibi look, finer ink lines, board animation\n- Kickflip move\n- Smoother distance edges (MSAA + FXAA)" },
+    { id: 20, d: '2026-10-09', k: 'p', t: 'What I worked on this week: 40 commits across 3 repos.', b: "wheels-off\n- Serve the game at playwheelsoff.com, workers.dev off\n- Serve the leaderboard API from the Worker\n\ntrained-on\n- Press page, and a citation on every change page\n\nopenstage\n- Blog: the relaunch story" }
+  ],
+  identity: { name: 'Tux', handle: 'tuxnotfound', avatar: '/_blob/59b36a5d4069a14bd0e0e68e44a14127' }
+};
+const TODAY = '2026-10-15';
+const DAY = 86400000;
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const WD = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+// Colors. Project colors are fixed by all-time commits (DATA.projects order).
+const PAL = { light: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300'], dark: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300'] };
+const THEMES = {
+  light: { bg: '#F8F7F3', ink: '#14171A', muted: '#62665F', faint: '#8A8E86', rule: '#E4E3DC', ruleStrong: '#CDCBC1', accent: '#00875A', ring: '#D9D7CE' },
+  dark: { bg: '#0E1012', ink: '#ECEEEF', muted: '#8E959A', faint: '#6B7378', rule: '#22272B', ruleStrong: '#394046', accent: '#00BA7C', ring: '#2A3035' }
+};
+const PAGE = { ink: '#111827', ink2: '#374151', muted: '#6B7280', faint: '#9CA3AF', quiet: '#D1D5DB', rule: '#F3F4F6', grid: '#F0F1F3', axis: '#D1D5DB', wash: '#F9FAFB', star: '#F59E0B', up: '#15803D', border: '#E5E7EB' };
+// surface: 'page' | 'light' | 'dark'. The 7th project and later are gray.
+function colorOf(pi, surface) {
+  if (pi == null) return surface === 'page' ? PAGE.faint : THEMES[surface].faint;
+  if (pi < 6) return PAL[surface === 'dark' ? 'dark' : 'light'][pi];
+  return surface === 'page' ? PAGE.faint : THEMES[surface].faint;
+}
+
+function ms(s) { const p = s.split('-'); return Date.UTC(+p[0], +p[1] - 1, +p[2]); }
+function iso(t) { return new Date(t).toISOString().slice(0, 10); }
+function parts(t) { const d = new Date(t); return { y: d.getUTCFullYear(), m: d.getUTCMonth(), d: d.getUTCDate(), wd: (d.getUTCDay() + 6) % 7 }; }
+function mStart(y, m) { return Date.UTC(y, m, 1); }
+function weekNo(t) { const thu = t + (3 - parts(t).wd) * DAY; const j4 = Date.UTC(parts(thu).y, 0, 4); const w1 = j4 - parts(j4).wd * DAY; return 1 + Math.floor((thu - w1) / (7 * DAY)); }
+function r1(v) { return Math.round(v * 10) / 10; }
+function fmtDay(t) { const q = parts(t); return MON[q.m] + ' ' + q.d; }
+function span(a, b) { const x = parts(a), y = parts(b); if (a === b) return fmtDay(a); return x.m === y.m ? MON[x.m] + ' ' + x.d + '–' + y.d : fmtDay(a) + ' – ' + fmtDay(b); }
+function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
+
+const T0 = ms(TODAY);
+const FIRST = Math.min(ms(Object.keys(DATA.days).sort()[0]), ...DATA.entries.map(e => ms(e.d)));
+
+// Entries with the owner's tag choices applied: tags maps id to a project
+// index, or -1 for "No project". Nothing is ever inferred from text.
+function entriesWith(tags) {
+  const t = tags || {};
+  return DATA.entries.map(e => {
+    const o = Object.assign({}, e);
+    if (Object.prototype.hasOwnProperty.call(t, e.id)) { if (t[e.id] === -1) { delete o.r; o.none = true; } else o.r = t[e.id]; }
+    return o;
+  });
+}
+
+// Calendar periods: ISO week, calendar month, calendar year, all time.
+function periodOf(range, offset) {
+  const t = parts(T0);
+  if (range === 'week') { const s = T0 - t.wd * DAY + offset * 7 * DAY; return { range, offset, start: s, end: s + 6 * DAY, unit: 'day' }; }
+  if (range === 'month') { const s = mStart(t.y, t.m + offset); return { range, offset, start: s, end: mStart(t.y, t.m + offset + 1) - DAY, unit: 'day' }; }
+  if (range === 'year') { const y = t.y + offset; return { range, offset, start: Date.UTC(y, 0, 1), end: Date.UTC(y, 11, 31), unit: 'week' }; }
+  const f = parts(FIRST);
+  return { range: 'all', offset: 0, start: mStart(f.y, f.m), end: mStart(t.y, t.m + 1) - DAY, unit: 'month' };
+}
+function running(p) { return p.start <= T0 && T0 <= p.end; }
+function lastDay(p) { return Math.min(p.end, T0); }
+
+// Counts for [s, e] (capped at today). proj: a project index, or null for all.
+function tally(s, e, proj, ents) {
+  const counts = DATA.projects.map(() => 0); const days = new Set(); let total = 0, all = 0; const end = Math.min(e, T0);
+  Object.keys(DATA.days).forEach(k => {
+    const t = ms(k); if (t < s || t > end) return; let hit = false;
+    DATA.days[k].forEach(([pi, n]) => { all += n; if (proj != null && pi !== proj) return; counts[pi] += n; total += n; hit = true; });
+    if (hit) days.add(k);
+  });
+  const hl = ents.filter(x => { const t = ms(x.d); return t >= s && t <= end && (proj == null || x.r === proj); });
+  hl.forEach(x => days.add(x.d));
+  return { counts, total, all, active: days.size, hl, shipped: hl.filter(x => x.k === 's').length, published: hl.filter(x => x.k === 'p').length, projects: counts.filter(n => n > 0).length };
+}
+
+// Buckets: a day each for Week and Month, an ISO week for Year, a month for All.
+function bucketsOf(p, proj, ents) {
+  const out = [];
+  if (p.unit === 'day') { for (let s = p.start; s <= p.end; s += DAY) out.push({ s, e: s, mon: s }); }
+  else if (p.unit === 'week') { for (let w = p.start - parts(p.start).wd * DAY; w <= p.end; w += 7 * DAY) out.push({ s: Math.max(w, p.start), e: Math.min(w + 6 * DAY, p.end), mon: w }); }
+  else { let s = p.start; while (s <= p.end) { const q = parts(s); const e = mStart(q.y, q.m + 1) - DAY; out.push({ s, e, mon: s }); s = e + DAY; } }
+  return out.map((b, i) => Object.assign(b, tally(b.s, b.e, proj, ents), { i, future: b.s > T0, today: b.s <= T0 && T0 <= b.e }));
+}
+// One label per bucket, or '' where the axis stays quiet.
+function axisLabel(p, bs, i) {
+  const b = bs[i]; const q = parts(b.s);
+  if (p.range === 'week') return WD[q.wd] + ' ' + q.d;
+  if (p.range === 'month') return [1, 8, 15, 22, 29].indexOf(q.d) >= 0 ? (q.d === 1 ? MON[q.m] + ' 1' : String(q.d)) : (b.today ? String(q.d) : '');
+  if (p.range === 'year') { const m = parts(b.mon + 3 * DAY).m; return (i === 0 || m !== parts(bs[i - 1].mon + 3 * DAY).m) ? MON[m] : ''; }
+  return MON[q.m] + (i === 0 || q.m === 0 ? ' ' + q.y : '');
+}
+// The bucket title for tooltips.
+function bucketTitle(p, b) {
+  const q = parts(b.s);
+  if (p.unit === 'day') return WD[q.wd] + ', ' + MON[q.m] + ' ' + q.d;
+  if (p.unit === 'week') return 'Week of ' + span(b.s, b.e);
+  return MONTH[q.m] + ' ' + q.y;
+}
+
+function namesOf(p, proj) {
+  const run = running(p); const q = parts(p.start); const last = lastDay(p);
+  const project = proj == null ? null : DATA.projects[proj];
+  let n;
+  if (p.range === 'week') { const w = weekNo(p.start); n = { title: 'Week ' + w, sub: span(p.start, p.end) + ', ' + parts(p.end).y + (run ? ' · so far' : ''), nav: 'Week ' + w + ' · ' + span(p.start, p.end), tag: 'PROGRESS · WEEK', word: run ? 'this week' : 'in Week ' + w, short: 'Week ' + w, file: parts(p.start + 3 * DAY).y + '-w' + String(w).padStart(2, '0') }; }
+  else if (p.range === 'month') n = { title: MONTH[q.m] + ' ' + q.y, sub: run ? span(p.start, last) + ' · so far' : span(p.start, p.end), nav: MONTH[q.m] + ' ' + q.y, tag: 'PROGRESS · MONTH', word: 'in ' + MONTH[q.m], short: MONTH[q.m], file: q.y + '-' + String(q.m + 1).padStart(2, '0') };
+  else if (p.range === 'year') n = { title: String(q.y), sub: run ? 'Jan 1 – ' + fmtDay(last) + ' · so far' : 'Jan 1 – Dec 31', nav: String(q.y), tag: 'PROGRESS · YEAR', word: 'in ' + q.y, short: String(q.y), file: String(q.y) };
+  else { const f = parts(FIRST); n = { title: 'All time', sub: 'Since ' + MONTH[f.m] + ' ' + f.y, nav: 'Since ' + MON[f.m] + ' ' + f.y, tag: 'PROGRESS · ALL TIME', word: 'so far', short: 'All time', file: 'all-time' }; }
+  return Object.assign(n, { running: run, project, empty: 'Nothing shipped or published ' + n.word + (run && p.range !== 'all' ? ' yet' : '') + '.', emptyTagged: project ? 'No entries tagged ' + project + ' ' + (p.range === 'all' ? 'yet' : n.word) + '.' : '' });
+}
+
+function summaryOf(p, proj, ents) {
+  const cur = tally(p.start, p.end, proj, ents); let prev = null, vs = '';
+  if (p.range !== 'all') {
+    const q = periodOf(p.range, p.offset - 1); const run = running(p);
+    const qEnd = run ? Math.min(q.end, q.start + (T0 - p.start)) : q.end;
+    if (q.end >= FIRST) {
+      prev = tally(q.start, qEnd, proj, ents);
+      if (p.range === 'week') vs = run ? 'vs Mon–' + WD[parts(T0).wd] + ' last week' : 'vs Week ' + weekNo(q.start);
+      else if (p.range === 'month') vs = run ? 'vs ' + span(q.start, qEnd) : 'vs ' + MONTH[parts(q.start).m];
+      else vs = run ? 'vs ' + parts(q.start).y + ' to ' + fmtDay(qEnd) : 'vs ' + parts(q.start).y;
+    }
+  }
+  return { cur, prev, vs, share: cur.all ? Math.round(100 * cur.total / cur.all) : 0 };
+}
+function deltaOf(c, p) { if (p == null) return null; const d = c - p; return { text: d > 0 ? '+' + d : d < 0 ? '−' + Math.abs(d) : '±0', up: d > 0 }; }
+
+// Entries in the period with no project that the owner has not marked "No project".
+function untaggedOf(p, ents) { const end = lastDay(p); return ents.filter(x => { const t = ms(x.d); return t >= p.start && t <= end && x.r == null && !x.none; }); }
+
+// The shared pick: who gets words. It never reads the text.
+// 1. Pins first, always kept. 2. Six equal day spans over the active domain.
+// 3. Shipped in rounds, one per span per round (a span holding a pin skips
+// round 1), newer first within a round. 4. Published the same way while room
+// is left (round 1 skips spans already holding an entry). 5. Display in date
+// order. feature: ids the owner swapped in on the card; each replaces the
+// lowest-ranked unpinned entry.
+function pick(p, proj, cap, ents, feature) {
+  const end = lastDay(p);
+  const pool = ents.filter(x => { const t = ms(x.d); return t >= p.start && t <= end && (proj == null || x.r === proj); });
+  if (!pool.length) return { kept: [], left: [], ids: new Set() };
+  let first = Infinity;
+  Object.keys(DATA.days).forEach(k => { const t = ms(k); if (t < p.start || t > end) return; if (proj == null || DATA.days[k].some(c => c[0] === proj)) first = Math.min(first, t); });
+  pool.forEach(x => { first = Math.min(first, ms(x.d)); });
+  const days = Math.round((end - first) / DAY) + 1;
+  const spanOf = x => Math.min(5, Math.floor(6 * Math.round((ms(x.d) - first) / DAY) / days));
+  const newest = (a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : b.id - a.id);
+  const ranked = pool.filter(x => x.pin).sort(newest).slice(0, Math.max(cap, 0));
+  const held = new Set(ranked.map(spanOf));
+  ['s', 'p'].forEach(kind => {
+    const lanes = [0, 1, 2, 3, 4, 5].map(s => pool.filter(x => !x.pin && x.k === kind && spanOf(x) === s).sort(newest));
+    const at = [0, 0, 0, 0, 0, 0];
+    for (let round = 0; ranked.length < cap; round++) {
+      const batch = [];
+      for (let s = 0; s < 6; s++) { if (round === 0 && held.has(s)) continue; if (at[s] < lanes[s].length) batch.push(lanes[s][at[s]++]); }
+      if (!batch.length && lanes.every((l, s) => at[s] >= l.length)) break;
+      batch.sort(newest).forEach(x => { if (ranked.length < cap) { ranked.push(x); held.add(spanOf(x)); } });
+    }
+  });
+  // A swap never pushes out a pin or an earlier swap.
+  const swapped = new Set();
+  (feature || []).forEach(id => {
+    if (ranked.some(x => x.id === id)) return;
+    const f = pool.find(x => x.id === id); if (!f) return;
+    for (let i = ranked.length - 1; i >= 0; i--) { if (!ranked[i].pin && !swapped.has(ranked[i].id)) { ranked.splice(i, 1); break; } }
+    if (ranked.length < cap) { ranked.push(f); swapped.add(f.id); }
+  });
+  const ids = new Set(ranked.map(x => x.id));
+  const byDate = (a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.id - b.id);
+  return { kept: ranked.slice().sort(byDate), left: pool.filter(x => !ids.has(x.id)).sort(byDate), ids, rank: ranked };
+}
+
+// Projects for the filter: commits or tagged entries, in all-time order.
+function projectOptions(ents) {
+  const totals = DATA.projects.map(() => 0);
+  Object.values(DATA.days).forEach(list => list.forEach(([pi, n]) => { totals[pi] += n; }));
+  return DATA.projects.map((slug, pi) => ({ pi, slug, n: totals[pi], label: slug + ' · ' + totals[pi] })).filter(o => o.n > 0 || ents.some(x => x.r === o.pi));
+}
+// Commits per project on one day, busiest first (orders the tag buttons).
+function commitsOn(day) { return (DATA.days[day] || []).map(([pi, n]) => ({ pi, n })).sort((a, b) => b.n - a.n); }
+
+// ----- Card text: the server measures with these Inter tables (thousandths
+// of an em, ASCII 0x20-0x7E plus a few marks). DM Mono is 600 per character.
+const INTER = {"400":{"base":[282,288,466,634,642,982,645,300,365,365,501,662,289,460,289,361,631,407,610,618,646,594,621,566,619,621,289,302,662,662,662,512,966,690,655,731,722,602,591,747,744,269,571,672,566,904,754,765,639,765,644,642,646,745,690,986,683,679,629,365,361,365,472,457,323,562,613,572,613,584,371,614,592,243,243,549,243,876,591,600,613,613,377,528,328,592,563,819,546,563,553,427,333,427,662],"extra":{"·":289,"–":500,"—":1000,"‘":261,"’":261,"“":441,"”":441,"…":865,"•":563,"×":662}},"500":{"base":[267,305,495,639,646,994,654,313,369,369,521,668,304,463,304,370,646,415,617,627,657,603,630,572,630,630,304,316,668,668,668,528,983,709,657,734,722,604,590,748,745,273,576,688,566,913,757,767,642,769,648,646,653,741,709,1003,701,697,641,369,370,369,477,463,337,568,619,577,619,588,380,620,602,252,252,560,252,889,602,605,619,619,387,539,341,602,575,829,558,576,560,441,346,441,668],"extra":{"·":304,"–":500,"—":1000,"‘":278,"’":278,"“":474,"”":471,"…":911,"•":534,"×":668}},"600":{"base":[252,322,523,644,651,1005,663,326,373,373,540,674,319,466,319,379,660,424,623,637,667,613,640,577,641,640,319,330,674,674,674,544,1000,728,660,737,723,606,589,750,746,277,580,704,566,923,760,769,645,773,653,651,661,737,728,1021,720,714,653,373,379,373,482,470,352,575,625,583,625,592,389,626,613,262,262,570,262,901,612,609,625,625,397,550,354,613,588,840,569,589,566,455,359,455,674],"extra":{"·":319,"–":500,"—":1000,"‘":294,"’":294,"“":507,"”":502,"…":957,"•":504,"×":674}}};
+// The card strips emoji, as the week cards do; 𝕏 is a letter and stays.
+function stripEmoji(s) { return s.replace(/\p{Extended_Pictographic}/gu, '').replace(/[︎️‍]/g, '').replace(/\s{2,}/g, ' ').trim(); }
+function charW(ch, weight) {
+  const c = ch.codePointAt(0); const t = INTER[String(weight)] || INTER['400'];
+  if (c >= 0x20 && c <= 0x7E) return t.base[c - 0x20];
+  if (t.extra[ch] != null) return t.extra[ch];
+  return c === 0x1D54F ? 1020 : 600;
+}
+// Width in px of Inter text at size px; ls is letter-spacing in em.
+function measure(s, weight, size, ls) { let w = 0, n = 0; for (const ch of s) { w += charW(ch, weight); n++; } return w / 1000 * size + (ls || 0) * size * n; }
+function monoW(s, size, ls) { return Array.from(s).length * size * (0.6 + (ls || 0)); }
+
+// A title ending in ":" continues into its own body: bullets stripped, empty
+// lines and lines equal to the title or a project slug dropped, joined by " · ".
+function runInOf(x) {
+  const t = x.t.trim(); if (!t.endsWith(':') || !x.b) return '';
+  return x.b.split('\n').map(l => l.replace(/^\s*[-*•]\s*/, '').trim()).filter(l => l && l !== t && DATA.projects.indexOf(l) < 0).join(' · ');
+}
+
+// Balanced wrapping: the fewest lines that fit, then the narrowest measure
+// that keeps that count. Past maxLines, cut at a word with "…" (never
+// mid-word, unless a single word is wider than the measure).
+function wrapText(text, weight, size, width, maxLines, ls) {
+  // A lone dash never starts a line: it stays with the word before it.
+  const words = text.split(/\s+/).filter(Boolean).reduce((acc, w) => { if (/^[—–-]$/.test(w) && acc.length) acc[acc.length - 1] += ' ' + w; else acc.push(w); return acc; }, []);
+  const W = s => measure(s, weight, size, ls);
+  // Lines as arrays of tokens, so a cut knows exactly which words it used.
+  const greedy = lim => { const out = []; let cur = []; words.forEach(w => { const t = cur.concat(w).join(' '); if (!cur.length || W(t) <= lim) cur.push(w); else { out.push(cur); cur = [w]; } }); if (cur.length) out.push(cur); return out; };
+  let rows = greedy(width);
+  if (rows.length <= maxLines) {
+    if (rows.length > 1) {
+      let lo = Math.max(...words.map(W)), hi = width; const n = rows.length;
+      for (let k = 0; k < 14; k++) { const mid = (lo + hi) / 2; if (greedy(mid).length <= n) hi = mid; else lo = mid; }
+      rows = greedy(hi);
+    }
+    const lines = rows.map(r => r.join(' '));
+    return { lines, cut: false, widths: lines.map(W) };
+  }
+  const keep = rows.slice(0, maxLines - 1).map(r => r.join(' '));
+  const used = rows.slice(0, maxLines - 1).reduce((n, r) => n + r.length, 0);
+  let last = '';
+  for (const w of words.slice(used)) { const t = last ? last + ' ' + w : w; if (W(t + '…') <= width) last = t; else break; }
+  if (!last) { const chars = Array.from(words[used] || ''); while (chars.length && W(chars.join('') + '…') > width) chars.pop(); last = chars.join(''); }
+  keep.push(last.replace(/[\s,;:·–—.\-]+$/, '') + '…');
+  return { lines: keep, cut: true, widths: keep.map(W) };
+}
+// The run-in only fills what is left of the title's last line, cut at a word
+// with "…"; it is dropped when fewer than 6 characters fit.
+function fitRunIn(runIn, room, weight, size, ls) {
+  if (!runIn || room <= 0) return '';
+  if (measure(runIn, weight, size, ls) <= room) return runIn;
+  let out = '';
+  for (const w of runIn.split(/\s+/)) { const t = out ? out + ' ' + w : w; if (measure(t + '…', weight, size, ls) <= room) out = t; else break; }
+  out = out.replace(/[\s,;:·–—.\-]+$/, '');
+  return Array.from(out).length >= 6 ? out + '…' : '';
+}
+// ===== end of shared core =====
+
+
+// ===== option =====
+// Footnotes: numbered discs ride the bars and the same numbers start each note
+// in the list below, so chart and words read in one time order. The plot
+// carries no text.
+const OPTION = { key: 'footnotes', cap: () => 6, cardCap: () => 6, glyphs: 'disc' };
+
+// Chart geometry in viewBox units, which equal px at a 704px column. The top
+// tick never moves: discs live in the fixed headroom above it.
+const FN = { W: 704, H: 220, L: 30, R: 698, T: 34, B: 196, disc: 16, pill: 26, lift: 3, gap: 2 };
+const FLASH = '#FEF3C7';
+
+// Below a 600px column the discs shrink to dots and lose their numerals. The
+// chart box is a size container, so this step function reads its own width.
+function fnStep(lo, hi) { return 'clamp(' + lo + 'px, calc((100cqw - 599px) * 1000), ' + hi + 'px)'; }
+
+// ----- Chart helpers. This block is identical in section.js and card.src.dc.html
+// (the assembler pastes only core.js into the card), so edit both together.
+
+function niceTicks(max) {
+  const raw = max / 3; const p = Math.pow(10, Math.floor(Math.log10(raw))); const m = raw / p;
+  const step = (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p;
+  const top = Math.ceil(max / step - 1e-9) * step; const out = [];
+  for (let v = 0; v <= top + 1e-9; v += step) out.push(Math.round(v * 10) / 10);
+  return out;
+}
+function box(x, y, w, h) { return 'M' + r1(x) + ',' + r1(y) + 'h' + r1(w) + 'v' + r1(h) + 'h' + r1(-w) + 'Z'; }
+function roundTop(x, y, w, h, r) {
+  r = Math.max(0, Math.min(r, h, w / 2));
+  return 'M' + r1(x) + ',' + r1(y + h) + 'V' + r1(y + r) + 'Q' + r1(x) + ',' + r1(y) + ' ' + r1(x + r) + ',' + r1(y) + 'H' + r1(x + w - r) + 'Q' + r1(x + w) + ',' + r1(y) + ' ' + r1(x + w) + ',' + r1(y + r) + 'V' + r1(y + h) + 'Z';
+}
+
+// Stacked bars, one path per project; a 2px gap is carved off the top of
+// every segment under another one. cols[i] holds a bar's centre and top.
+function barsOf(bs, g, surface) {
+  const slot = (g.R - g.L) / bs.length; const bw = Math.max(3, Math.min(24, slot * 0.62));
+  const ticks = niceTicks(Math.max(4, ...bs.map(b => b.total))); const top = ticks[ticks.length - 1];
+  const y = v => g.B - (v / top) * (g.B - g.T);
+  const paths = DATA.projects.map(() => '');
+  const cols = bs.map((b, i) => {
+    const cx = g.L + slot * (i + 0.5); const x = cx - bw / 2;
+    const segs = b.counts.map((v, pi) => [pi, v]).filter(s => s[1] > 0); let acc = 0;
+    segs.forEach(([pi, v], k) => {
+      const yb = y(acc), yt = y(acc + v); acc += v; const last = k === segs.length - 1;
+      const yTop = last ? yt : Math.min(yt + 2, yb - 1);
+      paths[pi] += last ? roundTop(x, yTop, bw, yb - yTop, 4) : box(x, yTop, bw, yb - yTop);
+    });
+    return { cx, x, top: y(b.total) };
+  });
+  return { slot, bw, cols, grid: ticks.slice(1).map(v => ({ v, y: r1(y(v)) })), fills: paths.map((d, pi) => ({ d, fill: colorOf(pi, surface) })) };
+}
+
+// The highest bar a disc standing at x would touch, with 1px to spare.
+function reachTop(x, w, bars) {
+  let top = Infinity;
+  bars.cols.forEach(c => { if (c.x < x + w / 2 + 1 && c.x + bars.bw > x - w / 2 - 1) top = Math.min(top, c.top); });
+  return top;
+}
+
+// Where each disc stands. A disc sits just above its own bar; other discs and
+// taller neighbouring bars push it sideways. Every spot within two pills of the
+// bar's centre is weighed by the distance moved (squared) plus 4 for each unit a
+// taller bar would still lift the disc. The cheapest row of spots that keeps
+// every pair of discs `gap` apart wins, so a disc moves only as far as it must
+// and floats above its bar only when no spot beside it is clear.
+function place(ds, bars, g) {
+  const STEP = 0.5, LIFT = 4, N = Math.round(2 * g.pill / STEP);
+  ds.forEach(d => { d.x = bars.cols[d.i].cx; });
+  if (!ds.length) return;
+  const spots = ds.map(d => {
+    const own = bars.cols[d.i]; const row = [];
+    for (let q = -N; q <= N; q++) {
+      const x = own.cx + q * STEP;
+      if (x - d.w / 2 >= g.L && x + d.w / 2 <= g.R) row.push({ x, cost: (q * STEP) * (q * STEP) + LIFT * Math.max(0, own.top - reachTop(x, d.w, bars)) });
+    }
+    return row;
+  });
+  // best[k][j]: the cheapest way to stand discs 0..k with disc k on its j-th spot.
+  const best = [], from = [];
+  spots.forEach((row, k) => {
+    best.push([]); from.push([]);
+    const apart = (ds[k - 1] ? (ds[k - 1].w + ds[k].w) / 2 : 0) + g.gap;
+    let p = 0, low = Infinity, at = -1;
+    row.forEach((s, j) => {
+      if (k === 0) { best[k].push(s.cost); from[k].push(-1); return; }
+      while (p < spots[k - 1].length && spots[k - 1][p].x <= s.x - apart + 1e-9) { if (best[k - 1][p] < low) { low = best[k - 1][p]; at = p; } p++; }
+      best[k].push(at < 0 ? Infinity : low + s.cost); from[k].push(at);
+    });
+  });
+  const end = best[ds.length - 1]; let j = end.indexOf(Math.min(...end));
+  if (j < 0 || end[j] === Infinity) return;
+  for (let k = ds.length - 1; k >= 0; k--) { ds[k].x = spots[k][j].x; j = from[k][j]; }
+}
+
+// One disc per bucket that holds notes, numbered in the notes' date order;
+// several notes in one bucket share a pill such as "2–3".
+function discsOf(bs, notes, bars, g) {
+  const ds = [];
+  notes.forEach((x, k) => {
+    const t = ms(x.d); const i = bs.findIndex(b => t >= b.s && t <= b.e); if (i < 0) return;
+    let d = ds.find(o => o.i === i);
+    if (!d) { d = { i, notes: [] }; ds.push(d); }
+    d.notes.push({ n: k + 1, x });
+  });
+  ds.sort((a, b) => a.i - b.i).forEach(d => {
+    d.first = d.notes[0].n; d.last = d.notes[d.notes.length - 1].n;
+    d.label = d.notes.length > 1 ? d.first + '–' + d.last : String(d.first);
+    d.w = d.notes.length > 1 ? g.pill : g.disc;
+    d.ship = d.notes.some(o => o.x.k === 's');
+  });
+  place(ds, bars, g);
+  ds.forEach(d => { d.cy = reachTop(d.x, d.w, bars) - g.lift - g.disc / 2; });
+  return ds;
+}
+
+// Year labels name months, so the month holding today is the current one.
+function toneOf(p, bs, i) {
+  const b = bs[i];
+  if (p.range !== 'year') return b.today ? 'now' : b.future ? 'future' : 'past';
+  const q = parts(b.mon + 3 * DAY); const s = Date.UTC(q.y, q.m, 1); const e = Date.UTC(q.y, q.m + 1, 1) - DAY;
+  return s <= T0 && T0 <= e ? 'now' : s > T0 ? 'future' : 'past';
+}
+
+// ----- end of chart helpers -----
+
+const byDate = (a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.id - b.id);
+
+// "in October 2026", "in 2026", "this week", "since March 2026".
+function phraseOf(p, names) {
+  if (p.range === 'month') return 'in ' + names.title;
+  if (p.range === 'all') return names.sub.replace('Since', 'since');
+  return names.word;
+}
+
+// The page shows the run-in capped at 160 characters on a word boundary.
+function capRunIn(s, n) {
+  const chars = Array.from(s);
+  if (chars.length <= n) return s;
+  const cut = chars.slice(0, n + 1).join(''); const sp = cut.lastIndexOf(' ');
+  return (sp > 0 ? cut.slice(0, sp) : chars.slice(0, n).join('')).replace(/[\s,;:·–—-]+$/, '') + '…';
+}
+
+// The words of a list row, shared by the notes and the rest.
+function rowTextOf(x, proj, filterTo) {
+  const run = capRunIn(runInOf(x), 160);
+  const tagged = proj == null && x.r != null;
+  return {
+    title: x.t, run, hasRun: run !== '', href: '#entry-' + x.id, date: fmtDay(ms(x.d)), pin: !!x.pin,
+    chip: tagged, chipName: tagged ? DATA.projects[x.r] : '', chipColor: tagged ? colorOf(x.r, 'page') : PAGE.faint,
+    chipPick: tagged ? filterTo(x.r) : null, chipHint: tagged ? 'Show only ' + DATA.projects[x.r] : ''
+  };
+}
+
+function discLabelOf(d) {
+  return d.notes.map(o => 'Note ' + o.n + ', ' + (o.x.k === 's' ? 'shipped ' : 'published ') + fmtDay(ms(o.x.d)) + ': ' + o.x.t).join('. ');
+}
+
+// The bar tooltip. Its entries lead with their disc (noted ones first, the lit
+// ones in bold); entries without a note get a dot.
+function tooltipOf(p, hb, bars, ds, litNotes) {
+  const noteOf = {}; ds.forEach(d => d.notes.forEach(o => { noteOf[o.x.id] = o.n; }));
+  const rows = hb.counts.map((n, pi) => ({ n, pi })).filter(r => r.n > 0).sort((a, b) => b.n - a.n)
+    .map(r => ({ name: DATA.projects[r.pi], n: r.n, color: colorOf(r.pi, 'page') }));
+  const all = hb.hl.slice().sort(byDate);
+  const items = all.filter(x => noteOf[x.id] != null).concat(all.filter(x => noteOf[x.id] == null));
+  const entries = items.slice(0, 4).map(x => {
+    const n = noteOf[x.id]; const noted = n != null; const bold = noted && litNotes.indexOf(n) >= 0;
+    return {
+      t: x.t, mark: noted ? String(n) : '·', fw: bold ? '600' : '400', color: bold ? '#ffffff' : '#E5E7EB',
+      bg: noted && x.k === 's' ? '#F9FAFB' : 'transparent', fg: noted ? (x.k === 's' ? PAGE.ink : '#F9FAFB') : '#9CA3AF',
+      border: noted && x.k !== 's' ? '1.5px solid #F9FAFB' : '0', ms: noted ? '9px' : '16px'
+    };
+  });
+  // Beside the bar, never over it, so the hovered disc stays visible.
+  const cx = bars.cols[hb.i].cx; const at = r1(cx / FN.W * 100) + '%';
+  const side = cx < FN.W / 2 ? 'calc(' + at + ' + 16px)' : 'calc(' + at + ' - 236px)';
+  return {
+    show: true, title: bucketTitle(p, hb), total: hb.future ? 'Still ahead' : plural(hb.total, 'commit'), rows,
+    entries, hasEntries: entries.length > 0, more: items.length > 4, moreText: '+' + (items.length - 4) + ' more',
+    left: 'clamp(0px, ' + side + ', calc(100% - 220px))'
+  };
+}
+
+// What the pointer or keyboard is on: a bucket for the tooltip (st.hover) and
+// the notes to light up (ui.lit), with the handlers that set them. A jump
+// flashes its row: amber in, then out over a second. Each transition's end
+// moves the row to the next step (ui.flash is n, then -n, then null), so no
+// timer can race with other updates.
+function interactionOf(ctx, bucketCount) {
+  const { st, set } = ctx; const ui = st.ui || {};
+  const setUi = patch => set({ ui: Object.assign({}, st.ui, patch) });
+  const lit = ui.lit && ui.lit.b < bucketCount ? ui.lit : null;
+  const hover = st.hover != null && st.hover >= 0 && st.hover < bucketCount ? st.hover : null;
+  return {
+    ui, setUi, lit, litNotes: lit ? lit.notes : [], hover, washB: hover != null ? hover : lit ? lit.b : null,
+    showBucket: i => { if (st.hover !== i || ui.lit) set({ hover: i, ui: Object.assign({}, st.ui, { lit: null }) }); },
+    light: (b, notes, withTip) => set({ hover: withTip ? b : st.hover, ui: Object.assign({}, st.ui, { lit: { b, notes } }) }),
+    clear: () => { if (st.hover != null || ui.lit) set({ hover: null, ui: Object.assign({}, st.ui, { lit: null }) }); },
+    unlight: () => { if (ui.lit) setUi({ lit: null }); },
+    jump: n => setUi({ flash: n }),
+    flashNext: n => { if (ui.flash === n) setUi({ flash: -n }); else if (ui.flash === -n) setUi({ flash: null }); }
+  };
+}
+
+function chartView(ctx, ix, bs, bars, ds) {
+  const { p, names, proj } = ctx;
+  const pct = (v, of) => Math.round(v / of * 10000) / 100 + '%';
+  const px = v => pct(v, FN.W); const py = v => pct(v, FN.H);
+  const unit = p.unit === 'day' ? 'day' : p.unit === 'week' ? 'week' : 'month';
+  const hb = ix.hover != null ? bs[ix.hover] : null;
+
+  const c = {
+    gridD: bars.grid.map(t => 'M' + FN.L + ',' + t.y + 'H' + FN.R).join(''),
+    baseD: 'M' + FN.L + ',' + FN.B + 'H' + FN.R,
+    washD: ix.washB == null ? '' : box(FN.L + bars.slot * ix.washB + 1, 2, bars.slot - 2, FN.B - 2),
+    fills: bars.fills
+  };
+  const ticks = bars.grid.map(t => ({ v: t.v, top: py(t.y) }));
+  // Month labels crowd a narrow column: below 600px every other one steps aside,
+  // and so do the two beside the current month, which always stays.
+  const crowded = p.range === 'year' || p.range === 'all';
+  const named = bs.map((b, i) => ({ text: axisLabel(p, bs, i), tone: toneOf(p, bs, i), left: px(bars.cols[i].cx) })).filter(l => l.text);
+  const now = named.findIndex(l => l.tone === 'now');
+  const xls = named.map((l, k) => ({
+    text: l.text, left: l.left, color: l.tone === 'now' ? PAGE.ink : l.tone === 'future' ? PAGE.quiet : PAGE.faint, fw: l.tone === 'now' ? '600' : '400',
+    size: crowded && l.tone !== 'now' && (k % 2 || (now >= 0 && Math.abs(k - now) === 1)) ? fnStep(0, 11) : '11px'
+  }));
+  const hits = bars.cols.map((col, i) => ({ left: px(FN.L + bars.slot * i), width: px(bars.slot), enter: () => ix.showBucket(i) }));
+  const discs = ds.map(d => {
+    const on = !!ix.lit && ix.lit.b === d.i;
+    return {
+      left: px(d.x), top: py(d.cy), label: d.label, href: '#note-' + d.first, aria: discLabelOf(d),
+      w: d.notes.length > 1 ? fnStep(13, FN.pill) : fnStep(8, FN.disc), hit: d.notes.length > 1 ? fnStep(24, FN.pill + 8) : '24px',
+      bg: d.ship ? PAGE.ink : '#ffffff', fg: d.ship ? '#ffffff' : PAGE.ink, border: d.ship ? '0' : '1.5px solid ' + PAGE.ink,
+      shadow: on ? '0 0 0 2px #ffffff, 0 0 0 4px ' + PAGE.ink : '0 0 0 2px #ffffff',
+      enter: () => ix.light(d.i, d.notes.map(o => o.n), true), blur: ix.clear, go: () => ix.jump(d.first)
+    };
+  });
+  const tip = hb ? tooltipOf(p, hb, bars, ds, ix.litNotes) : { show: false, rows: [], entries: [], hasEntries: false, more: false, moreText: '', left: '0px', title: '', total: '' };
+  return {
+    c, ticks, xls, hits, discs, tip, leave: ix.clear,
+    chartLabel: 'Commits per ' + unit + (proj == null ? ' by project' : ' in ' + DATA.projects[proj]) + ', ' + names.title
+  };
+}
+
+// The legend names the biggest projects; "+N more" opens the rest.
+function legendView(ctx, ix, key) {
+  const { proj, sum, filterTo } = ctx;
+  const order = sum.cur.counts.map((n, pi) => ({ n, pi })).filter(o => o.n > 0).sort((a, b) => b.n - a.n);
+  const all = ix.ui.legend === key;
+  const legend = (all ? order : order.slice(0, 5)).map(o => ({ name: DATA.projects[o.pi], n: o.n, color: colorOf(o.pi, 'page'), pick: filterTo(o.pi), hint: 'Show only ' + DATA.projects[o.pi] }));
+  return {
+    legendShow: proj == null && legend.length > 0, legend,
+    legendMore: { show: proj == null && !all && order.length > 5, text: '+' + (order.length - 5) + ' more', toggle: () => ix.setUi({ legend: key }) }
+  };
+}
+
+// The notes, numbered as on the chart, then the rest folded behind one row.
+function listView(ctx, ix, ds, key) {
+  const { owner, proj, p, names, picks, filterTo } = ctx;
+  const discOf = {}; ds.forEach(d => d.notes.forEach(o => { discOf[o.n] = d; }));
+  const notes = picks.kept.map((x, k) => {
+    const n = k + 1; const ship = x.k === 's';
+    return Object.assign(rowTextOf(x, proj, filterTo), {
+      id: 'note-' + n, n: String(n),
+      dbg: ship ? PAGE.ink : '#ffffff', dfg: ship ? '#ffffff' : PAGE.ink, dborder: ship ? '0' : '1.5px solid ' + PAGE.ink,
+      bg: ix.ui.flash === n ? FLASH : ix.litNotes.indexOf(n) >= 0 ? PAGE.rule : 'transparent',
+      fade: ix.ui.flash === -n ? '1s ease-in-out' : '0.15s',
+      enter: () => ix.light(discOf[n].i, [n], false), leave: ix.unlight, next: () => ix.flashNext(n)
+    });
+  });
+  const restOpen = ix.ui.rest === key && picks.left.length > 0;
+  const phrase = phraseOf(p, names);
+  return {
+    title: 'Shipped and published ' + phrase + (proj != null ? ' · ' + DATA.projects[proj] : ''),
+    key: notes.length > 0, notes,
+    hasRest: picks.left.length > 0, restOpen,
+    restText: picks.left.length + ' more ' + phrase, chevron: restOpen ? 'rotate(180deg)' : 'none',
+    rest: restOpen ? picks.left.map(x => Object.assign(rowTextOf(x, proj, filterTo), { ship: x.k === 's', post: x.k !== 's' })) : [],
+    toggleRest: () => ix.setUi({ rest: restOpen ? null : key }),
+    empty: notes.length === 0, emptyText: proj != null ? names.emptyTagged : names.empty, log: owner && proj == null
+  };
+}
+
+function optionView(ctx) {
+  const { ents, proj, p } = ctx;
+  // Open states belong to one period and filter; changing either closes them.
+  const key = [p.range, p.offset, proj == null ? 'all' : proj].join(':');
+  const bs = bucketsOf(p, proj, ents);
+  const bars = barsOf(bs, FN, 'page');
+  const ds = discsOf(bs, ctx.picks.kept, bars, FN);
+  const ix = interactionOf(ctx, bs.length);
+  return Object.assign(chartView(ctx, ix, bs, bars, ds), legendView(ctx, ix, key), { list: listView(ctx, ix, ds, key) });
+}
+
+// ===== page =====
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { range: 'year', offset: 0, project: null, hover: null, modal: false, cardTheme: 'light', copied: false, saved: false, tags: {}, feature: [], tagOpen: false, tagMore: false, ui: {} };
+  }
+
+  renderVals() {
+    const st = this.state;
+    const owner = (this.props.viewer ?? 'owner') === 'owner';
+    const set = s => this.setState(s);
+    const ents = entriesWith(st.tags);
+    const proj = st.project;
+    const offset = st.range === 'all' ? 0 : st.offset;
+    const p = periodOf(st.range, offset);
+    const names = namesOf(p, proj);
+    const sum = summaryOf(p, proj, ents);
+    const picks = pick(p, proj, OPTION.cap(p.range), ents, []);
+    const seg = on => ({ bg: on ? '#ffffff' : 'transparent', fg: on ? '#111827' : '#6B7280', shadow: on ? '0 1px 2px rgba(0,0,0,0.08)' : 'none' });
+
+    const tabs = [['week', 'Week'], ['month', 'Month'], ['year', 'Year'], ['all', 'All']].map(([r, label]) => Object.assign({ label, on: r === st.range, pick: () => set({ range: r, offset: 0, hover: null }) }, seg(r === st.range)));
+    const opts = projectOptions(ents);
+    const projSel = {
+      value: proj == null ? '' : String(proj), color: proj == null ? '#D1D5DB' : colorOf(proj, 'page'),
+      options: [{ value: '', label: 'All projects' }].concat(opts.map(o => ({ value: String(o.pi), label: o.label }))),
+      change: e => { const v = e && e.target ? e.target.value : ''; set({ project: v === '' ? null : Number(v), hover: null, feature: [] }); }
+    };
+    const prevOff = st.range === 'all' || periodOf(st.range, offset - 1).end < FIRST;
+    const nextOff = st.range === 'all' || offset >= 0;
+    const nav = {
+      show: st.range !== 'all', prevOff, nextOff,
+      prevCursor: prevOff ? 'default' : 'pointer', prevColor: prevOff ? '#D1D5DB' : '#374151',
+      nextCursor: nextOff ? 'default' : 'pointer', nextColor: nextOff ? '#D1D5DB' : '#374151',
+      prev: () => { if (!prevOff) set({ offset: offset - 1, hover: null }); },
+      next: () => { if (!nextOff) set({ offset: offset + 1, hover: null }); }
+    };
+
+    const pr = sum.prev; const g = OPTION.glyphs === 'disc';
+    const tiles = [
+      { label: 'Shipped', value: sum.cur.shipped, dl: pr && deltaOf(sum.cur.shipped, pr.shipped), diamond: !g, disc: g },
+      { label: 'Published', value: sum.cur.published, dl: pr && deltaOf(sum.cur.published, pr.published), ring: !g, hollow: g },
+      { label: 'Commits', value: sum.cur.total, dl: pr && deltaOf(sum.cur.total, pr.total) },
+      { label: 'Active days', value: sum.cur.active, dl: pr && deltaOf(sum.cur.active, pr.active) },
+      proj == null ? { label: 'Projects', value: sum.cur.projects, dl: null } : { label: 'Share of commits', value: sum.share + '%', dl: null }
+    ].map(t => Object.assign({ diamond: false, ring: false, disc: false, hollow: false }, t, { has: !!t.dl, dText: t.dl ? t.dl.text : '', dColor: t.dl && t.dl.up ? '#15803D' : '#9CA3AF' }));
+
+    // Owner: untagged entries in the period, and the inline tag panel.
+    const untagged = untaggedOf(p, ents).sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : b.id - a.id));
+    const tagTo = (id, v) => () => { const tags = Object.assign({}, this.state.tags); tags[id] = v; set({ tags }); };
+    const rows = (st.tagMore ? untagged : untagged.slice(0, 6)).map(x => {
+      const seen = new Set(); const buttons = [];
+      const add = (pi, label) => { if (seen.has(pi)) return; seen.add(pi); buttons.push({ label, color: colorOf(pi, 'page'), pick: tagTo(x.id, pi) }); };
+      if (proj != null) add(proj, DATA.projects[proj]);
+      commitsOn(x.d).forEach(c => add(c.pi, DATA.projects[c.pi] + ' · ' + c.n + ' that day'));
+      return { t: x.t, date: fmtDay(ms(x.d)), ship: x.k === 's', post: x.k === 'p', buttons, none: tagTo(x.id, -1), other: e => { const v = e && e.target ? e.target.value : ''; if (v !== '') tagTo(x.id, Number(v))(); } };
+    });
+    const untag = {
+      show: owner && untagged.length > 0,
+      open: owner && st.tagOpen && (untagged.length > 0 || Object.keys(st.tags).length > 0),
+      text: plural(untagged.length, 'entry').replace('entrys', 'entries') + ' ' + (p.range === 'all' ? 'so far' : names.word) + (untagged.length === 1 ? ' has' : ' have') + ' no project' + (proj != null ? ', so this view leaves them out.' : '.'),
+      button: st.tagOpen ? 'Close' : 'Tag them', toggle: () => set({ tagOpen: !this.state.tagOpen }),
+      rows, others: DATA.projects.map((slug, pi) => ({ value: String(pi), label: slug })),
+      more: !st.tagMore && untagged.length > 6, moreText: 'Show ' + (untagged.length - 6) + ' more', showMore: () => set({ tagMore: true }),
+      done: untagged.length === 0
+    };
+
+    // The card dialog: the card follows the range, period, project and tags.
+    // An option whose card decides its own words (Journey's flags) says which.
+    const cardPick = OPTION.cardEntries ? OPTION.cardEntries(p, proj, ents, st.feature) : pick(p, proj, OPTION.cardCap(p.range), ents, st.feature);
+    const themes = [['light', 'Light'], ['dark', 'Dark']].map(([k, label]) => Object.assign({ label, on: st.cardTheme === k, pick: () => set({ cardTheme: k }) }, seg(st.cardTheme === k)));
+    const tail = proj == null ? plural(sum.cur.total, 'commit') + ' on ' + plural(sum.cur.active, 'day') + '.' : sum.cur.total + ' ' + DATA.projects[proj] + ' ' + (sum.cur.total === 1 ? 'commit' : 'commits') + ' on ' + plural(sum.cur.active, 'day') + '.';
+    const draftHead = (proj == null ? '' : DATA.projects[proj] + ', ') + (p.range === 'all' ? names.sub : names.short + (names.running ? ' so far' : '')) + ':';
+    const modal = {
+      show: owner && st.modal, range: st.range, theme: st.cardTheme, offset, project: proj == null ? '' : String(proj),
+      tags: JSON.stringify(st.tags), feature: st.feature.join(','),
+      sub: (proj == null ? '' : DATA.projects[proj] + ' · ') + names.title + ' · ' + names.sub,
+      draft: [draftHead].concat(cardPick.kept.map(x => x.t)).concat([tail]).join('\n'),
+      left: cardPick.left.slice(0, 6).map(x => ({ t: x.t, date: fmtDay(ms(x.d)), swap: () => set({ feature: this.state.feature.concat([x.id]) }) })),
+      hasLeft: cardPick.left.length > 0, leftMore: cardPick.left.length > 6, leftMoreText: 'and ' + (cardPick.left.length - 6) + ' more',
+      warn: proj != null && untagged.length > 0, warnText: plural(untagged.length, 'entry').replace('entrys', 'entries') + ' ' + (p.range === 'all' ? 'so far' : names.word) + ' have no project and are not on this card. Tag them first to add them.',
+      saved: st.saved, copyLabel: st.copied ? 'Copied' : 'Copy post', saveLabel: st.saved ? 'Downloaded' : 'Download PNG',
+      fileName: 'openstage-tuxnotfound-' + (proj == null ? '' : DATA.projects[proj] + '-') + names.file + '.png',
+      copy: () => set({ copied: true }), save: () => set({ saved: true })
+    };
+
+    const opt = optionView({ st, set, owner, ents, proj, p, names, sum, picks, filterTo: pi => () => set({ project: pi, hover: null, feature: [] }) });
+
+    return {
+      owner, visitor: !owner, names, tabs, projSel, nav, tiles, vs: { show: !!sum.vs, text: sum.vs }, untag, themes, modal, opt,
+      timelineRepo: proj == null ? 'All repos' : DATA.projects[proj],
+      openModal: () => set({ modal: true, copied: false, saved: false, hover: null, feature: [] }),
+      closeModal: () => set({ modal: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

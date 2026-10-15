@@ -1,0 +1,1321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tux on Openstage: progress (Journey line)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=DM+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#6B7280;text-decoration:none}a:hover{color:#111827}
+.os-grid{display:grid;grid-template-columns:16rem minmax(0,1fr);gap:32px;align-items:start}
+.os-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.os-cardbox{width:600px;height:315px}
+.os-cardscale{transform:scale(.5);transform-origin:0 0}
+.os-clamp2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media (max-width:900px){.os-grid{grid-template-columns:minmax(0,1fr)}.os-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:700px){.os-cardbox{width:320px;height:168px}.os-cardscale{transform:scale(.2667)}}
+</style>
+</helmet>
+<div style="min-height: 100%; background: #ffffff; color: #111827; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased">
+
+  <header style="border-bottom: 1px solid #E5E7EB">
+    <nav style="max-width: 1024px; margin: 0 auto; padding: 0 16px; height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+      <a href="#" style="font-weight: 600; color: #111827">Openstage</a>
+      <sc-if value="{{owner}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; align-items: center; gap: 4px; font-size: 14px">
+          <a href="#" style="padding: 6px 10px; border-radius: 6px; color: #4B5563">Dashboard</a>
+          <a href="#" style="padding: 6px 10px; border-radius: 6px; color: #4B5563">Recap</a>
+          <a href="#" style="padding: 6px 10px; border-radius: 6px; color: #111827; background: #F3F4F6; font-weight: 500">My page</a>
+          <img src="/_blob/59b36a5d4069a14bd0e0e68e44a14127" alt="Account menu" style="width: 28px; height: 28px; border-radius: 9999px; margin-left: 8px">
+        </div>
+      </sc-if>
+      <sc-if value="{{visitor}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: center; gap: 16px; font-size: 14px">
+          <a href="#" style="color: #4B5563">Pricing</a>
+          <a href="#" style="color: #4B5563">Blog</a>
+          <a href="#" style="background: #111827; color: #ffffff; padding: 6px 12px; border-radius: 6px">Sign in with GitHub</a>
+        </div>
+      </sc-if>
+    </nav>
+  </header>
+
+  <main style="box-sizing: border-box; max-width: 1024px; margin: 0 auto; padding: 32px 16px 48px">
+    <div class="os-grid">
+
+      <aside style="display: flex; flex-direction: column; gap: 20px">
+        <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 16px">
+          <img src="/_blob/59b36a5d4069a14bd0e0e68e44a14127" alt="Tux" style="width: 96px; height: 96px; border-radius: 9999px; box-shadow: 0 0 0 2px #F3F4F6">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <h1 style="margin: 0; font-size: 20px; font-weight: 700; color: #111827">Tux</h1>
+              <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; background: #FEF3C7; color: #B45309; padding: 2px 8px; border-radius: 9999px">✦ Pro</span>
+            </div>
+            <p style="margin: 2px 0 0; font-size: 14px; color: #9CA3AF; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">@tuxnotfound</p>
+          </div>
+        </div>
+        <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #4B5563; white-space: pre-line">currently: relaunching Openstage in public.
+indie dev. ships things. moves on.</p>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: #6B7280">
+          <a href="#" style="display: flex; align-items: center; gap: 6px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path></svg>
+            tuxnotfound
+          </a>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 16px 0; border-top: 1px solid #E5E7EB; border-bottom: 1px solid #E5E7EB">
+          <div><div style="font-size: 20px; font-weight: 700">407</div><div style="font-size: 12px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em">entries</div></div>
+          <div><div style="font-size: 20px; font-weight: 700">5</div><div style="font-size: 12px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em">repos</div></div>
+          <div><div style="font-size: 20px; font-weight: 700">8</div><div style="font-size: 12px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em">milestones</div></div>
+          <div><div style="font-size: 20px; font-weight: 700">4</div><div style="font-size: 12px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em">day streak</div></div>
+        </div>
+        <sc-if value="{{visitor}}" hint-placeholder-val="{{ false }}">
+          <form style="margin: 0">
+            <label for="subscribe-email" style="display: block; font-size: 14px; font-weight: 500; color: #111827; margin-bottom: 8px">Get Tux's updates by email</label>
+            <div style="display: flex; gap: 8px">
+              <input id="subscribe-email" type="email" placeholder="you@example.com" style="flex: 1; min-width: 0; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px; font-size: 14px; font-family: inherit">
+              <button type="button" style="padding: 8px 12px; font-size: 14px; border-radius: 8px; background: #111827; color: #ffffff; border: 0; font-family: inherit">Subscribe</button>
+            </div>
+            <p style="margin: 6px 0 0; font-size: 12px; color: #9CA3AF">Double opt-in, one-click unsubscribe. Your address goes to Tux, not to a list of ours.</p>
+          </form>
+        </sc-if>
+      </aside>
+
+      <div style="min-width: 0">
+        <section aria-label="Progress" style="padding-bottom: 24px; border-bottom: 1px solid #E5E7EB">
+
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+              <div role="tablist" aria-label="Time range" style="display: inline-flex; padding: 3px; background: #F3F4F6; border-radius: 10px; gap: 2px">
+                <sc-for list="{{tabs}}" as="tab" hint-placeholder-count="4">
+                  <button type="button" role="tab" aria-selected="{{tab.on}}" onClick="{{tab.pick}}" style="border: 0; border-radius: 8px; padding: 6px 14px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; background: {{tab.bg}}; color: {{tab.fg}}; box-shadow: {{tab.shadow}}">{{tab.label}}</button>
+                </sc-for>
+              </div>
+              <label style="display: inline-flex; align-items: center; gap: 8px; border: 1px solid #E5E7EB; border-radius: 8px; padding: 0 4px 0 10px; height: 34px; background: #ffffff">
+                <span style="display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: {{projSel.color}}"></span>
+                <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Project</span>
+                <select onChange="{{projSel.change}}" value="{{projSel.value}}" style="border: 0; background: transparent; font-size: 13px; color: #111827; font-family: inherit; height: 32px; cursor: pointer; outline: none">
+                  <sc-for list="{{projSel.options}}" as="o" hint-placeholder-count="4">
+                    <option value="{{o.value}}">{{o.label}}</option>
+                  </sc-for>
+                </select>
+              </label>
+            </div>
+            <sc-if value="{{owner}}" hint-placeholder-val="{{ true }}">
+              <button type="button" onClick="{{openModal}}" style="display: inline-flex; align-items: center; gap: 8px; background: #111827; color: #ffffff; border: 0; border-radius: 8px; padding: 0 14px; height: 40px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 15l5-5 4 4 3-3 6 6"></path></svg>
+                Make a card
+              </button>
+            </sc-if>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 6px; margin-top: 16px">
+            <sc-if value="{{nav.show}}" hint-placeholder-val="{{ true }}">
+              <button type="button" aria-label="Previous period" onClick="{{nav.prev}}" disabled="{{nav.prevOff}}" style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid #E5E7EB; border-radius: 8px; background: #ffffff; cursor: {{nav.prevCursor}}; color: {{nav.prevColor}}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+              </button>
+              <button type="button" aria-label="Next period" onClick="{{nav.next}}" disabled="{{nav.nextOff}}" style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid #E5E7EB; border-radius: 8px; background: #ffffff; cursor: {{nav.nextCursor}}; color: {{nav.nextColor}}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+              </button>
+            </sc-if>
+            <h2 style="margin: 0 0 0 6px; font-size: 18px; font-weight: 600; color: #111827; white-space: nowrap">{{names.nav}}</h2>
+          </div>
+
+          <div class="os-kpis" style="margin-top: 20px">
+            <sc-for list="{{tiles}}" as="t" hint-placeholder-count="5">
+              <div style="min-width: 0">
+                <div style="font-size: 24px; font-weight: 700; color: #111827; line-height: 1.15">{{t.value}}</div>
+                <div style="display: flex; align-items: center; gap: 5px; font-size: 11px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px">
+                  <sc-if value="{{t.diamond}}" hint-placeholder-val="{{ false }}"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0.5L9.5 5L5 9.5L0.5 5Z" fill="#111827"></path></svg></sc-if>
+                  <sc-if value="{{t.ring}}" hint-placeholder-val="{{ false }}"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.7" fill="#ffffff" stroke="#111827" stroke-width="1.6"></circle></svg></sc-if>
+                  <sc-if value="{{t.disc}}" hint-placeholder-val="{{ false }}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#111827"></circle></svg></sc-if>
+                  <sc-if value="{{t.hollow}}" hint-placeholder-val="{{ false }}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.9" fill="#ffffff" stroke="#111827" stroke-width="1.3"></circle></svg></sc-if>
+                  {{t.label}}
+                </div>
+                <sc-if value="{{t.has}}" hint-placeholder-val="{{ true }}">
+                  <div style="font-size: 12px; margin-top: 2px; font-weight: 500; color: {{t.dColor}}">{{t.dText}}</div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{vs.show}}" hint-placeholder-val="{{ true }}">
+            <p style="margin: 8px 0 0; font-size: 12px; color: #9CA3AF">Changes {{vs.text}}</p>
+          </sc-if>
+
+          <div style="container-type: inline-size; margin-top: 18px">
+            <div tabindex="0" role="group" aria-label="{{opt.plotLabel}}" onKeyDown="{{opt.key}}" onFocus="{{opt.focus}}" onBlur="{{opt.leave}}" onMouseLeave="{{opt.leave}}" style="position: relative; height: {{opt.boxH}}; outline-offset: 4px">
+              <sc-for list="{{opt.variants}}" as="v" hint-placeholder-count="2">
+                <div style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; font-family: {{opt.font}}">
+                  <svg viewBox="0 0 {{v.W}} {{v.H}}" role="img" aria-label="{{opt.chartLabel}}" style="position: absolute; left: 0; top: 0; width: {{v.svgW}}; height: 100%; overflow: visible; pointer-events: none">
+                    <defs>
+                      <linearGradient id="jw-{{v.id}}" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="{{v.washColor}}" stop-opacity="{{v.wash0}}"></stop>
+                        <stop offset="1" stop-color="{{v.washColor}}" stop-opacity="{{v.wash1}}"></stop>
+                      </linearGradient>
+                    </defs>
+                    <path d="{{v.gridD}}" stroke="#F0F1F3" stroke-width="1" fill="none"></path>
+                    <path d="{{v.baseD}}" stroke="#D1D5DB" stroke-width="1" fill="none"></path>
+                    <path d="{{v.washD}}" fill="url(#jw-{{v.id}})"></path>
+                    <path d="{{v.crossD}}" stroke="#D1D5DB" stroke-width="1" fill="none"></path>
+                    <path d="{{v.poleD}}" stroke="#C9CDD3" stroke-width="1" fill="none"></path>
+                    <path d="{{v.lineD}}" fill="none" stroke="#111827" stroke-width="{{v.lineW}}" stroke-linejoin="round" stroke-linecap="round"></path>
+                    <path d="{{v.haloD}}" fill="#ffffff"></path>
+                    <path d="{{v.shipD}}" fill="#111827" stroke="#ffffff" stroke-width="{{v.haloW}}" stroke-linejoin="round" paint-order="stroke"></path>
+                    <path d="{{v.ringD}}" fill="#ffffff" stroke="#111827" stroke-width="{{v.ringW}}"></path>
+                    <circle cx="{{v.dot.cx}}" cy="{{v.dot.cy}}" r="{{v.dot.r}}" fill="#111827" stroke="#ffffff" stroke-width="{{v.haloW}}" paint-order="stroke"></circle>
+                    <path d="{{v.focusD}}" fill="none" stroke="#111827" stroke-width="1.5"></path>
+                    <path d="{{v.crossRing}}" fill="none" stroke="#111827" stroke-width="1.5"></path>
+                  </svg>
+
+                  <sc-for list="{{v.ticks}}" as="tk" hint-placeholder-count="4">
+                    <span style="position: absolute; left: {{tk.left}}; top: {{tk.top}}; transform: translate(-100%, -50%); font-size: {{tk.fs}}; line-height: 1; color: #9CA3AF; font-variant-numeric: tabular-nums; pointer-events: none">{{tk.v}}</span>
+                  </sc-for>
+                  <sc-for list="{{v.xls}}" as="xl" hint-placeholder-count="7">
+                    <span style="position: absolute; left: {{xl.left}}; top: {{xl.top}}; transform: translateX(-50%); font-size: {{xl.fs}}; line-height: 1; white-space: nowrap; color: {{xl.color}}; font-weight: {{xl.fw}}; pointer-events: none">{{xl.text}}</span>
+                  </sc-for>
+                  <div style="position: absolute; left: {{v.end.left}}; top: {{v.end.top}}; font-size: {{v.end.fsNum}}; line-height: {{v.end.lh}}; white-space: nowrap; pointer-events: none">
+                    <span style="font-size: {{v.end.fsNum}}; font-weight: 600; color: #111827">{{v.end.num}}</span><span style="font-size: {{v.end.fsWord}}; color: #6B7280">{{v.end.word}}</span>
+                  </div>
+
+                  <sc-for list="{{v.hits}}" as="h" hint-placeholder-count="12">
+                    <div onMouseEnter="{{h.enter}}" onClick="{{h.enter}}" style="position: absolute; z-index: 1; top: 0; bottom: 0; left: {{h.left}}; width: {{h.width}}"></div>
+                  </sc-for>
+                  <sc-for list="{{v.flags}}" as="f" hint-placeholder-count="5">
+                    <div onClick="{{f.click}}" style="position: absolute; z-index: 2; left: {{f.left}}; right: {{f.right}}; top: {{f.top}}; text-align: {{f.align}}; font-size: {{f.fs}}; line-height: {{f.lh}}; font-weight: {{f.fw}}; color: {{f.color}}; white-space: nowrap; cursor: pointer">
+                      <sc-for list="{{f.lines}}" as="ln" hint-placeholder-count="2">
+                        <div>{{ln.text}}<sc-if value="{{ln.hasRun}}" hint-placeholder-val="{{ false }}"><span style="margin-left: 0.28em; font-weight: 400; color: #6B7280">{{ln.run}}</span></sc-if></div>
+                      </sc-for>
+                    </div>
+                  </sc-for>
+                  <sc-for list="{{v.markers}}" as="m" hint-placeholder-count="10">
+                    <button type="button" tabindex="{{m.tab}}" aria-label="{{m.aria}}" onClick="{{m.click}}" onFocus="{{m.focus}}" onBlur="{{m.blur}}" onMouseEnter="{{m.enter}}" style="position: absolute; z-index: 3; left: {{m.left}}; top: {{m.top}}; width: {{m.size}}; height: {{m.size}}; margin: 0; padding: 0; border: 0; border-radius: 9999px; background: transparent; transform: translate(-50%, -50%); cursor: pointer"></button>
+                  </sc-for>
+
+                  <sc-if value="{{v.tip.show}}" hint-placeholder-val="{{ false }}">
+                    <div style="position: absolute; z-index: 6; pointer-events: none; top: 4px; left: {{v.tip.left}}; width: 18.333em; overflow: hidden; box-sizing: border-box; background: #111827; color: #F9FAFB; border-radius: 0.667em; padding: 0.833em 1em; box-shadow: 0 0.667em 2em rgba(0, 0, 0, 0.18); font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: {{v.tip.fs}}; line-height: 1.4">
+                      <div style="color: #9CA3AF">{{v.tip.title}}</div>
+                      <div style="font-size: 1.25em; font-weight: 600; margin-top: 0.15em">{{v.tip.value}}</div>
+                      <div style="color: #9CA3AF">{{v.tip.sofar}}</div>
+                      <sc-for list="{{v.tip.rows}}" as="r" hint-placeholder-count="2">
+                        <div style="display: flex; align-items: center; gap: 0.667em; margin-top: 0.333em">
+                          <span style="display: inline-block; flex-shrink: 0; width: 0.667em; height: 0.667em; border-radius: 9999px; background: {{r.color}}"></span>
+                          <span style="flex: 1; min-width: 0; color: #D1D5DB">{{r.name}}</span>
+                          <span style="font-weight: 600; font-variant-numeric: tabular-nums">{{r.n}}</span>
+                        </div>
+                      </sc-for>
+                      <sc-if value="{{v.tip.hasEntries}}" hint-placeholder-val="{{ true }}">
+                        <div style="margin-top: 0.667em; padding-top: 0.083em; border-top: 0.083em solid #374151">
+                          <sc-for list="{{v.tip.entries}}" as="te" hint-placeholder-count="2">
+                            <div style="display: flex; align-items: flex-start; gap: 0.667em; margin-top: 0.5em">
+                              <sc-if value="{{te.ship}}" hint-placeholder-val="{{ true }}"><svg width="10" height="10" viewBox="0 0 10 10" aria-label="Shipped" role="img" style="flex-shrink: 0; margin-top: 0.3em"><path d="M5 0.5L9.5 5L5 9.5L0.5 5Z" fill="#F9FAFB"></path></svg></sc-if>
+                              <sc-if value="{{te.post}}" hint-placeholder-val="{{ false }}"><svg width="10" height="10" viewBox="0 0 10 10" aria-label="Published" role="img" style="flex-shrink: 0; margin-top: 0.3em"><circle cx="5" cy="5" r="3.7" fill="none" stroke="#F9FAFB" stroke-width="1.6"></circle></svg></sc-if>
+                              <span class="os-clamp2" style="flex: 1; min-width: 0">{{te.t}}</span>
+                              <sc-if value="{{te.pin}}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" aria-label="Pinned" role="img" style="flex-shrink: 0; margin-top: 0.25em"><path fill="#F59E0B" d="M11.05 2.93c.3-.92 1.6-.92 1.9 0l1.52 4.67a1 1 0 00.95.69h4.91c.97 0 1.37 1.24.59 1.81l-3.98 2.89a1 1 0 00-.36 1.12l1.52 4.67c.3.92-.76 1.69-1.54 1.12l-3.98-2.89a1 1 0 00-1.17 0l-3.98 2.89c-.78.57-1.84-.2-1.54-1.12l1.52-4.67a1 1 0 00-.36-1.12L2.07 10.1c-.78-.57-.38-1.81.59-1.81h4.91a1 1 0 00.95-.69l1.53-4.67z"></path></svg></sc-if>
+                              <sc-if value="{{te.chip}}" hint-placeholder-val="{{ false }}"><span style="flex-shrink: 0; display: inline-flex; align-items: center; gap: 0.4em; font-size: 0.917em; color: #D1D5DB"><span style="display: inline-block; width: 0.667em; height: 0.667em; border-radius: 9999px; background: {{te.color}}"></span>{{te.slug}}</span></sc-if>
+                            </div>
+                          </sc-for>
+                          <sc-if value="{{v.tip.more}}" hint-placeholder-val="{{ false }}">
+                            <div style="margin-top: 0.5em; color: #9CA3AF">{{v.tip.moreText}}</div>
+                          </sc-if>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+              <div role="status" aria-live="polite" style="position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">{{opt.say}}</div>
+            </div>
+          </div>
+
+          <sc-if value="{{opt.mix.show}}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 14px; font-size: 12px; color: #4B5563">
+              <sc-for list="{{opt.mix.items}}" as="it" hint-placeholder-count="5">
+                <span style="display: inline-flex; align-items: center; gap: 10px">
+                  <button type="button" title="{{it.hint}}" onClick="{{it.pick}}" style="display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; padding: 0; font: inherit; color: inherit; cursor: pointer">
+                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: {{it.color}}"></span>
+                    <span style="color: #111827">{{it.name}}</span>
+                    <span style="color: #9CA3AF; font-variant-numeric: tabular-nums">{{it.n}}</span>
+                  </button>
+                  <sc-if value="{{it.sep}}" hint-placeholder-val="{{ true }}"><span aria-hidden="true" style="color: #D1D5DB">·</span></sc-if>
+                </span>
+              </sc-for>
+              <sc-if value="{{opt.mix.more}}" hint-placeholder-val="{{ false }}"><span style="color: #9CA3AF">{{opt.mix.moreText}}</span></sc-if>
+            </div>
+          </sc-if>
+
+          <div style="margin-top: 10px">
+            <button type="button" aria-expanded="{{opt.table.open}}" onClick="{{opt.table.toggle}}" style="border: 0; background: transparent; padding: 0; font-family: inherit; font-size: 12px; color: #6B7280; text-decoration: underline; cursor: pointer">{{opt.table.label}}</button>
+            <sc-if value="{{opt.table.open}}" hint-placeholder-val="{{ false }}">
+              <div role="table" aria-label="Commits by period and project" style="margin-top: 8px; font-size: 12px; color: #374151">
+                <div role="row" style="display: grid; grid-template-columns: minmax(0, 1.3fr) 56px 56px minmax(0, 2fr); gap: 0 12px; padding: 4px 0; color: #9CA3AF; font-weight: 500">
+                  <div role="columnheader">When</div>
+                  <div role="columnheader" style="text-align: right">Commits</div>
+                  <div role="columnheader" style="text-align: right">So far</div>
+                  <div role="columnheader">By project</div>
+                </div>
+                <sc-for list="{{opt.table.rows}}" as="tr" hint-placeholder-count="3">
+                  <div role="row" style="display: grid; grid-template-columns: minmax(0, 1.3fr) 56px 56px minmax(0, 2fr); gap: 0 12px; padding: 5px 0; border-top: 1px solid #F3F4F6">
+                    <div role="cell">{{tr.when}}</div>
+                    <div role="cell" style="text-align: right; font-variant-numeric: tabular-nums">{{tr.total}}</div>
+                    <div role="cell" style="text-align: right; font-variant-numeric: tabular-nums; color: #9CA3AF">{{tr.cum}}</div>
+                    <div role="cell" style="color: #6B7280">{{tr.by}}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{opt.list.show}}" hint-placeholder-val="{{ true }}">
+            <div style="margin-top: 20px">
+              <p style="margin: 0 0 6px; font-size: 11px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em">{{opt.list.title}}</p>
+              <ul style="list-style: none; margin: 0; padding: 0">
+                <sc-for list="{{opt.list.items}}" as="it" hint-placeholder-count="3">
+                  <li id="jr-row-{{it.id}}" onMouseEnter="{{it.enter}}" onMouseLeave="{{opt.list.leave}}" style="display: flex; align-items: center; gap: 10px; margin: 0 -8px; padding: 7px 8px; border-top: 1px solid #F3F4F6; border-radius: 6px; font-size: 14px; background: {{it.bg}}">
+                    <sc-if value="{{it.ship}}" hint-placeholder-val="{{ true }}">
+                      <svg width="10" height="10" viewBox="0 0 10 10" aria-label="Shipped" role="img" style="flex-shrink: 0"><path d="M5 0.5L9.5 5L5 9.5L0.5 5Z" fill="#111827"></path></svg>
+                    </sc-if>
+                    <sc-if value="{{it.post}}" hint-placeholder-val="{{ false }}">
+                      <svg width="10" height="10" viewBox="0 0 10 10" aria-label="Published" role="img" style="flex-shrink: 0"><circle cx="5" cy="5" r="3.7" fill="#ffffff" stroke="#111827" stroke-width="1.6"></circle></svg>
+                    </sc-if>
+                    <span style="width: 52px; flex-shrink: 0; font-size: 12px; font-weight: 500; color: #6B7280; font-variant-numeric: tabular-nums; white-space: nowrap">{{it.date}}</span>
+                    <span class="os-clamp2" style="flex: 1; min-width: 0; color: #111827">{{it.t}}</span>
+                    <sc-if value="{{it.pin}}" hint-placeholder-val="{{ false }}">
+                      <svg width="12" height="12" viewBox="0 0 24 24" aria-label="Pinned" role="img" style="flex-shrink: 0"><path fill="#F59E0B" d="M11.05 2.93c.3-.92 1.6-.92 1.9 0l1.52 4.67a1 1 0 00.95.69h4.91c.97 0 1.37 1.24.59 1.81l-3.98 2.89a1 1 0 00-.36 1.12l1.52 4.67c.3.92-.76 1.69-1.54 1.12l-3.98-2.89a1 1 0 00-1.17 0l-3.98 2.89c-.78.57-1.84-.2-1.54-1.12l1.52-4.67a1 1 0 00-.36-1.12L2.07 10.1c-.78-.57-.38-1.81.59-1.81h4.91a1 1 0 00.95-.69l1.53-4.67z"></path></svg>
+                    </sc-if>
+                    <sc-if value="{{it.chip}}" hint-placeholder-val="{{ false }}">
+                      <span style="flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 9999px; background: #F3F4F6; font-size: 12px; color: #4B5563"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: {{it.color}}"></span>{{it.slug}}</span>
+                    </sc-if>
+                  </li>
+                </sc-for>
+              </ul>
+            </div>
+          </sc-if>
+          <sc-if value="{{opt.empty.show}}" hint-placeholder-val="{{ false }}">
+            <p style="margin: 18px 0 0; font-size: 13px; color: #9CA3AF">{{opt.empty.text}}
+              <sc-if value="{{opt.empty.log}}" hint-placeholder-val="{{ false }}"><a href="#" style="margin-left: 6px; color: #111827; text-decoration: underline">Log an entry</a></sc-if>
+            </p>
+          </sc-if>
+
+
+          <sc-if value="{{untag.show}}" hint-placeholder-val="{{ false }}">
+            <p style="margin: 14px 0 0; font-size: 12px; color: #6B7280">{{untag.text}} <button type="button" onClick="{{untag.toggle}}" style="border: 0; background: transparent; padding: 0; font-size: 12px; color: #111827; text-decoration: underline; cursor: pointer; font-family: inherit">{{untag.button}}</button></p>
+          </sc-if>
+          <sc-if value="{{untag.open}}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top: 10px; border: 1px solid #E5E7EB; border-radius: 12px; padding: 4px 14px 10px">
+              <sc-for list="{{untag.rows}}" as="row" hint-placeholder-count="3">
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 0; border-bottom: 1px solid #F3F4F6">
+                  <div style="display: flex; align-items: center; gap: 10px; flex: 1 1 260px; min-width: 0">
+                    <sc-if value="{{row.ship}}" hint-placeholder-val="{{ true }}"><svg width="10" height="10" viewBox="0 0 10 10" aria-label="Shipped" role="img" style="flex-shrink: 0"><path d="M5 0.5L9.5 5L5 9.5L0.5 5Z" fill="#111827"></path></svg></sc-if>
+                    <sc-if value="{{row.post}}" hint-placeholder-val="{{ false }}"><svg width="10" height="10" viewBox="0 0 10 10" aria-label="Published" role="img" style="flex-shrink: 0"><circle cx="5" cy="5" r="3.7" fill="#ffffff" stroke="#111827" stroke-width="1.6"></circle></svg></sc-if>
+                    <span style="width: 48px; flex-shrink: 0; font-size: 12px; font-weight: 500; color: #6B7280; text-transform: uppercase; font-variant-numeric: tabular-nums">{{row.date}}</span>
+                    <span class="os-clamp2" style="font-size: 14px; color: #111827; min-width: 0">{{row.t}}</span>
+                  </div>
+                  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
+                    <sc-for list="{{row.buttons}}" as="b" hint-placeholder-count="2">
+                      <button type="button" onClick="{{b.pick}}" style="display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 10px; border: 1px solid #E5E7EB; border-radius: 8px; background: #ffffff; font-size: 12px; color: #111827; cursor: pointer; font-family: inherit">
+                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: {{b.color}}"></span>{{b.label}}
+                      </button>
+                    </sc-for>
+                    <select aria-label="Other project" onChange="{{row.other}}" value="" style="min-height: 30px; padding: 0 6px; border: 1px solid #E5E7EB; border-radius: 8px; background: #ffffff; font-size: 12px; color: #374151; font-family: inherit; cursor: pointer">
+                      <option value="">Other…</option>
+                      <sc-for list="{{untag.others}}" as="o" hint-placeholder-count="3">
+                        <option value="{{o.value}}">{{o.label}}</option>
+                      </sc-for>
+                    </select>
+                    <button type="button" onClick="{{row.none}}" style="min-height: 30px; padding: 0 10px; border: 0; border-radius: 8px; background: #F3F4F6; font-size: 12px; color: #374151; cursor: pointer; font-family: inherit">No project</button>
+                  </div>
+                </div>
+              </sc-for>
+              <sc-if value="{{untag.more}}" hint-placeholder-val="{{ false }}">
+                <button type="button" onClick="{{untag.showMore}}" style="margin-top: 8px; border: 0; background: transparent; padding: 0; font-size: 13px; color: #374151; cursor: pointer; font-family: inherit">{{untag.moreText}}</button>
+              </sc-if>
+              <sc-if value="{{untag.done}}" hint-placeholder-val="{{ false }}">
+                <p style="margin: 10px 0 0; font-size: 13px; color: #6B7280">Every entry here has a project now.</p>
+              </sc-if>
+            </div>
+          </sc-if>
+        </section>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; border-bottom: 1px solid #F3F4F6">
+          <div style="display: flex; gap: 4px; overflow-x: auto">
+            <a href="#" style="padding: 8px 16px; font-size: 14px; font-weight: 500; color: #111827; border-bottom: 2px solid #111827; margin-bottom: -1px; white-space: nowrap">All</a>
+            <a href="#" style="padding: 8px 16px; font-size: 14px; font-weight: 500; color: #6B7280; white-space: nowrap">Shipped</a>
+            <a href="#" style="padding: 8px 16px; font-size: 14px; font-weight: 500; color: #6B7280; white-space: nowrap">Posted</a>
+            <a href="#" style="padding: 8px 16px; font-size: 14px; font-weight: 500; color: #6B7280; white-space: nowrap">Milestones</a>
+            <a href="#" style="padding: 8px 16px; font-size: 14px; font-weight: 500; color: #6B7280; white-space: nowrap">Notes</a>
+          </div>
+          <span style="flex-shrink: 0; font-size: 12px; color: #6B7280; border: 1px solid #E5E7EB; border-radius: 8px; padding: 6px 10px">{{timelineRepo}}</span>
+        </div>
+        <div style="margin-top: 8px">
+          <div style="display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid #F3F4F6">
+            <div style="width: 28px; height: 28px; border-radius: 9999px; background: #F3F4F6; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #6B7280"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.5"></circle><path d="M12 3v5.5M12 15.5V21"></path></svg></div>
+            <div style="flex: 1; min-width: 0">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px"><span style="font-size: 12px; font-weight: 500; color: #6B7280; background: #F3F4F6; padding: 2px 8px; border-radius: 9999px">recap-card</span><span style="font-size: 12px; color: #9CA3AF">openstage</span></div>
+              <p style="margin: 0; font-size: 14px; font-weight: 500; color: #111827">Stop claiming Openstage reads only public activity</p>
+            </div>
+            <span style="font-size: 12px; color: #9CA3AF; white-space: nowrap">about 20 hours ago</span>
+          </div>
+          <div style="display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid #F3F4F6">
+            <div style="width: 28px; height: 28px; border-radius: 9999px; background: #F3F4F6; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #6B7280"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.5"></circle><path d="M12 3v5.5M12 15.5V21"></path></svg></div>
+            <div style="flex: 1; min-width: 0">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px"><span style="font-size: 12px; font-weight: 500; color: #2563EB; background: #EFF6FF; padding: 2px 8px; border-radius: 9999px">shipped</span><span style="font-size: 12px; color: #9CA3AF">watchtower · 5 commits</span></div>
+              <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: #111827">
+                <li>Solve drift: show the session the Mac started</li>
+                <li>Docs read in the app, synced from the Mac</li>
+                <li>Solve drift: an ask for Claude from the app</li>
+              </ul>
+              <p style="margin: 4px 0 0; font-size: 12px; color: #9CA3AF">2 more commits that day</p>
+            </div>
+            <span style="font-size: 12px; color: #9CA3AF; white-space: nowrap">1 day ago</span>
+          </div>
+          <div style="margin-top: 24px; text-align: center">
+            <a href="#" style="display: inline-block; font-size: 14px; color: #6B7280; border: 1px solid #E5E7EB; border-radius: 8px; padding: 10px 20px">Load more</a>
+          </div>
+        </div>
+
+        <footer style="margin-top: 48px; padding-top: 24px; border-top: 1px solid #F3F4F6; text-align: center; display: flex; flex-direction: column; gap: 8px; font-size: 14px">
+          <a href="#">Explore other builders</a>
+          <sc-if value="{{visitor}}" hint-placeholder-val="{{ false }}">
+            <a href="#">Get your own proof-of-work page →</a>
+          </sc-if>
+        </footer>
+      </div>
+    </div>
+  </main>
+
+  <sc-if value="{{modal.show}}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 50; background: rgba(17,24,39,0.55); display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto">
+      <div role="dialog" aria-modal="true" aria-label="Make a card" style="background: #ffffff; border-radius: 16px; width: 100%; max-width: 648px; box-sizing: border-box; padding: 24px; box-shadow: 0 24px 60px rgba(0,0,0,0.28)">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px">
+          <div>
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700">Your card</h2>
+            <p style="margin: 4px 0 0; font-size: 14px; color: #6B7280">{{modal.sub}}</p>
+          </div>
+          <button type="button" aria-label="Close" onClick="{{closeModal}}" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 0; border-radius: 8px; background: #F3F4F6; color: #374151; cursor: pointer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+        </div>
+        <div class="os-cardbox" style="margin-top: 16px; border-radius: 10px; overflow: hidden; box-shadow: 0 0 0 1px #E5E7EB; position: relative">
+          <div class="os-cardscale" style="width: 1200px; height: 630px">
+            <dc-import name="CardJourney" range="{{modal.range}}" theme="{{modal.theme}}" offset="{{modal.offset}}" project="{{modal.project}}" tags="{{modal.tags}}" feature="{{modal.feature}}" hint-size="1200px,630px"></dc-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px">
+          <div role="radiogroup" aria-label="Card theme" style="display: inline-flex; padding: 3px; background: #F3F4F6; border-radius: 10px; gap: 2px">
+            <sc-for list="{{themes}}" as="th" hint-placeholder-count="2">
+              <button type="button" role="radio" aria-checked="{{th.on}}" onClick="{{th.pick}}" style="border: 0; border-radius: 8px; padding: 6px 14px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; background: {{th.bg}}; color: {{th.fg}}; box-shadow: {{th.shadow}}">{{th.label}}</button>
+            </sc-for>
+          </div>
+          <div style="display: flex; gap: 8px">
+            <button type="button" onClick="{{modal.copy}}" style="min-height: 40px; padding: 0 14px; font-size: 14px; font-weight: 500; border-radius: 8px; border: 1px solid #E5E7EB; background: #ffffff; color: #111827; cursor: pointer; font-family: inherit">{{modal.copyLabel}}</button>
+            <button type="button" onClick="{{modal.save}}" style="min-height: 40px; padding: 0 14px; font-size: 14px; font-weight: 500; border-radius: 8px; border: 0; background: #111827; color: #ffffff; cursor: pointer; font-family: inherit">{{modal.saveLabel}}</button>
+          </div>
+        </div>
+        <sc-if value="{{modal.saved}}" hint-placeholder-val="{{ false }}">
+          <p style="margin: 8px 0 0; font-size: 12px; color: #6B7280; text-align: right">{{modal.fileName}}</p>
+        </sc-if>
+        <sc-if value="{{modal.warn}}" hint-placeholder-val="{{ false }}">
+          <p style="margin: 14px 0 0; font-size: 13px; color: #92400E; background: #FFFBEB; border-radius: 8px; padding: 8px 12px">{{modal.warnText}}</p>
+        </sc-if>
+        <sc-if value="{{modal.hasLeft}}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top: 16px">
+            <p style="margin: 0 0 4px; font-size: 12px; font-weight: 600; color: #6B7280">Not on the card</p>
+            <sc-for list="{{modal.left}}" as="l" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid #F3F4F6; font-size: 13px">
+                <span style="width: 48px; flex-shrink: 0; font-size: 12px; color: #6B7280; text-transform: uppercase; font-variant-numeric: tabular-nums">{{l.date}}</span>
+                <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #111827">{{l.t}}</span>
+                <button type="button" onClick="{{l.swap}}" style="flex-shrink: 0; min-height: 28px; padding: 0 10px; border: 1px solid #E5E7EB; border-radius: 8px; background: #ffffff; font-size: 12px; color: #111827; cursor: pointer; font-family: inherit">Swap in</button>
+              </div>
+            </sc-for>
+            <sc-if value="{{modal.leftMore}}" hint-placeholder-val="{{ false }}">
+              <p style="margin: 4px 0 0; font-size: 12px; color: #9CA3AF">{{modal.leftMoreText}}</p>
+            </sc-if>
+          </div>
+        </sc-if>
+        <div style="margin-top: 16px">
+          <p style="margin: 0 0 6px; font-size: 12px; font-weight: 600; color: #6B7280">Post to go with it</p>
+          <div style="white-space: pre-line; font-size: 14px; line-height: 1.5; color: #111827; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px; padding: 12px 14px">{{modal.draft}}</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"viewer":{"editor":"enum","options":["owner","visitor"],"default":"owner"},"$preview":{"width":1280,"height":1810}}'>
+// ===== Openstage progress draft: shared core =====
+// Data (Tux's live page, to 2026-10-14), periods, the shared pick, the project
+// filter with tag overrides, colors, and card text fitting with the server's
+// Inter width tables. Paste verbatim at the top of every artboard script.
+const DATA = {
+  projects: ['openstage', 'wheels-off', 'goal_atlas', 'story_time_v1', 'trained-on', 'watchtower', 'trained-on-dataset'],
+  days: {"2026-03-26":[[0,5]],"2026-03-27":[[0,1]],"2026-03-28":[[0,9]],"2026-03-31":[[0,1]],"2026-04-04":[[0,1]],"2026-04-29":[[0,1]],"2026-04-30":[[3,2]],"2026-05-01":[[3,1]],"2026-05-02":[[0,1],[3,3]],"2026-05-04":[[0,10]],"2026-05-05":[[0,15]],"2026-05-06":[[0,2],[3,19]],"2026-05-07":[[0,4]],"2026-05-08":[[0,2]],"2026-05-09":[[0,2]],"2026-05-10":[[3,1]],"2026-05-13":[[0,1]],"2026-05-14":[[3,3]],"2026-05-19":[[0,2],[2,1]],"2026-05-26":[[2,3]],"2026-05-27":[[0,1],[2,1]],"2026-06-03":[[0,1],[2,1]],"2026-06-04":[[0,1],[2,1]],"2026-06-05":[[0,1]],"2026-06-10":[[2,11]],"2026-06-11":[[2,10]],"2026-06-13":[[2,5]],"2026-06-14":[[0,1],[2,2]],"2026-06-15":[[2,1]],"2026-06-16":[[2,1]],"2026-06-17":[[2,7]],"2026-06-18":[[2,1]],"2026-06-19":[[2,1]],"2026-06-20":[[2,2]],"2026-06-21":[[3,2]],"2026-06-25":[[2,2]],"2026-06-29":[[2,1]],"2026-06-30":[[2,6]],"2026-07-28":[[2,3]],"2026-09-10":[[0,2]],"2026-09-11":[[0,18]],"2026-09-15":[[0,2],[3,1]],"2026-09-17":[[0,1]],"2026-09-21":[[0,4]],"2026-09-22":[[0,1]],"2026-09-23":[[0,1]],"2026-09-24":[[4,1]],"2026-09-25":[[1,12],[4,1]],"2026-09-26":[[1,3]],"2026-09-28":[[0,5],[4,13]],"2026-09-29":[[0,4],[4,2]],"2026-09-30":[[4,6]],"2026-10-01":[[4,1]],"2026-10-02":[[4,1]],"2026-10-06":[[0,2],[1,4]],"2026-10-07":[[1,19]],"2026-10-08":[[1,8]],"2026-10-09":[[0,2],[4,5]],"2026-10-11":[[0,25],[1,4]],"2026-10-12":[[0,5],[1,2]],"2026-10-13":[[0,39],[1,10],[4,1],[5,11],[6,3]],"2026-10-14":[[0,3],[5,5]]},
+  // k: 's' shipped (milestone, release), 'p' published (post, note, link).
+  // r: project index when the entry is tagged. pin: pinned by the builder.
+  entries: [
+    { id: 1, d: '2026-03-23', k: 'p', t: "why i'm building this" },
+    { id: 2, d: '2026-03-26', k: 's', t: 'day 1: it boots' },
+    { id: 3, d: '2026-03-26', k: 'p', t: 'on picking rails in 2026' },
+    { id: 4, d: '2026-03-27', k: 'p', t: 'the demo solves itself' },
+    { id: 5, d: '2026-03-28', k: 's', t: 'We are live!!' },
+    { id: 6, d: '2026-03-28', k: 'p', t: 'from idea to live' },
+    { id: 7, d: '2026-03-31', k: 's', t: 'live on Hacker News' },
+    { id: 8, d: '2026-04-29', k: 's', t: 'Pro tier shipped 🎉' },
+    { id: 9, d: '2026-05-06', k: 's', t: 'First user signed up 🥳🥳🥳' },
+    { id: 10, d: '2026-05-07', k: 's', t: 'story time is live! 🚀🚀🚀' },
+    { id: 11, d: '2026-05-08', k: 's', t: 'Share on 𝕏 !' },
+    { id: 12, d: '2026-06-11', k: 's', t: 'launched The Goal Atlas 🌍 — just in time for 2026' },
+    { id: 13, d: '2026-09-11', k: 'p', t: "This week's build log: 5 commits in openstage.", b: "This week's build log: 5 commits in openstage.\n- Rebirth begins 🚀" },
+    { id: 14, d: '2026-09-11', k: 's', t: 'Rebirth begins 🚀', pin: 1 },
+    { id: 15, d: '2026-09-18', k: 'p', t: 'This week I went back to Story Time by adding a export to pdf feature. Also a lot of work on synchronising private github repos on Openstage. Fun fun!' },
+    { id: 16, d: '2026-09-23', k: 'p', t: "Needed help to summarize my week's work and an easy way to publicly share what I've been building. Built a recap feature, and it's live." },
+    { id: 17, d: '2026-09-25', k: 'p', t: 'Shipped this week:', b: "- A new feature in OpenStage to help me recap my week's work\n- A new project to keep track of each AI tool trained on your inputs\n- A skateboarding game proof of concept was brought closer to life" },
+    { id: 18, d: '2026-10-01', k: 's', t: 'Trained on me is live!!', pin: 1, r: 4, b: "Is AI training on my prompts? Was it ever? And which vendors are?\nLet's find out!" },
+    { id: 19, d: '2026-10-02', k: 'p', t: "This week's build log:", b: "- Trained on me is live!!\n\nopenstage\n- UI cleanup\n- Landing page redesign\n\nwheels-off\n- Rider improvement: chibi look, finer ink lines, board animation\n- Kickflip move\n- Smoother distance edges (MSAA + FXAA)" },
+    { id: 20, d: '2026-10-09', k: 'p', t: 'What I worked on this week: 40 commits across 3 repos.', b: "wheels-off\n- Serve the game at playwheelsoff.com, workers.dev off\n- Serve the leaderboard API from the Worker\n\ntrained-on\n- Press page, and a citation on every change page\n\nopenstage\n- Blog: the relaunch story" }
+  ],
+  identity: { name: 'Tux', handle: 'tuxnotfound', avatar: '/_blob/59b36a5d4069a14bd0e0e68e44a14127' }
+};
+const TODAY = '2026-10-15';
+const DAY = 86400000;
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const WD = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+// Colors. Project colors are fixed by all-time commits (DATA.projects order).
+const PAL = { light: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300'], dark: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300'] };
+const THEMES = {
+  light: { bg: '#F8F7F3', ink: '#14171A', muted: '#62665F', faint: '#8A8E86', rule: '#E4E3DC', ruleStrong: '#CDCBC1', accent: '#00875A', ring: '#D9D7CE' },
+  dark: { bg: '#0E1012', ink: '#ECEEEF', muted: '#8E959A', faint: '#6B7378', rule: '#22272B', ruleStrong: '#394046', accent: '#00BA7C', ring: '#2A3035' }
+};
+const PAGE = { ink: '#111827', ink2: '#374151', muted: '#6B7280', faint: '#9CA3AF', quiet: '#D1D5DB', rule: '#F3F4F6', grid: '#F0F1F3', axis: '#D1D5DB', wash: '#F9FAFB', star: '#F59E0B', up: '#15803D', border: '#E5E7EB' };
+// surface: 'page' | 'light' | 'dark'. The 7th project and later are gray.
+function colorOf(pi, surface) {
+  if (pi == null) return surface === 'page' ? PAGE.faint : THEMES[surface].faint;
+  if (pi < 6) return PAL[surface === 'dark' ? 'dark' : 'light'][pi];
+  return surface === 'page' ? PAGE.faint : THEMES[surface].faint;
+}
+
+function ms(s) { const p = s.split('-'); return Date.UTC(+p[0], +p[1] - 1, +p[2]); }
+function iso(t) { return new Date(t).toISOString().slice(0, 10); }
+function parts(t) { const d = new Date(t); return { y: d.getUTCFullYear(), m: d.getUTCMonth(), d: d.getUTCDate(), wd: (d.getUTCDay() + 6) % 7 }; }
+function mStart(y, m) { return Date.UTC(y, m, 1); }
+function weekNo(t) { const thu = t + (3 - parts(t).wd) * DAY; const j4 = Date.UTC(parts(thu).y, 0, 4); const w1 = j4 - parts(j4).wd * DAY; return 1 + Math.floor((thu - w1) / (7 * DAY)); }
+function r1(v) { return Math.round(v * 10) / 10; }
+function fmtDay(t) { const q = parts(t); return MON[q.m] + ' ' + q.d; }
+function span(a, b) { const x = parts(a), y = parts(b); if (a === b) return fmtDay(a); return x.m === y.m ? MON[x.m] + ' ' + x.d + '–' + y.d : fmtDay(a) + ' – ' + fmtDay(b); }
+function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
+
+const T0 = ms(TODAY);
+const FIRST = Math.min(ms(Object.keys(DATA.days).sort()[0]), ...DATA.entries.map(e => ms(e.d)));
+
+// Entries with the owner's tag choices applied: tags maps id to a project
+// index, or -1 for "No project". Nothing is ever inferred from text.
+function entriesWith(tags) {
+  const t = tags || {};
+  return DATA.entries.map(e => {
+    const o = Object.assign({}, e);
+    if (Object.prototype.hasOwnProperty.call(t, e.id)) { if (t[e.id] === -1) { delete o.r; o.none = true; } else o.r = t[e.id]; }
+    return o;
+  });
+}
+
+// Calendar periods: ISO week, calendar month, calendar year, all time.
+function periodOf(range, offset) {
+  const t = parts(T0);
+  if (range === 'week') { const s = T0 - t.wd * DAY + offset * 7 * DAY; return { range, offset, start: s, end: s + 6 * DAY, unit: 'day' }; }
+  if (range === 'month') { const s = mStart(t.y, t.m + offset); return { range, offset, start: s, end: mStart(t.y, t.m + offset + 1) - DAY, unit: 'day' }; }
+  if (range === 'year') { const y = t.y + offset; return { range, offset, start: Date.UTC(y, 0, 1), end: Date.UTC(y, 11, 31), unit: 'week' }; }
+  const f = parts(FIRST);
+  return { range: 'all', offset: 0, start: mStart(f.y, f.m), end: mStart(t.y, t.m + 1) - DAY, unit: 'month' };
+}
+function running(p) { return p.start <= T0 && T0 <= p.end; }
+function lastDay(p) { return Math.min(p.end, T0); }
+
+// Counts for [s, e] (capped at today). proj: a project index, or null for all.
+function tally(s, e, proj, ents) {
+  const counts = DATA.projects.map(() => 0); const days = new Set(); let total = 0, all = 0; const end = Math.min(e, T0);
+  Object.keys(DATA.days).forEach(k => {
+    const t = ms(k); if (t < s || t > end) return; let hit = false;
+    DATA.days[k].forEach(([pi, n]) => { all += n; if (proj != null && pi !== proj) return; counts[pi] += n; total += n; hit = true; });
+    if (hit) days.add(k);
+  });
+  const hl = ents.filter(x => { const t = ms(x.d); return t >= s && t <= end && (proj == null || x.r === proj); });
+  hl.forEach(x => days.add(x.d));
+  return { counts, total, all, active: days.size, hl, shipped: hl.filter(x => x.k === 's').length, published: hl.filter(x => x.k === 'p').length, projects: counts.filter(n => n > 0).length };
+}
+
+// Buckets: a day each for Week and Month, an ISO week for Year, a month for All.
+function bucketsOf(p, proj, ents) {
+  const out = [];
+  if (p.unit === 'day') { for (let s = p.start; s <= p.end; s += DAY) out.push({ s, e: s, mon: s }); }
+  else if (p.unit === 'week') { for (let w = p.start - parts(p.start).wd * DAY; w <= p.end; w += 7 * DAY) out.push({ s: Math.max(w, p.start), e: Math.min(w + 6 * DAY, p.end), mon: w }); }
+  else { let s = p.start; while (s <= p.end) { const q = parts(s); const e = mStart(q.y, q.m + 1) - DAY; out.push({ s, e, mon: s }); s = e + DAY; } }
+  return out.map((b, i) => Object.assign(b, tally(b.s, b.e, proj, ents), { i, future: b.s > T0, today: b.s <= T0 && T0 <= b.e }));
+}
+// One label per bucket, or '' where the axis stays quiet.
+function axisLabel(p, bs, i) {
+  const b = bs[i]; const q = parts(b.s);
+  if (p.range === 'week') return WD[q.wd] + ' ' + q.d;
+  if (p.range === 'month') return [1, 8, 15, 22, 29].indexOf(q.d) >= 0 ? (q.d === 1 ? MON[q.m] + ' 1' : String(q.d)) : (b.today ? String(q.d) : '');
+  if (p.range === 'year') { const m = parts(b.mon + 3 * DAY).m; return (i === 0 || m !== parts(bs[i - 1].mon + 3 * DAY).m) ? MON[m] : ''; }
+  return MON[q.m] + (i === 0 || q.m === 0 ? ' ' + q.y : '');
+}
+// The bucket title for tooltips.
+function bucketTitle(p, b) {
+  const q = parts(b.s);
+  if (p.unit === 'day') return WD[q.wd] + ', ' + MON[q.m] + ' ' + q.d;
+  if (p.unit === 'week') return 'Week of ' + span(b.s, b.e);
+  return MONTH[q.m] + ' ' + q.y;
+}
+
+function namesOf(p, proj) {
+  const run = running(p); const q = parts(p.start); const last = lastDay(p);
+  const project = proj == null ? null : DATA.projects[proj];
+  let n;
+  if (p.range === 'week') { const w = weekNo(p.start); n = { title: 'Week ' + w, sub: span(p.start, p.end) + ', ' + parts(p.end).y + (run ? ' · so far' : ''), nav: 'Week ' + w + ' · ' + span(p.start, p.end), tag: 'PROGRESS · WEEK', word: run ? 'this week' : 'in Week ' + w, short: 'Week ' + w, file: parts(p.start + 3 * DAY).y + '-w' + String(w).padStart(2, '0') }; }
+  else if (p.range === 'month') n = { title: MONTH[q.m] + ' ' + q.y, sub: run ? span(p.start, last) + ' · so far' : span(p.start, p.end), nav: MONTH[q.m] + ' ' + q.y, tag: 'PROGRESS · MONTH', word: 'in ' + MONTH[q.m], short: MONTH[q.m], file: q.y + '-' + String(q.m + 1).padStart(2, '0') };
+  else if (p.range === 'year') n = { title: String(q.y), sub: run ? 'Jan 1 – ' + fmtDay(last) + ' · so far' : 'Jan 1 – Dec 31', nav: String(q.y), tag: 'PROGRESS · YEAR', word: 'in ' + q.y, short: String(q.y), file: String(q.y) };
+  else { const f = parts(FIRST); n = { title: 'All time', sub: 'Since ' + MONTH[f.m] + ' ' + f.y, nav: 'Since ' + MON[f.m] + ' ' + f.y, tag: 'PROGRESS · ALL TIME', word: 'so far', short: 'All time', file: 'all-time' }; }
+  return Object.assign(n, { running: run, project, empty: 'Nothing shipped or published ' + n.word + (run && p.range !== 'all' ? ' yet' : '') + '.', emptyTagged: project ? 'No entries tagged ' + project + ' ' + (p.range === 'all' ? 'yet' : n.word) + '.' : '' });
+}
+
+function summaryOf(p, proj, ents) {
+  const cur = tally(p.start, p.end, proj, ents); let prev = null, vs = '';
+  if (p.range !== 'all') {
+    const q = periodOf(p.range, p.offset - 1); const run = running(p);
+    const qEnd = run ? Math.min(q.end, q.start + (T0 - p.start)) : q.end;
+    if (q.end >= FIRST) {
+      prev = tally(q.start, qEnd, proj, ents);
+      if (p.range === 'week') vs = run ? 'vs Mon–' + WD[parts(T0).wd] + ' last week' : 'vs Week ' + weekNo(q.start);
+      else if (p.range === 'month') vs = run ? 'vs ' + span(q.start, qEnd) : 'vs ' + MONTH[parts(q.start).m];
+      else vs = run ? 'vs ' + parts(q.start).y + ' to ' + fmtDay(qEnd) : 'vs ' + parts(q.start).y;
+    }
+  }
+  return { cur, prev, vs, share: cur.all ? Math.round(100 * cur.total / cur.all) : 0 };
+}
+function deltaOf(c, p) { if (p == null) return null; const d = c - p; return { text: d > 0 ? '+' + d : d < 0 ? '−' + Math.abs(d) : '±0', up: d > 0 }; }
+
+// Entries in the period with no project that the owner has not marked "No project".
+function untaggedOf(p, ents) { const end = lastDay(p); return ents.filter(x => { const t = ms(x.d); return t >= p.start && t <= end && x.r == null && !x.none; }); }
+
+// The shared pick: who gets words. It never reads the text.
+// 1. Pins first, always kept. 2. Six equal day spans over the active domain.
+// 3. Shipped in rounds, one per span per round (a span holding a pin skips
+// round 1), newer first within a round. 4. Published the same way while room
+// is left (round 1 skips spans already holding an entry). 5. Display in date
+// order. feature: ids the owner swapped in on the card; each replaces the
+// lowest-ranked unpinned entry.
+function pick(p, proj, cap, ents, feature) {
+  const end = lastDay(p);
+  const pool = ents.filter(x => { const t = ms(x.d); return t >= p.start && t <= end && (proj == null || x.r === proj); });
+  if (!pool.length) return { kept: [], left: [], ids: new Set() };
+  let first = Infinity;
+  Object.keys(DATA.days).forEach(k => { const t = ms(k); if (t < p.start || t > end) return; if (proj == null || DATA.days[k].some(c => c[0] === proj)) first = Math.min(first, t); });
+  pool.forEach(x => { first = Math.min(first, ms(x.d)); });
+  const days = Math.round((end - first) / DAY) + 1;
+  const spanOf = x => Math.min(5, Math.floor(6 * Math.round((ms(x.d) - first) / DAY) / days));
+  const newest = (a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : b.id - a.id);
+  const ranked = pool.filter(x => x.pin).sort(newest).slice(0, Math.max(cap, 0));
+  const held = new Set(ranked.map(spanOf));
+  ['s', 'p'].forEach(kind => {
+    const lanes = [0, 1, 2, 3, 4, 5].map(s => pool.filter(x => !x.pin && x.k === kind && spanOf(x) === s).sort(newest));
+    const at = [0, 0, 0, 0, 0, 0];
+    for (let round = 0; ranked.length < cap; round++) {
+      const batch = [];
+      for (let s = 0; s < 6; s++) { if (round === 0 && held.has(s)) continue; if (at[s] < lanes[s].length) batch.push(lanes[s][at[s]++]); }
+      if (!batch.length && lanes.every((l, s) => at[s] >= l.length)) break;
+      batch.sort(newest).forEach(x => { if (ranked.length < cap) { ranked.push(x); held.add(spanOf(x)); } });
+    }
+  });
+  // A swap never pushes out a pin or an earlier swap.
+  const swapped = new Set();
+  (feature || []).forEach(id => {
+    if (ranked.some(x => x.id === id)) return;
+    const f = pool.find(x => x.id === id); if (!f) return;
+    for (let i = ranked.length - 1; i >= 0; i--) { if (!ranked[i].pin && !swapped.has(ranked[i].id)) { ranked.splice(i, 1); break; } }
+    if (ranked.length < cap) { ranked.push(f); swapped.add(f.id); }
+  });
+  const ids = new Set(ranked.map(x => x.id));
+  const byDate = (a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.id - b.id);
+  return { kept: ranked.slice().sort(byDate), left: pool.filter(x => !ids.has(x.id)).sort(byDate), ids, rank: ranked };
+}
+
+// Projects for the filter: commits or tagged entries, in all-time order.
+function projectOptions(ents) {
+  const totals = DATA.projects.map(() => 0);
+  Object.values(DATA.days).forEach(list => list.forEach(([pi, n]) => { totals[pi] += n; }));
+  return DATA.projects.map((slug, pi) => ({ pi, slug, n: totals[pi], label: slug + ' · ' + totals[pi] })).filter(o => o.n > 0 || ents.some(x => x.r === o.pi));
+}
+// Commits per project on one day, busiest first (orders the tag buttons).
+function commitsOn(day) { return (DATA.days[day] || []).map(([pi, n]) => ({ pi, n })).sort((a, b) => b.n - a.n); }
+
+// ----- Card text: the server measures with these Inter tables (thousandths
+// of an em, ASCII 0x20-0x7E plus a few marks). DM Mono is 600 per character.
+const INTER = {"400":{"base":[282,288,466,634,642,982,645,300,365,365,501,662,289,460,289,361,631,407,610,618,646,594,621,566,619,621,289,302,662,662,662,512,966,690,655,731,722,602,591,747,744,269,571,672,566,904,754,765,639,765,644,642,646,745,690,986,683,679,629,365,361,365,472,457,323,562,613,572,613,584,371,614,592,243,243,549,243,876,591,600,613,613,377,528,328,592,563,819,546,563,553,427,333,427,662],"extra":{"·":289,"–":500,"—":1000,"‘":261,"’":261,"“":441,"”":441,"…":865,"•":563,"×":662}},"500":{"base":[267,305,495,639,646,994,654,313,369,369,521,668,304,463,304,370,646,415,617,627,657,603,630,572,630,630,304,316,668,668,668,528,983,709,657,734,722,604,590,748,745,273,576,688,566,913,757,767,642,769,648,646,653,741,709,1003,701,697,641,369,370,369,477,463,337,568,619,577,619,588,380,620,602,252,252,560,252,889,602,605,619,619,387,539,341,602,575,829,558,576,560,441,346,441,668],"extra":{"·":304,"–":500,"—":1000,"‘":278,"’":278,"“":474,"”":471,"…":911,"•":534,"×":668}},"600":{"base":[252,322,523,644,651,1005,663,326,373,373,540,674,319,466,319,379,660,424,623,637,667,613,640,577,641,640,319,330,674,674,674,544,1000,728,660,737,723,606,589,750,746,277,580,704,566,923,760,769,645,773,653,651,661,737,728,1021,720,714,653,373,379,373,482,470,352,575,625,583,625,592,389,626,613,262,262,570,262,901,612,609,625,625,397,550,354,613,588,840,569,589,566,455,359,455,674],"extra":{"·":319,"–":500,"—":1000,"‘":294,"’":294,"“":507,"”":502,"…":957,"•":504,"×":674}}};
+// The card strips emoji, as the week cards do; 𝕏 is a letter and stays.
+function stripEmoji(s) { return s.replace(/\p{Extended_Pictographic}/gu, '').replace(/[︎️‍]/g, '').replace(/\s{2,}/g, ' ').trim(); }
+function charW(ch, weight) {
+  const c = ch.codePointAt(0); const t = INTER[String(weight)] || INTER['400'];
+  if (c >= 0x20 && c <= 0x7E) return t.base[c - 0x20];
+  if (t.extra[ch] != null) return t.extra[ch];
+  return c === 0x1D54F ? 1020 : 600;
+}
+// Width in px of Inter text at size px; ls is letter-spacing in em.
+function measure(s, weight, size, ls) { let w = 0, n = 0; for (const ch of s) { w += charW(ch, weight); n++; } return w / 1000 * size + (ls || 0) * size * n; }
+function monoW(s, size, ls) { return Array.from(s).length * size * (0.6 + (ls || 0)); }
+
+// A title ending in ":" continues into its own body: bullets stripped, empty
+// lines and lines equal to the title or a project slug dropped, joined by " · ".
+function runInOf(x) {
+  const t = x.t.trim(); if (!t.endsWith(':') || !x.b) return '';
+  return x.b.split('\n').map(l => l.replace(/^\s*[-*•]\s*/, '').trim()).filter(l => l && l !== t && DATA.projects.indexOf(l) < 0).join(' · ');
+}
+
+// Balanced wrapping: the fewest lines that fit, then the narrowest measure
+// that keeps that count. Past maxLines, cut at a word with "…" (never
+// mid-word, unless a single word is wider than the measure).
+function wrapText(text, weight, size, width, maxLines, ls) {
+  // A lone dash never starts a line: it stays with the word before it.
+  const words = text.split(/\s+/).filter(Boolean).reduce((acc, w) => { if (/^[—–-]$/.test(w) && acc.length) acc[acc.length - 1] += ' ' + w; else acc.push(w); return acc; }, []);
+  const W = s => measure(s, weight, size, ls);
+  // Lines as arrays of tokens, so a cut knows exactly which words it used.
+  const greedy = lim => { const out = []; let cur = []; words.forEach(w => { const t = cur.concat(w).join(' '); if (!cur.length || W(t) <= lim) cur.push(w); else { out.push(cur); cur = [w]; } }); if (cur.length) out.push(cur); return out; };
+  let rows = greedy(width);
+  if (rows.length <= maxLines) {
+    if (rows.length > 1) {
+      let lo = Math.max(...words.map(W)), hi = width; const n = rows.length;
+      for (let k = 0; k < 14; k++) { const mid = (lo + hi) / 2; if (greedy(mid).length <= n) hi = mid; else lo = mid; }
+      rows = greedy(hi);
+    }
+    const lines = rows.map(r => r.join(' '));
+    return { lines, cut: false, widths: lines.map(W) };
+  }
+  const keep = rows.slice(0, maxLines - 1).map(r => r.join(' '));
+  const used = rows.slice(0, maxLines - 1).reduce((n, r) => n + r.length, 0);
+  let last = '';
+  for (const w of words.slice(used)) { const t = last ? last + ' ' + w : w; if (W(t + '…') <= width) last = t; else break; }
+  if (!last) { const chars = Array.from(words[used] || ''); while (chars.length && W(chars.join('') + '…') > width) chars.pop(); last = chars.join(''); }
+  keep.push(last.replace(/[\s,;:·–—.\-]+$/, '') + '…');
+  return { lines: keep, cut: true, widths: keep.map(W) };
+}
+// The run-in only fills what is left of the title's last line, cut at a word
+// with "…"; it is dropped when fewer than 6 characters fit.
+function fitRunIn(runIn, room, weight, size, ls) {
+  if (!runIn || room <= 0) return '';
+  if (measure(runIn, weight, size, ls) <= room) return runIn;
+  let out = '';
+  for (const w of runIn.split(/\s+/)) { const t = out ? out + ' ' + w : w; if (measure(t + '…', weight, size, ls) <= room) out = t; else break; }
+  out = out.replace(/[\s,;:·–—.\-]+$/, '');
+  return Array.from(out).length >= 6 ? out + '…' : '';
+}
+// ===== end of shared core =====
+
+
+// ===== option =====
+// Generated by build.py from engine.js and page.js. Edit those, not this file.
+// ===== Journey engine =====
+// One cumulative commits line with the builder's entries standing on it as
+// markers and flags. The page chart (two profiles) and the card share this
+// file, so a flag lands on the same bucket on every surface. Units are viewBox
+// px on the page and artboard px on the card. Ported from the design-round
+// prototype (journey/journey_proto.py), with the shared pick() as flag order.
+
+// Geometry per surface. top/base: the 'top tick' and baseline y. lo/hi: where
+// flags may go. rises: gaps between a marker halo and the flag above it.
+const MARKS = { dia: 6, ring: 4.6, ringW: 2, halo: 2, gap: 7, rises: [6, 22, 38, 54], minBin: 12, num: 13, word: 13, dot: 4, endPad: 40, lineW: 2 };
+const JG = {
+  page: Object.assign({ id: 'page', W: 704, H: 248, L: 30, R: 698, top: 22, base: 220, lo: 4, hi: 216, fs: 13, lh: 16, mw: 180, caps: { week: 3, month: 3, year: 5, all: 5 } }, MARKS),
+  mobile: Object.assign({ id: 'mobile', W: 360, H: 240, L: 26, R: 354, top: 22, base: 212, lo: 4, hi: 208, fs: 12.5, lh: 15, mw: 150, caps: { week: 2, month: 2, year: 3, all: 3 } }, MARKS, { num: 12.5, word: 12.5 }),
+  card: { id: 'card', trims: true, W: 1200, H: 630, L: 100, R: 1140, top: 318, base: 552, lo: 282, hi: 548, fs: 20, lh: 24, mw: 290, dia: 8, ring: 6.2, ringW: 2.6, halo: 3, gap: 10, rises: [8, 28, 48, 68], minBin: 18, num: 24, word: 17, dot: 5, endPad: 72, lineW: 2.5, caps: { week: 3, month: 4, year: 6, all: 6 } }
+};
+
+// Round tick values on a commits axis. The step is a whole number: 2.5 only
+// when it is 25 or more, so a small chart never shows half a commit.
+function niceTicks(max) {
+  const raw = max / 3; const p = Math.pow(10, Math.floor(Math.log10(raw))); const m = raw / p;
+  const step = (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 && p >= 10 ? 2.5 : m <= 5 ? 5 : 10) * p;
+  const top = Math.ceil(max / step - 1e-9) * step; const out = [];
+  for (let v = 0; v <= top + 1e-9; v += step) out.push(Math.round(v * 10) / 10);
+  return out;
+}
+function r2(v) { return Math.round(v * 100) / 100; }
+function diamondPath(cx, cy, r) { return 'M' + r1(cx) + ',' + r1(cy - r) + 'L' + r1(cx + r) + ',' + r1(cy) + 'L' + r1(cx) + ',' + r1(cy + r) + 'L' + r1(cx - r) + ',' + r1(cy) + 'Z'; }
+function circlePath(cx, cy, r) { return 'M' + r1(cx - r) + ',' + r1(cy) + 'a' + r + ',' + r + ' 0 1,0 ' + 2 * r + ',0a' + r + ',' + r + ' 0 1,0 ' + -2 * r + ',0Z'; }
+function boxHits(a, b, px, py) { return !(a.x + a.w + px <= b.x || b.x + b.w + px <= a.x || a.y + a.h + py <= b.y || b.y + b.h + py <= a.y); }
+
+// ----- domain, buckets, line -----
+
+// First day with a commit or an entry (of the project under a filter), in all
+// time; null when there is none.
+function firstActivity(proj, ents) {
+  const days = Object.keys(DATA.days).filter(k => proj == null || DATA.days[k].some(c => c[0] === proj)).map(ms);
+  const dates = ents.filter(x => proj == null || x.r === proj).map(x => ms(x.d));
+  const all = days.concat(dates);
+  return all.length ? Math.min.apply(null, all) : null;
+}
+
+// The chart never shows time before the first activity: it starts one unit
+// before it (a day in Week and Month, a month in Year and All), or at the
+// period start if that is later. The card also stops a running period at
+// today (Week, Month) or at the end of this month (Year, All).
+function domainOf(p, proj, ents, g) {
+  const first = firstActivity(proj, ents);
+  const byDay = p.range === 'week' || p.range === 'month';
+  const q = parts(first == null ? p.start : first);
+  const floor = first == null ? p.start : byDay ? first - DAY : mStart(q.y, q.m - 1);
+  let s = p.range === 'all' ? floor : Math.max(p.start, floor);
+  let e = p.end;
+  if (s > e) s = p.start;
+  if (g.trims && running(p)) e = byDay ? T0 : mStart(parts(T0).y, parts(T0).m + 1) - DAY;
+  return { s, e, days: Math.round((e - s) / DAY) + 1, byDay };
+}
+
+// A day each, an ISO week each (clipped to the domain), or a calendar month each.
+function binsOf(dom, unit) {
+  const out = [];
+  if (unit === 'day') { for (let s = dom.s; s <= dom.e; s += DAY) out.push({ s, e: s }); }
+  else if (unit === 'week') { for (let w = dom.s - parts(dom.s).wd * DAY; w <= dom.e; w += 7 * DAY) out.push({ s: Math.max(w, dom.s), e: Math.min(w + 6 * DAY, dom.e) }); }
+  else { for (let d = mStart(parts(dom.s).y, parts(dom.s).m); d <= dom.e;) { const q = parts(d); const nxt = mStart(q.y, q.m + 1); out.push({ s: Math.max(d, dom.s), e: Math.min(nxt - DAY, dom.e) }); d = nxt; } }
+  return out;
+}
+// Markers sit one per bucket; a bucket narrower than minBin px steps up a unit.
+function markerUnit(dom, g) {
+  const perDay = (g.R - g.L) / dom.days;
+  if (perDay * 7 < g.minBin) return 'month';
+  return dom.byDay && perDay < g.minBin ? 'week' : dom.byDay ? 'day' : 'week';
+}
+
+// Cumulative commits at the end of every bucket up to today. t counts days
+// from the domain start, so a bucket's end vertex sits at t.
+function lineOf(dom, proj, ents) {
+  const pts = [{ t: 0, v: 0 }]; const buckets = []; let cum = 0;
+  binsOf(dom, dom.byDay ? 'day' : 'week').forEach(b => {
+    if (b.s > T0) return;
+    const e = Math.min(b.e, T0); const got = tally(b.s, e, proj, ents);
+    cum += got.total;
+    const t = Math.round((e - dom.s) / DAY) + 1;
+    pts.push({ t, v: cum });
+    buckets.push({ i: buckets.length, s: b.s, e, full: b.e, t, cum, total: got.total, counts: got.counts, hl: got.hl });
+  });
+  return { pts, buckets, total: cum };
+}
+
+// ----- text -----
+
+function chartTitle(t) { return stripEmoji(t).replace(/(\w)'(\w)/g, '$1’$2'); }
+function weightOf(x) { return x.pin ? 600 : x.k === 's' ? 500 : 400; }
+
+// How a title can be set: one line if it fits the measure; two balanced lines
+// when the title is wider than 60% of the measure (and the pair is clearly
+// narrower); a word cut with "…" when it needs more. A title ending in ":"
+// also gets its own body as a muted run-in, only in the room the last line has
+// left, so it never adds a line. Plain versions come after the run-in ones.
+function flagTexts(x, g) {
+  const weight = weightOf(x); const text = chartTitle(x.t);
+  const w1 = measure(text, weight, g.fs);
+  const two = wrapText(text, weight, g.fs, Math.min(g.mw, w1 - 0.5), 2);
+  const shapes = [];
+  if (w1 <= g.mw) shapes.push([text]);
+  if (two.lines.length === 2 && (!shapes.length || (w1 > 0.6 * g.mw && Math.max.apply(null, two.widths) < 0.8 * w1))) shapes.push(two.lines);
+  if (!shapes.length) shapes.push(two.lines);
+  const body = runInOf(x); const out = [];
+  shapes.forEach(lines => {
+    const widths = lines.map(l => measure(l, weight, g.fs)); const last = widths[widths.length - 1]; const h = lines.length * g.lh;
+    const gap = measure(' ', weight, g.fs);
+    const run = body ? fitRunIn(chartTitle(body), g.mw - last - gap, 400, g.fs) : '';
+    if (run) out.push({ lines, run, w: Math.max.apply(null, widths.slice(0, -1).concat(last + gap + measure(run, 400, g.fs))), h });
+    out.push({ lines, run: '', w: Math.max.apply(null, widths), h });
+  });
+  return out;
+}
+
+// ----- flags -----
+
+// Every try for one flag, cheapest first: the pole gap plus the text height,
+// with a penalty on a second line when one line would do. Left of the marker
+// goes first on a rising line.
+function flagTries(m, texts, g) {
+  const oneLine = texts.some(v => v.lines.length === 1);
+  const leftFirst = m.rising || m.x - g.L > g.R - m.x;
+  const sides = leftFirst ? ['L', 'R'] : ['R', 'L'];
+  const out = [];
+  texts.forEach((v, vi) => g.rises.forEach(rise => sides.forEach((side, si) => {
+    out.push({ v, vi, rise, side, si, cost: rise + v.h + (oneLine && v.lines.length === 2 ? 1.5 * g.lh : 0) });
+  })));
+  return out.sort((a, b) => a.cost - b.cost || a.vi - b.vi || a.si - b.si);
+}
+
+// Entries are tried in pick order, one flag per bucket, until the cap. A marker
+// whose first entry fits nowhere stays bare and the next one is tried. A flag
+// stays inside the plot, 3px clear above the line across its width, 6px from
+// other flags, poles and markers, clear of the end label, and its pole never
+// crosses another flag.
+function placeFlags(g, L, order, cap) {
+  const halo = m => (m.ship ? g.dia : g.ring + g.ringW / 2) + g.halo;
+  const obstacles = L.markers.map(m => ({ x: m.x - halo(m), y: m.y - halo(m), w: 2 * halo(m), h: 2 * halo(m), kind: 'marker', m }));
+  const dot = g.dot + g.halo;
+  obstacles.push({ x: L.ex - dot, y: L.ey - dot, w: 2 * dot, h: 2 * dot, kind: 'end' }, Object.assign({ kind: 'endlabel' }, L.endBox));
+  const clearOfLine = b => {
+    for (let x = b.x - 3; x <= b.x + b.w + 3; x += 1.5) { const y = L.lineY(x); if (y != null && y < b.y + b.h + 3) return false; }
+    return !L.line.some(q => q.x >= b.x - 3 && q.x <= b.x + b.w + 3 && q.y < b.y + b.h + 3);
+  };
+  const clashes = (b, pole, o) => {
+    if (boxHits(b, o, o.kind === 'endlabel' ? g.endPad : 6, o.kind === 'endlabel' ? 8 : 3)) return true;
+    return (o.kind === 'flag' || o.kind === 'endlabel') && boxHits(pole, o, 2, 2);
+  };
+  const place = (m, x) => {
+    const r = halo(m);
+    for (const c of flagTries(m, flagTexts(x, g), g)) {
+      const by = m.y - r - c.rise - c.v.h; const bx = c.side === 'L' ? m.x - g.gap - c.v.w : m.x + g.gap;
+      const b = { x: bx, y: by, w: c.v.w, h: c.v.h, kind: 'flag' };
+      if (bx < g.L + 2 || bx + b.w > g.R || by < g.lo || by + b.h > g.hi || !clearOfLine(b)) continue;
+      const pole = { x: m.x - 2.5, y: by, w: 5, h: m.y - r - by };
+      if (obstacles.some(o => o.m !== m && clashes(b, pole, o))) continue;
+      obstacles.push(b, pole);
+      return { m, entry: x, v: c.v, side: c.side, bx, by, w: b.w, h: b.h, pole: { x: m.x, y0: m.y - r, y1: by + 1 } };
+    }
+    return null;
+  };
+  const flags = []; const tried = new Set();
+  order.forEach(x => {
+    const m = L.markers.find(k => k.ids.has(x.id));
+    if (!m || tried.has(m) || flags.length >= cap) return;
+    const f = place(m, x);
+    if (f) { m.flag = f; flags.push(f); tried.add(m); } else if (!x.swapped) tried.add(m);
+  });
+  return flags;
+}
+
+// The order flags are tried in: pins, then what the owner swapped in, then
+// every other entry in pick order. Flags are taken from the front until the
+// cap, so a swap pushes the lowest-ranked unpinned flag out. A swapped-in entry
+// that fits nowhere hands its bucket back to the next entry (see placeFlags).
+function flagOrder(p, proj, ents, feature) {
+  const all = pick(p, proj, DATA.entries.length, ents, []).rank || [];
+  const want = feature || [];
+  const swapped = want.map(id => all.find(x => x.id === id && !x.pin)).filter(Boolean).map(x => Object.assign({}, x, { swapped: true }));
+  const rest = all.filter(x => x.pin || want.indexOf(x.id) < 0);
+  return rest.filter(x => x.pin).concat(swapped, rest.filter(x => !x.pin));
+}
+
+// ----- the whole chart -----
+
+// The end label sits 10px right of the end dot while the period still has
+// room, else above and left of it (never above the top of the chart). Beside a
+// dot on the baseline (nothing committed yet) it lifts clear of the axis and its
+// day labels instead of straddling them.
+function endLabelOf(g, total, ex, ey, room) {
+  const word = ' commit' + (total === 1 ? '' : 's');
+  const w = measure(String(total), 600, g.num) + measure(word, 400, g.word); const h = g.num * 1.25;
+  const right = room && ex + 10 + w <= g.R;
+  return { x: right ? ex + 10 : Math.min(ex - 4, g.R) - w, y: right ? Math.min(ey - h / 2, g.base - 4 - h) : Math.max(0, ey - 12 - h), w, h, num: String(total), word };
+}
+
+// A week names every day. A month names its week starts (1, 8, 15, 22, 29) and
+// today. A month that refits to a late first commit can hold fewer than three of
+// those, so it names every day instead (every 2nd or 3rd on a longer one) and the
+// axis never goes bare.
+function axisLabels(p, dom, X) {
+  const out = [];
+  if (dom.byDay) {
+    const bins = binsOf(dom, 'day'); const weekStart = q => [1, 8, 15, 22, 29].indexOf(q.d) >= 0;
+    const dense = p.range === 'month' && bins.filter(b => weekStart(parts(b.s))).length < 3;
+    const step = !dense ? 0 : bins.length <= 9 ? 1 : bins.length <= 16 ? 2 : 3;
+    bins.forEach((b, i) => {
+      const q = parts(b.s); const today = b.s === T0;
+      const named = p.range === 'week' || today || (step ? i % step === 0 : weekStart(q));
+      const text = !named ? '' : p.range === 'week' ? WD[q.wd] + ' ' + q.d : q.d === 1 ? MON[q.m] + ' 1' : String(q.d);
+      if (text) out.push({ x: X(i + 0.5), text, today, future: b.s > T0 });
+    });
+  } else {
+    binsOf(dom, 'month').forEach((b, i) => {
+      const q = parts(b.s); const nxt = mStart(q.y, q.m + 1);
+      out.push({ x: X(((b.s - dom.s) + (b.e + DAY - dom.s)) / 2 / DAY), text: MON[q.m] + (p.range === 'all' && (i === 0 || q.m === 0) ? ' ' + q.y : ''), today: b.s <= T0 && T0 < nxt, future: b.s > T0 });
+    });
+  }
+  return out;
+}
+// Drops a label that would touch the one after it, so a narrow chart stays legible.
+function declutter(labels, width, gap) {
+  const kept = [];
+  for (let i = labels.length - 1; i >= 0; i--) {
+    const l = labels[i]; const w = width(l); const last = kept[kept.length - 1];
+    if (!last || last.x - last.w / 2 - gap >= l.x + w / 2) kept.push(Object.assign({}, l, { w }));
+  }
+  return kept.reverse();
+}
+
+function lineYOf(line) {
+  return x => {
+    if (x < line[0].x) return line[0].y;
+    for (let i = 1; i < line.length; i++) {
+      const a = line[i - 1], b = line[i];
+      if (x >= a.x && x <= b.x) return b.x === a.x ? a.y : a.y + (b.y - a.y) * (x - a.x) / (b.x - a.x);
+    }
+    return null;
+  };
+}
+
+// The pool is the period's entries (of the project under a filter); order is
+// the pick order that decides which of them get words.
+function journeyLayout(p, proj, ents, g, order) {
+  const dom = domainOf(p, proj, ents, g);
+  const X = t => g.L + t / dom.days * (g.R - g.L);
+  const { pts, buckets, total } = lineOf(dom, proj, ents);
+  const ticks = niceTicks(Math.max(4, total)); const top = ticks[ticks.length - 1];
+  const Y = v => g.base - v / top * (g.base - g.top);
+  const line = pts.map(q => ({ x: X(q.t), y: Y(q.v) }));
+  const lineY = lineYOf(line); const end = line[line.length - 1];
+  // x0 is where a bucket starts, x where it ends (its vertex).
+  buckets.forEach(b => { b.x = X(b.t); b.y = Y(b.cum); b.x0 = X(b.t - Math.round((b.e - b.s) / DAY) - 1); });
+  const pool = ents.filter(x => { const t = ms(x.d); return t >= p.start && t <= lastDay(p) && (proj == null || x.r === proj); });
+  const markers = binsOf(dom, markerUnit(dom, g)).map(b => {
+    const es = pool.filter(x => { const t = ms(x.d); return t >= b.s && t <= b.e; });
+    if (!es.length) return null;
+    const last = Math.min(b.e, T0);
+    const x = Math.min(X((b.s - dom.s) / DAY + ((last - b.s) / DAY + 1) / 2), end.x);
+    const rising = lineY(Math.min(x + 4, end.x)) < lineY(Math.max(x - 4, line[0].x)) - 0.01;
+    return { x, y: lineY(x), bin: b, entries: es, ids: new Set(es.map(e => e.id)), ship: es.some(e => e.k === 's'), rising };
+  }).filter(Boolean);
+  const endBox = endLabelOf(g, total, end.x, end.y, running(p) && dom.e > T0);
+  const L = { g, dom, X, Y, ticks, line, lineY, buckets, total, markers, pool, ex: end.x, ey: end.y, endBox, flags: [] };
+  L.flags = placeFlags(g, L, order, g.caps[p.range]);
+  L.labels = axisLabels(p, dom, X);
+  return L;
+}
+// ===== end of Journey engine =====
+
+// ===== Journey line: page view =====
+// The chart is drawn twice, in the 704 and 360 profiles; the chart box is a
+// size container and each profile shows itself only in its own width range
+// (a step function in container units, since a section has no stylesheet).
+// Text is HTML over the SVG, sized in cqw so it scales with the chart.
+const OPTION = { key: 'journey', cap: range => JG.page.caps[range], cardCap: range => JG.card.caps[range], glyphs: 'diamond' };
+// The card dialog lists what the card really flags: the card's own layout
+// decides which entries get words, so "Not on the card" and the post draft
+// come from it rather than from a plain pick.
+OPTION.cardEntries = (p, proj, ents, feature) => {
+  const L = journeyLayout(p, proj, ents, JG.card, flagOrder(p, proj, ents, feature));
+  const ids = new Set(L.flags.map(f => f.entry.id));
+  const byDate = (a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.id - b.id);
+  return { kept: L.pool.filter(x => ids.has(x.id)).sort(byDate), left: L.pool.filter(x => !ids.has(x.id)).sort(byDate) };
+};
+
+const JR = { ui: {}, scrollTimer: null, markTimer: null };   // the latest ui state and the two timers, which outlive a render
+const STEP = { page: 'calc((100cqw - 559.5px) * 100000)', mobile: 'calc((559.5px - 100cqw) * 100000)' };
+const CHART_FONT = "Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif";
+const INTER_BASE = 0.865;   // baseline below the top of a 1-line-height Inter box, in em
+
+function projectColor(pi) { return colorOf(pi, 'page'); }
+function byNewest(a, b) { return a.d < b.d ? 1 : a.d > b.d ? -1 : b.id - a.id; }
+
+// ----- one chart profile -----
+
+// Sizes for a profile: font sizes scale with the chart; fixed sizes do not.
+// Both fall to zero outside the profile's width range.
+function sizesOf(g) {
+  const on = STEP[g.id];
+  return {
+    pc: x => r2(x / g.W * 100) + '%', pcy: y => r2(y / g.H * 100) + '%',
+    fs: px => 'clamp(0px, ' + on + ', ' + r2(px / g.W * 100) + 'cqw)',
+    fixed: px => 'clamp(0px, ' + on + ', ' + px + 'px)',
+    share: v => 'clamp(0px, ' + on + ', ' + r2(v / g.W * 100) + '%)',
+    whole: 'clamp(0px, ' + on + ', 100%)'
+  };
+}
+
+function markerAria(m, order) {
+  const top = m.flag ? m.flag.entry : order.find(x => m.ids.has(x.id)) || m.entries[0];
+  const more = m.entries.length > 1 ? ', and ' + (m.entries.length - 1) + ' more' : '';
+  return (m.ship ? 'Shipped, ' : 'Published, ') + fmtDay(ms(top.d)) + ': ' + top.t + (top.pin ? ' (pinned)' : '') + more;
+}
+
+function chartPaths(L, ctx) {
+  const g = L.g; const line = L.line; const first = line[0], last = line[line.length - 1];
+  const lineD = 'M' + line.map(q => r1(q.x) + ',' + r1(q.y)).join('L');
+  const ship = L.markers.filter(m => m.ship); const post = L.markers.filter(m => !m.ship);
+  const hov = ctx.hov == null ? null : L.buckets[ctx.hov];
+  const focus = ctx.focusId == null ? null : L.markers.find(m => m.ids.has(ctx.focusId));
+  const haloR = m => (m.ship ? g.dia : g.ring + g.ringW / 2) + g.halo;
+  return {
+    gridD: L.ticks.slice(1).map(v => 'M' + g.L + ',' + r1(L.Y(v)) + 'H' + g.R).join(''), baseD: 'M' + g.L + ',' + g.base + 'H' + g.R,
+    lineD, washD: lineD + 'L' + r1(last.x) + ',' + g.base + 'L' + r1(first.x) + ',' + g.base + 'Z',
+    poleD: L.flags.map(f => 'M' + r1(f.pole.x) + ',' + r1(f.pole.y0) + 'V' + r1(f.pole.y1)).join(''),
+    haloD: post.map(m => circlePath(m.x, m.y, haloR(m))).join(''),
+    shipD: ship.map(m => diamondPath(m.x, m.y, g.dia)).join(''), ringD: post.map(m => circlePath(m.x, m.y, g.ring)).join(''),
+    focusD: focus ? circlePath(focus.x, focus.y, haloR(focus) + 3.5) : '',
+    crossD: hov ? 'M' + r1(hov.x) + ',' + (g.top - 10) + 'V' + g.base : '',
+    crossRing: hov ? circlePath(hov.x, hov.y, 6) : '',
+    dot: { cx: r1(L.ex), cy: r1(L.ey), r: g.dot }
+  };
+}
+
+function chartOverlay(L, ctx, z) {
+  const g = L.g;
+  const ticks = L.ticks.map(v => ({ v, left: z.pc(g.L - 8), top: z.pcy(L.Y(v)), fs: z.fs(10) }));
+  const labels = declutter(L.labels, l => measure(l.text, l.today ? 600 : 400, 11), 6);
+  const xls = labels.map(l => ({ text: l.text, left: z.pc(l.x), top: z.pcy(g.base + 17 - 11 * INTER_BASE), fs: z.fs(11), color: l.today ? PAGE.ink : l.future ? PAGE.quiet : PAGE.faint, fw: l.today ? 600 : 400 }));
+  const flags = L.flags.map(f => {
+    const left = f.side === 'R'; const ink = f.entry.k === 's' || f.entry.pin || ctx.focusId != null && f.m.ids.has(ctx.focusId);
+    return {
+      left: left ? z.pc(f.bx) : 'auto', right: left ? 'auto' : z.pc(g.W - (f.bx + f.w)), top: z.pcy(f.by), align: left ? 'left' : 'right',
+      fs: z.fs(g.fs), lh: z.fs(g.lh), fw: weightOf(f.entry), color: ink ? PAGE.ink : PAGE.muted,
+      lines: f.v.lines.map((text, i) => ({ text, run: i === f.v.lines.length - 1 ? f.v.run : '', hasRun: i === f.v.lines.length - 1 && !!f.v.run })),
+      click: ctx.markClick(f.m)
+    };
+  });
+  const markers = L.markers.map(m => ({
+    left: z.pc(m.x), top: z.pcy(m.y), size: z.fixed(24), aria: markerAria(m, ctx.order), tab: ctx.tab,
+    click: ctx.markClick(m), focus: ctx.hoverMarker(m), enter: ctx.hoverMarker(m), blur: ctx.clearHover
+  }));
+  const hits = L.buckets.map(b => ({ left: z.pc(b.x0), width: z.share(b.x - b.x0), enter: ctx.hoverBucket(b.i) }));
+  const e = L.endBox;
+  const end = { left: z.pc(e.x), top: z.pcy(e.y), lh: z.fs(e.h), fsNum: z.fs(g.num), fsWord: z.fs(g.word), num: e.num, word: e.word };
+  return { ticks, xls, flags, markers, hits, end };
+}
+
+function tipOf(L, ctx, z) {
+  const b = ctx.hov == null ? null : L.buckets[ctx.hov];
+  if (!b) return { show: false, rows: [], entries: [], say: '' };
+  const g = L.g; const left = b.x < g.W / 2;
+  const rank = id => ctx.order.findIndex(x => x.id === id);
+  const es = b.hl.slice().sort((a, c) => rank(a.id) - rank(c.id));
+  const rows = ctx.proj != null ? [] : b.counts.map((n, pi) => ({ n, pi })).filter(r => r.n > 0).sort((a, c) => c.n - a.n).map(r => ({ name: DATA.projects[r.pi], n: r.n, color: projectColor(r.pi) }));
+  const entries = es.slice(0, 4).map(x => ({ t: x.t, ship: x.k === 's', post: x.k === 'p', pin: !!x.pin, chip: x.r != null, slug: x.r != null ? DATA.projects[x.r] : '', color: x.r != null ? projectColor(x.r) : PAGE.faint }));
+  const x = z.pc(b.x);
+  const title = ctx.dom.byDay ? WD[parts(b.s).wd] + ', ' + fmtDay(b.s) : 'Week of ' + span(b.s, b.full);
+  const value = b.total === 0 ? 'No commits' : '+' + plural(b.total, 'commit'); const sofar = b.cum + ' so far' + (ctx.p.range === 'all' ? '' : ' ' + ctx.names.word);
+  // What a screen reader hears when the crosshair moves: the same facts as the tooltip.
+  const say = [title, value + ', ' + sofar].concat(es.slice(0, 4).map(x => (x.k === 's' ? 'Shipped: ' : 'Published: ') + x.t + (x.pin ? ' (pinned)' : '')), es.length > 4 ? ['and ' + (es.length - 4) + ' more in the list'] : []).join('. ');
+  return {
+    show: true, rows, entries, hasEntries: es.length > 0, more: es.length > 4, moreText: '+' + (es.length - 4) + ' more in the list', say,
+    fs: z.fixed(12), title, value, sofar,
+    left: left ? 'max(0px, min(calc(' + x + ' + 12px), calc(100% - 220px)))' : 'max(0px, min(calc(' + x + ' - 232px), calc(100% - 220px)))'
+  };
+}
+
+function chartView(L, ctx) {
+  const g = L.g; const z = sizesOf(g); const filtered = ctx.proj != null;
+  return Object.assign({
+    id: g.id, W: g.W, H: g.H, svgW: z.whole, lineW: g.lineW, ringW: g.ringW, haloW: 2 * g.halo,
+    washColor: filtered ? projectColor(ctx.proj) : PAGE.ink, wash0: filtered ? 0.22 : 0.1, wash1: filtered ? 0.04 : 0.02
+  }, chartPaths(L, ctx), chartOverlay(L, ctx, z), { tip: tipOf(L, ctx, z) });
+}
+
+// ----- below the chart -----
+
+function mixOf(ctx) {
+  const items = ctx.sum.cur.counts.map((n, pi) => ({ n, pi })).filter(x => x.n > 0).sort((a, b) => b.n - a.n);
+  const shown = items.slice(0, 5).map((x, i, all) => ({ name: DATA.projects[x.pi], n: x.n, color: projectColor(x.pi), hint: 'Show only ' + DATA.projects[x.pi], pick: ctx.filterTo(x.pi), sep: i < all.length - 1 || items.length > 5 }));
+  return { show: ctx.proj == null && items.length > 0, items: shown, more: items.length > 5, moreText: '+' + (items.length - 5) + ' more' };
+}
+
+// One row per vertex bucket that has commits, so the table says what the chart shows.
+function tableOf(L, ctx) {
+  const rows = L.buckets.filter(b => b.total > 0).map(b => ({
+    when: ctx.dom.byDay ? WD[parts(b.s).wd] + ', ' + fmtDay(b.s) : span(b.s, b.full), total: b.total, cum: b.cum,
+    by: b.counts.map((n, pi) => ({ n, pi })).filter(r => r.n > 0).sort((a, c) => c.n - a.n).map(r => DATA.projects[r.pi] + ' ' + r.n).join(' · ')
+  }));
+  const open = !!ctx.ui.table;
+  return { open, label: open ? 'Hide table' : 'Show as table', rows, toggle: () => ctx.setUi({ table: !open }) };
+}
+
+function listOf(ctx) {
+  const items = ctx.pool.slice().sort(byNewest).map(x => ({
+    id: x.id, t: x.t, date: fmtDay(ms(x.d)).toUpperCase(), ship: x.k === 's', post: x.k === 'p', pin: !!x.pin,
+    chip: x.r != null, slug: x.r != null ? DATA.projects[x.r] : '', color: x.r != null ? projectColor(x.r) : PAGE.faint,
+    bg: ctx.marked.has(x.id) ? PAGE.rule : 'transparent', enter: () => ctx.setUi({ row: x.id })
+  }));
+  return { show: items.length > 0, title: 'Shipped and published ' + ctx.names.word, items, leave: () => { if (ctx.ui.row != null) ctx.setUi({ row: null }); } };
+}
+
+function emptyOf(ctx) {
+  const none = ctx.pool.length === 0;
+  return { show: none, text: ctx.proj != null ? ctx.names.emptyTagged : ctx.names.empty, log: none && ctx.owner };
+}
+
+// ----- the view -----
+
+// Handlers that change state. ui is merged from the latest render, because the
+// timers here outlive the render that made them.
+function handlersOf(ctx, main) {
+  const { st, set } = ctx;
+  const setUi = patch => set({ ui: Object.assign({}, JR.ui, patch) });
+  const bucketOf = m => { const t = ms(m.entries[0].d); const b = main.buckets.find(k => t >= k.s && t <= k.e); return b ? b.i : null; };
+  // The list rows live in the same tree as the chart, so they are looked up from the
+  // clicked node's root: that works in the page and inside a shadow root alike.
+  const scrollTo = (root, id) => {
+    const tree = root && root.getElementById ? root : typeof document !== 'undefined' ? document : null;
+    const el = tree && tree.getElementById('jr-row-' + id);
+    const calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center', behavior: calm ? 'auto' : 'smooth' });
+  };
+  return {
+    setUi,
+    hoverBucket: i => () => { if (st.hover !== i) set({ hover: i }); },
+    clearHover: () => { if (st.hover != null) set({ hover: null }); },
+    hoverMarker: m => () => { const i = bucketOf(m); if (i != null && st.hover !== i) set({ hover: i }); },
+    // A marker or its flag lights up its rows for 1.5s and scrolls the first into view.
+    // A second click restarts the 1.5s instead of letting the first timer cut it short.
+    markClick: m => e => {
+      const ids = m.entries.map(x => x.id); setUi({ mark: ids });
+      if (typeof setTimeout !== 'function') return;
+      const root = e && e.currentTarget && e.currentTarget.getRootNode ? e.currentTarget.getRootNode() : null;
+      if (typeof clearTimeout === 'function') { clearTimeout(JR.scrollTimer); clearTimeout(JR.markTimer); }
+      JR.scrollTimer = setTimeout(() => scrollTo(root, ids[0]), 40);
+      JR.markTimer = setTimeout(() => setUi({ mark: null }), 1500);
+    }
+  };
+}
+
+// Left and right move the crosshair bucket by bucket (the first press lands on
+// today), Escape hides the tooltip.
+function keyHandler(st, set, last) {
+  return e => {
+    const k = e && e.key;
+    if (last < 0) return;
+    if (k === 'Escape') { set({ hover: null }); return; }
+    const step = k === 'ArrowLeft' ? -1 : k === 'ArrowRight' ? 1 : 0;
+    if (!step) return;
+    if (e.preventDefault) e.preventDefault();
+    set({ hover: st.hover == null ? last : Math.max(0, Math.min(last, st.hover + step)) });
+  };
+}
+
+// Focusing the plot itself (not a marker inside it) shows the crosshair on the
+// latest bucket, so a keyboard user sees where the arrows start.
+function focusHandler(st, set, last) {
+  return e => { if (last >= 0 && st.hover == null && e && e.target === e.currentTarget) set({ hover: last }); };
+}
+
+function chartLabelOf(ctx) {
+  const { p, proj, names } = ctx; const cur = ctx.sum.cur; const n = cur.shipped + cur.published;
+  const when = p.range === 'all' ? 'in all time' : (names.running ? 'so far in ' : 'in ') + names.title;
+  return (proj != null ? DATA.projects[proj] + ' commits ' : 'Commits ') + when + ': ' + cur.total + '; ' + cur.shipped + ' shipped and ' + cur.published + ' published ' + (n === 1 ? 'entry' : 'entries');
+}
+
+function optionView(ctx) {
+  const { st, set, ents, proj, p } = ctx;
+  const ui = st.ui || {}; JR.ui = ui;
+  const order = flagOrder(p, proj, ents, []);
+  const layouts = [journeyLayout(p, proj, ents, JG.page, order), journeyLayout(p, proj, ents, JG.mobile, order)];
+  const main = layouts[0];
+  const c = Object.assign({
+    p, proj, names: ctx.names, sum: ctx.sum, owner: ctx.owner, filterTo: ctx.filterTo, order, ui, pool: main.pool, dom: main.dom,
+    hov: st.hover != null && st.hover >= 0 && st.hover < main.buckets.length ? st.hover : null,
+    marked: new Set(ui.mark || []), focusId: ui.row == null ? null : ui.row
+  }, handlersOf(ctx, main));
+  const variants = layouts.map((L, i) => chartView(L, Object.assign({ tab: i === 0 ? 0 : -1 }, c)));
+  return {
+    variants, say: variants[0].tip.say,
+    mix: mixOf(c), table: tableOf(main, c), list: listOf(c), empty: emptyOf(c),
+    boxH: 'max(' + r2(JG.page.H / JG.page.W * 100) + 'cqw, clamp(0px, ' + STEP.mobile + ', ' + r2(JG.mobile.H / JG.mobile.W * 100) + 'cqw))',
+    font: CHART_FONT, chartLabel: chartLabelOf(c),
+    plotLabel: 'Commits chart. The left and right arrow keys move between ' + (main.dom.byDay ? 'days' : 'weeks') + ' and Escape closes the details.',
+    leave: c.clearHover, key: keyHandler(st, set, main.buckets.length - 1), focus: focusHandler(st, set, main.buckets.length - 1)
+  };
+}
+// ===== end of Journey line: page view =====
+
+// ===== page =====
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { range: 'year', offset: 0, project: null, hover: null, modal: false, cardTheme: 'light', copied: false, saved: false, tags: {}, feature: [], tagOpen: false, tagMore: false, ui: {} };
+  }
+
+  renderVals() {
+    const st = this.state;
+    const owner = (this.props.viewer ?? 'owner') === 'owner';
+    const set = s => this.setState(s);
+    const ents = entriesWith(st.tags);
+    const proj = st.project;
+    const offset = st.range === 'all' ? 0 : st.offset;
+    const p = periodOf(st.range, offset);
+    const names = namesOf(p, proj);
+    const sum = summaryOf(p, proj, ents);
+    const picks = pick(p, proj, OPTION.cap(p.range), ents, []);
+    const seg = on => ({ bg: on ? '#ffffff' : 'transparent', fg: on ? '#111827' : '#6B7280', shadow: on ? '0 1px 2px rgba(0,0,0,0.08)' : 'none' });
+
+    const tabs = [['week', 'Week'], ['month', 'Month'], ['year', 'Year'], ['all', 'All']].map(([r, label]) => Object.assign({ label, on: r === st.range, pick: () => set({ range: r, offset: 0, hover: null }) }, seg(r === st.range)));
+    const opts = projectOptions(ents);
+    const projSel = {
+      value: proj == null ? '' : String(proj), color: proj == null ? '#D1D5DB' : colorOf(proj, 'page'),
+      options: [{ value: '', label: 'All projects' }].concat(opts.map(o => ({ value: String(o.pi), label: o.label }))),
+      change: e => { const v = e && e.target ? e.target.value : ''; set({ project: v === '' ? null : Number(v), hover: null, feature: [] }); }
+    };
+    const prevOff = st.range === 'all' || periodOf(st.range, offset - 1).end < FIRST;
+    const nextOff = st.range === 'all' || offset >= 0;
+    const nav = {
+      show: st.range !== 'all', prevOff, nextOff,
+      prevCursor: prevOff ? 'default' : 'pointer', prevColor: prevOff ? '#D1D5DB' : '#374151',
+      nextCursor: nextOff ? 'default' : 'pointer', nextColor: nextOff ? '#D1D5DB' : '#374151',
+      prev: () => { if (!prevOff) set({ offset: offset - 1, hover: null }); },
+      next: () => { if (!nextOff) set({ offset: offset + 1, hover: null }); }
+    };
+
+    const pr = sum.prev; const g = OPTION.glyphs === 'disc';
+    const tiles = [
+      { label: 'Shipped', value: sum.cur.shipped, dl: pr && deltaOf(sum.cur.shipped, pr.shipped), diamond: !g, disc: g },
+      { label: 'Published', value: sum.cur.published, dl: pr && deltaOf(sum.cur.published, pr.published), ring: !g, hollow: g },
+      { label: 'Commits', value: sum.cur.total, dl: pr && deltaOf(sum.cur.total, pr.total) },
+      { label: 'Active days', value: sum.cur.active, dl: pr && deltaOf(sum.cur.active, pr.active) },
+      proj == null ? { label: 'Projects', value: sum.cur.projects, dl: null } : { label: 'Share of commits', value: sum.share + '%', dl: null }
+    ].map(t => Object.assign({ diamond: false, ring: false, disc: false, hollow: false }, t, { has: !!t.dl, dText: t.dl ? t.dl.text : '', dColor: t.dl && t.dl.up ? '#15803D' : '#9CA3AF' }));
+
+    // Owner: untagged entries in the period, and the inline tag panel.
+    const untagged = untaggedOf(p, ents).sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : b.id - a.id));
+    const tagTo = (id, v) => () => { const tags = Object.assign({}, this.state.tags); tags[id] = v; set({ tags }); };
+    const rows = (st.tagMore ? untagged : untagged.slice(0, 6)).map(x => {
+      const seen = new Set(); const buttons = [];
+      const add = (pi, label) => { if (seen.has(pi)) return; seen.add(pi); buttons.push({ label, color: colorOf(pi, 'page'), pick: tagTo(x.id, pi) }); };
+      if (proj != null) add(proj, DATA.projects[proj]);
+      commitsOn(x.d).forEach(c => add(c.pi, DATA.projects[c.pi] + ' · ' + c.n + ' that day'));
+      return { t: x.t, date: fmtDay(ms(x.d)), ship: x.k === 's', post: x.k === 'p', buttons, none: tagTo(x.id, -1), other: e => { const v = e && e.target ? e.target.value : ''; if (v !== '') tagTo(x.id, Number(v))(); } };
+    });
+    const untag = {
+      show: owner && untagged.length > 0,
+      open: owner && st.tagOpen && (untagged.length > 0 || Object.keys(st.tags).length > 0),
+      text: plural(untagged.length, 'entry').replace('entrys', 'entries') + ' ' + (p.range === 'all' ? 'so far' : names.word) + (untagged.length === 1 ? ' has' : ' have') + ' no project' + (proj != null ? ', so this view leaves them out.' : '.'),
+      button: st.tagOpen ? 'Close' : 'Tag them', toggle: () => set({ tagOpen: !this.state.tagOpen }),
+      rows, others: DATA.projects.map((slug, pi) => ({ value: String(pi), label: slug })),
+      more: !st.tagMore && untagged.length > 6, moreText: 'Show ' + (untagged.length - 6) + ' more', showMore: () => set({ tagMore: true }),
+      done: untagged.length === 0
+    };
+
+    // The card dialog: the card follows the range, period, project and tags.
+    // An option whose card decides its own words (Journey's flags) says which.
+    const cardPick = OPTION.cardEntries ? OPTION.cardEntries(p, proj, ents, st.feature) : pick(p, proj, OPTION.cardCap(p.range), ents, st.feature);
+    const themes = [['light', 'Light'], ['dark', 'Dark']].map(([k, label]) => Object.assign({ label, on: st.cardTheme === k, pick: () => set({ cardTheme: k }) }, seg(st.cardTheme === k)));
+    const tail = proj == null ? plural(sum.cur.total, 'commit') + ' on ' + plural(sum.cur.active, 'day') + '.' : sum.cur.total + ' ' + DATA.projects[proj] + ' ' + (sum.cur.total === 1 ? 'commit' : 'commits') + ' on ' + plural(sum.cur.active, 'day') + '.';
+    const draftHead = (proj == null ? '' : DATA.projects[proj] + ', ') + (p.range === 'all' ? names.sub : names.short + (names.running ? ' so far' : '')) + ':';
+    const modal = {
+      show: owner && st.modal, range: st.range, theme: st.cardTheme, offset, project: proj == null ? '' : String(proj),
+      tags: JSON.stringify(st.tags), feature: st.feature.join(','),
+      sub: (proj == null ? '' : DATA.projects[proj] + ' · ') + names.title + ' · ' + names.sub,
+      draft: [draftHead].concat(cardPick.kept.map(x => x.t)).concat([tail]).join('\n'),
+      left: cardPick.left.slice(0, 6).map(x => ({ t: x.t, date: fmtDay(ms(x.d)), swap: () => set({ feature: this.state.feature.concat([x.id]) }) })),
+      hasLeft: cardPick.left.length > 0, leftMore: cardPick.left.length > 6, leftMoreText: 'and ' + (cardPick.left.length - 6) + ' more',
+      warn: proj != null && untagged.length > 0, warnText: plural(untagged.length, 'entry').replace('entrys', 'entries') + ' ' + (p.range === 'all' ? 'so far' : names.word) + ' have no project and are not on this card. Tag them first to add them.',
+      saved: st.saved, copyLabel: st.copied ? 'Copied' : 'Copy post', saveLabel: st.saved ? 'Downloaded' : 'Download PNG',
+      fileName: 'openstage-tuxnotfound-' + (proj == null ? '' : DATA.projects[proj] + '-') + names.file + '.png',
+      copy: () => set({ copied: true }), save: () => set({ saved: true })
+    };
+
+    const opt = optionView({ st, set, owner, ents, proj, p, names, sum, picks, filterTo: pi => () => set({ project: pi, hover: null, feature: [] }) });
+
+    return {
+      owner, visitor: !owner, names, tabs, projSel, nav, tiles, vs: { show: !!sum.vs, text: sum.vs }, untag, themes, modal, opt,
+      timelineRepo: proj == null ? 'All repos' : DATA.projects[proj],
+      openModal: () => set({ modal: true, copied: false, saved: false, hover: null, feature: [] }),
+      closeModal: () => set({ modal: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

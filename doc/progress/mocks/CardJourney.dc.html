@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Progress card, Journey line</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=DM+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 1200px; height: 630px; overflow: hidden; background: {{t.bg}}; color: {{t.ink}}; font-family: Inter, sans-serif">
+
+  <svg width="1200" height="630" viewBox="0 0 1200 630" style="position: absolute; left: 0; top: 0" aria-hidden="true">
+    <defs>
+      <clipPath id="jc-avatar"><circle cx="88" cy="80" r="28"></circle></clipPath>
+      <linearGradient id="jc-wash" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="{{c.washColor}}" stop-opacity="{{c.wash0}}"></stop>
+        <stop offset="1" stop-color="{{c.washColor}}" stop-opacity="{{c.wash1}}"></stop>
+      </linearGradient>
+    </defs>
+    <circle cx="88" cy="80" r="30" fill="{{t.ring}}"></circle>
+    <image href="/_blob/59b36a5d4069a14bd0e0e68e44a14127" x="60" y="52" width="56" height="56" clip-path="url(#jc-avatar)" preserveAspectRatio="xMidYMid slice"></image>
+    <path d="M60,136H1140" stroke="{{t.rule}}" stroke-width="1"></path>
+    <path d="{{c.gridD}}" stroke="{{t.rule}}" stroke-width="1" fill="none"></path>
+    <path d="{{c.baseD}}" stroke="{{t.ruleStrong}}" stroke-width="1" fill="none"></path>
+    <path d="{{c.washD}}" fill="url(#jc-wash)"></path>
+    <path d="{{c.poleD}}" stroke="{{c.pole}}" stroke-width="1" fill="none"></path>
+    <path d="{{c.lineD}}" fill="none" stroke="{{t.ink}}" stroke-width="{{c.lineW}}" stroke-linejoin="round" stroke-linecap="round"></path>
+    <path d="{{c.haloD}}" fill="{{t.bg}}"></path>
+    <path d="{{c.shipD}}" fill="{{t.ink}}" stroke="{{t.bg}}" stroke-width="{{c.haloW}}" stroke-linejoin="round" paint-order="stroke"></path>
+    <path d="{{c.ringD}}" fill="{{t.bg}}" stroke="{{t.ink}}" stroke-width="{{c.ringW}}"></path>
+    <circle cx="{{c.dot.cx}}" cy="{{c.dot.cy}}" r="{{c.dot.r}}" fill="{{t.ink}}" stroke="{{t.bg}}" stroke-width="{{c.haloW}}" paint-order="stroke"></circle>
+  </svg>
+
+  <div style="position: absolute; left: 132px; top: 52px; display: flex; align-items: center; gap: 10px">
+    <span style="font-size: 26px; font-weight: 600; letter-spacing: -0.01em; line-height: 30px">Tux</span>
+    <span style="font-family: 'DM Mono', monospace; font-size: 10.5px; font-weight: 500; letter-spacing: 0.12em; line-height: 14px; padding: 2px 6px; border: 1px solid {{t.ruleStrong}}; border-radius: 4px; color: {{t.muted}}">PRO</span>
+  </div>
+  <div style="position: absolute; left: 132px; top: 88px; font-family: 'DM Mono', monospace; font-size: 14px; line-height: 18px; color: {{t.muted}}">@tuxnotfound</div>
+  <div style="position: absolute; right: 60px; top: 70px; font-size: 16px; font-weight: 500; line-height: 20px; letter-spacing: -0.005em"><span style="color: {{t.muted}}">openstage.dev/</span>tuxnotfound</div>
+
+  <div style="position: absolute; left: 60px; top: 166px; font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.14em; line-height: 14px; color: {{t.accent}}">{{names.tag}}</div>
+  <div style="position: absolute; left: 58px; top: 184px; font-size: 46px; font-weight: 600; letter-spacing: -0.02em; line-height: 54px; white-space: nowrap">{{names.title}}</div>
+  <div style="position: absolute; left: 60px; top: 244px; display: flex; align-items: center; gap: 8px; font-size: 16px; line-height: 20px; color: {{t.muted}}; white-space: nowrap">
+    <sc-if value="{{sub.dot}}" hint-placeholder-val="{{ false }}">
+      <span style="display: inline-block; width: 12px; height: 12px; border-radius: 9999px; background: {{sub.color}}"></span>
+    </sc-if>
+    <span><sc-if value="{{sub.dot}}" hint-placeholder-val="{{ false }}"><span style="font-weight: 500; color: {{t.ink}}">{{sub.slug}}</span></sc-if>{{sub.rest}}</span>
+  </div>
+
+  <sc-for list="{{stats}}" as="s" hint-placeholder-count="4">
+    <div style="position: absolute; left: {{s.left}}px; top: {{s.valueTop}}px; display: flex; align-items: baseline; gap: 8px; white-space: nowrap">
+      <span style="font-size: 30px; font-weight: 600; letter-spacing: -0.02em; line-height: 36px">{{s.value}}</span>
+      <sc-if value="{{s.has}}" hint-placeholder-val="{{ true }}">
+        <span style="font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; line-height: 14px; color: {{s.dColor}}">{{s.dText}}</span>
+      </sc-if>
+    </div>
+    <div style="position: absolute; left: {{s.left}}px; top: {{s.labelTop}}px; display: flex; align-items: center; gap: 5px; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; line-height: 14px; color: {{t.muted}}; white-space: nowrap">
+      <sc-if value="{{s.diamond}}" hint-placeholder-val="{{ false }}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0L10 5L5 10L0 5Z" fill="{{t.ink}}"></path></svg></sc-if>
+      <sc-if value="{{s.ring}}" hint-placeholder-val="{{ false }}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.9" fill="none" stroke="{{t.ink}}" stroke-width="1.8"></circle></svg></sc-if>
+      <span>{{s.label}}</span>
+    </div>
+  </sc-for>
+
+  <sc-for list="{{ticks}}" as="tk" hint-placeholder-count="3">
+    <div style="position: absolute; left: 88px; top: {{tk.top}}px; transform: translate(-100%, -50%); font-family: 'DM Mono', monospace; font-size: 11px; line-height: 12px; color: {{t.faint}}; font-variant-numeric: tabular-nums">{{tk.v}}</div>
+  </sc-for>
+  <sc-for list="{{xls}}" as="xl" hint-placeholder-count="9">
+    <div style="position: absolute; left: {{xl.left}}px; top: {{xl.top}}px; transform: translateX(-50%); font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; line-height: 12px; white-space: nowrap; color: {{xl.color}}">{{xl.text}}</div>
+  </sc-for>
+
+  <sc-for list="{{flags}}" as="f" hint-placeholder-count="6">
+    <div style="position: absolute; left: {{f.left}}; right: {{f.right}}; top: {{f.top}}px; text-align: {{f.align}}; font-size: 20px; line-height: 24px; font-weight: {{f.fw}}; color: {{f.color}}; white-space: nowrap">
+      <sc-for list="{{f.lines}}" as="ln" hint-placeholder-count="2">
+        <div>{{ln.text}}<sc-if value="{{ln.hasRun}}" hint-placeholder-val="{{ false }}"><span style="margin-left: 0.28em; font-weight: 400; color: {{t.muted}}">{{ln.run}}</span></sc-if></div>
+      </sc-for>
+    </div>
+  </sc-for>
+
+  <div style="position: absolute; left: {{end.left}}px; top: {{end.top}}px; font-size: 24px; line-height: {{end.lh}}px; white-space: nowrap">
+    <span style="font-size: 24px; font-weight: 600; color: {{t.ink}}">{{end.num}}</span><span style="font-size: 17px; color: {{t.muted}}">{{end.word}}</span>
+  </div>
+
+  <sc-if value="{{quiet.show}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 100px; top: {{quiet.top}}px; font-size: 20px; font-weight: 500; line-height: 24px; color: {{t.muted}}; white-space: nowrap">{{quiet.text}}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"range":{"editor":"enum","options":["week","month","year","all"],"default":"year"},"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"offset":{"editor":"int","default":0,"min":-12,"max":0},"project":{"editor":"text","default":""},"tags":{"editor":null,"default":"{}"},"feature":{"editor":null,"default":""},"$preview":{"width":1200,"height":630}}'>
+// ===== Openstage progress draft: shared core =====
+// Data (Tux's live page, to 2026-10-14), periods, the shared pick, the project
+// filter with tag overrides, colors, and card text fitting with the server's
+// Inter width tables. Paste verbatim at the top of every artboard script.
+const DATA = {
+  projects: ['openstage', 'wheels-off', 'goal_atlas', 'story_time_v1', 'trained-on', 'watchtower', 'trained-on-dataset'],
+  days: {"2026-03-26":[[0,5]],"2026-03-27":[[0,1]],"2026-03-28":[[0,9]],"2026-03-31":[[0,1]],"2026-04-04":[[0,1]],"2026-04-29":[[0,1]],"2026-04-30":[[3,2]],"2026-05-01":[[3,1]],"2026-05-02":[[0,1],[3,3]],"2026-05-04":[[0,10]],"2026-05-05":[[0,15]],"2026-05-06":[[0,2],[3,19]],"2026-05-07":[[0,4]],"2026-05-08":[[0,2]],"2026-05-09":[[0,2]],"2026-05-10":[[3,1]],"2026-05-13":[[0,1]],"2026-05-14":[[3,3]],"2026-05-19":[[0,2],[2,1]],"2026-05-26":[[2,3]],"2026-05-27":[[0,1],[2,1]],"2026-06-03":[[0,1],[2,1]],"2026-06-04":[[0,1],[2,1]],"2026-06-05":[[0,1]],"2026-06-10":[[2,11]],"2026-06-11":[[2,10]],"2026-06-13":[[2,5]],"2026-06-14":[[0,1],[2,2]],"2026-06-15":[[2,1]],"2026-06-16":[[2,1]],"2026-06-17":[[2,7]],"2026-06-18":[[2,1]],"2026-06-19":[[2,1]],"2026-06-20":[[2,2]],"2026-06-21":[[3,2]],"2026-06-25":[[2,2]],"2026-06-29":[[2,1]],"2026-06-30":[[2,6]],"2026-07-28":[[2,3]],"2026-09-10":[[0,2]],"2026-09-11":[[0,18]],"2026-09-15":[[0,2],[3,1]],"2026-09-17":[[0,1]],"2026-09-21":[[0,4]],"2026-09-22":[[0,1]],"2026-09-23":[[0,1]],"2026-09-24":[[4,1]],"2026-09-25":[[1,12],[4,1]],"2026-09-26":[[1,3]],"2026-09-28":[[0,5],[4,13]],"2026-09-29":[[0,4],[4,2]],"2026-09-30":[[4,6]],"2026-10-01":[[4,1]],"2026-10-02":[[4,1]],"2026-10-06":[[0,2],[1,4]],"2026-10-07":[[1,19]],"2026-10-08":[[1,8]],"2026-10-09":[[0,2],[4,5]],"2026-10-11":[[0,25],[1,4]],"2026-10-12":[[0,5],[1,2]],"2026-10-13":[[0,39],[1,10],[4,1],[5,11],[6,3]],"2026-10-14":[[0,3],[5,5]]},
+  // k: 's' shipped (milestone, release), 'p' published (post, note, link).
+  // r: project index when the entry is tagged. pin: pinned by the builder.
+  entries: [
+    { id: 1, d: '2026-03-23', k: 'p', t: "why i'm building this" },
+    { id: 2, d: '2026-03-26', k: 's', t: 'day 1: it boots' },
+    { id: 3, d: '2026-03-26', k: 'p', t: 'on picking rails in 2026' },
+    { id: 4, d: '2026-03-27', k: 'p', t: 'the demo solves itself' },
+    { id: 5, d: '2026-03-28', k: 's', t: 'We are live!!' },
+    { id: 6, d: '2026-03-28', k: 'p', t: 'from idea to live' },
+    { id: 7, d: '2026-03-31', k: 's', t: 'live on Hacker News' },
+    { id: 8, d: '2026-04-29', k: 's', t: 'Pro tier shipped 🎉' },
+    { id: 9, d: '2026-05-06', k: 's', t: 'First user signed up 🥳🥳🥳' },
+    { id: 10, d: '2026-05-07', k: 's', t: 'story time is live! 🚀🚀🚀' },
+    { id: 11, d: '2026-05-08', k: 's', t: 'Share on 𝕏 !' },
+    { id: 12, d: '2026-06-11', k: 's', t: 'launched The Goal Atlas 🌍 — just in time for 2026' },
+    { id: 13, d: '2026-09-11', k: 'p', t: "This week's build log: 5 commits in openstage.", b: "This week's build log: 5 commits in openstage.\n- Rebirth begins 🚀" },
+    { id: 14, d: '2026-09-11', k: 's', t: 'Rebirth begins 🚀', pin: 1 },
+    { id: 15, d: '2026-09-18', k: 'p', t: 'This week I went back to Story Time by adding a export to pdf feature. Also a lot of work on synchronising private github repos on Openstage. Fun fun!' },
+    { id: 16, d: '2026-09-23', k: 'p', t: "Needed help to summarize my week's work and an easy way to publicly share what I've been building. Built a recap feature, and it's live." },
+    { id: 17, d: '2026-09-25', k: 'p', t: 'Shipped this week:', b: "- A new feature in OpenStage to help me recap my week's work\n- A new project to keep track of each AI tool trained on your inputs\n- A skateboarding game proof of concept was brought closer to life" },
+    { id: 18, d: '2026-10-01', k: 's', t: 'Trained on me is live!!', pin: 1, r: 4, b: "Is AI training on my prompts? Was it ever? And which vendors are?\nLet's find out!" },
+    { id: 19, d: '2026-10-02', k: 'p', t: "This week's build log:", b: "- Trained on me is live!!\n\nopenstage\n- UI cleanup\n- Landing page redesign\n\nwheels-off\n- Rider improvement: chibi look, finer ink lines, board animation\n- Kickflip move\n- Smoother distance edges (MSAA + FXAA)" },
+    { id: 20, d: '2026-10-09', k: 'p', t: 'What I worked on this week: 40 commits across 3 repos.', b: "wheels-off\n- Serve the game at playwheelsoff.com, workers.dev off\n- Serve the leaderboard API from the Worker\n\ntrained-on\n- Press page, and a citation on every change page\n\nopenstage\n- Blog: the relaunch story" }
+  ],
+  identity: { name: 'Tux', handle: 'tuxnotfound', avatar: '/_blob/59b36a5d4069a14bd0e0e68e44a14127' }
+};
+const TODAY = '2026-10-15';
+const DAY = 86400000;
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const WD = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+// Colors. Project colors are fixed by all-time commits (DATA.projects order).
+const PAL = { light: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300'], dark: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300'] };
+const THEMES = {
+  light: { bg: '#F8F7F3', ink: '#14171A', muted: '#62665F', faint: '#8A8E86', rule: '#E4E3DC', ruleStrong: '#CDCBC1', accent: '#00875A', ring: '#D9D7CE' },
+  dark: { bg: '#0E1012', ink: '#ECEEEF', muted: '#8E959A', faint: '#6B7378', rule: '#22272B', ruleStrong: '#394046', accent: '#00BA7C', ring: '#2A3035' }
+};
+const PAGE = { ink: '#111827', ink2: '#374151', muted: '#6B7280', faint: '#9CA3AF', quiet: '#D1D5DB', rule: '#F3F4F6', grid: '#F0F1F3', axis: '#D1D5DB', wash: '#F9FAFB', star: '#F59E0B', up: '#15803D', border: '#E5E7EB' };
+// surface: 'page' | 'light' | 'dark'. The 7th project and later are gray.
+function colorOf(pi, surface) {
+  if (pi == null) return surface === 'page' ? PAGE.faint : THEMES[surface].faint;
+  if (pi < 6) return PAL[surface === 'dark' ? 'dark' : 'light'][pi];
+  return surface === 'page' ? PAGE.faint : THEMES[surface].faint;
+}
+
+function ms(s) { const p = s.split('-'); return Date.UTC(+p[0], +p[1] - 1, +p[2]); }
+function iso(t) { return new Date(t).toISOString().slice(0, 10); }
+function parts(t) { const d = new Date(t); return { y: d.getUTCFullYear(), m: d.getUTCMonth(), d: d.getUTCDate(), wd: (d.getUTCDay() + 6) % 7 }; }
+function mStart(y, m) { return Date.UTC(y, m, 1); }
+function weekNo(t) { const thu = t + (3 - parts(t).wd) * DAY; const j4 = Date.UTC(parts(thu).y, 0, 4); const w1 = j4 - parts(j4).wd * DAY; return 1 + Math.floor((thu - w1) / (7 * DAY)); }
+function r1(v) { return Math.round(v * 10) / 10; }
+function fmtDay(t) { const q = parts(t); return MON[q.m] + ' ' + q.d; }
+function span(a, b) { const x = parts(a), y = parts(b); if (a === b) return fmtDay(a); return x.m === y.m ? MON[x.m] + ' ' + x.d + '–' + y.d : fmtDay(a) + ' – ' + fmtDay(b); }
+function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
+
+const T0 = ms(TODAY);
+const FIRST = Math.min(ms(Object.keys(DATA.days).sort()[0]), ...DATA.entries.map(e => ms(e.d)));
+
+// Entries with the owner's tag choices applied: tags maps id to a project
+// index, or -1 for "No project". Nothing is ever inferred from text.
+function entriesWith(tags) {
+  const t = tags || {};
+  return DATA.entries.map(e => {
+    const o = Object.assign({}, e);
+    if (Object.prototype.hasOwnProperty.call(t, e.id)) { if (t[e.id] === -1) { delete o.r; o.none = true; } else o.r = t[e.id]; }
+    return o;
+  });
+}
+
+// Calendar periods: ISO week, calendar month, calendar year, all time.
+function periodOf(range, offset) {
+  const t = parts(T0);
+  if (range === 'week') { const s = T0 - t.wd * DAY + offset * 7 * DAY; return { range, offset, start: s, end: s + 6 * DAY, unit: 'day' }; }
+  if (range === 'month') { const s = mStart(t.y, t.m + offset); return { range, offset, start: s, end: mStart(t.y, t.m + offset + 1) - DAY, unit: 'day' }; }
+  if (range === 'year') { const y = t.y + offset; return { range, offset, start: Date.UTC(y, 0, 1), end: Date.UTC(y, 11, 31), unit: 'week' }; }
+  const f = parts(FIRST);
+  return { range: 'all', offset: 0, start: mStart(f.y, f.m), end: mStart(t.y, t.m + 1) - DAY, unit: 'month' };
+}
+function running(p) { return p.start <= T0 && T0 <= p.end; }
+function lastDay(p) { return Math.min(p.end, T0); }
+
+// Counts for [s, e] (capped at today). proj: a project index, or null for all.
+function tally(s, e, proj, ents) {
+  const counts = DATA.projects.map(() => 0); const days = new Set(); let total = 0, all = 0; const end = Math.min(e, T0);
+  Object.keys(DATA.days).forEach(k => {
+    const t = ms(k); if (t < s || t > end) return; let hit = false;
+    DATA.days[k].forEach(([pi, n]) => { all += n; if (proj != null && pi !== proj) return; counts[pi] += n; total += n; hit = true; });
+    if (hit) days.add(k);
+  });
+  const hl = ents.filter(x => { const t = ms(x.d); return t >= s && t <= end && (proj == null || x.r === proj); });
+  hl.forEach(x => days.add(x.d));
+  return { counts, total, all, active: days.size, hl, shipped: hl.filter(x => x.k === 's').length, published: hl.filter(x => x.k === 'p').length, projects: counts.filter(n => n > 0).length };
+}
+
+// Buckets: a day each for Week and Month, an ISO week for Year, a month for All.
+function bucketsOf(p, proj, ents) {
+  const out = [];
+  if (p.unit === 'day') { for (let s = p.start; s <= p.end; s += DAY) out.push({ s, e: s, mon: s }); }
+  else if (p.unit === 'week') { for (let w = p.start - parts(p.start).wd * DAY; w <= p.end; w += 7 * DAY) out.push({ s: Math.max(w, p.start), e: Math.min(w + 6 * DAY, p.end), mon: w }); }
+  else { let s = p.start; while (s <= p.end) { const q = parts(s); const e = mStart(q.y, q.m + 1) - DAY; out.push({ s, e, mon: s }); s = e + DAY; } }
+  return out.map((b, i) => Object.assign(b, tally(b.s, b.e, proj, ents), { i, future: b.s > T0, today: b.s <= T0 && T0 <= b.e }));
+}
+// One label per bucket, or '' where the axis stays quiet.
+function axisLabel(p, bs, i) {
+  const b = bs[i]; const q = parts(b.s);
+  if (p.range === 'week') return WD[q.wd] + ' ' + q.d;
+  if (p.range === 'month') return [1, 8, 15, 22, 29].indexOf(q.d) >= 0 ? (q.d === 1 ? MON[q.m] + ' 1' : String(q.d)) : (b.today ? String(q.d) : '');
+  if (p.range === 'year') { const m = parts(b.mon + 3 * DAY).m; return (i === 0 || m !== parts(bs[i - 1].mon + 3 * DAY).m) ? MON[m] : ''; }
+  return MON[q.m] + (i === 0 || q.m === 0 ? ' ' + q.y : '');
+}
+// The bucket title for tooltips.
+function bucketTitle(p, b) {
+  const q = parts(b.s);
+  if (p.unit === 'day') return WD[q.wd] + ', ' + MON[q.m] + ' ' + q.d;
+  if (p.unit === 'week') return 'Week of ' + span(b.s, b.e);
+  return MONTH[q.m] + ' ' + q.y;
+}
+
+function namesOf(p, proj) {
+  const run = running(p); const q = parts(p.start); const last = lastDay(p);
+  const project = proj == null ? null : DATA.projects[proj];
+  let n;
+  if (p.range === 'week') { const w = weekNo(p.start); n = { title: 'Week ' + w, sub: span(p.start, p.end) + ', ' + parts(p.end).y + (run ? ' · so far' : ''), nav: 'Week ' + w + ' · ' + span(p.start, p.end), tag: 'PROGRESS · WEEK', word: run ? 'this week' : 'in Week ' + w, short: 'Week ' + w, file: parts(p.start + 3 * DAY).y + '-w' + String(w).padStart(2, '0') }; }
+  else if (p.range === 'month') n = { title: MONTH[q.m] + ' ' + q.y, sub: run ? span(p.start, last) + ' · so far' : span(p.start, p.end), nav: MONTH[q.m] + ' ' + q.y, tag: 'PROGRESS · MONTH', word: 'in ' + MONTH[q.m], short: MONTH[q.m], file: q.y + '-' + String(q.m + 1).padStart(2, '0') };
+  else if (p.range === 'year') n = { title: String(q.y), sub: run ? 'Jan 1 – ' + fmtDay(last) + ' · so far' : 'Jan 1 – Dec 31', nav: String(q.y), tag: 'PROGRESS · YEAR', word: 'in ' + q.y, short: String(q.y), file: String(q.y) };
+  else { const f = parts(FIRST); n = { title: 'All time', sub: 'Since ' + MONTH[f.m] + ' ' + f.y, nav: 'Since ' + MON[f.m] + ' ' + f.y, tag: 'PROGRESS · ALL TIME', word: 'so far', short: 'All time', file: 'all-time' }; }
+  return Object.assign(n, { running: run, project, empty: 'Nothing shipped or published ' + n.word + (run && p.range !== 'all' ? ' yet' : '') + '.', emptyTagged: project ? 'No entries tagged ' + project + ' ' + (p.range === 'all' ? 'yet' : n.word) + '.' : '' });
+}
+
+function summaryOf(p, proj, ents) {
+  const cur = tally(p.start, p.end, proj, ents); let prev = null, vs = '';
+  if (p.range !== 'all') {
+    const q = periodOf(p.range, p.offset - 1); const run = running(p);
+    const qEnd = run ? Math.min(q.end, q.start + (T0 - p.start)) : q.end;
+    if (q.end >= FIRST) {
+      prev = tally(q.start, qEnd, proj, ents);
+      if (p.range === 'week') vs = run ? 'vs Mon–' + WD[parts(T0).wd] + ' last week' : 'vs Week ' + weekNo(q.start);
+      else if (p.range === 'month') vs = run ? 'vs ' + span(q.start, qEnd) : 'vs ' + MONTH[parts(q.start).m];
+      else vs = run ? 'vs ' + parts(q.start).y + ' to ' + fmtDay(qEnd) : 'vs ' + parts(q.start).y;
+    }
+  }
+  return { cur, prev, vs, share: cur.all ? Math.round(100 * cur.total / cur.all) : 0 };
+}
+function deltaOf(c, p) { if (p == null) return null; const d = c - p; return { text: d > 0 ? '+' + d : d < 0 ? '−' + Math.abs(d) : '±0', up: d > 0 }; }
+
+// Entries in the period with no project that the owner has not marked "No project".
+function untaggedOf(p, ents) { const end = lastDay(p); return ents.filter(x => { const t = ms(x.d); return t >= p.start && t <= end && x.r == null && !x.none; }); }
+
+// The shared pick: who gets words. It never reads the text.
+// 1. Pins first, always kept. 2. Six equal day spans over the active domain.
+// 3. Shipped in rounds, one per span per round (a span holding a pin skips
+// round 1), newer first within a round. 4. Published the same way while room
+// is left (round 1 skips spans already holding an entry). 5. Display in date
+// order. feature: ids the owner swapped in on the card; each replaces the
+// lowest-ranked unpinned entry.
+function pick(p, proj, cap, ents, feature) {
+  const end = lastDay(p);
+  const pool = ents.filter(x => { const t = ms(x.d); return t >= p.start && t <= end && (proj == null || x.r === proj); });
+  if (!pool.length) return { kept: [], left: [], ids: new Set() };
+  let first = Infinity;
+  Object.keys(DATA.days).forEach(k => { const t = ms(k); if (t < p.start || t > end) return; if (proj == null || DATA.days[k].some(c => c[0] === proj)) first = Math.min(first, t); });
+  pool.forEach(x => { first = Math.min(first, ms(x.d)); });
+  const days = Math.round((end - first) / DAY) + 1;
+  const spanOf = x => Math.min(5, Math.floor(6 * Math.round((ms(x.d) - first) / DAY) / days));
+  const newest = (a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : b.id - a.id);
+  const ranked = pool.filter(x => x.pin).sort(newest).slice(0, Math.max(cap, 0));
+  const held = new Set(ranked.map(spanOf));
+  ['s', 'p'].forEach(kind => {
+    const lanes = [0, 1, 2, 3, 4, 5].map(s => pool.filter(x => !x.pin && x.k === kind && spanOf(x) === s).sort(newest));
+    const at = [0, 0, 0, 0, 0, 0];
+    for (let round = 0; ranked.length < cap; round++) {
+      const batch = [];
+      for (let s = 0; s < 6; s++) { if (round === 0 && held.has(s)) continue; if (at[s] < lanes[s].length) batch.push(lanes[s][at[s]++]); }
+      if (!batch.length && lanes.every((l, s) => at[s] >= l.length)) break;
+      batch.sort(newest).forEach(x => { if (ranked.length < cap) { ranked.push(x); held.add(spanOf(x)); } });
+    }
+  });
+  // A swap never pushes out a pin or an earlier swap.
+  const swapped = new Set();
+  (feature || []).forEach(id => {
+    if (ranked.some(x => x.id === id)) return;
+    const f = pool.find(x => x.id === id); if (!f) return;
+    for (let i = ranked.length - 1; i >= 0; i--) { if (!ranked[i].pin && !swapped.has(ranked[i].id)) { ranked.splice(i, 1); break; } }
+    if (ranked.length < cap) { ranked.push(f); swapped.add(f.id); }
+  });
+  const ids = new Set(ranked.map(x => x.id));
+  const byDate = (a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.id - b.id);
+  return { kept: ranked.slice().sort(byDate), left: pool.filter(x => !ids.has(x.id)).sort(byDate), ids, rank: ranked };
+}
+
+// Projects for the filter: commits or tagged entries, in all-time order.
+function projectOptions(ents) {
+  const totals = DATA.projects.map(() => 0);
+  Object.values(DATA.days).forEach(list => list.forEach(([pi, n]) => { totals[pi] += n; }));
+  return DATA.projects.map((slug, pi) => ({ pi, slug, n: totals[pi], label: slug + ' · ' + totals[pi] })).filter(o => o.n > 0 || ents.some(x => x.r === o.pi));
+}
+// Commits per project on one day, busiest first (orders the tag buttons).
+function commitsOn(day) { return (DATA.days[day] || []).map(([pi, n]) => ({ pi, n })).sort((a, b) => b.n - a.n); }
+
+// ----- Card text: the server measures with these Inter tables (thousandths
+// of an em, ASCII 0x20-0x7E plus a few marks). DM Mono is 600 per character.
+const INTER = {"400":{"base":[282,288,466,634,642,982,645,300,365,365,501,662,289,460,289,361,631,407,610,618,646,594,621,566,619,621,289,302,662,662,662,512,966,690,655,731,722,602,591,747,744,269,571,672,566,904,754,765,639,765,644,642,646,745,690,986,683,679,629,365,361,365,472,457,323,562,613,572,613,584,371,614,592,243,243,549,243,876,591,600,613,613,377,528,328,592,563,819,546,563,553,427,333,427,662],"extra":{"·":289,"–":500,"—":1000,"‘":261,"’":261,"“":441,"”":441,"…":865,"•":563,"×":662}},"500":{"base":[267,305,495,639,646,994,654,313,369,369,521,668,304,463,304,370,646,415,617,627,657,603,630,572,630,630,304,316,668,668,668,528,983,709,657,734,722,604,590,748,745,273,576,688,566,913,757,767,642,769,648,646,653,741,709,1003,701,697,641,369,370,369,477,463,337,568,619,577,619,588,380,620,602,252,252,560,252,889,602,605,619,619,387,539,341,602,575,829,558,576,560,441,346,441,668],"extra":{"·":304,"–":500,"—":1000,"‘":278,"’":278,"“":474,"”":471,"…":911,"•":534,"×":668}},"600":{"base":[252,322,523,644,651,1005,663,326,373,373,540,674,319,466,319,379,660,424,623,637,667,613,640,577,641,640,319,330,674,674,674,544,1000,728,660,737,723,606,589,750,746,277,580,704,566,923,760,769,645,773,653,651,661,737,728,1021,720,714,653,373,379,373,482,470,352,575,625,583,625,592,389,626,613,262,262,570,262,901,612,609,625,625,397,550,354,613,588,840,569,589,566,455,359,455,674],"extra":{"·":319,"–":500,"—":1000,"‘":294,"’":294,"“":507,"”":502,"…":957,"•":504,"×":674}}};
+// The card strips emoji, as the week cards do; 𝕏 is a letter and stays.
+function stripEmoji(s) { return s.replace(/\p{Extended_Pictographic}/gu, '').replace(/[︎️‍]/g, '').replace(/\s{2,}/g, ' ').trim(); }
+function charW(ch, weight) {
+  const c = ch.codePointAt(0); const t = INTER[String(weight)] || INTER['400'];
+  if (c >= 0x20 && c <= 0x7E) return t.base[c - 0x20];
+  if (t.extra[ch] != null) return t.extra[ch];
+  return c === 0x1D54F ? 1020 : 600;
+}
+// Width in px of Inter text at size px; ls is letter-spacing in em.
+function measure(s, weight, size, ls) { let w = 0, n = 0; for (const ch of s) { w += charW(ch, weight); n++; } return w / 1000 * size + (ls || 0) * size * n; }
+function monoW(s, size, ls) { return Array.from(s).length * size * (0.6 + (ls || 0)); }
+
+// A title ending in ":" continues into its own body: bullets stripped, empty
+// lines and lines equal to the title or a project slug dropped, joined by " · ".
+function runInOf(x) {
+  const t = x.t.trim(); if (!t.endsWith(':') || !x.b) return '';
+  return x.b.split('\n').map(l => l.replace(/^\s*[-*•]\s*/, '').trim()).filter(l => l && l !== t && DATA.projects.indexOf(l) < 0).join(' · ');
+}
+
+// Balanced wrapping: the fewest lines that fit, then the narrowest measure
+// that keeps that count. Past maxLines, cut at a word with "…" (never
+// mid-word, unless a single word is wider than the measure).
+function wrapText(text, weight, size, width, maxLines, ls) {
+  // A lone dash never starts a line: it stays with the word before it.
+  const words = text.split(/\s+/).filter(Boolean).reduce((acc, w) => { if (/^[—–-]$/.test(w) && acc.length) acc[acc.length - 1] += ' ' + w; else acc.push(w); return acc; }, []);
+  const W = s => measure(s, weight, size, ls);
+  // Lines as arrays of tokens, so a cut knows exactly which words it used.
+  const greedy = lim => { const out = []; let cur = []; words.forEach(w => { const t = cur.concat(w).join(' '); if (!cur.length || W(t) <= lim) cur.push(w); else { out.push(cur); cur = [w]; } }); if (cur.length) out.push(cur); return out; };
+  let rows = greedy(width);
+  if (rows.length <= maxLines) {
+    if (rows.length > 1) {
+      let lo = Math.max(...words.map(W)), hi = width; const n = rows.length;
+      for (let k = 0; k < 14; k++) { const mid = (lo + hi) / 2; if (greedy(mid).length <= n) hi = mid; else lo = mid; }
+      rows = greedy(hi);
+    }
+    const lines = rows.map(r => r.join(' '));
+    return { lines, cut: false, widths: lines.map(W) };
+  }
+  const keep = rows.slice(0, maxLines - 1).map(r => r.join(' '));
+  const used = rows.slice(0, maxLines - 1).reduce((n, r) => n + r.length, 0);
+  let last = '';
+  for (const w of words.slice(used)) { const t = last ? last + ' ' + w : w; if (W(t + '…') <= width) last = t; else break; }
+  if (!last) { const chars = Array.from(words[used] || ''); while (chars.length && W(chars.join('') + '…') > width) chars.pop(); last = chars.join(''); }
+  keep.push(last.replace(/[\s,;:·–—.\-]+$/, '') + '…');
+  return { lines: keep, cut: true, widths: keep.map(W) };
+}
+// The run-in only fills what is left of the title's last line, cut at a word
+// with "…"; it is dropped when fewer than 6 characters fit.
+function fitRunIn(runIn, room, weight, size, ls) {
+  if (!runIn || room <= 0) return '';
+  if (measure(runIn, weight, size, ls) <= room) return runIn;
+  let out = '';
+  for (const w of runIn.split(/\s+/)) { const t = out ? out + ' ' + w : w; if (measure(t + '…', weight, size, ls) <= room) out = t; else break; }
+  out = out.replace(/[\s,;:·–—.\-]+$/, '');
+  return Array.from(out).length >= 6 ? out + '…' : '';
+}
+// ===== end of shared core =====
+
+
+// ===== Journey engine =====
+// One cumulative commits line with the builder's entries standing on it as
+// markers and flags. The page chart (two profiles) and the card share this
+// file, so a flag lands on the same bucket on every surface. Units are viewBox
+// px on the page and artboard px on the card. Ported from the design-round
+// prototype (journey/journey_proto.py), with the shared pick() as flag order.
+
+// Geometry per surface. top/base: the 'top tick' and baseline y. lo/hi: where
+// flags may go. rises: gaps between a marker halo and the flag above it.
+const MARKS = { dia: 6, ring: 4.6, ringW: 2, halo: 2, gap: 7, rises: [6, 22, 38, 54], minBin: 12, num: 13, word: 13, dot: 4, endPad: 40, lineW: 2 };
+const JG = {
+  page: Object.assign({ id: 'page', W: 704, H: 248, L: 30, R: 698, top: 22, base: 220, lo: 4, hi: 216, fs: 13, lh: 16, mw: 180, caps: { week: 3, month: 3, year: 5, all: 5 } }, MARKS),
+  mobile: Object.assign({ id: 'mobile', W: 360, H: 240, L: 26, R: 354, top: 22, base: 212, lo: 4, hi: 208, fs: 12.5, lh: 15, mw: 150, caps: { week: 2, month: 2, year: 3, all: 3 } }, MARKS, { num: 12.5, word: 12.5 }),
+  card: { id: 'card', trims: true, W: 1200, H: 630, L: 100, R: 1140, top: 318, base: 552, lo: 282, hi: 548, fs: 20, lh: 24, mw: 290, dia: 8, ring: 6.2, ringW: 2.6, halo: 3, gap: 10, rises: [8, 28, 48, 68], minBin: 18, num: 24, word: 17, dot: 5, endPad: 72, lineW: 2.5, caps: { week: 3, month: 4, year: 6, all: 6 } }
+};
+
+// Round tick values on a commits axis. The step is a whole number: 2.5 only
+// when it is 25 or more, so a small chart never shows half a commit.
+function niceTicks(max) {
+  const raw = max / 3; const p = Math.pow(10, Math.floor(Math.log10(raw))); const m = raw / p;
+  const step = (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 && p >= 10 ? 2.5 : m <= 5 ? 5 : 10) * p;
+  const top = Math.ceil(max / step - 1e-9) * step; const out = [];
+  for (let v = 0; v <= top + 1e-9; v += step) out.push(Math.round(v * 10) / 10);
+  return out;
+}
+function r2(v) { return Math.round(v * 100) / 100; }
+function diamondPath(cx, cy, r) { return 'M' + r1(cx) + ',' + r1(cy - r) + 'L' + r1(cx + r) + ',' + r1(cy) + 'L' + r1(cx) + ',' + r1(cy + r) + 'L' + r1(cx - r) + ',' + r1(cy) + 'Z'; }
+function circlePath(cx, cy, r) { return 'M' + r1(cx - r) + ',' + r1(cy) + 'a' + r + ',' + r + ' 0 1,0 ' + 2 * r + ',0a' + r + ',' + r + ' 0 1,0 ' + -2 * r + ',0Z'; }
+function boxHits(a, b, px, py) { return !(a.x + a.w + px <= b.x || b.x + b.w + px <= a.x || a.y + a.h + py <= b.y || b.y + b.h + py <= a.y); }
+
+// ----- domain, buckets, line -----
+
+// First day with a commit or an entry (of the project under a filter), in all
+// time; null when there is none.
+function firstActivity(proj, ents) {
+  const days = Object.keys(DATA.days).filter(k => proj == null || DATA.days[k].some(c => c[0] === proj)).map(ms);
+  const dates = ents.filter(x => proj == null || x.r === proj).map(x => ms(x.d));
+  const all = days.concat(dates);
+  return all.length ? Math.min.apply(null, all) : null;
+}
+
+// The chart never shows time before the first activity: it starts one unit
+// before it (a day in Week and Month, a month in Year and All), or at the
+// period start if that is later. The card also stops a running period at
+// today (Week, Month) or at the end of this month (Year, All).
+function domainOf(p, proj, ents, g) {
+  const first = firstActivity(proj, ents);
+  const byDay = p.range === 'week' || p.range === 'month';
+  const q = parts(first == null ? p.start : first);
+  const floor = first == null ? p.start : byDay ? first - DAY : mStart(q.y, q.m - 1);
+  let s = p.range === 'all' ? floor : Math.max(p.start, floor);
+  let e = p.end;
+  if (s > e) s = p.start;
+  if (g.trims && running(p)) e = byDay ? T0 : mStart(parts(T0).y, parts(T0).m + 1) - DAY;
+  return { s, e, days: Math.round((e - s) / DAY) + 1, byDay };
+}
+
+// A day each, an ISO week each (clipped to the domain), or a calendar month each.
+function binsOf(dom, unit) {
+  const out = [];
+  if (unit === 'day') { for (let s = dom.s; s <= dom.e; s += DAY) out.push({ s, e: s }); }
+  else if (unit === 'week') { for (let w = dom.s - parts(dom.s).wd * DAY; w <= dom.e; w += 7 * DAY) out.push({ s: Math.max(w, dom.s), e: Math.min(w + 6 * DAY, dom.e) }); }
+  else { for (let d = mStart(parts(dom.s).y, parts(dom.s).m); d <= dom.e;) { const q = parts(d); const nxt = mStart(q.y, q.m + 1); out.push({ s: Math.max(d, dom.s), e: Math.min(nxt - DAY, dom.e) }); d = nxt; } }
+  return out;
+}
+// Markers sit one per bucket; a bucket narrower than minBin px steps up a unit.
+function markerUnit(dom, g) {
+  const perDay = (g.R - g.L) / dom.days;
+  if (perDay * 7 < g.minBin) return 'month';
+  return dom.byDay && perDay < g.minBin ? 'week' : dom.byDay ? 'day' : 'week';
+}
+
+// Cumulative commits at the end of every bucket up to today. t counts days
+// from the domain start, so a bucket's end vertex sits at t.
+function lineOf(dom, proj, ents) {
+  const pts = [{ t: 0, v: 0 }]; const buckets = []; let cum = 0;
+  binsOf(dom, dom.byDay ? 'day' : 'week').forEach(b => {
+    if (b.s > T0) return;
+    const e = Math.min(b.e, T0); const got = tally(b.s, e, proj, ents);
+    cum += got.total;
+    const t = Math.round((e - dom.s) / DAY) + 1;
+    pts.push({ t, v: cum });
+    buckets.push({ i: buckets.length, s: b.s, e, full: b.e, t, cum, total: got.total, counts: got.counts, hl: got.hl });
+  });
+  return { pts, buckets, total: cum };
+}
+
+// ----- text -----
+
+function chartTitle(t) { return stripEmoji(t).replace(/(\w)'(\w)/g, '$1’$2'); }
+function weightOf(x) { return x.pin ? 600 : x.k === 's' ? 500 : 400; }
+
+// How a title can be set: one line if it fits the measure; two balanced lines
+// when the title is wider than 60% of the measure (and the pair is clearly
+// narrower); a word cut with "…" when it needs more. A title ending in ":"
+// also gets its own body as a muted run-in, only in the room the last line has
+// left, so it never adds a line. Plain versions come after the run-in ones.
+function flagTexts(x, g) {
+  const weight = weightOf(x); const text = chartTitle(x.t);
+  const w1 = measure(text, weight, g.fs);
+  const two = wrapText(text, weight, g.fs, Math.min(g.mw, w1 - 0.5), 2);
+  const shapes = [];
+  if (w1 <= g.mw) shapes.push([text]);
+  if (two.lines.length === 2 && (!shapes.length || (w1 > 0.6 * g.mw && Math.max.apply(null, two.widths) < 0.8 * w1))) shapes.push(two.lines);
+  if (!shapes.length) shapes.push(two.lines);
+  const body = runInOf(x); const out = [];
+  shapes.forEach(lines => {
+    const widths = lines.map(l => measure(l, weight, g.fs)); const last = widths[widths.length - 1]; const h = lines.length * g.lh;
+    const gap = measure(' ', weight, g.fs);
+    const run = body ? fitRunIn(chartTitle(body), g.mw - last - gap, 400, g.fs) : '';
+    if (run) out.push({ lines, run, w: Math.max.apply(null, widths.slice(0, -1).concat(last + gap + measure(run, 400, g.fs))), h });
+    out.push({ lines, run: '', w: Math.max.apply(null, widths), h });
+  });
+  return out;
+}
+
+// ----- flags -----
+
+// Every try for one flag, cheapest first: the pole gap plus the text height,
+// with a penalty on a second line when one line would do. Left of the marker
+// goes first on a rising line.
+function flagTries(m, texts, g) {
+  const oneLine = texts.some(v => v.lines.length === 1);
+  const leftFirst = m.rising || m.x - g.L > g.R - m.x;
+  const sides = leftFirst ? ['L', 'R'] : ['R', 'L'];
+  const out = [];
+  texts.forEach((v, vi) => g.rises.forEach(rise => sides.forEach((side, si) => {
+    out.push({ v, vi, rise, side, si, cost: rise + v.h + (oneLine && v.lines.length === 2 ? 1.5 * g.lh : 0) });
+  })));
+  return out.sort((a, b) => a.cost - b.cost || a.vi - b.vi || a.si - b.si);
+}
+
+// Entries are tried in pick order, one flag per bucket, until the cap. A marker
+// whose first entry fits nowhere stays bare and the next one is tried. A flag
+// stays inside the plot, 3px clear above the line across its width, 6px from
+// other flags, poles and markers, clear of the end label, and its pole never
+// crosses another flag.
+function placeFlags(g, L, order, cap) {
+  const halo = m => (m.ship ? g.dia : g.ring + g.ringW / 2) + g.halo;
+  const obstacles = L.markers.map(m => ({ x: m.x - halo(m), y: m.y - halo(m), w: 2 * halo(m), h: 2 * halo(m), kind: 'marker', m }));
+  const dot = g.dot + g.halo;
+  obstacles.push({ x: L.ex - dot, y: L.ey - dot, w: 2 * dot, h: 2 * dot, kind: 'end' }, Object.assign({ kind: 'endlabel' }, L.endBox));
+  const clearOfLine = b => {
+    for (let x = b.x - 3; x <= b.x + b.w + 3; x += 1.5) { const y = L.lineY(x); if (y != null && y < b.y + b.h + 3) return false; }
+    return !L.line.some(q => q.x >= b.x - 3 && q.x <= b.x + b.w + 3 && q.y < b.y + b.h + 3);
+  };
+  const clashes = (b, pole, o) => {
+    if (boxHits(b, o, o.kind === 'endlabel' ? g.endPad : 6, o.kind === 'endlabel' ? 8 : 3)) return true;
+    return (o.kind === 'flag' || o.kind === 'endlabel') && boxHits(pole, o, 2, 2);
+  };
+  const place = (m, x) => {
+    const r = halo(m);
+    for (const c of flagTries(m, flagTexts(x, g), g)) {
+      const by = m.y - r - c.rise - c.v.h; const bx = c.side === 'L' ? m.x - g.gap - c.v.w : m.x + g.gap;
+      const b = { x: bx, y: by, w: c.v.w, h: c.v.h, kind: 'flag' };
+      if (bx < g.L + 2 || bx + b.w > g.R || by < g.lo || by + b.h > g.hi || !clearOfLine(b)) continue;
+      const pole = { x: m.x - 2.5, y: by, w: 5, h: m.y - r - by };
+      if (obstacles.some(o => o.m !== m && clashes(b, pole, o))) continue;
+      obstacles.push(b, pole);
+      return { m, entry: x, v: c.v, side: c.side, bx, by, w: b.w, h: b.h, pole: { x: m.x, y0: m.y - r, y1: by + 1 } };
+    }
+    return null;
+  };
+  const flags = []; const tried = new Set();
+  order.forEach(x => {
+    const m = L.markers.find(k => k.ids.has(x.id));
+    if (!m || tried.has(m) || flags.length >= cap) return;
+    const f = place(m, x);
+    if (f) { m.flag = f; flags.push(f); tried.add(m); } else if (!x.swapped) tried.add(m);
+  });
+  return flags;
+}
+
+// The order flags are tried in: pins, then what the owner swapped in, then
+// every other entry in pick order. Flags are taken from the front until the
+// cap, so a swap pushes the lowest-ranked unpinned flag out. A swapped-in entry
+// that fits nowhere hands its bucket back to the next entry (see placeFlags).
+function flagOrder(p, proj, ents, feature) {
+  const all = pick(p, proj, DATA.entries.length, ents, []).rank || [];
+  const want = feature || [];
+  const swapped = want.map(id => all.find(x => x.id === id && !x.pin)).filter(Boolean).map(x => Object.assign({}, x, { swapped: true }));
+  const rest = all.filter(x => x.pin || want.indexOf(x.id) < 0);
+  return rest.filter(x => x.pin).concat(swapped, rest.filter(x => !x.pin));
+}
+
+// ----- the whole chart -----
+
+// The end label sits 10px right of the end dot while the period still has
+// room, else above and left of it (never above the top of the chart). Beside a
+// dot on the baseline (nothing committed yet) it lifts clear of the axis and its
+// day labels instead of straddling them.
+function endLabelOf(g, total, ex, ey, room) {
+  const word = ' commit' + (total === 1 ? '' : 's');
+  const w = measure(String(total), 600, g.num) + measure(word, 400, g.word); const h = g.num * 1.25;
+  const right = room && ex + 10 + w <= g.R;
+  return { x: right ? ex + 10 : Math.min(ex - 4, g.R) - w, y: right ? Math.min(ey - h / 2, g.base - 4 - h) : Math.max(0, ey - 12 - h), w, h, num: String(total), word };
+}
+
+// A week names every day. A month names its week starts (1, 8, 15, 22, 29) and
+// today. A month that refits to a late first commit can hold fewer than three of
+// those, so it names every day instead (every 2nd or 3rd on a longer one) and the
+// axis never goes bare.
+function axisLabels(p, dom, X) {
+  const out = [];
+  if (dom.byDay) {
+    const bins = binsOf(dom, 'day'); const weekStart = q => [1, 8, 15, 22, 29].indexOf(q.d) >= 0;
+    const dense = p.range === 'month' && bins.filter(b => weekStart(parts(b.s))).length < 3;
+    const step = !dense ? 0 : bins.length <= 9 ? 1 : bins.length <= 16 ? 2 : 3;
+    bins.forEach((b, i) => {
+      const q = parts(b.s); const today = b.s === T0;
+      const named = p.range === 'week' || today || (step ? i % step === 0 : weekStart(q));
+      const text = !named ? '' : p.range === 'week' ? WD[q.wd] + ' ' + q.d : q.d === 1 ? MON[q.m] + ' 1' : String(q.d);
+      if (text) out.push({ x: X(i + 0.5), text, today, future: b.s > T0 });
+    });
+  } else {
+    binsOf(dom, 'month').forEach((b, i) => {
+      const q = parts(b.s); const nxt = mStart(q.y, q.m + 1);
+      out.push({ x: X(((b.s - dom.s) + (b.e + DAY - dom.s)) / 2 / DAY), text: MON[q.m] + (p.range === 'all' && (i === 0 || q.m === 0) ? ' ' + q.y : ''), today: b.s <= T0 && T0 < nxt, future: b.s > T0 });
+    });
+  }
+  return out;
+}
+// Drops a label that would touch the one after it, so a narrow chart stays legible.
+function declutter(labels, width, gap) {
+  const kept = [];
+  for (let i = labels.length - 1; i >= 0; i--) {
+    const l = labels[i]; const w = width(l); const last = kept[kept.length - 1];
+    if (!last || last.x - last.w / 2 - gap >= l.x + w / 2) kept.push(Object.assign({}, l, { w }));
+  }
+  return kept.reverse();
+}
+
+function lineYOf(line) {
+  return x => {
+    if (x < line[0].x) return line[0].y;
+    for (let i = 1; i < line.length; i++) {
+      const a = line[i - 1], b = line[i];
+      if (x >= a.x && x <= b.x) return b.x === a.x ? a.y : a.y + (b.y - a.y) * (x - a.x) / (b.x - a.x);
+    }
+    return null;
+  };
+}
+
+// The pool is the period's entries (of the project under a filter); order is
+// the pick order that decides which of them get words.
+function journeyLayout(p, proj, ents, g, order) {
+  const dom = domainOf(p, proj, ents, g);
+  const X = t => g.L + t / dom.days * (g.R - g.L);
+  const { pts, buckets, total } = lineOf(dom, proj, ents);
+  const ticks = niceTicks(Math.max(4, total)); const top = ticks[ticks.length - 1];
+  const Y = v => g.base - v / top * (g.base - g.top);
+  const line = pts.map(q => ({ x: X(q.t), y: Y(q.v) }));
+  const lineY = lineYOf(line); const end = line[line.length - 1];
+  // x0 is where a bucket starts, x where it ends (its vertex).
+  buckets.forEach(b => { b.x = X(b.t); b.y = Y(b.cum); b.x0 = X(b.t - Math.round((b.e - b.s) / DAY) - 1); });
+  const pool = ents.filter(x => { const t = ms(x.d); return t >= p.start && t <= lastDay(p) && (proj == null || x.r === proj); });
+  const markers = binsOf(dom, markerUnit(dom, g)).map(b => {
+    const es = pool.filter(x => { const t = ms(x.d); return t >= b.s && t <= b.e; });
+    if (!es.length) return null;
+    const last = Math.min(b.e, T0);
+    const x = Math.min(X((b.s - dom.s) / DAY + ((last - b.s) / DAY + 1) / 2), end.x);
+    const rising = lineY(Math.min(x + 4, end.x)) < lineY(Math.max(x - 4, line[0].x)) - 0.01;
+    return { x, y: lineY(x), bin: b, entries: es, ids: new Set(es.map(e => e.id)), ship: es.some(e => e.k === 's'), rising };
+  }).filter(Boolean);
+  const endBox = endLabelOf(g, total, end.x, end.y, running(p) && dom.e > T0);
+  const L = { g, dom, X, Y, ticks, line, lineY, buckets, total, markers, pool, ex: end.x, ey: end.y, endBox, flags: [] };
+  L.flags = placeFlags(g, L, order, g.caps[p.range]);
+  L.labels = axisLabels(p, dom, X);
+  return L;
+}
+// ===== end of Journey engine =====
+
+// Generated by build.py from engine.js and card.js. Edit those, not this file.
+// ===== Journey line: card =====
+const OPTION = { key: 'journey', cap: range => JG.page.caps[range], cardCap: range => JG.card.caps[range], glyphs: 'diamond' };
+
+const POLE = { light: '#BDBBB1', dark: '#4A5258' };
+const STAT_X = [672, 790, 908, 1026];
+
+// Top of a box whose first baseline must land on y. Inter and DM Mono ascent and
+// descent as the browser reports them, in em.
+const FONT_EM = { inter: { up: 0.97, body: 1.21 }, mono: { up: 0.99, body: 1.3 } };
+function topFor(baseline, size, lh, font) { const f = FONT_EM[font]; return r1(baseline - ((lh - f.body * size) / 2 + f.up * size)); }
+
+const STAT_TOP = { value: topFor(214, 30, 36, 'inter'), label: topFor(236, 11, 14, 'mono') };   // value baseline 214, label baseline 236
+
+// The empty-state line sits at the top-left of the plot. When the line climbs into
+// that corner (a filtered project that took off early) it moves up, above the top tick,
+// where the line never goes.
+function quietTop(L, text) {
+  const w = measure(text, 500, 20); const x0 = JG.card.L, x1 = JG.card.L + w + 3;
+  for (const top of [328, 288]) {
+    const low = top + 24 + 3;
+    let clear = !L.line.some(q => q.x >= x0 && q.x <= x1 && q.y < low);
+    for (let x = x0; clear && x <= x1; x += 3) { const y = L.lineY(x); if (y != null && y < low) clear = false; }
+    if (clear) return top;
+  }
+  return 288;
+}
+
+function parseJson(s) { try { const v = JSON.parse(s); return v && typeof v === 'object' ? v : {}; } catch (e) { return {}; } }
+function parseIds(s) { return String(s || '').split(',').map(Number).filter(n => isFinite(n) && n > 0); }
+
+function quietOf(L, text) { return { show: L.pool.length === 0, text, top: quietTop(L, text) }; }
+
+function statsOf(sum, t) {
+  const cur = sum.cur; const pr = sum.prev;
+  return [['SHIPPED', 'shipped', 'diamond'], ['PUBLISHED', 'published', 'ring'], ['COMMITS', 'total', ''], ['ACTIVE DAYS', 'active', '']].map(([label, key, glyph], i) => {
+    const dl = pr && deltaOf(cur[key], pr[key]);
+    return {
+      label, value: cur[key], left: STAT_X[i], valueTop: STAT_TOP.value, labelTop: STAT_TOP.label,
+      diamond: glyph === 'diamond', ring: glyph === 'ring', has: !!dl, dText: dl ? dl.text : '', dColor: dl && dl.up ? t.accent : t.faint
+    };
+  });
+}
+
+function flagBlocks(L, t) {
+  const g = L.g;
+  return L.flags.map(f => {
+    const right = f.side === 'L';
+    return {
+      left: right ? 'auto' : f.bx + 'px', right: right ? (g.W - (f.bx + f.w)) + 'px' : 'auto', top: r1(f.by), align: right ? 'right' : 'left',
+      fw: weightOf(f.entry), color: f.entry.k === 's' || f.entry.pin ? t.ink : t.muted,
+      lines: f.v.lines.map((text, i) => ({ text, run: i === f.v.lines.length - 1 ? f.v.run : '', hasRun: i === f.v.lines.length - 1 && !!f.v.run }))
+    };
+  });
+}
+
+class Component extends DCLogic {
+  renderVals() {
+    const pr = this.props;
+    const range = ['week', 'month', 'year', 'all'].indexOf(pr.range) >= 0 ? pr.range : 'year';
+    const theme = pr.theme === 'dark' ? 'dark' : 'light';
+    const offset = range === 'all' ? 0 : Math.min(0, Number(pr.offset) || 0);
+    const proj = pr.project !== '' && pr.project != null && Number(pr.project) >= 0 && Number(pr.project) < DATA.projects.length ? Number(pr.project) : null;
+    const t = THEMES[theme]; const g = JG.card;
+    const ents = entriesWith(parseJson(pr.tags));
+    const p = periodOf(range, offset);
+    const names = namesOf(p, proj); const sum = summaryOf(p, proj, ents);
+    // The card says "yet" while the period is still running, as the empty week does.
+    const tagged = names.running && range !== 'all' ? names.emptyTagged.replace(/\.$/, ' yet.') : names.emptyTagged;
+    const L = journeyLayout(p, proj, ents, g, flagOrder(p, proj, ents, parseIds(pr.feature)));
+    const filtered = proj != null;
+    const washColor = filtered ? colorOf(proj, theme) : t.ink;
+    const first = L.line[0], last = L.line[L.line.length - 1];
+    const lineD = 'M' + L.line.map(q => r1(q.x) + ',' + r1(q.y)).join('L');
+    const post = L.markers.filter(m => !m.ship);
+    const labels = declutter(L.labels, l => monoW(l.text.toUpperCase(), 11, 0.08), 8);
+    const e = L.endBox;
+    const c = {
+      gridD: L.ticks.slice(1).map(v => 'M' + g.L + ',' + r1(L.Y(v)) + 'H' + g.R).join(''), baseD: 'M' + g.L + ',' + g.base + 'H' + g.R,
+      washD: lineD + 'L' + r1(last.x) + ',' + g.base + 'L' + r1(first.x) + ',' + g.base + 'Z', lineD,
+      washColor, wash0: filtered ? 0.22 : 0.1, wash1: filtered ? 0.04 : 0.02, lineW: g.lineW, ringW: g.ringW, haloW: 2 * g.halo,
+      poleD: L.flags.map(f => 'M' + r1(f.pole.x) + ',' + r1(f.pole.y0) + 'V' + r1(f.pole.y1)).join(''), pole: POLE[theme],
+      haloD: post.map(m => circlePath(m.x, m.y, g.ring + g.ringW / 2 + g.halo)).join(''),
+      shipD: L.markers.filter(m => m.ship).map(m => diamondPath(m.x, m.y, g.dia)).join(''), ringD: post.map(m => circlePath(m.x, m.y, g.ring)).join(''),
+      dot: { cx: r1(L.ex), cy: r1(L.ey), r: g.dot }
+    };
+    return {
+      t, c, names, stats: statsOf(sum, t), flags: flagBlocks(L, t),
+      sub: { dot: filtered, color: filtered ? colorOf(proj, theme) : t.faint, slug: filtered ? DATA.projects[proj] : '', rest: filtered ? ' · ' + names.sub : names.sub },
+      ticks: L.ticks.map(v => ({ v, top: r1(L.Y(v)) })),
+      xls: labels.map(l => ({ text: l.text.toUpperCase(), left: r1(l.x), top: topFor(578, 11, 12, 'mono'), color: l.today ? t.ink : t.faint })),
+      end: { left: r1(e.x), top: r1(e.y), lh: r1(e.h), num: e.num, word: e.word },
+      quiet: quietOf(L, filtered ? tagged : names.empty)
+    };
+  }
+}
+// ===== end of Journey line: card =====
+</script>
+</body>
+</html>
