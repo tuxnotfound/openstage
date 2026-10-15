@@ -49,6 +49,36 @@ RSpec.describe "Public timeline de-noising", type: :request do
     end
   end
 
+  describe "branch commits" do
+    it "shows a commit not yet on the default branch with its branch, not as shipped" do
+      commit("Try a new layout", at: 1.day.ago, branch: "redesign/layout")
+
+      get "/builder"
+
+      expect(response.body).to include("redesign/layout")
+      expect(response.body).to include("On redesign/layout, not yet on the default branch")
+    end
+
+    it "never folds branch commits and default-branch commits into one session" do
+      day = 2.days.ago.beginning_of_day + 10.hours
+      3.times { |i| commit("Main #{i}", at: day + i.minutes) }
+      3.times { |i| commit("Branch #{i}", at: day + 10.minutes + i.minutes, branch: "layout") }
+
+      get "/builder"
+
+      expect(response.body.scan('data-session-size="3"').size).to eq(2)
+    end
+
+    it "hides them once the builder turns branch commits off" do
+      commit("Try a new layout", at: 1.day.ago, branch: "layout")
+      user.update!(branch_commits: false)
+
+      get "/builder"
+
+      expect(response.body).not_to include("Try a new layout")
+    end
+  end
+
   describe "work sessions" do
     it "folds a day of commits to one repo into one card that still lists every commit" do
       day = 2.days.ago.beginning_of_day + 10.hours

@@ -10,6 +10,7 @@ class TimelineSessions
 
   Session = Struct.new(:entries, keyword_init: true) do
     def repo_name   = entries.first.repo_name
+    def branch      = entries.first.branch
     def occurred_at = entries.first.occurred_at
     def size        = entries.size
     def preview     = entries.first(PREVIEW)
@@ -29,7 +30,7 @@ class TimelineSessions
 
   def self.same_session?(a, b)
     groupable?(a) && groupable?(b) &&
-      a.repo_name == b.repo_name &&
+      a.repo_name == b.repo_name && a.branch == b.branch &&
       a.occurred_at.utc.to_date == b.occurred_at.utc.to_date
   end
 end

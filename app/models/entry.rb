@@ -38,7 +38,13 @@ class Entry < ApplicationRecord
   # repo filter, which keys off `where.not(repo_name: nil)`.
   normalizes :repo_name, with: ->(value) { value.strip.presence }
 
-  scope :visible, -> { where(hidden: false) }
+  # A commit only on a branch other than the default shows while its builder
+  # keeps branch commits on in Settings. Every page reads through here, so
+  # turning the switch off hides them everywhere without touching a row.
+  BRANCH_SWITCH_SQL = "entries.branch IS NULL OR EXISTS " \
+                      "(SELECT 1 FROM users WHERE users.id = entries.user_id AND users.branch_commits)".freeze
+
+  scope :visible, -> { where(hidden: false).where(BRANCH_SWITCH_SQL) }
   scope :publicly_visible, -> { visible.where(visibility: :public_entry) }
   scope :chronological, -> { order(occurred_at: :desc) }
   scope :pinned_entries, -> { where(pinned: true) }
@@ -62,4 +68,9 @@ class Entry < ApplicationRecord
     pattern = "%#{sanitize_sql_like(term.to_s.strip)}%"
     where("title ILIKE :q OR body ILIKE :q OR repo_name ILIKE :q", q: pattern)
   }
+
+  # The repos these entries came from, for a repo filter.
+  def self.repo_names
+    where.not(repo_name: nil).distinct.order(:repo_name).pluck(:repo_name)
+  end
 end

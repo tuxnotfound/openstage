@@ -58,5 +58,26 @@ RSpec.describe Entry, type: :model do
       newer = create(:entry, user: user, occurred_at: 1.day.ago)
       expect(Entry.chronological.to_a).to eq([ newer, older ])
     end
+
+    it "visible hides branch commits while their builder has branch commits off" do
+      on_branch = create(:entry, user: user, branch: "feature")
+      on_main = create(:entry, user: user)
+      other_builder = create(:entry, branch: "feature")
+      expect(Entry.visible).to contain_exactly(on_branch, on_main, other_builder)
+
+      user.update!(branch_commits: false)
+      expect(Entry.visible).to contain_exactly(on_main, other_builder)
+      expect(Entry.publicly_visible).to contain_exactly(on_main, other_builder)
+    end
+  end
+
+  describe ".repo_names" do
+    it "lists each repo once, sorted, leaving out entries without one" do
+      create_list(:entry, 2, user: user, repo_name: "user/zeta")
+      create(:entry, user: user, repo_name: "user/alpha")
+      create(:entry, user: user, repo_name: nil)
+
+      expect(Entry.repo_names).to eq([ "user/alpha", "user/zeta" ])
+    end
   end
 end

@@ -36,8 +36,11 @@ RSpec.describe GithubSyncJob, type: :job do
     allow(client).to receive(:scopes).and_return([ "repo", "user:email" ])
     allow(client).to receive(:repositories).and_return([ repo_double ])
     allow(client).to receive(:commits).and_return([ commit_double ])
+    allow(client).to receive(:access_token).and_return("gho_token")
     # Single-page stub: no :next rel means each_page yields once and stops.
     allow(client).to receive(:last_response).and_return(double(rels: {}))
+    # Branches other than the default have their own examples below.
+    allow(GithubGateway).to receive(:branches).and_return([])
   end
 
   describe "#perform" do
@@ -190,12 +193,68 @@ RSpec.describe GithubSyncJob, type: :job do
       expect(SyncLog.last.error_message).to eq("skipped: tuxnotfound/myapp")
     end
 
-    it "clears recorded scopes on a dead token so the next sign-in replaces it" do
-      user.update!(github_token_scopes: "repo,user:email")
-      allow(client).to receive(:scopes).and_raise(Octokit::Unauthorized)
+    describe "a token GitHub turns down" do
+      before do
+        user.update!(github_token_scopes: "repo,user:email")
+        allow(client).to receive(:scopes).and_raise(Octokit::Unauthorized)
+      end
 
-      expect { described_class.new.perform(user.id) }.to raise_error(Octokit::Unauthorized)
-      expect(user.reload.github_token_scopes).to be_nil
+      def synced_successfully(at)
+        create(:sync_log, user: user, source: :github, status: :success, ran_at: at)
+      end
+
+      it "fails the run with a note to reconnect, without raising" do
+        expect { described_class.new.perform(user.id) }.not_to raise_error
+
+        expect(SyncLog.last).to have_attributes(status: "failed", error_message: SyncLog::TOKEN_REJECTED)
+        expect(SyncLog.last).to be_token_rejected
+      end
+
+      it "keeps the token within a day of a good sync, in case GitHub blipped" do
+        synced_successfully(3.hours.ago)
+
+        described_class.new.perform(user.id)
+
+        expect(user.reload.github_access_token).to eq("gho_token")
+      end
+
+      it "clears the recorded scopes at once so the next sign-in replaces the token" do
+        synced_successfully(3.hours.ago)
+
+        described_class.new.perform(user.id)
+
+        expect(user.reload.github_token_scopes).to be_nil
+      end
+
+      it "drops the token after a day without a good sync, so the fanout skips it" do
+        synced_successfully(25.hours.ago)
+
+        described_class.new.perform(user.id)
+
+        expect(user.reload.github_access_token).to be_nil
+        expect(described_class).not_to receive(:set)
+        GithubSyncFanoutJob.new.perform
+      end
+
+      it "drops it for a builder who never had a good sync, a day after signing up" do
+        user.update_column(:created_at, 2.days.ago)
+
+        described_class.new.perform(user.id)
+
+        expect(user.reload.github_access_token).to be_nil
+      end
+
+      it "keeps a token a sign-in stored while the run was reading the old one" do
+        synced_successfully(25.hours.ago)
+        allow(client).to receive(:scopes) do
+          User.where(id: user.id).update_all(github_access_token: "gho_new", github_token_scopes: "user:email")
+          raise Octokit::Unauthorized
+        end
+
+        described_class.new.perform(user.id)
+
+        expect(user.reload).to have_attributes(github_access_token: "gho_new", github_token_scopes: "user:email")
+      end
     end
 
     it "does not create duplicate entries on re-sync" do
@@ -262,25 +321,89 @@ RSpec.describe GithubSyncJob, type: :job do
 
       travel_to(2.hours.from_now) { described_class.new.perform(user.id) }
 
-      # Without the reset, since would be ~initial_synced - SINCE_OVERLAP.
+      # Without the reset, since would be at most initial_synced - SINCE_OVERLAP.
       # With the reset, since is ~INITIAL_SYNC_WINDOW.ago — far older.
-      expect(captured_since).to be < (initial_synced - 1.week)
+      expect(captured_since).to be < (initial_synced - described_class::SINCE_OVERLAP - 1.day)
     end
 
-    it "does not reset last_synced_at when the default branch is unchanged" do
-      described_class.new.perform(user.id)
-      initial_synced = GithubRepo.last.last_synced_at
+    describe "how far back a later sync reads" do
+      let(:sinces) { [] }
 
-      captured_since = nil
-      allow(client).to receive(:commits) do |_full_name, _branch, opts|
-        captured_since = Time.parse(opts[:since])
-        []
+      before do
+        allow(client).to receive(:commits) do |_full_name, _branch, opts|
+          sinces << Time.zone.parse(opts[:since])
+          []
+        end
       end
 
-      travel_to(2.hours.from_now) { described_class.new.perform(user.id) }
+      def sync_at(time)
+        travel_to(time) { described_class.new.perform(user.id) }
+      end
 
-      # Normal sync: since is last_synced_at - 1.day, not the wide window.
-      expect(captured_since).to be_within(2.seconds).of(initial_synced - 1.day)
+      # A branch merged with a merge commit keeps its commits' old dates.
+      it "goes SINCE_OVERLAP back while the default branch is unchanged" do
+        sync_at(Time.utc(2026, 12, 1, 12))
+        sync_at(Time.utc(2026, 12, 1, 14))
+
+        expect(sinces.last).to eq(Time.utc(2026, 12, 1, 12) - described_class::SINCE_OVERLAP)
+      end
+
+      # Older deletes left no record, so reading past them would publish them again.
+      it "stops at the day deleted commits started being remembered" do
+        sync_at(Time.utc(2026, 10, 13, 12))
+        sync_at(Time.utc(2026, 10, 13, 14))
+
+        expect(sinces.last).to eq(described_class::DISMISSALS_RECORDED_FROM)
+      end
+
+      it "still goes a day back from a sync made before that day" do
+        sync_at(Time.utc(2026, 9, 1, 12))
+        sync_at(Time.utc(2026, 10, 13, 12))
+
+        expect(sinces.last).to eq(Time.utc(2026, 8, 31, 12))
+      end
+    end
+
+    describe "branches other than the default" do
+      let(:branch_commit) do
+        GithubGateway::Commit.new(sha: "branch1", message: "Try a new layout", authored_at: 1.day.ago,
+                                  html_url: "https://github.com/tuxnotfound/myapp/commit/branch1",
+                                  author_login: "tuxnotfound", author_email: nil)
+      end
+
+      before do
+        allow(GithubGateway).to receive(:branches).with("tuxnotfound/myapp", token: "gho_token").and_return(
+          [ GithubGateway::Branch.new(name: "main", sha: "m1"), GithubGateway::Branch.new(name: "layout", sha: "l1") ]
+        )
+        allow(GithubGateway).to receive(:commits_ahead).and_return([ branch_commit ])
+      end
+
+      it "puts the builder's branch commits on the page, tagged with their branch" do
+        described_class.new.perform(user.id)
+
+        expect(user.entries.find_by(external_id: "branch1").branch).to eq("layout")
+        expect(SyncLog.last.entries_added).to eq(2)
+      end
+
+      it "reads no branch once the builder turned branch commits off" do
+        user.update!(branch_commits: false)
+
+        described_class.new.perform(user.id)
+
+        expect(GithubGateway).not_to have_received(:branches)
+        expect(user.entries.pluck(:external_id)).to eq([ "abc123def456" ])
+      end
+
+      it "keeps the default branch's commits and watermark when the branches fail, and says so" do
+        allow(GithubGateway).to receive(:commits_ahead).and_raise(ApplicationGateway::ServerError.new(status: 502))
+
+        described_class.new.perform(user.id)
+
+        expect(user.entries.pluck(:external_id)).to eq([ "abc123def456" ])
+        expect(GithubRepo.last.last_synced_at).to be_present
+        expect(SyncLog.last).to have_attributes(status: "success")
+        expect(SyncLog.last.error_message).to include("skipped: tuxnotfound/myapp (other branches)")
+      end
     end
 
     it "does not advance last_synced_at when a repo's commits endpoint errors" do

@@ -18,6 +18,9 @@ RSpec.describe GithubSyncJob, "private repos through the GitHub App", type: :job
     allow(GithubAppGateway).to receive(:installation_token).with(7).and_return("ghs_installation")
     allow(signin_client).to receive_messages(repositories: [ public_repo ], commits: [])
     allow(app_client).to receive_messages(list_app_installation_repositories: double(repositories: [ private_repo ]), commits: [])
+    allow(signin_client).to receive(:access_token).and_return("gho_signin")
+    allow(app_client).to receive(:access_token).and_return("ghs_installation")
+    allow(GithubGateway).to receive(:branches).and_return([])
   end
 
   it "lists the picked private repos with the installation token, excluded by default" do

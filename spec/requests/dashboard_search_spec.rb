@@ -49,6 +49,43 @@ RSpec.describe "Dashboard search and paging", type: :request do
     expect(response.body).not_to include("a commit")
   end
 
+  describe "the repo filter" do
+    before do
+      create(:entry, user: user, title: "openstage work", repo_name: "builder/openstage")
+      create(:entry, user: user, title: "goal atlas work", repo_name: "builder/goal_atlas")
+    end
+
+    it "shows only the chosen repo's entries" do
+      get "/dashboard", params: { repo: "builder/openstage" }
+
+      expect(response.body).to include("openstage work")
+      expect(response.body).not_to include("goal atlas work")
+      expect(response.body).to include("1 entry of 2")
+      expect(response.body).to include('<option selected="selected" value="builder/openstage">openstage</option>')
+    end
+
+    it "ignores a repo with no entries rather than returning nothing" do
+      get "/dashboard", params: { repo: "builder/unknown" }
+
+      expect(response.body).to include("openstage work", "goal atlas work")
+    end
+
+    it "keeps the repo on the Load more link" do
+      create_list(:entry, DashboardController::PER_PAGE, user: user, repo_name: "builder/openstage")
+
+      get "/dashboard", params: { repo: "builder/openstage" }
+
+      expect(response.body).to include("repo=builder%2Fopenstage")
+    end
+  end
+
+  it "offers no repo filter while every entry comes from one repo" do
+    create(:entry, user: user, repo_name: "builder/openstage")
+
+    get "/dashboard"
+    expect(response.body).not_to include("All repos")
+  end
+
   it "ignores an unknown type rather than returning nothing" do
     create(:entry, user: user, title: "still here")
 

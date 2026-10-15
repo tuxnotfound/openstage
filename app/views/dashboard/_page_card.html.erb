@@ -26,8 +26,14 @@
         Not synced yet
       <% end %>
     </span>
-    <%= button_to "Sync now", sync_github_path, method: :post,
-          class: "text-xs text-gray-600 hover:text-gray-900 border border-gray-200 px-2.5 py-1 rounded-md hover:bg-gray-50 transition-colors cursor-pointer" %>
+    <% if last_log&.token_rejected? %>
+      <%# A sign-in stores a new token; the old one cannot sync. %>
+      <%= button_to "Reconnect GitHub", "/auth/github", method: :post, data: { turbo: false },
+            class: "text-xs text-white bg-gray-900 px-2.5 py-1 rounded-md hover:bg-gray-700 transition-colors cursor-pointer" %>
+    <% else %>
+      <%= button_to "Sync now", sync_github_path, method: :post,
+            class: "text-xs text-gray-600 hover:text-gray-900 border border-gray-200 px-2.5 py-1 rounded-md hover:bg-gray-50 transition-colors cursor-pointer" %>
+    <% end %>
   </div>
 
   <% if last_log&.error_message.present? %>

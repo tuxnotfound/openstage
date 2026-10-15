@@ -8,9 +8,25 @@ class GithubSyncJob < ApplicationJob
 
   # Overlap window when computing `since` from last_synced_at. GitHub's
   # `since` filter uses committer date, not push date, so commits pushed
-  # late (after their committer date) are otherwise missed forever.
-  # Dedup via external_id makes the overlap free.
-  SINCE_OVERLAP = 1.day
+  # late (after their committer date) are otherwise missed forever. A branch
+  # merged with a merge commit keeps its commits' dates, so a one-day overlap
+  # lost every commit made more than a day before its merge (C12's nine).
+  # Dedup via external_id makes reading them again safe.
+  SINCE_OVERLAP = 30.days
+
+  # Deleted commits are remembered (DismissedCommit) only from this day on, so
+  # the overlap stops here: reading further back would bring back a commit
+  # deleted before it. It stops binding once the overlap starts after it.
+  DISMISSALS_RECORDED_FROM = Time.utc(2026, 10, 12)
+
+  # GitHub turns down a revoked token at the first call, GET /user. One 401
+  # could be a blip on GitHub's side, so the token is dropped only after a day
+  # with no good sync, and the fanout then stops enqueuing it. Signing in again
+  # stores a new one. Neither case raises: a dead token is the builder's state,
+  # not a broken job, and raising filled the failed jobs F4 counts.
+  TOKEN_GRACE = 1.day
+
+  class TokenRejected < StandardError; end
 
   PER_PAGE = 100
   # Backstop so a pagination bug can never loop indefinitely again.
@@ -27,9 +43,9 @@ class GithubSyncJob < ApplicationJob
       log.update!(status: :success, entries_added: @entries_added, error_message: sync_notes(user))
       GithubExtrasJob.perform_later(user.id)
       Rails.logger.info "[GithubSyncJob] user=#{user.username} repos=#{@listed_ids.size} entries_added=#{@entries_added}"
+    rescue TokenRejected
+      reject_token(user, log)
     rescue => e
-      # A dead token must not stop the next sign-in from replacing it.
-      user.update_column(:github_token_scopes, nil) if e.is_a?(Octokit::Unauthorized)
       log.update!(status: :failed, error_message: e.message)
       Rails.logger.error "[GithubSyncJob] user=#{user.username} error=#{e.message}"
       raise
@@ -47,8 +63,8 @@ class GithubSyncJob < ApplicationJob
     client = Octokit::Client.new(access_token: user.github_access_token)
 
     # One header read. Keeps Settings honest about private-repo access
-    # without waiting for a sign-in; a revoked token raises here.
-    user.update_column(:github_token_scopes, client.scopes.join(","))
+    # without waiting for a sign-in.
+    user.update_column(:github_token_scopes, token_scopes(client).join(","))
 
     # Every repo the user can push to, not just the ones they own. `type: "owner"`
     # silently dropped org repos and any shared project owned by a teammate,
@@ -70,6 +86,25 @@ class GithubSyncJob < ApplicationJob
     # Runs off our own table, not the GitHub listing, so it still works after
     # the "repo" scope is revoked and private repos vanish from the API.
     hide_excluded_private_entries(user)
+  end
+
+  def token_scopes(client)
+    client.scopes
+  rescue Octokit::Unauthorized
+    raise TokenRejected
+  end
+
+  def reject_token(user, log)
+    log.update!(status: :failed, error_message: SyncLog::TOKEN_REJECTED)
+    Rails.logger.warn "[GithubSyncJob] user=#{user.username} token rejected by GitHub"
+
+    # Only the token this run read: a sign-in meanwhile may have stored a new one.
+    same_token = User.where(id: user.id, github_access_token: user.github_access_token)
+    # The scopes go at once, or a sign-in would keep a dead repo-scoped token over its new one.
+    same_token.update_all(github_token_scopes: nil)
+    return if (user.last_synced_at(source: :github) || user.created_at) > TOKEN_GRACE.ago
+
+    same_token.update_all(github_access_token: nil)
   end
 
   # fetch receives a page number and returns that page of repos.
@@ -114,15 +149,17 @@ class GithubSyncJob < ApplicationJob
     repo = GithubRepos::RecordService.new(user: user, listing: repo_data).tap(&:call!).repo
     return unless repo.included?
 
-    @entries_added += sync_commits(client, user, repo, private_repo: repo_data.private)
+    @entries_added += sync_commits(client, user, repo)
     repo.update!(last_synced_at: Time.current)
+    @entries_added += sync_branches(client, user, repo) if user.branch_commits?
   rescue Octokit::Conflict
     # GitHub answers 409 while a repo has no commits yet. Nothing failed, and the
     # watermark stays unset so its first commits get the full window.
     nil
-  rescue Octokit::Error => e
+  rescue Octokit::Error, ApplicationGateway::Error => e
     # Per-repo failure must not advance the watermark, or commits in the
-    # gap are lost forever. Other repos continue to sync.
+    # gap are lost forever. Other repos continue to sync. The gateway errors
+    # come from a squash merge's pull request lookup.
     Rails.logger.warn "[GithubSyncJob] skipping #{repo.full_name}: #{e.message}"
     @skipped << repo.full_name
   end
@@ -156,8 +193,8 @@ class GithubSyncJob < ApplicationJob
     count
   end
 
-  def sync_commits(client, user, repo, private_repo: false)
-    since = repo.last_synced_at ? repo.last_synced_at - SINCE_OVERLAP : INITIAL_SYNC_WINDOW.ago
+  def sync_commits(client, user, repo)
+    since = commits_since(repo)
     added = 0
 
     fetch_commits = lambda do |page|
@@ -165,11 +202,7 @@ class GithubSyncJob < ApplicationJob
     end
 
     capped = each_page(fetch_commits) do |commit_page|
-      commit_page.each do |commit|
-        next if !authored_by?(commit, user) || dismissed_shas(user).include?(commit.sha)
-
-        added += 1 if import_commit(user, repo, commit, private_repo: private_repo)
-      end
+      commit_page.each { |commit| added += 1 if record_commit(client, user, repo, commit) }
     end
 
     # GitHub lists newest first, so a capped read leaves out the oldest ones.
@@ -177,23 +210,40 @@ class GithubSyncJob < ApplicationJob
     added
   end
 
-  # True when the commit was new to the builder's page.
-  def import_commit(user, repo, commit, private_repo:)
-    entry = Entry.find_or_initialize_by(user: user, external_id: commit.sha)
-    return false unless entry.new_record?
+  # A repo's first sync reads the full window. Later ones go SINCE_OVERLAP
+  # back, but not past DISMISSALS_RECORDED_FROM, and always at least the day
+  # back they went before, so a repo last synced long ago misses nothing.
+  def commits_since(repo)
+    last = repo.last_synced_at
+    return INITIAL_SYNC_WINDOW.ago unless last
 
-    entry.assign_attributes(
-      entry_type: :shipped,
-      source: :github,
-      title: commit.commit.message.split("\n").first.truncate(200),
-      occurred_at: commit.commit.author.date,
-      # Never expose commit links for private repositories.
-      url: private_repo ? nil : commit.html_url,
-      repo_name: repo.full_name
-    )
-    entry.save!
-  rescue ActiveRecord::RecordNotUnique
-    false
+    [ [ last - SINCE_OVERLAP, DISMISSALS_RECORDED_FROM ].max, last - 1.day ].min
+  end
+
+  # True when the commit was new to the builder's page.
+  def record_commit(client, user, repo, commit)
+    record = GithubCommits::RecordService.new(user: user, repo: repo, commit: to_commit(commit), token: client.access_token)
+    record.tap(&:call!).added
+  end
+
+  # Octokit's commit as the gateway's, so the default branch and the others
+  # are recorded by the same rules.
+  def to_commit(commit)
+    GithubGateway::Commit.new(sha: commit.sha, message: commit.commit.message, authored_at: commit.commit.author.date,
+                              html_url: commit.html_url, author_login: commit.author&.login,
+                              author_email: commit.commit&.author&.email)
+  end
+
+  # Commits only on other branches, tagged with their branch. Off when the
+  # builder turned branch commits off in Settings.
+  def sync_branches(client, user, repo)
+    GithubCommits::ImportBranchesService.new(user: user, repo: repo, token: client.access_token).tap(&:call!).added
+  rescue ApplicationGateway::Error => e
+    # The default branch is in and its watermark set. Unread branches keep
+    # their old heads, so the next run reads them again.
+    Rails.logger.warn "[GithubSyncJob] skipping #{repo.full_name} branches: #{e.message}"
+    @skipped << "#{repo.full_name} (other branches)"
+    0
   end
 
   # Yields each page of a paginated Octokit response so the previous page can
@@ -222,26 +272,5 @@ class GithubSyncJob < ApplicationJob
       return false if page.size < PER_PAGE
     end
     @listing_incomplete = true
-  end
-
-  # Commits the builder deleted from their page are never imported again.
-  def dismissed_shas(user)
-    @dismissed_shas ||= DismissedCommit.where(user_id: user.id).pluck(:sha).to_set
-  end
-
-  # GitHub returns `commit.author = nil` whenever the committer email isn't
-  # tied to a verified account, which silently dropped legitimate commits.
-  # Fall back to matching the GitHub-issued noreply email pattern.
-  def authored_by?(commit, user)
-    username = user.github_username.to_s.downcase
-    return false if username.empty?
-
-    login = commit.author&.login&.downcase
-    return true if login == username
-
-    email = commit.commit&.author&.email.to_s.downcase
-    return false if email.empty?
-
-    email.match?(/\A(?:\d+\+)?#{Regexp.escape(username)}@users\.noreply\.github\.com\z/)
   end
 end
