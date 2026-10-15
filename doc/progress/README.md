@@ -11,6 +11,7 @@ All files run on the founder's real data (the live page on 2026-10-14). Commits 
 - `mocks/PageFootnotes.dc.html`, `mocks/PageJourney.dc.html`: the two option pages the mix came from. Their chart code is better tested than the mix's: the Footnotes page has the least-movement disc placement, the Journey page the full flag engine.
 - `specs/footnotes.md`, `specs/journey.md`: the full specs from the design round, with the shared rules (the pick, text rules, colors, filter, tagging, the card dialog).
 - `sources/`: the generated mocks' sources. `sources/journey/engine.js` is the line and flag engine; `build.py` shows how page and card were assembled from it.
+- `data.json`: the same data as plain JSON, for specs and a render script.
 - `kit/core.js`: the shared logic every mock embeds: the data, calendar periods, buckets, the shared pick, tag overrides, colors, and card text fitting with the server's Inter widths (`CardText`). Port the pick and the text rules from here.
 - `shots/`: renders of the page (Bars, Lines, a project after sample tags) and the two cards (2026 light, October dark).
 
