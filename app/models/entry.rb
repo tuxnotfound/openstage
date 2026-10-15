@@ -53,6 +53,8 @@ class Entry < ApplicationRecord
   scope :publicly_visible, -> { visible.where(visibility: :public_entry) }
   scope :chronological, -> { order(occurred_at: :desc) }
   scope :pinned_entries, -> { where(pinned: true) }
+  scope :commits, -> { where(source: :github, entry_type: :shipped) }
+  scope :highlights, -> { where(entry_type: SHIPPED_TYPES + PUBLISHED_TYPES) }
 
   # Case-insensitive match across the fields a builder would actually remember:
   # what it said, and which project it was.
