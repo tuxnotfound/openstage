@@ -1,5 +1,4 @@
 <% period = section.tally.period %>
-<% project = section.project %>
 <div class="flex flex-wrap items-center justify-between gap-3">
   <div class="flex flex-wrap items-center gap-2.5">
     <nav aria-label="Time range" class="inline-flex gap-0.5 p-[3px] bg-gray-100 rounded-[10px]">
@@ -11,21 +10,36 @@
       <% end %>
     </nav>
 
-    <%# GET to the whole page: the filter scopes the timeline below as well. %>
-    <form action="<%= profile_path(user.username) %>" method="get" data-turbo-frame="_top" data-controller="autosubmit"
-          class="inline-flex items-center gap-2 h-[34px] pl-2.5 pr-1 border border-gray-200 rounded-lg bg-white">
-      <% %i[range offset chart filter].each do |key| %>
-        <% if params[key].present? %><%= hidden_field_tag key, params[key], id: nil %><% end %>
-      <% end %>
-      <span class="inline-block size-2.5 rounded-[3px]" style="background: <%= project ? ProgressChart::Palette.project_color(project.rank) : '#D1D5DB' %>"></span>
-      <select name="repo" aria-label="Project" data-action="change->autosubmit#submit"
-              class="h-8 border-0 bg-transparent text-[13px] text-gray-900 cursor-pointer focus:outline-none focus:ring-0">
-        <option value="">All projects</option>
-        <% section.tally.projects.all.each do |option| %>
-          <option value="<%= option.repo %>" <%= "selected" if project == option %>><%= option.name %> · <%= option.commits %></option>
+    <%# A GET to the whole page, since the filter scopes the timeline below too.
+        Ticks apply together when the menu closes. %>
+    <details class="relative" data-controller="dropdown project-filter" data-action="toggle->project-filter#toggled">
+      <summary aria-label="Projects" class="list-none inline-flex items-center gap-2 h-[34px] pl-2.5 pr-2 border border-gray-200 rounded-lg bg-white text-[13px] text-gray-900 cursor-pointer [&::-webkit-details-marker]:hidden">
+        <span class="inline-flex -space-x-0.5">
+          <% (section.filtered? ? section.selected.first(3) : [ nil ]).each do |picked| %>
+            <span class="inline-block size-2.5 rounded-[3px] ring-1 ring-white" style="background: <%= picked ? ProgressChart::Palette.project_color(picked.rank) : '#D1D5DB' %>"></span>
+          <% end %>
+        </span>
+        <%= section.filtered? ? section.selection_name : "All projects" %>
+        <svg class="size-3.5 text-gray-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+      </summary>
+      <form action="<%= profile_path(user.username) %>" method="get" data-turbo-frame="_top" data-project-filter-target="form"
+            class="absolute left-0 z-20 mt-1 w-64 max-w-[calc(100vw-2rem)] rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
+        <% %i[range offset chart filter].each do |key| %>
+          <% if params[key].present? %><%= hidden_field_tag key, params[key], id: nil %><% end %>
         <% end %>
-      </select>
-    </form>
+        <%= link_to "All projects", progress_view_path(user, repo: nil), data: { turbo_frame: "_top" },
+              class: "block rounded-md px-2 py-1.5 text-[13px] #{section.filtered? ? 'text-gray-700 hover:bg-gray-50' : 'font-medium text-gray-900 bg-gray-50'}" %>
+        <% section.tally.projects.all.each do |option| %>
+          <label class="flex items-center gap-2 rounded-md px-2 py-1.5 text-[13px] text-gray-900 cursor-pointer hover:bg-gray-50">
+            <input type="checkbox" name="repo[]" value="<%= option.repo %>" <%= "checked" if section.selected.include?(option) %>
+                   class="size-3.5 shrink-0 accent-gray-900">
+            <span class="inline-block size-2.5 shrink-0 rounded-[3px]" style="background: <%= ProgressChart::Palette.project_color(option.rank) %>"></span>
+            <span class="flex-1 min-w-0 truncate"><%= option.name %></span>
+            <span class="text-xs text-gray-400 tabular-nums"><%= option.commits %></span>
+          </label>
+        <% end %>
+      </form>
+    </details>
 
     <nav aria-label="Chart" class="inline-flex gap-0.5 p-[3px] bg-gray-100 rounded-[10px]">
       <% lines = params[:chart] == "lines" %>
@@ -58,7 +72,7 @@
           </button>
         </div>
         <%= turbo_frame_tag "progress_card", src: progress_card_path(range: params[:range].presence, offset: params[:offset].presence,
-                                                                     repo: params[:repo].presence, chart: params[:chart].presence),
+                                                                     repo: Array(params[:repo]).compact_blank.presence, chart: params[:chart].presence),
               loading: :lazy do %>
           <p class="mt-4 text-sm text-gray-400">Drawing your card…</p>
         <% end %>

@@ -12,7 +12,7 @@ RSpec.describe CardLayout::Footnotes do
   end
 
   def card(range, offset: 0, repo: nil, theme: "light", swapped: [])
-    section = Progress::ComposeService.new(user: user, range: range, offset: offset, repo: repo, swapped_ids: swapped)
+    section = Progress::ComposeService.new(user: user, range: range, offset: offset, repos: Array(repo), swapped_ids: swapped)
                                       .tap(&:call!).section
     described_class.new(section, user: user, theme: theme)
   end
@@ -77,6 +77,13 @@ RSpec.describe CardLayout::Footnotes do
     expect(texts(trained_on)).to include("trained-on", "1 SHIPPED")
     expect(texts(openstage).join(" ")).to include("No entries tagged", "openstage in 2026 yet.")
     expect(texts(openstage)).not_to include("+4 more")
+  end
+
+  it "names several picked projects in the dateline and keeps their legend" do
+    both = card("year", repo: [ progress_repo(0), progress_repo(1) ])
+
+    expect(texts(both)).to include("openstage + wheels-off", "openstage", "176", "wheels-off", "62")
+    expect(both.fills.size).to eq(2 + 2)
   end
 
   it "swaps an entry in for the lowest-ranked unpinned note" do

@@ -75,6 +75,16 @@ RSpec.describe "Making a card from the progress section" do
     expect(page.css("nav[aria-label='Card theme'] a").first["href"]).to eq("/progress/card?chart=lines&theme=light")
   end
 
+  it "makes a card of several projects, named together in the post" do
+    sign_in_as(user)
+    get "/progress/card", params: { repo: [ progress_repo(0), progress_repo(1) ] }
+
+    draft = page.at_css("[data-clipboard-target='source']").text
+    expect(draft.lines.first).to eq("openstage + wheels-off, 2026 so far:\n")
+    expect(draft.lines.last).to eq("238 openstage + wheels-off commits on 39 days.")
+    expect(page.css("nav[aria-label='Card theme'] a").first["href"]).to include("repo%5B%5D=#{CGI.escape(progress_repo(0))}")
+  end
+
   it "sends a visitor to sign in" do
     get "/progress/card"
 

@@ -103,7 +103,7 @@ module CardLayout
       # At the plot's top left, or above the top tick when the line climbs there.
       def quiet
         section = @layout.section
-        text = section.project ? section.labels.empty_tagged(section.project.name, yet: true) : section.labels.empty
+        text = section.filtered? ? section.labels.empty_tagged(section.selection_name(alternatives: true), yet: true) : section.labels.empty
         width = Type.width(text, :inter_medium, 20)
         top = [ 328, 288 ].find do |candidate|
           low = candidate + 24 + 3

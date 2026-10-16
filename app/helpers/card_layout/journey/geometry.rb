@@ -116,13 +116,13 @@ module CardLayout
 
       def running_sums
         counts = @section.tally.day_counts
-        repo = @section.project&.repo
+        repos = @section.selected.map(&:repo)
         sums = Hash.new(0)
         bins(by_day ? :day : :week).filter_map do |from, to|
           next if from > @period.today
 
           to = [ to, @period.today ].min
-          (from..to).each { |day| counts.fetch(day, {}).each { |key, n| sums[key] += n if repo.nil? || key == repo } }
+          (from..to).each { |day| counts.fetch(day, {}).each { |key, n| sums[key] += n if repos.empty? || repos.include?(key) } }
           [ (to - first).to_i + 1, sums.dup ]
         end
       end

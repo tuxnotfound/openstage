@@ -5,7 +5,7 @@
      [ "Published", now.published, before&.published, :hollow ],
      [ "Commits", now.commits, before&.commits, nil ],
      [ "Active days", now.active_days, before&.active_days, nil ],
-     section.project ? [ "Share of commits", "#{now.share}%", nil, nil ] : [ "Projects", now.projects, nil, nil ]
+     section.filtered? ? [ "Share of commits", "#{now.share}%", nil, nil ] : [ "Projects", now.projects, nil, nil ]
    ] %>
 <div class="mt-[18px] grid grid-cols-3 gap-3 min-[821px]:grid-cols-5">
   <% tiles.each do |label, value, previous, glyph| %>

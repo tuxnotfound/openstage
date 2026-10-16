@@ -66,14 +66,21 @@ module CardLayout
 
     def dateline
       baseline = line(244, 20, 16)
+      x = @section.filtered? ? selection(baseline) : L
+      @canvas.put(@dateline, :inter_regular, 16, x, baseline, @palette[:muted])
+    end
+
+    # The project in view behind its dot, or several by name: the legend
+    # gives their colors.
+    def selection(baseline)
       x = L
       if (project = @section.project)
         @canvas.dot(L + (@dot / 2.0), 254, @dot / 2.0, ProgressChart::Palette.project_color(project.rank, @layout.theme.to_sym))
-        x = @canvas.put(project.name, :inter_medium, 16, L + @dot + 8, baseline, @palette[:ink])
-        space = Type.width(" ", :inter_regular, 16)
-        x = @canvas.put("·", :inter_regular, 16, x + space, baseline, @palette[:muted]) + space
+        x += @dot + 8
       end
-      @canvas.put(@dateline, :inter_regular, 16, x, baseline, @palette[:muted])
+      x = @canvas.put(@section.selection_name, :inter_medium, 16, x, baseline, @palette[:ink])
+      space = Type.width(" ", :inter_regular, 16)
+      @canvas.put("·", :inter_regular, 16, x + space, baseline, @palette[:muted]) + space
     end
 
     def line(...)

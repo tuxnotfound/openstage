@@ -12,7 +12,7 @@ RSpec.describe ProgressChart::Page do
   end
 
   def chart(range, offset: 0, repo: nil, kind: "bars")
-    section = Progress::ComposeService.new(user: user, range: range, offset: offset, repo: repo).tap(&:call!).section
+    section = Progress::ComposeService.new(user: user, range: range, offset: offset, repos: Array(repo)).tap(&:call!).section
     described_class.new(section, kind)
   end
 
@@ -71,6 +71,13 @@ RSpec.describe ProgressChart::Page do
     expect(chart("year", repo: progress_repo(4)).legend).to be_nil
   end
 
+  it "stacks only the picked projects, with their legend, when several are picked" do
+    both = chart("year", repo: [ progress_repo(0), progress_repo(3) ])
+
+    expect(both.legend.map(&:name)).to eq(%w[openstage story_time_v1])
+    expect(both.series.fills.size).to eq(2)
+  end
+
   describe "Lines" do
     it "draws one line per project, scaled to the busiest one's total" do
       lines = chart("year", kind: "lines")
@@ -96,6 +103,14 @@ RSpec.describe ProgressChart::Page do
       expect(disc.cy).to be < described_class::FRAME.bottom - 100
       expect(trained_on.wash).to be_present
       expect(trained_on.track_path).to be_nil
+    end
+
+    it "keeps the circles on the track when several projects are picked" do
+      both = chart("year", repo: [ progress_repo(0), progress_repo(4) ], kind: "lines")
+
+      expect(both.series.paths.size).to eq(2)
+      expect(both.discs.map(&:cy).uniq).to eq([ described_class::TRACK_Y.to_f ])
+      expect(both.wash).to be_nil
     end
 
     it "adds the running total to each tooltip row" do

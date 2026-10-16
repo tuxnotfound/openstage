@@ -4,7 +4,7 @@
 <div class="min-w-0">
   <div class="flex items-center justify-between gap-2 pb-2 border-b border-gray-200">
     <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-      Shipped and published <%= section.labels.phrase %><%= " · #{section.project.name}" if section.project %>
+      Shipped and published <%= section.labels.phrase %><%= " · #{section.selection_name}" if section.filtered? %>
     </p>
     <span class="inline-flex items-center gap-2.5 text-[11px] text-gray-500 whitespace-nowrap">
       <span class="inline-flex items-center gap-1"><%= filled %>shipped</span>
@@ -35,7 +35,7 @@
     </ol>
   <% else %>
     <p class="mt-3.5 text-[13px] text-gray-400">
-      <%= section.project ? section.labels.empty_tagged(section.project.name) : section.labels.empty %>
+      <%= section.filtered? ? section.labels.empty_tagged(section.selection_name(alternatives: true)) : section.labels.empty %>
       <% if current_user == user %><%= link_to "Log an entry", dashboard_path, data: { turbo_frame: "_top" }, class: "ml-1 text-gray-700 underline" %><% end %>
     </p>
   <% end %>

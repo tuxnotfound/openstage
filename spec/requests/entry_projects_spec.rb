@@ -38,6 +38,15 @@ RSpec.describe "Tagging entries with a project" do
     expect(section.css("[data-tag-row]").size).to eq(2)
   end
 
+  it "offers every picked project first when several are picked" do
+    sign_in_as(user)
+    get "/tux", params: { tag: "1", range: "month", repo: [ progress_repo(0), progress_repo(1) ] }
+
+    row = section.at_css("[data-tag-row='#{post.id}']")
+    expect(row.css("button").map { |button| button.text.squish })
+      .to eq([ "openstage", "wheels-off", "trained-on · 5 that day", "No project" ])
+  end
+
   it "tags any entry type and redraws the period with the panel open" do
     sign_in_as(user)
     patch "/entries/#{post.id}/project", params: { repo_name: progress_repo(4), range: "month", offset: "0" }

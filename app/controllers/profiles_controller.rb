@@ -18,7 +18,7 @@ class ProfilesController < ApplicationController
                @user.github_access_token.present?
 
     @filter     = params[:filter].presence_in(%w[shipped posted milestone note link]) || "all"
-    @repo_filter = params[:repo].presence
+    @repo_filter = selected_repos.presence
 
     # The list drops merge and dependency-bump commits. Counts and the streak
     # still include them: that work happened, it is just not reading.
@@ -54,9 +54,14 @@ class ProfilesController < ApplicationController
 
   private
 
+  # ?repo= names one project or several (repo[]=); none means all of them.
+  def selected_repos
+    Array(params[:repo]).map(&:to_s).compact_blank.uniq
+  end
+
   # The progress section opens on this year; ?repo= scopes it with the timeline.
   def progress_section
-    service = Progress::ComposeService.new(user: @user, range: params[:range], offset: params[:offset], repo: @repo_filter)
+    service = Progress::ComposeService.new(user: @user, range: params[:range], offset: params[:offset], repos: @repo_filter)
     service.section if service.call
   end
 

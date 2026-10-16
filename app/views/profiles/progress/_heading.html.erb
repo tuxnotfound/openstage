@@ -18,7 +18,7 @@
     <% end %>
   <% end %>
   <h2 class="ml-1.5 text-lg font-semibold text-gray-900 whitespace-nowrap"><%= section.labels.nav %></h2>
-  <% if section.project %>
-    <span class="ml-1 text-[13px] text-gray-400"><%= section.project.name %></span>
+  <% if section.filtered? %>
+    <span class="ml-1 text-[13px] text-gray-400"><%= section.selection_name %></span>
   <% end %>
 </div>

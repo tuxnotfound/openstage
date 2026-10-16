@@ -12,7 +12,7 @@ RSpec.describe CardLayout::Journey do
   end
 
   def card(range, offset: 0, repo: nil, theme: "light", swapped: [])
-    section = Progress::ComposeService.new(user: user, range: range, offset: offset, repo: repo, swapped_ids: swapped)
+    section = Progress::ComposeService.new(user: user, range: range, offset: offset, repos: Array(repo), swapped_ids: swapped)
                                       .tap(&:call!).section
     described_class.new(section, user: user, theme: theme)
   end
@@ -59,6 +59,14 @@ RSpec.describe CardLayout::Journey do
     expect(trained_on.fills).to be_empty
     expect(trained_on.wash_paint.first).to eq("#e87ba4")
     expect(trained_on.flags.map { |flag| words(flag) }).to eq([ "Trained on me is live!!" ])
+  end
+
+  it "draws the picked projects' lines under their ink total when several are picked" do
+    both = card("year", repo: [ progress_repo(0), progress_repo(1) ])
+
+    expect(both.strokes.size).to eq(3)
+    expect(both.geometry.total).to eq(176 + 62)
+    expect(both.fills.size).to eq(2)
   end
 
   it "puts what the flags carry on the post, and the rest under Not on the card" do

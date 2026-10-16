@@ -87,4 +87,18 @@ RSpec.describe "The progress section of the public page" do
     bars = section.css("nav[aria-label='Chart'] a").find { |a| a.text.squish == "Bars" }
     expect(bars["href"]).to eq("/tux?range=month")
   end
+
+  it "shows several projects at once, and the timeline follows them" do
+    create(:entry, user: user, repo_name: progress_repo(1), title: "A wheels-off commit", occurred_at: 1.hour.ago)
+    create(:entry, user: user, repo_name: progress_repo(2), title: "A goal_atlas commit", occurred_at: 1.hour.ago)
+    get "/tux", params: { repo: [ progress_repo(0), progress_repo(1) ] }
+
+    expect(section.at_css("h2").parent.text.squish).to include("2026 openstage + wheels-off")
+    expect(section.text.squish).to include("239 Commits", "Share of commits")
+    expect(section.css("input[name='repo[]'][checked]").map { |box| box["value"] }).to eq([ progress_repo(0), progress_repo(1) ])
+    timeline = Nokogiri::HTML(response.body).at_css("turbo-frame#timeline").text
+    expect(timeline).to include("A wheels-off commit")
+    expect(timeline).not_to include("A goal_atlas commit")
+    expect(Nokogiri::HTML(response.body).at_css("turbo-frame#progress_card")).to be_nil
+  end
 end

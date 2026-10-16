@@ -16,7 +16,7 @@ module Entries
 
     # Back to the period and view the click came from, with the panel open.
     def back_params
-      params.permit(:range, :offset, :repo, :chart).to_h.symbolize_keys.merge(tag: "1").compact_blank
+      params.permit(:range, :offset, :repo, :chart, repo: []).to_h.symbolize_keys.merge(tag: "1").compact_blank
     end
   end
 end

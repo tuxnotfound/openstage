@@ -7,7 +7,7 @@ class ProgressCardsController < ApplicationController
 
   def show
     service = Progress::ComposeService.new(user: current_user, range: params[:range], offset: params[:offset],
-                                           repo: params[:repo].presence, swapped_ids: swapped_ids)
+                                           repos: Array(params[:repo]).map(&:to_s).compact_blank, swapped_ids: swapped_ids)
     return head(:unprocessable_entity) unless service.call
 
     @section = service.section

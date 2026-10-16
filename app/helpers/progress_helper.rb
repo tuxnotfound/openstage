@@ -1,6 +1,7 @@
 module ProgressHelper
-  # The page's own params that the progress section and the timeline share.
-  PROGRESS_PARAMS = %i[range offset repo chart filter].freeze
+  # The page's own params that the progress section and the timeline share;
+  # repo is one project or several.
+  PROGRESS_PARAMS = [ :range, :offset, :repo, :chart, :filter, { repo: [] } ].freeze
   RANGES = { "week" => "Week", "month" => "Month", "year" => "Year", "all" => "All" }.freeze
 
   # This page with some of its params changed; nil drops one.
@@ -23,18 +24,18 @@ module ProgressHelper
   def progress_untagged_line(section)
     count = section.tally.untagged.size
     "#{pluralize(count, 'entry')} #{section.labels.word} #{count == 1 ? 'has' : 'have'} no project" \
-      "#{section.project ? ', so this view leaves them out.' : '.'}"
+      "#{section.filtered? ? ', so this view leaves them out.' : '.'}"
   end
 
-  # The projects a tag row offers first: the one in view, then those with
+  # The projects a tag row offers first: those in view, then those with
   # commits that day, busiest first.
   def progress_tag_choices(item, section)
     projects = section.tally.projects
     day = section.tally.day_counts.fetch(item.date, {}).select { |repo, _n| repo }.sort_by { |repo, n| [ -n, repo ] }
-    choices = section.project ? [ [ section.project, nil ] ] : []
+    choices = section.selected.map { |project| [ project, nil ] }
     choices + day.filter_map do |repo, n|
       project = projects.find(repo)
-      [ project, n ] if project && project != section.project
+      [ project, n ] if project && section.selected.exclude?(project)
     end
   end
 
@@ -44,8 +45,9 @@ module ProgressHelper
     labels = section.labels
     period = labels.range == "all" ? labels.subtitle : "#{labels.short}#{' so far' if labels.running?}"
     totals = section.tally.totals
-    commits = section.project ? "#{totals.commits} #{section.project.name} commits" : pluralize(totals.commits, "commit")
-    [ "#{"#{section.project.name}, " if section.project}#{period}:", *items.map(&:title),
+    name = section.selection_name if section.filtered?
+    commits = name ? "#{totals.commits} #{name} commits" : pluralize(totals.commits, "commit")
+    [ "#{"#{name}, " if name}#{period}:", *items.map(&:title),
       "#{commits} on #{pluralize(totals.active_days, 'day')}." ].join("\n")
   end
 

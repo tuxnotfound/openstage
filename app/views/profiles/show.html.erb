@@ -122,7 +122,7 @@
       </div>
 
       <%# The project filter above scopes the timeline too; this says which. %>
-      <span class="shrink-0 mb-1 text-xs text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1.5"><%= @progress&.project&.name || (@repo_filter ? @repo_filter.split("/").last : "All repos") %></span>
+      <span class="shrink-0 mb-1 text-xs text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1.5"><%= if @progress&.filtered? then @progress.selection_name elsif @repo_filter then @repo_filter.map { |repo| repo.split("/").last }.join(" + ") else "All repos" end %></span>
     </div>
 
     <!-- Timeline -->

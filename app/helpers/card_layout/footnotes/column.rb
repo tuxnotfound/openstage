@@ -69,8 +69,8 @@ module CardLayout
       end
 
       def empty
-        text = if @section.project
-          @section.labels.empty_tagged(@section.project.name, yet: true)
+        text = if @section.filtered?
+          @section.labels.empty_tagged(@section.selection_name(alternatives: true), yet: true)
         else
           @section.labels.empty
         end
