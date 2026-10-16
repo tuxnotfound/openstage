@@ -12,8 +12,9 @@ module Progress
     # the builder swapped in on a card, in the order they were.
     attr_accessor :items, :first_day, :last_day, :cap, :swapped_ids
     # kept and left are in date order; ranked is kept in rank order, so a
-    # card that runs out of room drops from its end.
-    attr_reader :kept, :left, :ranked
+    # card that runs out of room drops from its end. swapped: the swaps that
+    # made it, in the order they were, for the next Swap in to add to.
+    attr_reader :kept, :left, :ranked, :swapped
 
     validates :last_day, presence: true
     validates :cap, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
@@ -58,21 +59,27 @@ module Progress
       @held << span_of(item)
     end
 
-    # Each swap pushes out the lowest-ranked entry that is neither a pin nor
-    # an earlier swap.
+    # The latest swap always lands, unless the card holds nothing but pins.
     def swap_in
-      swapped = []
+      @swapped = []
       Array(swapped_ids).map(&:to_i).each do |id|
         item = items.find { |candidate| candidate.id == id }
-        next if item.nil? || ranked.include?(item)
+        next if item.nil? || swapped.include?(item)
+        next unless ranked.include?(item) || make_room
 
-        out = ranked.rindex { |kept| !kept.pinned? && !swapped.include?(kept) }
-        ranked.delete_at(out) if out
-        next if ranked.size >= cap
-
-        ranked << item
+        ranked << item unless ranked.include?(item)
         swapped << item
       end
+    end
+
+    # Pushes out the lowest-ranked entry that is neither a pin nor a swap;
+    # once only those are left, the earliest swap.
+    def make_room
+      return true if ranked.size < cap
+
+      out = ranked.rindex { |kept| !kept.pinned? && !swapped.include?(kept) } || ranked.index(swapped.shift)
+      ranked.delete_at(out) if out
+      ranked.size < cap
     end
 
     def span_of(item)

@@ -47,6 +47,15 @@ RSpec.describe "Making a card from the progress section" do
     expect(page.at_css("[data-clipboard-target='source']").text).to include("Pro tier shipped 🎉")
   end
 
+  it "builds each Swap in from the swaps still on the card, so a pushed-out one can come back" do
+    sign_in_as(user)
+    ids = [ 2, 5, 9, 11, 8 ].map { |id| progress_entry(user, id).id }
+    get "/progress/card", params: { swap: ids.join(",") }
+
+    day_one = page.css("li").find { |li| li.text.include?("day 1: it boots") }
+    expect(day_one.at_css("a")["href"]).to eq("/progress/card?swap=#{(ids.drop(1) + ids.first(1)).join('%2C')}&theme=light")
+  end
+
   it "switches the card between light and dark" do
     sign_in_as(user)
     get "/progress/card", params: { theme: "dark" }

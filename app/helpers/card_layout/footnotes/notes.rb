@@ -5,7 +5,7 @@ module CardLayout
     # word; a title ending in ":" runs on into its own body in muted ink,
     # word by word, within the same three lines. A pinned note ends in a star.
     # If six do not fit at 20px, the lowest-ranked note that is neither pinned
-    # nor swapped in goes.
+    # nor swapped in goes, then the earliest swap.
     class Notes
       TOP = 196
       BOTTOM = 548
@@ -60,9 +60,11 @@ module CardLayout
         (notes.sum { |note| note.lines.size } * size * 1.25) + ((notes.size - 1) * size / 2.0)
       end
 
+      # Past the unswapped notes, the earliest swap goes, so the latest one stays.
       def drop(items, ranked, swapped_ids)
         low = ranked.reverse.select { |item| items.include?(item) }
-        low.find { |item| !item.pinned? && swapped_ids.exclude?(item.id) } || low.first || items.last
+        swaps = items.select { |item| swapped_ids.include?(item.id) }.sort_by { |item| swapped_ids.index(item.id) }
+        low.find { |item| !item.pinned? && swapped_ids.exclude?(item.id) } || swaps.first || low.first || items.last
       end
 
       def lines_of(item, size)

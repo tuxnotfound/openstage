@@ -2,7 +2,7 @@
 <% labels = section.labels %>
 <% items = @layout.fit.notes.map(&:item) %>
 <% left_out = @layout.left_out %>
-<% swapped = section.pick.swapped_ids %>
+<% swapped = section.pick.swapped.map(&:id) %>
 <% here = { range: params[:range].presence, offset: params[:offset].presence, repo: Array(params[:repo]).compact_blank.presence, chart: params[:chart].presence } %>
 <% theme = @layout.theme %>
 <%= turbo_frame_tag "progress_card" do %>

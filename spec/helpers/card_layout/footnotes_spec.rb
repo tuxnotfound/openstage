@@ -94,6 +94,16 @@ RSpec.describe CardLayout::Footnotes do
     expect(swapped.left_out.map(&:id)).not_to include(pro_tier.id)
   end
 
+  it "drops the earliest swap, never the latest, when only pins and swaps are left and they do not fit" do
+    swaps = [ 2, 5, 9, 11, 8 ].map { |id| progress_entry(user, id) }
+    swaps.each { |entry| entry.update!(title: "#{entry.title} #{'and a note that runs long ' * 8}") }
+    swapped = card("year", swapped: swaps.map(&:id))
+    on_card = swapped.fit.notes.map { |note| note.item.id }
+
+    expect(on_card).to include(swaps.last.id)
+    expect(on_card).not_to include(swaps.second.id)
+  end
+
   it "draws in the dark palette" do
     expect(card("year", theme: "dark").palette[:bg]).to eq("#0E1012")
     expect(card("year", theme: "sepia").theme).to eq("light")

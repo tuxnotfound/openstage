@@ -80,6 +80,15 @@ RSpec.describe Progress::PickService do
       expect(swapped.kept.size).to eq(6)
     end
 
+    it "pushes out the earliest swap once only pins and swaps are left" do
+      four = [ 2, 5, 9, 11 ].map { |id| progress_entry(user, id).id }
+      swapped = pick("year", swapped: four + [ pro_tier ])
+
+      expect(titles(swapped.kept)).to eq([ "We are live!!", "Pro tier shipped", "First user signed up", "Share on 𝕏 !",
+                                           "Rebirth begins", "Trained on me is live!!" ])
+      expect(swapped.swapped.map(&:id)).to eq(four.drop(1) + [ pro_tier ])
+    end
+
     it "ignores an entry already kept or out of the period" do
       kept_id = pick("year").kept.first.id
       october_ids = pick("month").kept.map(&:id)

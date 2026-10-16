@@ -49,7 +49,7 @@ module CardLayout
       @canvas = Canvas.new(UNDER.keys + OVER.keys)
       @fills = []
       @strokes = []
-      @fit = Notes.fit(section.pick.kept, ranked: section.pick.ranked, swapped_ids: section.pick.swapped_ids,
+      @fit = Notes.fit(section.pick.kept, ranked: section.pick.ranked, swapped_ids: section.pick.swapped.map(&:id),
                        project_names: section.tally.projects.all.map(&:name))
       draw
     end
