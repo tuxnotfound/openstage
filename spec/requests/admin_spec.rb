@@ -38,9 +38,9 @@ RSpec.describe "Admin", type: :request do
 
       it "counts the builders who downloaded a progress card or copied its post, leaving the owner out" do
         builder = create(:user)
-        Event.track("progress_card_downloaded", user: builder, detail: "footnotes")
-        Event.track("progress_card_downloaded", user: builder, detail: "journey")
-        Event.track("progress_post_copied", user: owner, detail: "journey")
+        Event.track("progress_card_downloaded", user: builder, detail: "bars")
+        Event.track("progress_card_downloaded", user: builder, detail: "lines")
+        Event.track("progress_post_copied", user: owner, detail: "lines")
 
         get "/admin"
         expect(response.body).to include('data-card-step="progress_card_downloaded" data-count="1"')

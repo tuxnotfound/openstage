@@ -17,7 +17,6 @@ module ProgressChart
 
     Tick = Data.define(:value, :top)
     Label = Data.define(:text, :left, :tone)
-    Track = Data.define(:columns, :width, :frame)
 
     attr_reader :section, :kind, :series, :discs
 
@@ -120,19 +119,9 @@ module ProgressChart
     def place_discs
       kept = section.pick.kept
       return Markers.new(kept, period: tally.period, lines: series, repo: section.project.repo, shape: SHAPE).all if lines? && section.project
-      return Discs.new(kept, period: tally.period, bars: track, shape: SHAPE).all if on_track?
+      return Discs.new(kept, period: tally.period, bars: Discs.track(series, tally.buckets.size, TRACK_Y, SHAPE), shape: SHAPE).all if on_track?
 
       Discs.new(kept, period: tally.period, bars: series, shape: SHAPE).all
-    end
-
-    # A flat ground for the circles on the track, so they spread without lifting.
-    def track
-      ground = TRACK_Y + SHAPE.lift + (SHAPE.size / 2.0)
-      columns = tally.buckets.map do |bucket|
-        cx = series.center(bucket.span.index)
-        Bars::Column.new(cx: cx, x: cx, top: ground)
-      end
-      Track.new(columns: columns, width: 0, frame: FRAME.with(bottom: ground))
     end
 
     def num(value)

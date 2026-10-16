@@ -28,7 +28,20 @@ module ProgressChart
     # between two; lift: the space between a disc and the bar under it.
     Shape = Data.define(:size, :pill, :gap, :lift)
 
+    # A flat ground for circles on a track at y, under the chart: they spread
+    # sideways without lifting, since no bar stands in their way.
+    Ground = Data.define(:columns, :width, :frame)
+
     attr_reader :all
+
+    def self.track(series, count, y, shape)
+      top = y + shape.lift + (shape.size / 2.0)
+      columns = Array.new(count) do |index|
+        cx = series.center(index)
+        Bars::Column.new(cx: cx, x: cx, top: top)
+      end
+      Ground.new(columns: columns, width: 0, frame: series.frame.with(bottom: top))
+    end
 
     # kept: the listed entries in date order, numbered from 1.
     def initialize(kept, period:, bars:, shape:)

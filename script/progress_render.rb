@@ -80,8 +80,8 @@ ActiveRecord::Base.transaction do
     html = if what == "page"
       page(section_html(section, chart), nil, stylesheet: true)
     else
-      layout = (chart == "lines" ? CardLayout::Journey : CardLayout::Footnotes).new(section, user: user, theme: theme || "light")
-      page(ApplicationController.render(partial: "progress_cards/#{chart == 'lines' ? 'journey' : 'footnotes'}", locals: { layout: layout }), width)
+      layout = CardLayout::Footnotes.new(section, user: user, theme: theme || "light", kind: chart.to_sym)
+      page(ApplicationController.render(partial: "progress_cards/footnotes", locals: { layout: layout }), width)
     end
     File.write(out, html)
   end

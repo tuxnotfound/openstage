@@ -1,5 +1,5 @@
 module CardLayout
-  # The top of both progress cards: the name, Pro and the handle beside the
+  # The top of the progress card: the name, Pro and the handle beside the
   # avatar, the page's address at the right. Then the period: its tag, its
   # title and a dateline under it, led by the project under a filter.
   class ProgressHeader
@@ -10,14 +10,16 @@ module CardLayout
     # DM Mono's at 0.34. Measured in Chrome, so the mocks' CSS boxes land.
     INTER_BASE = 0.364
 
-    # dateline: the words after the project; dot: the project dot's diameter.
-    def initialize(layout, dateline:, dot:)
+    # The project dot's diameter.
+    DOT = 10
+
+    # dateline: the words after the project.
+    def initialize(layout, dateline:)
       @layout = layout
       @canvas = layout.canvas
       @palette = layout.palette
       @section = layout.section
       @dateline = dateline
-      @dot = dot
     end
 
     # The baseline of a line of text set in a CSS box at top, this high.
@@ -75,8 +77,8 @@ module CardLayout
     def selection(baseline)
       x = L
       if (project = @section.project)
-        @canvas.dot(L + (@dot / 2.0), 254, @dot / 2.0, ProgressChart::Palette.project_color(project.rank, @layout.theme.to_sym))
-        x += @dot + 8
+        @canvas.dot(L + (DOT / 2.0), 254, DOT / 2.0, ProgressChart::Palette.project_color(project.rank, @layout.theme.to_sym))
+        x += DOT + 8
       end
       x = @canvas.put(@section.selection_name, :inter_medium, 16, x, baseline, @palette[:ink])
       space = Type.width(" ", :inter_regular, 16)

@@ -86,6 +86,5 @@ RSpec.describe Progress::TallyService do
 
     expect(both.totals.commits).to eq(176 + 62)
     expect(both.totals.counts.keys).to contain_exactly(progress_repo(0), progress_repo(1))
-    expect(both.first_project_day).to eq(Date.new(2026, 3, 26))
   end
 end

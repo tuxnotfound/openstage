@@ -11,10 +11,10 @@ RSpec.describe CardLayout::Footnotes do
     travel_to ProgressData::TODAY
   end
 
-  def card(range, offset: 0, repo: nil, theme: "light", swapped: [])
+  def card(range, offset: 0, repo: nil, theme: "light", swapped: [], kind: :bars)
     section = Progress::ComposeService.new(user: user, range: range, offset: offset, repos: Array(repo), swapped_ids: swapped)
                                       .tap(&:call!).section
-    described_class.new(section, user: user, theme: theme)
+    described_class.new(section, user: user, theme: theme, kind: kind)
   end
 
   def lines(note)
@@ -97,5 +97,26 @@ RSpec.describe CardLayout::Footnotes do
   it "draws in the dark palette" do
     expect(card("year", theme: "dark").palette[:bg]).to eq("#0E1012")
     expect(card("year", theme: "sepia").theme).to eq("light")
+  end
+
+  describe "with lines" do
+    it "draws each project's line with the same notes, the discs on a track under the plot" do
+      lines = card("year", kind: :lines)
+      discs = lines.canvas.runs.select { |run| run.face == :inter_semibold && run.size == 12 }
+
+      expect(lines.strokes.size).to eq(7)
+      expect(lines.fit.notes.size).to eq(6)
+      expect(discs.map(&:text).first(5)).to eq(%w[1 2–3 4 5 6])
+      expect(discs.first(5).map(&:y).uniq.size).to eq(1)
+      expect(lines.fills.size).to eq(3)
+    end
+
+    it "stands the discs on the one project's line, over its wash" do
+      trained_on = card("year", repo: progress_repo(4), kind: :lines)
+
+      expect(trained_on.strokes.size).to eq(1)
+      expect(trained_on.wash.last).to eq("#e87ba4")
+      expect(trained_on.fills).to be_empty
+    end
   end
 end

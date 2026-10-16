@@ -35,8 +35,6 @@ module Progress
     attr_reader :untagged
     # Each day's commits by repo, every project's, to order the tag buttons.
     attr_reader :day_counts
-    # The first day with a commit or an entry of the projects in view, ever.
-    attr_reader :first_project_day
 
     validates :user, presence: true
 
@@ -46,7 +44,6 @@ module Progress
       @zone = ActiveSupport::TimeZone[WeekCard.last_time_zone_for(user).to_s] || ActiveSupport::TimeZone["UTC"]
       @projects = Projects.new(public_entries)
       @period = Period.new(range: range, offset: offset, today: Time.current.in_time_zone(zone).to_date, first_activity: first_day_of(public_entries))
-      @first_project_day = selected? ? first_day_of(public_entries.where(repo_name: repos)) : period.first_activity
       @items = items_on(period.first..period.last_day)
       @buckets = period.buckets.map { |bucket| tally_bucket(bucket) }
       @totals = totals_on(period.first..period.last_day)
