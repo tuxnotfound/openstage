@@ -1,16 +1,20 @@
-<% section = chart.section %>
-<% unit = { day: "day", week: "week", month: "month" }.fetch(section.tally.period.unit) %>
 <% tones = { now: "color: #111827; font-weight: 600", future: "color: #D1D5DB", past: "color: #9CA3AF" } %>
 <div class="min-w-0" data-controller="chart-tooltip">
   <%# A size container: below a 600px column the discs turn into dots, and
       the list beside the chart keeps the numbers. %>
   <div class="@container relative w-full aspect-[640/300]" data-action="mouseleave->chart-tooltip#hide">
-    <svg viewBox="0 0 640 300" class="absolute inset-0 size-full overflow-visible" role="img"
-         aria-label="Commits per <%= unit %> by project, <%= section.labels.title %>">
+    <svg viewBox="0 0 640 300" class="absolute inset-0 size-full overflow-visible" role="img" aria-label="<%= chart.aria_label %>">
       <path d="<%= chart.grid_path %>" stroke="#F0F1F3" stroke-width="1" fill="none"/>
+      <% if (track = chart.track_path) %><path d="<%= track %>" stroke="#E5E7EB" stroke-width="1" fill="none"/><% end %>
+      <% if (wash = chart.wash) %><path d="<%= wash.first %>" fill="<%= wash.last %>" opacity="0.12"/><% end %>
       <path d="<%= chart.base_path %>" stroke="#D1D5DB" stroke-width="1" fill="none"/>
-      <% chart.fills.each do |path, fill| %>
-        <path d="<%= path %>" fill="<%= fill %>"/>
+      <% if chart.lines? %>
+        <% chart.series.paths.each do |path, stroke| %>
+          <path d="<%= path %>" stroke="<%= stroke %>" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+        <% end %>
+        <path d="<%= chart.series.ends %>" fill="#ffffff" stroke="#9CA3AF" stroke-width="1"/>
+      <% else %>
+        <% chart.series.fills.each do |path, fill| %><path d="<%= path %>" fill="<%= fill %>"/><% end %>
       <% end %>
     </svg>
 
@@ -26,7 +30,7 @@
       <div class="group absolute inset-y-0" style="left: <%= column.left %>%; width: <%= column.width %>%"
            data-action="mouseenter->chart-tooltip#show mousemove->chart-tooltip#move"
            data-chart-tooltip-template-param="progress-tip-<%= i %>">
-        <div class="absolute inset-x-px top-[8%] h-[73.4%] rounded-sm bg-gray-900/5 opacity-0 group-hover:opacity-100"></div>
+        <div class="absolute inset-x-px top-[8%] rounded-sm bg-gray-900/5 opacity-0 group-hover:opacity-100" style="height: <%= chart.hover_height %>%"></div>
       </div>
     <% end %>
 
@@ -38,7 +42,7 @@
                 <%= disc.width > ProgressChart::Page::SHAPE.size ? 'min-w-[30px]' : 'min-w-[18px]' %>
                 <%= disc.shipped? ? 'bg-gray-900 text-white' : 'bg-white text-gray-900' %>
                 @max-[600px]:min-w-2 @max-[600px]:size-2 @max-[600px]:p-0 @max-[600px]:border @max-[600px]:text-[0px]"
-         style="left: <%= chart.disc_left(disc) %>%; top: <%= chart.disc_top(disc) %>%"><%= disc.label %></a>
+         style="left: <%= chart.left(disc.x) %>%; top: <%= chart.top(disc.cy) %>%"><%= disc.label %></a>
     <% end %>
 
     <div data-chart-tooltip-target="tooltip" class="hidden absolute z-[5] pointer-events-none w-[210px] rounded-lg bg-gray-900 px-3 py-2.5 text-xs/snug text-gray-50 shadow-lg"></div>
@@ -50,7 +54,7 @@
           <div class="mt-1 flex items-center gap-2">
             <span class="inline-block w-3 h-[3px] rounded-sm" style="background: <%= row.color %>"></span>
             <span class="flex-1 text-gray-300"><%= row.name %></span>
-            <span class="font-semibold tabular-nums"><%= row.n %></span>
+            <span class="font-semibold tabular-nums"><%= row.n %><% if row.so_far %><span class="font-normal text-gray-400"> · <%= row.so_far %> so far</span><% end %></span>
           </div>
         <% end %>
         <% column.notes.each do |note| %>
@@ -65,7 +69,7 @@
       <% legend.first(ProgressChart::Page::LEGEND_SIZE).each do |row| %>
         <%= link_to progress_view_path(user, repo: row.repo), data: { turbo_frame: "_top" },
               class: "inline-flex items-center gap-1.5 py-0.5 hover:text-gray-900", title: "Show only #{row.name}" do %>
-          <span class="inline-block size-2.5 rounded-[3px]" style="background: <%= row.color %>"></span>
+          <span class="inline-block rounded-[3px] <%= chart.lines? ? 'w-3.5 h-[3px]' : 'size-2.5' %>" style="background: <%= row.color %>"></span>
           <%= row.name %> <span class="text-gray-400 tabular-nums"><%= row.n %></span>
         <% end %>
       <% end %>

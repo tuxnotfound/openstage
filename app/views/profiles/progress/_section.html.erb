@@ -9,7 +9,7 @@
     <%= render "profiles/progress/kpis", section: section %>
 
     <div class="mt-5 grid gap-7 items-start min-[821px]:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-      <%= render "profiles/progress/bars", user: user, chart: ProgressChart::Page.new(section) %>
+      <%= render "profiles/progress/chart", user: user, chart: ProgressChart::Page.new(section, params[:chart]) %>
       <%= render "profiles/progress/list", user: user, section: section %>
     </div>
 

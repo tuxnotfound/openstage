@@ -14,7 +14,7 @@
     <%# GET to the whole page: the filter scopes the timeline below as well. %>
     <form action="<%= profile_path(user.username) %>" method="get" data-turbo-frame="_top" data-controller="autosubmit"
           class="inline-flex items-center gap-2 h-[34px] pl-2.5 pr-1 border border-gray-200 rounded-lg bg-white">
-      <% %i[range offset filter].each do |key| %>
+      <% %i[range offset chart filter].each do |key| %>
         <% if params[key].present? %><%= hidden_field_tag key, params[key], id: nil %><% end %>
       <% end %>
       <span class="inline-block size-2.5 rounded-[3px]" style="background: <%= project ? ProgressChart::Palette.project_color(project.rank) : '#D1D5DB' %>"></span>
@@ -26,6 +26,18 @@
         <% end %>
       </select>
     </form>
+
+    <nav aria-label="Chart" class="inline-flex gap-0.5 p-[3px] bg-gray-100 rounded-[10px]">
+      <% lines = params[:chart] == "lines" %>
+      <%= link_to progress_view_path(user, chart: nil), aria: { current: (lines ? nil : "page") },
+            class: "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-medium #{lines ? 'text-gray-500 hover:text-gray-900' : 'bg-white text-gray-900 shadow-sm'}" do %>
+        <svg class="size-3.5" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 12V7M7 12V3M12 12V8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>Bars
+      <% end %>
+      <%= link_to progress_view_path(user, chart: "lines"), aria: { current: (lines ? "page" : nil) },
+            class: "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-medium #{lines ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}" do %>
+        <svg class="size-3.5" viewBox="0 0 14 14" aria-hidden="true"><path d="M1.5 11.5L5 8l3 2 4.5-6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>Lines
+      <% end %>
+    </nav>
   </div>
 
   <% if current_user == user %>

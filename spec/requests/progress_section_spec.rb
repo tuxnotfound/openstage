@@ -78,4 +78,13 @@ RSpec.describe "The progress section of the public page" do
     owner.at_css("[data-controller='dialog']").remove
     expect(owner.text.squish).to eq("#{visitor} 19 entries in 2026 have no project. Tag them")
   end
+
+  it "switches to the Lines chart, keeping the period" do
+    get "/tux", params: { range: "month", chart: "lines" }
+
+    expect(section.at_css("svg[role='img']")["aria-label"]).to eq("Commits added up per project, October 2026")
+    expect(section.at_css("nav[aria-label='Chart'] a[aria-current='page']").text.squish).to eq("Lines")
+    bars = section.css("nav[aria-label='Chart'] a").find { |a| a.text.squish == "Bars" }
+    expect(bars["href"]).to eq("/tux?range=month")
+  end
 end
