@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_13_100001) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_16_100001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -55,6 +55,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_13_100001) do
     t.jsonb "languages"
     t.datetime "stats_fetched_at"
     t.string "branch"
+    t.boolean "no_project", default: false, null: false
     t.index ["user_id", "external_id"], name: "index_entries_on_user_id_and_external_id", unique: true
     t.index ["user_id", "occurred_at"], name: "index_entries_on_user_id_and_occurred_at"
     t.index ["user_id", "pinned"], name: "index_entries_on_user_id_and_pinned"
