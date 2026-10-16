@@ -1,5 +1,5 @@
 <%# The period's numbers in one row over the chart, on the same rule as the
-    list's header beside it. The heading says what the changes are against. %>
+    list's header beside it. Hovering a change says what it is against. %>
 <% now = section.tally.totals %>
 <% before = section.tally.previous_totals %>
 <% tiles = [
@@ -15,7 +15,7 @@
       <span class="inline-flex items-baseline gap-1.5 whitespace-nowrap">
         <span class="text-base/5 font-semibold text-gray-900 tabular-nums"><%= value %></span>
         <% if (delta = previous && progress_delta(value, previous)) %>
-          <span class="text-xs font-medium tabular-nums <%= delta.last ? 'text-green-700' : 'text-gray-400' %>"><%= delta.first %></span>
+          <span class="text-xs font-medium tabular-nums <%= delta.last ? 'text-green-700' : 'text-gray-400' %>" title="<%= section.labels.versus %>"><%= delta.first %></span>
         <% end %>
         <span class="text-xs text-gray-500 uppercase tracking-wide">
           <% if glyph == :filled %>

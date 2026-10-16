@@ -59,11 +59,11 @@ RSpec.describe ProgressChart::Page do
     expect(may.notes.map(&:mark)).to eq(%w[· 2 3])
   end
 
-  it "names the current month on the Year axis and quiets the months ahead" do
+  it "names the current month on the Year axis and stops there" do
     labels = chart("year").labels
 
     expect(labels.find { |label| label.text == "Oct" }.tone).to eq(:now)
-    expect(labels.find { |label| label.text == "Nov" }.tone).to eq(:future)
+    expect(labels.map(&:text).last).to eq("Oct")
   end
 
   it "lists the period's projects for the legend, but not under a filter" do

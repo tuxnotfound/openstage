@@ -87,7 +87,8 @@ module Progress
       "No entries tagged #{project} #{range == 'all' ? 'yet' : word}#{' yet' if yet && running? && range != 'all'}."
     end
 
-    # What the KPI changes are measured against; nil without a comparison.
+    # What the counters' changes are measured against, for their tooltip; nil
+    # without a comparison.
     def versus
       before = period.comparison
       return unless before
@@ -110,16 +111,11 @@ module Progress
       end
     end
 
-    # :now, :future or :past, for the axis label's ink. On the Year axis a
-    # label names a month, so the month holding today is the current one.
+    # :now or :past, for the axis label's ink. On the Year axis a label names
+    # a month, so the month holding today is the current one.
     def axis_tone(bucket)
-      if range == "year"
-        month = thursday(bucket).all_month
-        return :now if month.cover?(today)
-
-        return month.first > today ? :future : :past
-      end
-      bucket.current ? :now : (bucket.future ? :future : :past)
+      current = range == "year" ? thursday(bucket).all_month.cover?(today) : bucket.current
+      current ? :now : :past
     end
 
     def bucket_title(bucket)

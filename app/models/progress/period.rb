@@ -2,14 +2,15 @@ module Progress
   # A calendar period on the progress section: an ISO week, a month, a year,
   # or all time since the builder's first activity, cut into the chart's
   # buckets. Every date is a day in the builder's zone. Offset 0 is the period
-  # holding today; earlier ones count back from it.
+  # holding today; earlier ones count back from it. A running period's buckets
+  # stop at today: days still ahead would only be empty columns.
   class Period
     RANGES = %w[week month year all].freeze
     # A bucket is a day for Week and Month, an ISO week for Year, a month for All.
     UNITS = { "week" => :day, "month" => :day, "year" => :week, "all" => :month }.freeze
 
     # monday starts the bucket's ISO week, even when the period cuts it short.
-    Bucket = Data.define(:index, :first, :last, :monday, :future, :current)
+    Bucket = Data.define(:index, :first, :last, :monday, :current)
 
     attr_reader :range, :offset, :today, :first_activity, :first, :last
 
@@ -57,7 +58,7 @@ module Progress
 
     def buckets
       @buckets ||= spans.each_with_index.map do |(from, to, monday), index|
-        Bucket.new(index: index, first: from, last: to, monday: monday, future: from > today, current: (from..to).cover?(today))
+        Bucket.new(index: index, first: from, last: to, monday: monday, current: (from..to).cover?(today))
       end
     end
 
@@ -93,21 +94,21 @@ module Progress
 
     def spans
       case unit
-      when :day then days.map { |day| [ day, day, day ] }
+      when :day then (first..last_day).map { |day| [ day, day, day ] }
       when :week then week_spans
       else month_spans
       end
     end
 
     def week_spans
-      (first - (first.cwday - 1)).step(last, 7).map { |monday| [ [ monday, first ].max, [ monday + 6, last ].min, monday ] }
+      (first - (first.cwday - 1)).step(last_day, 7).map { |monday| [ [ monday, first ].max, [ monday + 6, last_day ].min, monday ] }
     end
 
     def month_spans
       months = []
       start = first
-      while start <= last
-        months << [ start, start.end_of_month, start ]
+      while start <= last_day
+        months << [ start, [ start.end_of_month, last_day ].min, start ]
         start = start.next_month.beginning_of_month
       end
       months

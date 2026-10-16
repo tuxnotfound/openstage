@@ -19,7 +19,7 @@ module ProgressChart
         Column.new(left: @page.left(series.frame.left + (series.slot * span.index)),
                    width: @page.left(series.frame.left + series.slot) - @page.left(series.frame.left),
                    title: @section.labels.bucket_title(span),
-                   total: span.future ? "Still ahead" : "#{bucket.total} #{'commit'.pluralize(bucket.total)}",
+                   total: "#{bucket.total} #{'commit'.pluralize(bucket.total)}",
                    rows: rows(bucket.counts, span.index), notes: bucket.items.map { |item| note(item) })
       end
     end

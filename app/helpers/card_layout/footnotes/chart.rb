@@ -55,7 +55,7 @@ module CardLayout
       end
 
       def axis_labels
-        inks = { now: @palette[:ink], future: @palette[:rule_strong], past: @palette[:faint] }
+        inks = { now: @palette[:ink], past: @palette[:faint] }
         tally.period.buckets.each do |bucket|
           text = @section.labels.axis(bucket).upcase
           next if text.empty?

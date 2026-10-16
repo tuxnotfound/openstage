@@ -1,6 +1,6 @@
 module ProgressChart
   # Each project's commits added up across the period: one line per project
-  # through the centers of the buckets so far, on the bars' axis. The scale
+  # through the centers of the buckets, on the bars' axis. The scale
   # fits the busiest project's total, so lines never stack.
   class Lines
     attr_reader :frame, :slot, :scale
@@ -11,8 +11,8 @@ module ProgressChart
       @repos = repos
       @colors = colors
       @slot = (frame.right - frame.left).to_f / buckets.size
-      @live = buckets.reject { |bucket| bucket.span.future }
-      @sums = running_sums(@live)
+      @buckets = buckets
+      @sums = running_sums(buckets)
       @scale = Scale.new(@sums.values.map { |sums| sums.last.to_i }.max.to_i, top: frame.top, bottom: frame.bottom)
     end
 
@@ -27,28 +27,28 @@ module ProgressChart
 
     # A small open dot where each line ends, today or at the period's end.
     def ends
-      return "" if @live.empty?
+      return "" if @buckets.empty?
 
-      x = center(@live.last.span.index)
+      x = center(@buckets.last.span.index)
       shown.map { |repo| dot(x, scale.y(@sums[repo].last), 2.6) }.join
     end
 
     # The area under one project's line, for its wash under a filter.
     def wash(repo)
-      return "" unless @sums.key?(repo) && @live.any?
+      return "" unless @sums.key?(repo) && @buckets.any?
 
-      "#{path(repo)}L#{num(center(@live.last.span.index))},#{frame.bottom}Z"
+      "#{path(repo)}L#{num(center(@buckets.last.span.index))},#{frame.bottom}Z"
     end
 
     # The line's points: the baseline at the left edge, then each bucket so far.
     def points(repo)
-      sums = @sums.fetch(repo) { Array.new(@live.size, 0) }
-      [ [ frame.left, frame.bottom ] ] + @live.each_with_index.map { |bucket, i| [ center(bucket.span.index), scale.y(sums[i]) ] }
+      sums = @sums.fetch(repo) { Array.new(@buckets.size, 0) }
+      [ [ frame.left, frame.bottom ] ] + @buckets.each_with_index.map { |bucket, i| [ center(bucket.span.index), scale.y(sums[i]) ] }
     end
 
     # Commits added up to the end of a bucket.
     def so_far(repo, index)
-      at = @live.index { |bucket| bucket.span.index == index }
+      at = @buckets.index { |bucket| bucket.span.index == index }
       at && @sums.key?(repo) ? @sums[repo][at] : 0
     end
 
@@ -58,11 +58,11 @@ module ProgressChart
       @repos.select { |repo| @sums.key?(repo) } + (@sums.keys - @repos)
     end
 
-    def running_sums(live)
-      repos = live.flat_map { |bucket| bucket.counts.select { |_repo, n| n.positive? }.keys }.uniq
+    def running_sums(buckets)
+      repos = buckets.flat_map { |bucket| bucket.counts.select { |_repo, n| n.positive? }.keys }.uniq
       repos.index_with do |repo|
         total = 0
-        live.map { |bucket| total += bucket.counts.fetch(repo, 0) }
+        buckets.map { |bucket| total += bucket.counts.fetch(repo, 0) }
       end
     end
 

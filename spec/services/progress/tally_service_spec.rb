@@ -39,7 +39,7 @@ RSpec.describe Progress::TallyService do
 
     expect(week.totals.commits).to eq(79)
     expect(week.items).to be_empty
-    expect(week.buckets.map(&:total)).to eq([ 7, 64, 8, 0, 0, 0, 0 ])
+    expect(week.buckets.map(&:total)).to eq([ 7, 64, 8, 0 ])
   end
 
   it "stacks each bucket by repo and holds its entries" do

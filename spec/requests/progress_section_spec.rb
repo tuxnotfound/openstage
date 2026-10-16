@@ -28,7 +28,8 @@ RSpec.describe "The progress section of the public page" do
   it "steps through calendar periods by range and offset, with the change against the period before" do
     get "/tux", params: { range: "month" }
     expect(section.at_css("h2").text).to eq("October 2026")
-    expect(section.text).to include("Changes vs Sep 1–15", "+127")
+    expect(section.text).to include("+127")
+    expect(section.css("[title='vs Sep 1–15']").map(&:text)).to include("+127")
 
     get "/tux", params: { range: "month", offset: -1 }
     expect(section.at_css("h2").text).to eq("September 2026")

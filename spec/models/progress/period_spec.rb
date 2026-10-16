@@ -8,13 +8,13 @@ RSpec.describe Progress::Period do
     described_class.new(range: range, offset: offset, today: today, first_activity: first_activity)
   end
 
-  it "runs an ISO week from Monday, a day per bucket" do
+  it "runs an ISO week from Monday, a day per bucket, up to today" do
     week = period("week")
 
     expect([ week.first, week.last, week.unit ]).to eq([ Date.new(2026, 10, 12), Date.new(2026, 10, 18), :day ])
-    expect(week.buckets.size).to eq(7)
-    expect(week.buckets.map(&:current)).to eq([ false, false, false, true, false, false, false ])
-    expect(week.buckets.last.future).to be(true)
+    expect(week.buckets.map(&:first)).to eq((Date.new(2026, 10, 12)..Date.new(2026, 10, 15)).to_a)
+    expect(week.buckets.map(&:current)).to eq([ false, false, false, true ])
+    expect(period("week", -1).buckets.size).to eq(7)
   end
 
   it "steps back a week, a month or a year by offset, never forward" do
@@ -24,12 +24,13 @@ RSpec.describe Progress::Period do
     expect(period("week", 3).first).to eq(Date.new(2026, 10, 12))
   end
 
-  it "cuts a year into ISO weeks clipped to the year" do
+  it "cuts a year into ISO weeks clipped to the year, up to today" do
     year = period("year")
 
-    expect(year.buckets.size).to eq(53)
+    expect(year.buckets.size).to eq(42)
     expect(year.buckets.first).to have_attributes(first: Date.new(2026, 1, 1), last: Date.new(2026, 1, 4), monday: Date.new(2025, 12, 29))
-    expect(year.buckets.last).to have_attributes(first: Date.new(2026, 12, 28), last: Date.new(2026, 12, 31))
+    expect(year.buckets.last).to have_attributes(first: Date.new(2026, 10, 12), last: Date.new(2026, 10, 15), current: true)
+    expect(period("year", -1).buckets.last).to have_attributes(first: Date.new(2025, 12, 29), last: Date.new(2025, 12, 31))
   end
 
   it "runs all time by month from the month of the first activity" do
@@ -37,6 +38,7 @@ RSpec.describe Progress::Period do
 
     expect([ all.offset, all.first, all.last, all.unit ]).to eq([ 0, Date.new(2026, 3, 1), Date.new(2026, 10, 31), :month ])
     expect(all.buckets.map(&:first).map(&:month)).to eq((3..10).to_a)
+    expect(all.buckets.last.last).to eq(today)
     expect(all.previous).to be_nil
   end
 

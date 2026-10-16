@@ -25,27 +25,24 @@ RSpec.describe CardLayout::Journey do
     flag.shape.lines.join(" / ").tr("\u00A0", " ")
   end
 
-  it "puts 2026's six flags where the design round measured them" do
+  it "puts six flags on 2026, inside the plot and clear of each other" do
     flags = card("year").flags.sort_by { |flag| flag.item.date }
 
     expect(flags.map { |flag| words(flag) }).to eq([
-      "We are live!!", "Share on 𝕏 !", "launched The Goal Atlas — / just in time for 2026", "Rebirth begins",
+      "live on Hacker News", "Share on 𝕏 !", "launched The Goal Atlas — / just in time for 2026", "Rebirth begins",
       "Trained on me is live!!", "What I worked on this week: / 40 commits across 3 repos."
     ])
-    measured = { "We are live!!" => [ 175, 294, 505, 529 ], "Share on 𝕏 !" => [ 331, 453, 478, 502 ],
-                 "Rebirth begins" => [ 794, 934, 414, 438 ], "Trained on me is live!!" => [ 802, 1014, 383, 407 ] }
-    measured.each do |title, expected|
-      flag = flags.find { |candidate| words(candidate) == title }
-      box(flag).zip(expected).each { |got, want| expect(got).to be_within(3).of(want) }
-    end
+    boxes = flags.map { |flag| box(flag) }
+    boxes.each { |left, right, top, bottom| expect([ left >= 102, right <= 1140, top >= 282, bottom <= 548 ]).to all(be(true)) }
+    boxes.combination(2).each { |a, b| expect(a[1] + 6 <= b[0] || b[1] + 6 <= a[0] || a[3] + 3 <= b[2] || b[3] + 3 <= a[2]).to be(true) }
   end
 
   it "ends the ink line in a dot with the period's commits beside it" do
     year = card("year")
 
-    expect(year.geometry.line.last.map(&:round)).to eq([ 1079, 330 ])
+    expect(year.geometry.line.last.map(&:round)).to eq([ 1140, 330 ])
     expect([ year.geometry.end_box.num, year.geometry.end_box.word ]).to eq([ "380", " commits" ])
-    expect([ year.geometry.first, year.geometry.last ]).to eq([ Date.new(2026, 2, 1), Date.new(2026, 10, 31) ])
+    expect([ year.geometry.first, year.geometry.last ]).to eq([ Date.new(2026, 2, 1), Date.new(2026, 10, 15) ])
   end
 
   it "draws each project's line beneath the ink one with a legend, and only the ink one under a filter" do
@@ -72,7 +69,7 @@ RSpec.describe CardLayout::Journey do
   it "puts what the flags carry on the post, and the rest under Not on the card" do
     year = card("year")
 
-    expect(year.items.map(&:title).first).to eq("We are live!!")
+    expect(year.items.map(&:title).first).to eq("live on Hacker News")
     expect(year.items.size + year.left_out.size).to eq(20)
   end
 

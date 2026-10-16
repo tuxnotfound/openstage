@@ -3,9 +3,9 @@ module CardLayout
     # The Journey card's chart in card pixels, ported from
     # doc/progress/sources/journey/engine.js. Time runs on a day scale from one
     # unit before the first activity (a day in Week and Month, a month in Year
-    # and All), or the period's start if later; a running period stops at
-    # today, or at the end of this month in Year and All. The ink line adds up
-    # every commit and carries the words; each project's line runs beneath it.
+    # and All), or the period's start if later, to its end or today. The ink
+    # line adds up every commit and carries the words; each project's line runs
+    # beneath it.
     class Geometry
       LEFT = 100
       RIGHT = 1140
@@ -55,16 +55,14 @@ module CardLayout
         nil
       end
 
-      # "380 commits" beside the end dot while the period has room, else above
-      # and left of it, clear of the axis when nothing is committed yet.
+      # "380 commits" above and left of the end dot, which sits at the right
+      # edge: the line runs to the period's end or today.
       def end_box
         @end_box ||= begin
           word = " commit#{'s' unless total == 1}"
           w = Type.width(total.to_s, :inter_semibold, 24) + Type.width(word, :inter_regular, 17)
           ex, ey = line.last
-          right = @period.running? && last > @period.today && ex + 10 + w <= RIGHT
-          EndBox.new(x: right ? ex + 10 : [ ex - 4, RIGHT ].min - w, y: right ? [ ey - 15, BASE - 4 - 30 ].min : [ 0, ey - 12 - 30 ].max,
-                     w: w, h: 30, num: total.to_s, word: word)
+          EndBox.new(x: [ ex - 4, RIGHT ].min - w, y: [ 0, ey - 12 - 30 ].max, w: w, h: 30, num: total.to_s, word: word)
         end
       end
 
@@ -86,7 +84,7 @@ module CardLayout
         end
         from = @period.range == "all" ? floor : [ @period.first, floor ].max
         from = @period.first if from > @period.last
-        [ from, @period.running? ? (by_day ? @period.today : @period.today.end_of_month) : @period.last ]
+        [ from, @period.last_day ]
       end
 
       def months
