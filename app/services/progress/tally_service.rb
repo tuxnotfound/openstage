@@ -2,7 +2,7 @@ module Progress
   # Counts a builder's public work over one period of the progress section:
   # commits per project in each bucket, active days, what they shipped and
   # published, and the same counts over the same span of the period before.
-  # With a repo, only that project's commits and the entries tagged with it
+  # With repos, only those projects' commits and the entries tagged with them
   # count; nothing is inferred from text. Days are in the zone of the
   # builder's last saved week card, else UTC.
   class TallyService < ApplicationService
@@ -14,7 +14,7 @@ module Progress
         kind == :shipped
       end
     end
-    # counts: commits by repo, the selected repo's only under a filter.
+    # counts: commits by repo, the selected repos' only under a filter.
     Bucket = Data.define(:span, :counts, :total, :items)
     # all_commits counts every project's, for the selected one's share.
     Totals = Data.define(:shipped, :published, :commits, :all_commits, :active_days, :counts) do
@@ -27,14 +27,15 @@ module Progress
       end
     end
 
-    attr_accessor :user, :range, :offset, :repo
+    # repos: the projects in view; none for all of them.
+    attr_accessor :user, :range, :offset, :repos
     attr_reader :zone, :period, :projects, :items, :buckets, :totals, :previous_totals, :first_active_day
     # The period's entries with no project that the builder has not marked as
     # having none, newest first; whatever the filter, so they can be tagged.
     attr_reader :untagged
     # Each day's commits by repo, every project's, to order the tag buttons.
     attr_reader :day_counts
-    # The first day with a commit or an entry of the project in view, ever.
+    # The first day with a commit or an entry of the projects in view, ever.
     attr_reader :first_project_day
 
     validates :user, presence: true
@@ -45,7 +46,7 @@ module Progress
       @zone = ActiveSupport::TimeZone[WeekCard.last_time_zone_for(user).to_s] || ActiveSupport::TimeZone["UTC"]
       @projects = Projects.new(public_entries)
       @period = Period.new(range: range, offset: offset, today: Time.current.in_time_zone(zone).to_date, first_activity: first_day_of(public_entries))
-      @first_project_day = repo ? first_day_of(public_entries.where(repo_name: repo)) : period.first_activity
+      @first_project_day = selected? ? first_day_of(public_entries.where(repo_name: repos)) : period.first_activity
       @items = items_on(period.first..period.last_day)
       @buckets = period.buckets.map { |bucket| tally_bucket(bucket) }
       @totals = totals_on(period.first..period.last_day)
@@ -53,6 +54,14 @@ module Progress
       @first_active_day = (selected_commits_on(period.first..period.last_day).map(&:first) + items.map(&:date)).min
       @untagged = untagged_on(period.first..period.last_day)
       @day_counts = window_commits.group_by(&:first).transform_values { |commits| tally(commits) }
+    end
+
+    def selected?
+      Array(repos).any?
+    end
+
+    def shows?(repo)
+      !selected? || repos.include?(repo)
     end
 
     def public_entries
@@ -83,7 +92,7 @@ module Progress
     end
 
     def selected_commits_on(days)
-      commits_on(days).select { |_date, commit_repo| repo.nil? || commit_repo == repo }
+      commits_on(days).select { |_date, commit_repo| shows?(commit_repo) }
     end
 
     def commits_on(days)
@@ -91,7 +100,7 @@ module Progress
     end
 
     def items_on(days)
-      window_items.select { |item| days.cover?(item.date) && (repo.nil? || item.repo_name == repo) }
+      window_items.select { |item| days.cover?(item.date) && shows?(item.repo_name) }
     end
 
     def untagged_on(days)

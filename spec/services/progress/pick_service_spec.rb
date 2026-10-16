@@ -12,7 +12,7 @@ RSpec.describe Progress::PickService do
   end
 
   def pick(range, offset: 0, cap: 6, repo: nil, swapped: [])
-    tally = Progress::TallyService.new(user: user, range: range, offset: offset, repo: repo).tap(&:call!)
+    tally = Progress::TallyService.new(user: user, range: range, offset: offset, repos: Array(repo)).tap(&:call!)
     described_class.new(items: tally.items, first_day: tally.first_active_day, last_day: tally.period.last_day,
                         cap: cap, swapped_ids: swapped).tap(&:call!)
   end

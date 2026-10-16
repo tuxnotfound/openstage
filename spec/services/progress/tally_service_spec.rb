@@ -12,7 +12,7 @@ RSpec.describe Progress::TallyService do
   end
 
   def tally(range, offset: 0, repo: nil)
-    described_class.new(user: user, range: range, offset: offset, repo: repo).tap(&:call!)
+    described_class.new(user: user, range: range, offset: offset, repos: Array(repo)).tap(&:call!)
   end
 
   def numbers(totals)
@@ -79,5 +79,13 @@ RSpec.describe Progress::TallyService do
 
     WeekCard.create!(user: user, week_start: Date.new(2026, 10, 12), time_zone: "Europe/Lisbon")
     expect(tally("week").buckets.map(&:total)[2, 2]).to eq([ 8, 1 ])
+  end
+
+  it "counts several projects together" do
+    both = tally("year", repo: [ progress_repo(0), progress_repo(1) ])
+
+    expect(both.totals.commits).to eq(176 + 62)
+    expect(both.totals.counts.keys).to contain_exactly(progress_repo(0), progress_repo(1))
+    expect(both.first_project_day).to eq(Date.new(2026, 3, 26))
   end
 end
