@@ -45,6 +45,18 @@ RSpec.describe Progress::PeriodLabels do
     expect(labels("week").axis(labels("week").period.buckets.first)).to eq("Mon 12")
   end
 
+  it "keeps today's Month label clear of the week start beside it" do
+    october = lambda do |day|
+      period = Progress::Period.new(range: "month", offset: 0, today: Date.new(2026, 10, day), first_activity: Date.new(2026, 3, 23))
+      labels = described_class.new(period)
+      period.buckets.map { |bucket| labels.axis(bucket) }.reject(&:empty?)
+    end
+
+    expect(october.call(16)).to eq([ "Oct 1", "8", "16", "22", "29" ])
+    expect(october.call(2)).to eq([ "Oct 1", "8", "15", "22", "29" ])
+    expect(october.call(18)).to eq([ "Oct 1", "8", "15", "18", "22", "29" ])
+  end
+
   it "titles a bucket for its tooltip" do
     expect(labels("month").bucket_title(labels("month").period.buckets.first)).to eq("Thu, Oct 1")
     expect(labels("year").bucket_title(labels("year").period.buckets[41])).to eq("Week of Oct 12–18")

@@ -142,11 +142,20 @@ module Progress
       from.month == to.month ? "#{day(from)}–#{to.day}" : "#{day(from)} – #{day(to)}"
     end
 
+    # The week starts and today. Today beside a week start would touch it, so
+    # today wins, except beside the 1st, which names the month.
     def month_axis(bucket)
       date = bucket.first
-      return date.day == 1 ? day(date) : date.day.to_s if MONTH_TICKS.include?(date.day)
+      if MONTH_TICKS.include?(date.day)
+        return "" if date.day != 1 && beside_today?(date)
 
-      bucket.current ? date.day.to_s : ""
+        return date.day == 1 ? day(date) : date.day.to_s
+      end
+      bucket.current && today.day != 2 ? date.day.to_s : ""
+    end
+
+    def beside_today?(date)
+      running? && (today - date).abs == 1 && MONTH_TICKS.exclude?(today.day)
     end
 
     # A Year bucket belongs to the month its Thursday falls in, as ISO weeks do.
