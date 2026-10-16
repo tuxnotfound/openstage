@@ -30,6 +30,7 @@
   <% layout.strokes.each do |d, stroke, width| %>
     <path d="<%= d %>" fill="none" stroke="<%= stroke %>" stroke-width="<%= width %>" stroke-linejoin="round" stroke-linecap="round"/>
   <% end %>
+  <% layout.fills.each do |d, fill| %><%= tag.path(d: d, fill: fill) %><% end %>
   <% layout.canvas.dots.each do |dot| %>
     <circle cx="<%= num.call(dot.cx) %>" cy="<%= num.call(dot.cy) %>" r="<%= num.call(dot.r) %>" fill="<%= dot.fill %>"/>
   <% end %>

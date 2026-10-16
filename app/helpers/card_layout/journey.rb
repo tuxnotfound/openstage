@@ -2,9 +2,9 @@ module CardLayout
   # The Journey card, 1200x630, made from the progress section's Lines view:
   # the period's commits added up as one ink line with the builder's words on
   # flags along it, each project's line beneath, and the period's numbers at
-  # the top right. A port of doc/progress/mocks/CardJourney.dc.html, with
-  # circles where it has diamonds and the project lines added (decided
-  # 2026-10-16).
+  # the top right, and the projects' legend at the bottom. A port of
+  # doc/progress/mocks/CardJourney.dc.html, with circles where it has
+  # diamonds, the project lines and their legend added (decided 2026-10-16).
   class Journey
     INTER_BASE = ProgressHeader::INTER_BASE
     PALETTES = Footnotes::PALETTES.to_h do |theme, colors|
@@ -14,8 +14,10 @@ module CardLayout
     OVER = { halos: { fill: :bg }, ship: { fill: :ink }, ring_fill: { fill: :bg }, rings: { stroke: :ink, width: 2.6 },
              end_dot: { fill: :ink }, chip: { stroke: :rule_strong } }.freeze
     STAT_X = [ 672, 790, 908, 1026 ].freeze
+    # Under the month labels, which sit on 578.
+    LEGEND_TOP = 592
 
-    attr_reader :section, :user, :theme, :palette, :canvas, :geometry, :flags, :strokes, :wash
+    attr_reader :section, :user, :theme, :palette, :canvas, :geometry, :flags, :strokes
 
     def self.faces
       Footnotes.faces
@@ -55,6 +57,15 @@ module CardLayout
       strokes << [ path, color, width ]
     end
 
+    # A shape in a project's color: the legend's swatches.
+    def fill(path, color)
+      fills << [ path, color ]
+    end
+
+    def fills
+      @fills ||= []
+    end
+
     # The area under the ink line: ink, or the project's color under a filter.
     def wash_paint
       project = section.project
@@ -70,6 +81,7 @@ module CardLayout
       canvas.draw(:rules, Shapes.rule(ProgressHeader::L, ProgressHeader::R, 136))
       stats
       Plot.new(self).draw
+      ProgressLegend.new(self, top: LEGEND_TOP, width: 1080, swatch: :line).draw
     end
 
     # Shipped, published, commits and active days, each with its change; the

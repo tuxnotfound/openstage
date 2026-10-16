@@ -48,12 +48,15 @@ RSpec.describe CardLayout::Journey do
     expect([ year.geometry.first, year.geometry.last ]).to eq([ Date.new(2026, 2, 1), Date.new(2026, 10, 31) ])
   end
 
-  it "draws each project's line beneath the ink one, and only the ink one under a filter" do
+  it "draws each project's line beneath the ink one with a legend, and only the ink one under a filter" do
     expect(card("year").strokes.size).to eq(8)
     expect(card("year").strokes.last[1]).to eq("#14171A")
 
+    expect(card("year").canvas.runs.map(&:text)).to include("openstage", "176", "trained-on-dataset")
+
     trained_on = card("year", repo: progress_repo(4))
     expect(trained_on.strokes.size).to eq(1)
+    expect(trained_on.fills).to be_empty
     expect(trained_on.wash_paint.first).to eq("#e87ba4")
     expect(trained_on.flags.map { |flag| words(flag) }).to eq([ "Trained on me is live!!" ])
   end
