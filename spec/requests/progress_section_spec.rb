@@ -39,7 +39,7 @@ RSpec.describe "The progress section of the public page" do
     get "/tux", params: { range: "week" }
 
     expect(section.text).to include("Nothing shipped or published this week yet.")
-    expect(section.text.squish).to include("79 Commits")
+    expect(section.text.squish).to include("79 +46 Commits")
   end
 
   it "scopes the section with the timeline's repo filter, counting only tagged entries" do

@@ -1,6 +1,6 @@
 <% period = section.tally.period %>
 <% arrow = "inline-flex items-center justify-center size-8 border border-gray-200 rounded-lg bg-white" %>
-<div class="flex items-center gap-1.5 mt-4">
+<div class="flex flex-wrap items-center gap-1.5 mt-4">
   <% unless period.range == "all" %>
     <% if period.previous? %>
       <%= link_to progress_view_path(user, offset: period.offset - 1), aria: { label: "Previous period" }, class: "#{arrow} text-gray-700 hover:bg-gray-50" do %>
@@ -20,5 +20,8 @@
   <h2 class="ml-1.5 text-lg font-semibold text-gray-900 whitespace-nowrap"><%= section.labels.nav %></h2>
   <% if section.filtered? %>
     <span class="ml-1 text-[13px] text-gray-400"><%= section.selection_name %></span>
+  <% end %>
+  <% if (versus = section.labels.versus) %>
+    <span class="ml-auto text-xs text-gray-400">Changes <%= versus %></span>
   <% end %>
 </div>

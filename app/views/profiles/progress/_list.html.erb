@@ -1,16 +1,7 @@
 <% pick = section.pick %>
 <% filled = '<svg class="size-[9px] shrink-0" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#111827"/></svg>'.html_safe %>
 <% hollow = '<svg class="size-[9px] shrink-0" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.9" fill="#ffffff" stroke="#111827" stroke-width="1.3"/></svg>'.html_safe %>
-<div class="min-w-0">
-  <div class="flex items-center justify-between gap-2 pb-2 border-b border-gray-200">
-    <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-      Shipped and published <%= section.labels.phrase %><%= " · #{section.selection_name}" if section.filtered? %>
-    </p>
-    <span class="inline-flex items-center gap-2.5 text-[11px] text-gray-500 whitespace-nowrap">
-      <span class="inline-flex items-center gap-1"><%= filled %>shipped</span>
-      <span class="inline-flex items-center gap-1"><%= hollow %>published</span>
-    </span>
-  </div>
+<div class="order-4 min-[821px]:order-none min-w-0">
 
   <% if pick.kept.any? %>
     <ol class="list-none m-0 p-0">

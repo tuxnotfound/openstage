@@ -6,9 +6,13 @@
   <section aria-label="Progress" class="py-6 border-b border-gray-200">
     <%= render "profiles/progress/controls", user: user, section: section %>
     <%= render "profiles/progress/heading", user: user, section: section %>
-    <%= render "profiles/progress/kpis", section: section %>
 
-    <div class="mt-5 grid gap-7 items-start min-[821px]:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+    <%# Two columns, each led by a row on one shared rule: the counters over
+        the chart, the list's header over the list. On a phone the chart
+        follows its counters and the list comes after. %>
+    <div class="mt-5 grid gap-x-7 items-start min-[821px]:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <%= render "profiles/progress/kpis", section: section %>
+      <%= render "profiles/progress/list_head", section: section %>
       <%= render "profiles/progress/chart", user: user, chart: ProgressChart::Page.new(section, params[:chart]) %>
       <%= render "profiles/progress/list", user: user, section: section %>
     </div>

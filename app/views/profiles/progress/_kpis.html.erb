@@ -1,3 +1,5 @@
+<%# The period's numbers in one row over the chart, on the same rule as the
+    list's header beside it. The heading says what the changes are against. %>
 <% now = section.tally.totals %>
 <% before = section.tally.previous_totals %>
 <% tiles = [
@@ -7,24 +9,22 @@
      [ "Active days", now.active_days, before&.active_days, nil ],
      section.filtered? ? [ "Share of commits", "#{now.share}%", nil, nil ] : [ "Projects", now.projects, nil, nil ]
    ] %>
-<div class="mt-[18px] grid grid-cols-3 gap-3 min-[821px]:grid-cols-5">
-  <% tiles.each do |label, value, previous, glyph| %>
-    <div class="min-w-0">
-      <div class="text-2xl/tight font-bold text-gray-900 tabular-nums"><%= value %></div>
-      <div class="mt-1 flex items-center gap-[5px] text-[11px] text-gray-400 uppercase tracking-wider">
-        <% if glyph == :filled %>
-          <svg class="size-2.5" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#111827"/></svg>
-        <% elsif glyph == :hollow %>
-          <svg class="size-2.5" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.9" fill="#ffffff" stroke="#111827" stroke-width="1.3"/></svg>
+<div class="order-1 min-[821px]:order-none min-w-0 self-stretch flex items-end pb-2 border-b border-gray-200">
+  <p class="flex flex-wrap items-baseline gap-x-5 gap-y-1">
+    <% tiles.each do |label, value, previous, glyph| %>
+      <span class="inline-flex items-baseline gap-1.5 whitespace-nowrap">
+        <span class="text-base/5 font-semibold text-gray-900 tabular-nums"><%= value %></span>
+        <% if (delta = previous && progress_delta(value, previous)) %>
+          <span class="text-[11px] font-medium tabular-nums <%= delta.last ? 'text-green-700' : 'text-gray-400' %>"><%= delta.first %></span>
         <% end %>
-        <%= label %>
-      </div>
-      <% if (delta = previous && progress_delta(value, previous)) %>
-        <div class="mt-0.5 text-xs font-medium <%= delta.last ? 'text-green-700' : 'text-gray-400' %>"><%= delta.first %></div>
-      <% end %>
-    </div>
-  <% end %>
+        <span class="text-[11px] text-gray-400 uppercase tracking-wider">
+          <% if glyph == :filled %>
+            <svg class="inline-block size-2 align-[0px] mr-0.5" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#111827"/></svg>
+          <% elsif glyph == :hollow %>
+            <svg class="inline-block size-2 align-[0px] mr-0.5" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.9" fill="#ffffff" stroke="#111827" stroke-width="1.3"/></svg>
+          <% end %><%= label %>
+        </span>
+      </span>
+    <% end %>
+  </p>
 </div>
-<% if (versus = section.labels.versus) %>
-  <p class="mt-2 text-xs text-gray-400">Changes <%= versus %></p>
-<% end %>
