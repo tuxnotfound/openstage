@@ -10,18 +10,18 @@
      section.filtered? ? [ "Share of commits", "#{now.share}%", nil, nil ] : [ "Projects", now.projects, nil, nil ]
    ] %>
 <div class="order-1 min-[821px]:order-none min-w-0 self-stretch flex items-end pb-2 border-b border-gray-200">
-  <p class="flex flex-wrap items-baseline gap-x-5 gap-y-1">
+  <p class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
     <% tiles.each do |label, value, previous, glyph| %>
       <span class="inline-flex items-baseline gap-1.5 whitespace-nowrap">
         <span class="text-base/5 font-semibold text-gray-900 tabular-nums"><%= value %></span>
         <% if (delta = previous && progress_delta(value, previous)) %>
-          <span class="text-[11px] font-medium tabular-nums <%= delta.last ? 'text-green-700' : 'text-gray-400' %>"><%= delta.first %></span>
+          <span class="text-xs font-medium tabular-nums <%= delta.last ? 'text-green-700' : 'text-gray-400' %>"><%= delta.first %></span>
         <% end %>
-        <span class="text-[11px] text-gray-400 uppercase tracking-wider">
+        <span class="text-xs text-gray-500 uppercase tracking-wide">
           <% if glyph == :filled %>
-            <svg class="inline-block size-2 align-[0px] mr-0.5" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#111827"/></svg>
+            <svg class="inline-block size-2.5 align-[-1px] mr-1" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#111827"/></svg>
           <% elsif glyph == :hollow %>
-            <svg class="inline-block size-2 align-[0px] mr-0.5" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.9" fill="#ffffff" stroke="#111827" stroke-width="1.3"/></svg>
+            <svg class="inline-block size-2.5 align-[-1px] mr-1" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.9" fill="#ffffff" stroke="#111827" stroke-width="1.3"/></svg>
           <% end %><%= label %>
         </span>
       </span>
