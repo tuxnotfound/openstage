@@ -1,0 +1,30 @@
+<% now = section.tally.totals %>
+<% before = section.tally.previous_totals %>
+<% tiles = [
+     [ "Shipped", now.shipped, before&.shipped, :filled ],
+     [ "Published", now.published, before&.published, :hollow ],
+     [ "Commits", now.commits, before&.commits, nil ],
+     [ "Active days", now.active_days, before&.active_days, nil ],
+     section.project ? [ "Share of commits", "#{now.share}%", nil, nil ] : [ "Projects", now.projects, nil, nil ]
+   ] %>
+<div class="mt-[18px] grid grid-cols-3 gap-3 min-[821px]:grid-cols-5">
+  <% tiles.each do |label, value, previous, glyph| %>
+    <div class="min-w-0">
+      <div class="text-2xl/tight font-bold text-gray-900 tabular-nums"><%= value %></div>
+      <div class="mt-1 flex items-center gap-[5px] text-[11px] text-gray-400 uppercase tracking-wider">
+        <% if glyph == :filled %>
+          <svg class="size-2.5" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#111827"/></svg>
+        <% elsif glyph == :hollow %>
+          <svg class="size-2.5" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.9" fill="#ffffff" stroke="#111827" stroke-width="1.3"/></svg>
+        <% end %>
+        <%= label %>
+      </div>
+      <% if (delta = previous && progress_delta(value, previous)) %>
+        <div class="mt-0.5 text-xs font-medium <%= delta.last ? 'text-green-700' : 'text-gray-400' %>"><%= delta.first %></div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+<% if (versus = section.labels.versus) %>
+  <p class="mt-2 text-xs text-gray-400">Changes <%= versus %></p>
+<% end %>

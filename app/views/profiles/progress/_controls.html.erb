@@ -1,0 +1,30 @@
+<% period = section.tally.period %>
+<% project = section.project %>
+<div class="flex flex-wrap items-center justify-between gap-3">
+  <div class="flex flex-wrap items-center gap-2.5">
+    <nav aria-label="Time range" class="inline-flex gap-0.5 p-[3px] bg-gray-100 rounded-[10px]">
+      <% ProgressHelper::RANGES.each do |range, label| %>
+        <% on = period.range == range %>
+        <%= link_to label, progress_view_path(user, range: range, offset: nil),
+              aria: { current: (on ? "page" : nil) },
+              class: "rounded-lg px-3.5 py-1.5 text-[13px] font-medium transition-colors #{on ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}" %>
+      <% end %>
+    </nav>
+
+    <%# GET to the whole page: the filter scopes the timeline below as well. %>
+    <form action="<%= profile_path(user.username) %>" method="get" data-turbo-frame="_top" data-controller="autosubmit"
+          class="inline-flex items-center gap-2 h-[34px] pl-2.5 pr-1 border border-gray-200 rounded-lg bg-white">
+      <% %i[range offset filter].each do |key| %>
+        <% if params[key].present? %><%= hidden_field_tag key, params[key], id: nil %><% end %>
+      <% end %>
+      <span class="inline-block size-2.5 rounded-[3px]" style="background: <%= project ? ProgressChart::Palette.project_color(project.rank) : '#D1D5DB' %>"></span>
+      <select name="repo" aria-label="Project" data-action="change->autosubmit#submit"
+              class="h-8 border-0 bg-transparent text-[13px] text-gray-900 cursor-pointer focus:outline-none focus:ring-0">
+        <option value="">All projects</option>
+        <% section.tally.projects.all.each do |option| %>
+          <option value="<%= option.repo %>" <%= "selected" if project == option %>><%= option.name %> · <%= option.commits %></option>
+        <% end %>
+      </select>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,16 @@
+<%# A period of the builder's work: the chart beside the entries that get
+    words. Range and period change this frame only, and the URL follows. The
+    project filter reloads the page instead, because it scopes the timeline
+    too. %>
+<%= turbo_frame_tag "progress", data: { turbo_action: "advance" } do %>
+  <section aria-label="Progress" class="py-6 border-b border-gray-200">
+    <%= render "profiles/progress/controls", user: user, section: section %>
+    <%= render "profiles/progress/heading", user: user, section: section %>
+    <%= render "profiles/progress/kpis", section: section %>
+
+    <div class="mt-5 grid gap-7 items-start min-[821px]:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <%= render "profiles/progress/bars", user: user, chart: ProgressChart::Page.new(section) %>
+      <%= render "profiles/progress/list", user: user, section: section %>
+    </div>
+  </section>
+<% end %>

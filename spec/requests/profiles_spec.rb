@@ -85,17 +85,22 @@ RSpec.describe "Profiles", type: :request do
         expect(response.body).to include(note_entry.title)
       end
 
+      # The progress section above lists entries too, whatever the timeline shows.
+      def timeline
+        Nokogiri::HTML(response.body).at_css("turbo-frame#timeline").text
+      end
+
       it "shows only shipped entries when filter=shipped" do
         get "/builder", params: { filter: "shipped" }
-        expect(response.body).to include(shipped_entry.title)
-        expect(response.body).not_to include(milestone_entry.title)
-        expect(response.body).not_to include(note_entry.title)
+        expect(timeline).to include(shipped_entry.title)
+        expect(timeline).not_to include(milestone_entry.title)
+        expect(timeline).not_to include(note_entry.title)
       end
 
       it "shows only milestone entries when filter=milestone" do
         get "/builder", params: { filter: "milestone" }
-        expect(response.body).to include(milestone_entry.title)
-        expect(response.body).not_to include(shipped_entry.title)
+        expect(timeline).to include(milestone_entry.title)
+        expect(timeline).not_to include(shipped_entry.title)
       end
 
       it "falls back to all entries for an invalid filter" do

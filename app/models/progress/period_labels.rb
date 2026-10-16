@@ -32,6 +32,15 @@ module Progress
       end
     end
 
+    # The heading between the period arrows.
+    def nav
+      case range
+      when "week" then "#{title} · #{span(first, last)}"
+      when "all" then "Since #{first.strftime('%b %Y')}"
+      else title
+      end
+    end
+
     def tag
       "PROGRESS · #{range == 'all' ? 'ALL TIME' : range.upcase}"
     end
@@ -43,6 +52,15 @@ module Progress
       when "month" then "in #{first.strftime('%B')}"
       when "year" then "in #{first.year}"
       else "so far"
+      end
+    end
+
+    # "in October 2026", "in 2026", "this week", "since March 2026".
+    def phrase
+      case range
+      when "month" then "in #{title}"
+      when "all" then "since #{first.strftime('%B %Y')}"
+      else word
       end
     end
 
