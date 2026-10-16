@@ -29,6 +29,11 @@ module Progress
 
     attr_accessor :user, :range, :offset, :repo
     attr_reader :zone, :period, :projects, :items, :buckets, :totals, :previous_totals, :first_active_day
+    # The period's entries with no project that the builder has not marked as
+    # having none, newest first; whatever the filter, so they can be tagged.
+    attr_reader :untagged
+    # Each day's commits by repo, every project's, to order the tag buttons.
+    attr_reader :day_counts
 
     validates :user, presence: true
 
@@ -43,6 +48,8 @@ module Progress
       @totals = totals_on(period.first..period.last_day)
       @previous_totals = totals_on(period.comparison) if period.comparison
       @first_active_day = (selected_commits_on(period.first..period.last_day).map(&:first) + items.map(&:date)).min
+      @untagged = untagged_on(period.first..period.last_day)
+      @day_counts = window_commits.group_by(&:first).transform_values { |commits| tally(commits) }
     end
 
     def public_entries
@@ -82,6 +89,11 @@ module Progress
 
     def items_on(days)
       window_items.select { |item| days.cover?(item.date) && (repo.nil? || item.repo_name == repo) }
+    end
+
+    def untagged_on(days)
+      window_items.select { |item| days.cover?(item.date) && item.repo_name.nil? && !item.entry.no_project? }
+                  .sort_by { |item| [ -item.date.jd, -item.id ] }
     end
 
     # [date, repo] for every public commit from the comparison's start to today.

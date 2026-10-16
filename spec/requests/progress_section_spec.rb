@@ -68,12 +68,12 @@ RSpec.describe "The progress section of the public page" do
     expect(discs.first["aria-label"]).to eq("Note 1, shipped Mar 31: live on Hacker News")
   end
 
-  it "shows a visitor the same section the owner sees" do
+  it "shows a visitor the owner's section, without the owner's tag line" do
     get "/tux"
     visitor = section.text.squish
 
     sign_in_as(user)
     get "/tux"
-    expect(section.text.squish).to eq(visitor)
+    expect(section.text.squish).to eq("#{visitor} 19 entries in 2026 have no project. Tag them")
   end
 end

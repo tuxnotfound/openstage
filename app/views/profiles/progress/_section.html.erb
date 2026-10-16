@@ -12,5 +12,9 @@
       <%= render "profiles/progress/bars", user: user, chart: ProgressChart::Page.new(section) %>
       <%= render "profiles/progress/list", user: user, section: section %>
     </div>
+
+    <% if current_user == user %>
+      <%= render "profiles/progress/untagged", user: user, section: section %>
+    <% end %>
   </section>
 <% end %>

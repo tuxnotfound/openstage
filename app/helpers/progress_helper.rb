@@ -19,6 +19,25 @@ module ProgressHelper
     [ text, change.positive? ]
   end
 
+  # "19 entries in 2026 have no project." for the owner's tag line.
+  def progress_untagged_line(section)
+    count = section.tally.untagged.size
+    "#{pluralize(count, 'entry')} #{section.labels.word} #{count == 1 ? 'has' : 'have'} no project" \
+      "#{section.project ? ', so this view leaves them out.' : '.'}"
+  end
+
+  # The projects a tag row offers first: the one in view, then those with
+  # commits that day, busiest first.
+  def progress_tag_choices(item, section)
+    projects = section.tally.projects
+    day = section.tally.day_counts.fetch(item.date, {}).select { |repo, _n| repo }.sort_by { |repo, n| [ -n, repo ] }
+    choices = section.project ? [ [ section.project, nil ] ] : []
+    choices + day.filter_map do |repo, n|
+      project = projects.find(repo)
+      [ project, n ] if project && project != section.project
+    end
+  end
+
   def progress_run_in(item, section)
     names = section.tally.projects.all.map(&:name)
     Progress::RunIn.capped(Progress::RunIn.of(item.title, item.body, names))
