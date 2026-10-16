@@ -65,11 +65,11 @@ RSpec.describe "Dashboard", type: :request do
 
     before { sign_in_as(user) }
 
-    it "has Dashboard, Your week and My page, and tucks the rest into a menu" do
+    it "has Dashboard, Recap and My page, and tucks the rest into a menu" do
       get "/dashboard"
 
       nav = response.body[/<header.*?<\/header>/m]
-      expect(nav).to include(">Dashboard<", ">Your week<", ">My page<")
+      expect(nav).to include(">Dashboard<", ">Recap<", ">My page<")
       expect(nav).to include('aria-current="page"')
 
       menu = nav[/<details.*?<\/details>/m]
