@@ -49,7 +49,7 @@ module ProgressChart
     def labels
       tally.period.buckets.filter_map do |bucket|
         text = section.labels.axis(bucket)
-        Label.new(text: text, left: left(@bars.center(bucket.index)), tone: tone(bucket)) if text.present?
+        Label.new(text: text, left: left(@bars.center(bucket.index)), tone: section.labels.axis_tone(bucket)) if text.present?
       end
     end
 
@@ -118,19 +118,6 @@ module ProgressChart
     def note(item)
       number = section.pick.kept.index(item)
       Note.new(mark: number ? (number + 1).to_s : "·", title: item.title, shipped: item.shipped?)
-    end
-
-    # On the Year axis a label names a month, so the month holding today is
-    # the current one.
-    def tone(bucket)
-      today = tally.period.today
-      if tally.period.range == "year"
-        month = (bucket.monday + 3).all_month
-        return :now if month.cover?(today)
-
-        return month.first > today ? :future : :past
-      end
-      bucket.current ? :now : (bucket.future ? :future : :past)
     end
 
     def num(value)

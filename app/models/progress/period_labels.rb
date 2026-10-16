@@ -41,6 +41,11 @@ module Progress
       end
     end
 
+    # "Week 42", "October", "2026", "All time": the period in a post.
+    def short
+      range == "month" ? first.strftime("%B") : title
+    end
+
     def tag
       "PROGRESS · #{range == 'all' ? 'ALL TIME' : range.upcase}"
     end
@@ -77,8 +82,9 @@ module Progress
       "Nothing shipped or published #{word}#{' yet' if running? && range != 'all'}."
     end
 
-    def empty_tagged(project)
-      "No entries tagged #{project} #{range == 'all' ? 'yet' : word}."
+    # yet: the cards add it while the period runs.
+    def empty_tagged(project, yet: false)
+      "No entries tagged #{project} #{range == 'all' ? 'yet' : word}#{' yet' if yet && running? && range != 'all'}."
     end
 
     # What the KPI changes are measured against; nil without a comparison.
@@ -102,6 +108,18 @@ module Progress
       when "year" then new_month?(bucket) ? thursday(bucket).strftime("%b") : ""
       else bucket.index.zero? || date.month == 1 ? date.strftime("%b %Y") : date.strftime("%b")
       end
+    end
+
+    # :now, :future or :past, for the axis label's ink. On the Year axis a
+    # label names a month, so the month holding today is the current one.
+    def axis_tone(bucket)
+      if range == "year"
+        month = thursday(bucket).all_month
+        return :now if month.cover?(today)
+
+        return month.first > today ? :future : :past
+      end
+      bucket.current ? :now : (bucket.future ? :future : :past)
     end
 
     def bucket_title(bucket)
