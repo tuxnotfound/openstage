@@ -18,18 +18,16 @@ class ProfilesController < ApplicationController
                @user.github_access_token.present?
 
     @filter     = params[:filter].presence_in(%w[shipped posted milestone note link]) || "all"
-    @repo_filter = params[:repo].presence
+    @repo_filter = selected_repos.presence
 
-    # The list drops merge and dependency-bump commits. Counts, streak and the
-    # heatmap still include them: that work happened, it is just not reading.
+    # The list drops merge and dependency-bump commits. Counts and the streak
+    # still include them: that work happened, it is just not reading.
     base = @user.entries.publicly_visible.without_tooling_noise.chronological
     base = base.where(entry_type: @filter) unless @filter == "all"
     base = base.where(repo_name: @repo_filter) if @repo_filter.present?
     @entries = base.page(params[:page]).per(25)
     @timeline = TimelineSessions.group(@entries)
 
-    @pinned_entries  = @user.entries.publicly_visible.pinned_entries.chronological
-    @available_repos = @user.entries.publicly_visible.repo_names
     @has_posted_entries = @user.entries.publicly_visible.posted.exists?
 
     @total_entries = @user.entries.publicly_visible.count
@@ -37,19 +35,11 @@ class ProfilesController < ApplicationController
     @repos_synced  = @user.github_repos.included_repos.public_repos.count
     @milestones    = @user.entries.publicly_visible.where(entry_type: :milestone).count
     # public_activity_streak, not current_streak: the latter counts private
-    # entries, so the headline number would disclose private working days that
-    # the heatmap directly above it correctly omits.
+    # entries, so the headline number would disclose private working days.
     @streak        = @user.public_activity_streak
 
-    start_date = 52.weeks.ago.to_date
-    raw = @user.entries.publicly_visible
-               .where(occurred_at: start_date.beginning_of_day..)
-               .group("DATE(occurred_at AT TIME ZONE 'UTC')")
-               .count
-    @heatmap_data = raw.transform_keys { |k| k.to_s }
-
     respond_to do |format|
-      format.html
+      format.html { @progress = progress_section }
       # Only "Load more" (which always carries page) wants the append stream.
       # A Turbo form redirecting here (Subscribe) arrives accepting turbo_stream
       # too, because fetch keeps the Accept header across the redirect. Serving
@@ -63,6 +53,17 @@ class ProfilesController < ApplicationController
   end
 
   private
+
+  # ?repo= names one project or several (repo[]=); none means all of them.
+  def selected_repos
+    Array(params[:repo]).map(&:to_s).compact_blank.uniq
+  end
+
+  # The progress section opens on this year; ?repo= scopes it with the timeline.
+  def progress_section
+    service = Progress::ComposeService.new(user: @user, range: params[:range], offset: params[:offset], repos: @repo_filter)
+    service.section if service.call
+  end
 
   def track_profile_view
     return if current_user == @user

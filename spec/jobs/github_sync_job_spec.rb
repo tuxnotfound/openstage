@@ -11,7 +11,8 @@ RSpec.describe GithubSyncJob, type: :job do
       description: "My Rails app",
       html_url: "https://github.com/tuxnotfound/myapp",
       default_branch: "main",
-      private: false
+      private: false,
+      stargazers_count: 7
     )
   end
 
@@ -127,6 +128,17 @@ RSpec.describe GithubSyncJob, type: :job do
       expect(log.status).to eq("success")
       expect(log.entries_added).to eq(1)
       expect(log.error_message).to be_nil
+    end
+
+    it "records the repo's stars and then reads the week card's extras" do
+      adapter = ActiveJob::Base.queue_adapter
+      ActiveJob::Base.queue_adapter = :test
+      described_class.new.perform(user.id)
+
+      expect(GithubRepo.last.stars_count).to eq(7)
+      expect(GithubExtrasJob).to have_been_enqueued.with(user.id)
+    ensure
+      ActiveJob::Base.queue_adapter = adapter
     end
 
     it "records the token's scopes on the user every run" do

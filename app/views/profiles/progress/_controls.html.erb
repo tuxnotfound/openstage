@@ -1,0 +1,82 @@
+<% period = section.tally.period %>
+<div class="flex flex-wrap items-center justify-between gap-3">
+  <div class="flex flex-wrap items-center gap-2.5">
+    <nav aria-label="Time range" class="inline-flex gap-0.5 p-[3px] bg-gray-100 rounded-[10px]">
+      <% ProgressHelper::RANGES.each do |range, label| %>
+        <% on = period.range == range %>
+        <%= link_to label, progress_view_path(user, range: range, offset: nil),
+              aria: { current: (on ? "page" : nil) },
+              class: "rounded-lg px-3.5 py-1.5 text-[13px] font-medium transition-colors #{on ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}" %>
+      <% end %>
+    </nav>
+
+    <%# A GET to the whole page, since the filter scopes the timeline below too.
+        Ticks apply together when the menu closes. %>
+    <details class="relative" data-controller="dropdown project-filter" data-action="toggle->project-filter#toggled">
+      <summary aria-label="Projects" class="list-none inline-flex items-center gap-2 h-[34px] pl-2.5 pr-2 border border-gray-200 rounded-lg bg-white text-[13px] text-gray-900 cursor-pointer [&::-webkit-details-marker]:hidden">
+        <span class="inline-flex -space-x-0.5">
+          <% (section.filtered? ? section.selected.first(3) : [ nil ]).each do |picked| %>
+            <span class="inline-block size-2.5 rounded-[3px] ring-1 ring-white" style="background: <%= picked ? ProgressChart::Palette.project_color(picked.rank) : '#D1D5DB' %>"></span>
+          <% end %>
+        </span>
+        <%= section.filtered? ? section.selection_name : "All projects" %>
+        <svg class="size-3.5 text-gray-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+      </summary>
+      <form action="<%= profile_path(user.username) %>" method="get" data-turbo-frame="_top" data-project-filter-target="form"
+            class="absolute left-0 z-20 mt-1 w-64 max-w-[calc(100vw-2rem)] rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
+        <% %i[range offset chart filter].each do |key| %>
+          <% if params[key].present? %><%= hidden_field_tag key, params[key], id: nil %><% end %>
+        <% end %>
+        <%= link_to "All projects", progress_view_path(user, repo: nil), data: { turbo_frame: "_top" },
+              class: "block rounded-md px-2 py-1.5 text-[13px] #{section.filtered? ? 'text-gray-700 hover:bg-gray-50' : 'font-medium text-gray-900 bg-gray-50'}" %>
+        <% section.tally.projects.all.each do |option| %>
+          <label class="flex items-center gap-2 rounded-md px-2 py-1.5 text-[13px] text-gray-900 cursor-pointer hover:bg-gray-50">
+            <input type="checkbox" name="repo[]" value="<%= option.repo %>" <%= "checked" if section.selected.include?(option) %>
+                   class="size-3.5 shrink-0 accent-gray-900">
+            <span class="inline-block size-2.5 shrink-0 rounded-[3px]" style="background: <%= ProgressChart::Palette.project_color(option.rank) %>"></span>
+            <span class="flex-1 min-w-0 truncate"><%= option.name %></span>
+            <span class="text-xs text-gray-400 tabular-nums"><%= option.commits %></span>
+          </label>
+        <% end %>
+      </form>
+    </details>
+
+    <nav aria-label="Chart" class="inline-flex gap-0.5 p-[3px] bg-gray-100 rounded-[10px]">
+      <% lines = params[:chart] == "lines" %>
+      <%= link_to progress_view_path(user, chart: nil), aria: { current: (lines ? nil : "page") },
+            class: "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-medium #{lines ? 'text-gray-500 hover:text-gray-900' : 'bg-white text-gray-900 shadow-sm'}" do %>
+        <svg class="size-3.5" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 12V7M7 12V3M12 12V8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>Bars
+      <% end %>
+      <%= link_to progress_view_path(user, chart: "lines"), aria: { current: (lines ? "page" : nil) },
+            class: "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-medium #{lines ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}" do %>
+        <svg class="size-3.5" viewBox="0 0 14 14" aria-hidden="true"><path d="M1.5 11.5L5 8l3 2 4.5-6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>Lines
+      <% end %>
+    </nav>
+  </div>
+
+  <% if current_user == user %>
+    <%# The dialog loads the card when it opens: a lazy frame inside it. %>
+    <div data-controller="dialog">
+      <button type="button" data-action="dialog#open"
+              class="inline-flex items-center gap-2 h-10 px-3.5 rounded-lg bg-gray-900 text-sm font-medium text-white cursor-pointer hover:bg-gray-700">
+        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-5 4 4 3-3 6 6"/></svg>
+        Make a card
+      </button>
+      <dialog data-dialog-target="dialog" data-action="click->dialog#backdrop" aria-label="Make a card"
+              class="m-auto mt-10 w-[calc(100%-2rem)] max-w-[648px] rounded-2xl bg-white p-6 shadow-2xl backdrop:bg-gray-900/55">
+        <div class="flex items-start justify-between gap-3">
+          <h2 class="text-lg font-bold text-gray-900">Your card</h2>
+          <button type="button" data-action="dialog#close" aria-label="Close"
+                  class="inline-flex items-center justify-center size-10 rounded-lg bg-gray-100 text-gray-700 cursor-pointer hover:bg-gray-200">
+            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <%= turbo_frame_tag "progress_card", src: progress_card_path(range: params[:range].presence, offset: params[:offset].presence,
+                                                                     repo: Array(params[:repo]).compact_blank.presence, chart: params[:chart].presence),
+              loading: :lazy do %>
+          <p class="mt-4 text-sm text-gray-400">Drawing your card…</p>
+        <% end %>
+      </dialog>
+    </div>
+  <% end %>
+</div>

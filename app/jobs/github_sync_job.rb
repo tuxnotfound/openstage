@@ -41,6 +41,7 @@ class GithubSyncJob < ApplicationJob
     begin
       sync(user)
       log.update!(status: :success, entries_added: @entries_added, error_message: sync_notes(user))
+      GithubExtrasJob.perform_later(user.id)
       Rails.logger.info "[GithubSyncJob] user=#{user.username} repos=#{@listed_ids.size} entries_added=#{@entries_added}"
     rescue TokenRejected
       reject_token(user, log)

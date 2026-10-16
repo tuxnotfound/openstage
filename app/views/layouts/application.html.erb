@@ -101,7 +101,7 @@
       <% end %>
     <% end %>
 
-    <main class="max-w-5xl mx-auto px-4 py-8">
+    <main class="<%= content_for(:main_class) || "max-w-5xl mx-auto px-4 py-8" %>">
       <%= yield %>
     </main>
 

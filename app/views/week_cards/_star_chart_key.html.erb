@@ -1,0 +1,24 @@
+<%# The marks of the Star Chart's key, at the places CardLayout::StarChart::Key
+    gave them; its words are runs on the canvas. %>
+<% dust = [ [ 2.4, 3.2, 0.9 ], [ 6.6, 2.2, 0.7 ], [ 9.6, 5.4, 1 ], [ 4.2, 7.6, 0.8 ], [ 8, 9.6, 0.7 ], [ 1.8, 10.2, 0.6 ] ].map { |x, y, r| CardLayout::StarChart.circle(x, y, r) }.join %>
+<% chart.key.marks.each do |mark| %>
+  <% x, y = num.call(mark[:x]), num.call(mark[:y]) %>
+  <% case mark[:kind] %>
+  <% when :rings %>
+    <svg x="<%= x %>" y="<%= y %>" width="14" height="14" viewBox="0 0 14 14"><% [ 6.3, 4.2, 2.1 ].each do |r| %><circle cx="7" cy="7" r="<%= r %>" fill="none" stroke="<%= t[:key_icon] %>" stroke-width="1"/><% end %></svg>
+  <% when :size %>
+    <% size = mark[:size] %>
+    <% cx, cy = num.call(mark[:x] + size.c), num.call(mark[:y] + 9) %>
+    <circle cx="<%= cx %>" cy="<%= cy %>" r="<%= CardLayout::StarChart.f1(size.halo) %>" fill="<%= t[:star_hue] %>" opacity="<%= t[:star_glow_o] %>" filter="url(#sc-dot)"/>
+    <circle cx="<%= cx %>" cy="<%= cy %>" r="<%= CardLayout::StarChart.f1(size.r) %>" fill="<%= t[:star_hue] %>"/>
+    <circle cx="<%= cx %>" cy="<%= cy %>" r="<%= CardLayout::StarChart.f1(size.center) %>" fill="<%= t[:star_center] %>"/>
+  <% when :clock %>
+    <svg x="<%= x %>" y="<%= y %>" width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="none" stroke="<%= t[:key_icon] %>" stroke-width="1.1"/><path d="M6 2.8V6l2.3 1.5" fill="none" stroke="<%= t[:key_icon] %>" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <% when :nova %>
+    <svg x="<%= x %>" y="<%= y %>" width="14" height="14" viewBox="0 0 24 24" overflow="visible"><path d="<%= CardLayout::StarChart::STAR %>" fill="<%= t[:gold] %>"/></svg>
+  <% when :comet %>
+    <svg x="<%= x %>" y="<%= y %>" width="14" height="14" viewBox="0 0 24 24" overflow="visible"><path d="<%= CardLayout::StarChart::COMET_TAIL %>" fill="<%= t[:pub] %>" opacity="0.5"/><path d="<%= CardLayout::StarChart::COMET_HEAD %>" fill="<%= t[:pub] %>"/></svg>
+  <% when :dust %>
+    <svg x="<%= x %>" y="<%= y %>" width="12" height="12" viewBox="0 0 12 12"><path d="<%= dust %>" fill="<%= t[:key_icon] %>"/></svg>
+  <% end %>
+<% end %>

@@ -1,0 +1,24 @@
+<% period = section.tally.period %>
+<% arrow = "inline-flex items-center justify-center size-8 border border-gray-200 rounded-lg bg-white" %>
+<div class="flex flex-wrap items-center gap-1.5 mt-4">
+  <% unless period.range == "all" %>
+    <% if period.previous? %>
+      <%= link_to progress_view_path(user, offset: period.offset - 1), aria: { label: "Previous period" }, class: "#{arrow} text-gray-700 hover:bg-gray-50" do %>
+        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      <% end %>
+    <% else %>
+      <span class="<%= arrow %> text-gray-300" aria-hidden="true"><svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
+    <% end %>
+    <% if period.offset.negative? %>
+      <%= link_to progress_view_path(user, offset: (period.offset + 1).nonzero?), aria: { label: "Next period" }, class: "#{arrow} text-gray-700 hover:bg-gray-50" do %>
+        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      <% end %>
+    <% else %>
+      <span class="<%= arrow %> text-gray-300" aria-hidden="true"><svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
+    <% end %>
+  <% end %>
+  <h2 class="ml-1.5 text-lg font-semibold text-gray-900 whitespace-nowrap"><%= section.labels.nav %></h2>
+  <% if section.filtered? %>
+    <span class="ml-1 text-[13px] text-gray-400"><%= section.selection_name %></span>
+  <% end %>
+</div>

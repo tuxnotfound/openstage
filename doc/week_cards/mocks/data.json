@@ -1,0 +1,532 @@
+{
+  "_notes": "Real data from the builder's weeks where it exists. Fields marked invented are plausible filler for mocks; the builder allowed invented numbers where data does not exist yet.",
+  "builder": {
+    "name": "Tux",
+    "github": "tuxnotfound",
+    "x": "tux404",
+    "pro": true,
+    "avatar_src_in_canvas": "/_blob/1e393e927f6a7146a6c82436c6086f9c",
+    "page": "openstage.dev/tuxnotfound",
+    "building_since": "2026-03-23",
+    "all_time_invented": {
+      "commits": 1284,
+      "shipped": 23,
+      "published": 41,
+      "projects": 6,
+      "best_day_streak": 12,
+      "weeks_in_a_row_with_work": 9
+    }
+  },
+  "projects": {
+    "wheels-off": {
+      "color": "#1D9BF0",
+      "about": "a true-3D toon racing game in the browser"
+    },
+    "openstage": {
+      "color": "#00BA7C",
+      "about": "proof-of-work pages for indie builders (this product)"
+    },
+    "trained-on": {
+      "color": "#FFB020",
+      "about": "a small site, trainedon.me"
+    },
+    "story_time_v1": {
+      "color": "#8B5CF6",
+      "about": "a private kids' story app (private repo the builder chose to show by name)"
+    }
+  },
+  "weeks": {
+    "w41": {
+      "kind": "busy week",
+      "label": "Week 41",
+      "dates": "Oct 5 – 11, 2026",
+      "iso": "2026-W41",
+      "totals": {
+        "commits": 74,
+        "active_days": 5,
+        "shipped": 2,
+        "published": 1,
+        "projects": 3
+      },
+      "previous_week": {
+        "commits": 32,
+        "active_days": 5,
+        "shipped": 1,
+        "published": 1
+      },
+      "streak_days_current": 1,
+      "best_run_this_week": 4,
+      "projects": [
+        [
+          "wheels-off",
+          35
+        ],
+        [
+          "openstage",
+          34
+        ],
+        [
+          "trained-on",
+          5
+        ]
+      ],
+      "days": [
+        {
+          "label": "MON 5",
+          "commits": {},
+          "hours": []
+        },
+        {
+          "label": "TUE 6",
+          "commits": {
+            "wheels-off": 4,
+            "openstage": 2
+          },
+          "kind": "built",
+          "headline": "4 commits in wheels-off",
+          "headline_is_auto_count": true,
+          "hours": [
+            19,
+            20,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "label": "WED 7",
+          "commits": {
+            "wheels-off": 16
+          },
+          "kind": "built",
+          "headline": "Arcade mode: leaderboards, world record, name entry",
+          "hours": [
+            0,
+            10,
+            11,
+            12,
+            15,
+            15,
+            15,
+            16,
+            19,
+            19,
+            19,
+            20,
+            20,
+            20,
+            21,
+            23
+          ]
+        },
+        {
+          "label": "THU 8",
+          "commits": {
+            "wheels-off": 11
+          },
+          "kind": "shipped",
+          "headline": "playwheelsoff.com is live",
+          "hours": [
+            0,
+            1,
+            9,
+            10,
+            12,
+            13,
+            15,
+            15,
+            18,
+            19,
+            20
+          ]
+        },
+        {
+          "label": "FRI 9",
+          "commits": {
+            "openstage": 11,
+            "trained-on": 5
+          },
+          "kind": "published",
+          "headline": "Posted on X",
+          "hours": [
+            10,
+            11,
+            12,
+            13,
+            15,
+            15,
+            16,
+            16,
+            19,
+            19,
+            20,
+            20,
+            21,
+            22,
+            23,
+            23
+          ]
+        },
+        {
+          "label": "SAT 10",
+          "commits": {},
+          "hours": []
+        },
+        {
+          "label": "SUN 11",
+          "commits": {
+            "wheels-off": 4,
+            "openstage": 21
+          },
+          "kind": "shipped",
+          "headline": "Read-only private repos via a GitHub App",
+          "hours": [
+            0,
+            10,
+            12,
+            15,
+            15,
+            15,
+            16,
+            19,
+            19,
+            19,
+            19,
+            19,
+            20,
+            20,
+            20,
+            20,
+            20,
+            21,
+            21,
+            22,
+            22,
+            23,
+            23,
+            23,
+            23
+          ]
+        }
+      ],
+      "peak_hours": "19:00 – 21:00",
+      "next_week_goal": "Launch on Product Hunt",
+      "audience": {
+        "visitors": 184,
+        "visitors_change": "+38%",
+        "new_subscribers": 3
+      },
+      "code": {
+        "added": 11976,
+        "removed": 2187,
+        "files": 212,
+        "languages": [
+          [
+            "Ruby",
+            46
+          ],
+          [
+            "TypeScript",
+            26
+          ],
+          [
+            "ERB",
+            7
+          ],
+          [
+            "CSS",
+            5
+          ],
+          [
+            "other",
+            16
+          ]
+        ]
+      },
+      "github": {
+        "prs_merged": 2,
+        "releases": 1,
+        "deploys": 9,
+        "stars_gained": 12
+      }
+    },
+    "w40": {
+      "kind": "launch week",
+      "label": "Week 40",
+      "dates": "Sep 28 – Oct 4, 2026",
+      "iso": "2026-W40",
+      "totals": {
+        "commits": 32,
+        "active_days": 5,
+        "shipped": 1,
+        "published": 1,
+        "projects": 2
+      },
+      "previous_week": {
+        "commits": 43,
+        "active_days": 6,
+        "shipped": 0,
+        "published": 2
+      },
+      "streak_days_current": null,
+      "best_run_this_week": 5,
+      "projects": [
+        [
+          "trained-on",
+          23
+        ],
+        [
+          "openstage",
+          9
+        ]
+      ],
+      "days": [
+        {
+          "label": "MON 28",
+          "commits": {
+            "trained-on": 13,
+            "openstage": 5
+          },
+          "kind": "built",
+          "headline": "13 commits in trained-on",
+          "headline_is_auto_count": true,
+          "hours": [
+            9,
+            10,
+            10,
+            11,
+            11,
+            12,
+            14,
+            14,
+            15,
+            15,
+            16,
+            16,
+            17,
+            21,
+            21,
+            22,
+            22,
+            23
+          ]
+        },
+        {
+          "label": "TUE 29",
+          "commits": {
+            "openstage": 4,
+            "trained-on": 2
+          },
+          "kind": "built",
+          "headline": "Redesign: one frame, four-section landing",
+          "hours": [
+            10,
+            11,
+            20,
+            21,
+            21,
+            22
+          ]
+        },
+        {
+          "label": "WED 30",
+          "commits": {
+            "trained-on": 6
+          },
+          "kind": "built",
+          "headline": "6 commits in trained-on",
+          "headline_is_auto_count": true,
+          "hours": [
+            19,
+            20,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "label": "THU 1",
+          "commits": {
+            "trained-on": 1
+          },
+          "kind": "shipped",
+          "headline": "Trained on me is live!!",
+          "hours": [
+            11
+          ]
+        },
+        {
+          "label": "FRI 2",
+          "commits": {
+            "trained-on": 1
+          },
+          "kind": "published",
+          "headline": "Posted on X",
+          "hours": [
+            9
+          ]
+        },
+        {
+          "label": "SAT 3",
+          "commits": {},
+          "hours": []
+        },
+        {
+          "label": "SUN 4",
+          "commits": {},
+          "hours": []
+        }
+      ],
+      "peak_hours": "21:00 – 23:00",
+      "next_week_goal": "Ship the wheels-off arcade mode",
+      "audience": {
+        "visitors": 133,
+        "visitors_change": "+12%",
+        "new_subscribers": 1,
+        "_invented": true
+      },
+      "code": {
+        "added": 3402,
+        "removed": 611,
+        "files": 64,
+        "languages": [
+          [
+            "TypeScript",
+            58
+          ],
+          [
+            "Ruby",
+            22
+          ],
+          [
+            "CSS",
+            12
+          ],
+          [
+            "HTML",
+            8
+          ]
+        ],
+        "_invented": true
+      },
+      "github": {
+        "prs_merged": 1,
+        "releases": 1,
+        "deploys": 4,
+        "stars_gained": 31,
+        "_invented": true
+      }
+    },
+    "w38": {
+      "kind": "thin week",
+      "label": "Week 38",
+      "dates": "Sep 14 – 20, 2026",
+      "iso": "2026-W38",
+      "totals": {
+        "commits": 4,
+        "active_days": 3,
+        "shipped": 0,
+        "published": 1,
+        "projects": 2
+      },
+      "previous_week": {
+        "commits": 20,
+        "active_days": 2,
+        "shipped": 0,
+        "published": 1
+      },
+      "streak_days_current": null,
+      "best_run_this_week": 2,
+      "projects": [
+        [
+          "openstage",
+          3
+        ],
+        [
+          "story_time_v1",
+          1
+        ]
+      ],
+      "days": [
+        {
+          "label": "MON 14",
+          "commits": {},
+          "hours": []
+        },
+        {
+          "label": "TUE 15",
+          "commits": {
+            "openstage": 2,
+            "story_time_v1": 1
+          },
+          "kind": "built",
+          "headline": "Story Time exports to PDF",
+          "hours": [
+            22,
+            23,
+            23
+          ]
+        },
+        {
+          "label": "WED 16",
+          "commits": {},
+          "hours": []
+        },
+        {
+          "label": "THU 17",
+          "commits": {
+            "openstage": 1
+          },
+          "kind": "built",
+          "headline": "1 commit in openstage",
+          "headline_is_auto_count": true,
+          "hours": [
+            10
+          ]
+        },
+        {
+          "label": "FRI 18",
+          "commits": {},
+          "kind": "published",
+          "headline": "Posted on X",
+          "hours": []
+        },
+        {
+          "label": "SAT 19",
+          "commits": {},
+          "hours": []
+        },
+        {
+          "label": "SUN 20",
+          "commits": {},
+          "hours": []
+        }
+      ],
+      "peak_hours": "22:00 – 00:00",
+      "next_week_goal": "Ship Story Time's PDF export",
+      "audience": null,
+      "code": {
+        "added": 412,
+        "removed": 96,
+        "files": 9,
+        "languages": [
+          [
+            "Ruby",
+            61
+          ],
+          [
+            "ERB",
+            24
+          ],
+          [
+            "CSS",
+            15
+          ]
+        ]
+      },
+      "github": null
+    }
+  }
+}

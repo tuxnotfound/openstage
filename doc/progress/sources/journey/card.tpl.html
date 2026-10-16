@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Progress card, Journey line</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=DM+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 1200px; height: 630px; overflow: hidden; background: {{t.bg}}; color: {{t.ink}}; font-family: Inter, sans-serif">
+
+  <svg width="1200" height="630" viewBox="0 0 1200 630" style="position: absolute; left: 0; top: 0" aria-hidden="true">
+    <defs>
+      <clipPath id="jc-avatar"><circle cx="88" cy="80" r="28"></circle></clipPath>
+      <linearGradient id="jc-wash" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="{{c.washColor}}" stop-opacity="{{c.wash0}}"></stop>
+        <stop offset="1" stop-color="{{c.washColor}}" stop-opacity="{{c.wash1}}"></stop>
+      </linearGradient>
+    </defs>
+    <circle cx="88" cy="80" r="30" fill="{{t.ring}}"></circle>
+    <image href="/_blob/59b36a5d4069a14bd0e0e68e44a14127" x="60" y="52" width="56" height="56" clip-path="url(#jc-avatar)" preserveAspectRatio="xMidYMid slice"></image>
+    <path d="M60,136H1140" stroke="{{t.rule}}" stroke-width="1"></path>
+    <path d="{{c.gridD}}" stroke="{{t.rule}}" stroke-width="1" fill="none"></path>
+    <path d="{{c.baseD}}" stroke="{{t.ruleStrong}}" stroke-width="1" fill="none"></path>
+    <path d="{{c.washD}}" fill="url(#jc-wash)"></path>
+    <path d="{{c.poleD}}" stroke="{{c.pole}}" stroke-width="1" fill="none"></path>
+    <path d="{{c.lineD}}" fill="none" stroke="{{t.ink}}" stroke-width="{{c.lineW}}" stroke-linejoin="round" stroke-linecap="round"></path>
+    <path d="{{c.haloD}}" fill="{{t.bg}}"></path>
+    <path d="{{c.shipD}}" fill="{{t.ink}}" stroke="{{t.bg}}" stroke-width="{{c.haloW}}" stroke-linejoin="round" paint-order="stroke"></path>
+    <path d="{{c.ringD}}" fill="{{t.bg}}" stroke="{{t.ink}}" stroke-width="{{c.ringW}}"></path>
+    <circle cx="{{c.dot.cx}}" cy="{{c.dot.cy}}" r="{{c.dot.r}}" fill="{{t.ink}}" stroke="{{t.bg}}" stroke-width="{{c.haloW}}" paint-order="stroke"></circle>
+  </svg>
+
+  <div style="position: absolute; left: 132px; top: 52px; display: flex; align-items: center; gap: 10px">
+    <span style="font-size: 26px; font-weight: 600; letter-spacing: -0.01em; line-height: 30px">Tux</span>
+    <span style="font-family: 'DM Mono', monospace; font-size: 10.5px; font-weight: 500; letter-spacing: 0.12em; line-height: 14px; padding: 2px 6px; border: 1px solid {{t.ruleStrong}}; border-radius: 4px; color: {{t.muted}}">PRO</span>
+  </div>
+  <div style="position: absolute; left: 132px; top: 88px; font-family: 'DM Mono', monospace; font-size: 14px; line-height: 18px; color: {{t.muted}}">@tuxnotfound</div>
+  <div style="position: absolute; right: 60px; top: 70px; font-size: 16px; font-weight: 500; line-height: 20px; letter-spacing: -0.005em"><span style="color: {{t.muted}}">openstage.dev/</span>tuxnotfound</div>
+
+  <div style="position: absolute; left: 60px; top: 166px; font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.14em; line-height: 14px; color: {{t.accent}}">{{names.tag}}</div>
+  <div style="position: absolute; left: 58px; top: 184px; font-size: 46px; font-weight: 600; letter-spacing: -0.02em; line-height: 54px; white-space: nowrap">{{names.title}}</div>
+  <div style="position: absolute; left: 60px; top: 244px; display: flex; align-items: center; gap: 8px; font-size: 16px; line-height: 20px; color: {{t.muted}}; white-space: nowrap">
+    <sc-if value="{{sub.dot}}" hint-placeholder-val="{{ false }}">
+      <span style="display: inline-block; width: 12px; height: 12px; border-radius: 9999px; background: {{sub.color}}"></span>
+    </sc-if>
+    <span><sc-if value="{{sub.dot}}" hint-placeholder-val="{{ false }}"><span style="font-weight: 500; color: {{t.ink}}">{{sub.slug}}</span></sc-if>{{sub.rest}}</span>
+  </div>
+
+  <sc-for list="{{stats}}" as="s" hint-placeholder-count="4">
+    <div style="position: absolute; left: {{s.left}}px; top: {{s.valueTop}}px; display: flex; align-items: baseline; gap: 8px; white-space: nowrap">
+      <span style="font-size: 30px; font-weight: 600; letter-spacing: -0.02em; line-height: 36px">{{s.value}}</span>
+      <sc-if value="{{s.has}}" hint-placeholder-val="{{ true }}">
+        <span style="font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; line-height: 14px; color: {{s.dColor}}">{{s.dText}}</span>
+      </sc-if>
+    </div>
+    <div style="position: absolute; left: {{s.left}}px; top: {{s.labelTop}}px; display: flex; align-items: center; gap: 5px; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; line-height: 14px; color: {{t.muted}}; white-space: nowrap">
+      <sc-if value="{{s.diamond}}" hint-placeholder-val="{{ false }}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0L10 5L5 10L0 5Z" fill="{{t.ink}}"></path></svg></sc-if>
+      <sc-if value="{{s.ring}}" hint-placeholder-val="{{ false }}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.9" fill="none" stroke="{{t.ink}}" stroke-width="1.8"></circle></svg></sc-if>
+      <span>{{s.label}}</span>
+    </div>
+  </sc-for>
+
+  <sc-for list="{{ticks}}" as="tk" hint-placeholder-count="3">
+    <div style="position: absolute; left: 88px; top: {{tk.top}}px; transform: translate(-100%, -50%); font-family: 'DM Mono', monospace; font-size: 11px; line-height: 12px; color: {{t.faint}}; font-variant-numeric: tabular-nums">{{tk.v}}</div>
+  </sc-for>
+  <sc-for list="{{xls}}" as="xl" hint-placeholder-count="9">
+    <div style="position: absolute; left: {{xl.left}}px; top: {{xl.top}}px; transform: translateX(-50%); font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; line-height: 12px; white-space: nowrap; color: {{xl.color}}">{{xl.text}}</div>
+  </sc-for>
+
+  <sc-for list="{{flags}}" as="f" hint-placeholder-count="6">
+    <div style="position: absolute; left: {{f.left}}; right: {{f.right}}; top: {{f.top}}px; text-align: {{f.align}}; font-size: 20px; line-height: 24px; font-weight: {{f.fw}}; color: {{f.color}}; white-space: nowrap">
+      <sc-for list="{{f.lines}}" as="ln" hint-placeholder-count="2">
+        <div>{{ln.text}}<sc-if value="{{ln.hasRun}}" hint-placeholder-val="{{ false }}"><span style="margin-left: 0.28em; font-weight: 400; color: {{t.muted}}">{{ln.run}}</span></sc-if></div>
+      </sc-for>
+    </div>
+  </sc-for>
+
+  <div style="position: absolute; left: {{end.left}}px; top: {{end.top}}px; font-size: 24px; line-height: {{end.lh}}px; white-space: nowrap">
+    <span style="font-size: 24px; font-weight: 600; color: {{t.ink}}">{{end.num}}</span><span style="font-size: 17px; color: {{t.muted}}">{{end.word}}</span>
+  </div>
+
+  <sc-if value="{{quiet.show}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 100px; top: {{quiet.top}}px; font-size: 20px; font-weight: 500; line-height: 24px; color: {{t.muted}}; white-space: nowrap">{{quiet.text}}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"range":{"editor":"enum","options":["week","month","year","all"],"default":"year"},"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"offset":{"editor":"int","default":0,"min":-12,"max":0},"project":{"editor":"text","default":""},"tags":{"editor":null,"default":"{}"},"feature":{"editor":null,"default":""},"$preview":{"width":1200,"height":630}}'>
+/*CORE_JS*/
+
+/*ENGINE_JS*/
+
+/*CARD_JS*/
+</script>
+</body>
+</html>

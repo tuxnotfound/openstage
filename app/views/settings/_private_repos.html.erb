@@ -20,13 +20,13 @@
     <% end %>
   <% elsif github_app %>
     <div class="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex items-center justify-between gap-4">
-      <p class="text-xs text-amber-800">Private repos are not listed. Connecting them installs the Openstage GitHub App on the repos you pick, read-only; Openstage only ever reads commit messages, and each private repo stays excluded until you include it.</p>
+      <p class="text-xs text-amber-800">Private repos are not listed. Connecting them installs the Openstage GitHub App on the repos you pick, read-only. Openstage reads their commits, releases, merged pull requests and deploys, and never stores your code. Each private repo stays excluded until you include it.</p>
       <%= link_to "Connect private repos", new_github_installation_path, data: { turbo: false },
           class: "shrink-0 text-xs bg-gray-900 text-white px-3 py-1.5 rounded-md hover:bg-gray-700 transition-colors" %>
     </div>
   <% else %>
     <div class="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex items-center justify-between gap-4">
-      <p class="text-xs text-amber-800">Private repos are not listed. GitHub only shares them through its <code>repo</code> permission, which also allows writes; Openstage only ever reads commit messages, and each private repo stays excluded until you include it.</p>
+      <p class="text-xs text-amber-800">Private repos are not listed. GitHub only shares them through its <code>repo</code> permission, which also allows writes. Openstage never writes. It reads their commits, releases, merged pull requests and deploys, and never stores your code. Each private repo stays excluded until you include it.</p>
       <%= button_to "Connect private repos", "/auth/github", method: :post,
           params: { scope: "user:email,repo" }, data: { turbo: false },
           class: "shrink-0 text-xs bg-gray-900 text-white px-3 py-1.5 rounded-md hover:bg-gray-700 transition-colors cursor-pointer" %>

@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Changelog v2: the week as release notes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=DM+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1200px; height: 630px; position: relative; overflow: hidden; background: {{t.bg}}; color: {{t.ink}}; font-family: 'Inter', sans-serif">
+
+  <svg width="1200" height="630" viewBox="0 0 1200 630" style="position: absolute; left: 0; top: 0" aria-hidden="true">
+    <path d="{{g.wash}}" fill="{{t.wash}}"></path>
+    <path d="{{g.rules}}" stroke="{{t.rule}}" stroke-width="1" fill="none"></path>
+    <path d="{{g.rulesStrong}}" stroke="{{t.ruleStrong}}" stroke-width="1" fill="none"></path>
+    <path d="{{g.cellEmpty}}" stroke="{{t.cellLine}}" stroke-width="1" fill="none"></path>
+    <path d="{{g.cellPost}}" stroke="{{t.accent}}" stroke-width="1.5" fill="none"></path>
+    <path d="{{g.cell1}}" fill="{{t.lvl1}}"></path>
+    <path d="{{g.cell2}}" fill="{{t.lvl2}}"></path>
+    <path d="{{g.cell3}}" fill="{{t.lvl3}}"></path>
+    <path d="{{g.cell4}}" fill="{{t.lvl4}}"></path>
+    <path d="{{g.pills}}" fill="{{t.ink}}" fill-opacity="{{t.pillA}}"></path>
+    <path d="{{g.tagShip}}" fill="{{t.accent}}"></path>
+    <path d="{{g.tagPub}}" stroke="{{t.accent}}" stroke-width="1" fill="none"></path>
+    <path d="{{g.tagBuilt}}" stroke="{{t.ruleStrong}}" stroke-width="1" fill="none"></path>
+    <path d="{{g.chip}}" stroke="{{t.ruleStrong}}" stroke-width="1" fill="none"></path>
+  </svg>
+
+  <svg style="position: absolute; left: {{avatar.x}}px; top: {{avatar.y}}px" width="{{avatar.s}}" height="{{avatar.s}}" viewBox="0 0 {{avatar.s}} {{avatar.s}}" role="img" aria-label="{{avatar.label}}">
+    <defs><clipPath id="face-{{uid}}"><circle cx="{{avatar.c}}" cy="{{avatar.c}}" r="{{avatar.c}}"></circle></clipPath></defs>
+    <image href="/_blob/1e393e927f6a7146a6c82436c6086f9c" x="0" y="0" width="{{avatar.s}}" height="{{avatar.s}}" preserveAspectRatio="xMidYMid slice" clip-path="url(#face-{{uid}})"></image>
+    <circle cx="{{avatar.c}}" cy="{{avatar.c}}" r="{{avatar.ring}}" fill="none" stroke="{{t.avatarRing}}" stroke-width="1"></circle>
+  </svg>
+
+  <sc-for list="{{dots}}" as="d" hint-placeholder-count="8">
+    <svg style="position: absolute; left: {{d.x}}px; top: {{d.y}}px" width="{{d.s}}" height="{{d.s}}" viewBox="0 0 {{d.s}} {{d.s}}" aria-hidden="true"><circle cx="{{d.r}}" cy="{{d.r}}" r="{{d.r}}" fill="{{d.c}}"></circle></svg>
+  </sc-for>
+
+  <sc-for list="{{icons}}" as="i" hint-placeholder-count="2">
+    <svg style="position: absolute; left: {{i.x}}px; top: {{i.y}}px" width="{{i.w}}" height="{{i.h}}" viewBox="{{i.vb}}" aria-hidden="true"><path d="{{i.d}}" fill="{{i.fill}}" fill-rule="evenodd"></path></svg>
+  </sc-for>
+
+  <div style="position: absolute; right: {{link.r}}px; top: {{link.y}}px; margin-right: {{link.mr}}em; text-align: right; font-family: 'Inter', sans-serif; font-weight: 500; font-size: {{link.fs}}px; line-height: {{link.fs}}px; letter-spacing: {{link.ls}}em; white-space: nowrap"><span style="color: {{t.muted}}">{{link.a}}</span><span style="color: {{t.ink}}">{{link.b}}</span></div>
+
+  <sc-for list="{{texts}}" as="p" hint-placeholder-count="60">
+    <div style="position: absolute; left: {{p.x}}px; top: {{p.y}}px; font-family: {{p.ff}}; font-weight: {{p.fw}}; font-size: {{p.fs}}px; line-height: {{p.fs}}px; letter-spacing: {{p.ls}}em; font-variant-numeric: {{p.num}}; color: {{p.color}}; white-space: nowrap">{{p.text}}</div>
+  </sc-for>
+
+  <sc-for list="{{textsR}}" as="p" hint-placeholder-count="20">
+    <div style="position: absolute; right: {{p.r}}px; top: {{p.y}}px; text-align: right; font-family: {{p.ff}}; font-weight: {{p.fw}}; font-size: {{p.fs}}px; line-height: {{p.fs}}px; letter-spacing: {{p.ls}}em; margin-right: {{p.mr}}em; font-variant-numeric: {{p.num}}; color: {{p.color}}; white-space: nowrap">{{p.text}}</div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"week":{"editor":"enum","options":["w41","w40","w38","wx","w0","w7"],"default":"w41"},"code":{"editor":"enum","options":["show","hide"],"default":"show"},"identity":{"editor":"enum","options":["tux","mid","long"],"default":"tux"},"$preview":{"width":1200,"height":630}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // ---------- Font metrics: Inter (400, 500, 600) and DM Mono, measured in Chrome at 1000px (advance widths in em/1000) ----------
+    // The server knows the same metrics. Every position below is computed, so this function is the spec for the Ruby port:
+    // each piece of type has an x (or a right edge), a baseline, a size and a tracking. Widths are sums of advances, which
+    // overstate kerned text by about 2%, so a fit computed here always fits when drawn.
+    const CH = " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,:;!?'\"-–—/&()@#+%*_…’‘“”·→←↑↓±−×$€[]{}<>=|~^`\\éèáàíóúñçüöäÉ";
+    const RAW = {
+      i4: '281 690 654 730 722 601 590 746 743 269 571 672 565 903 753 765 639 765 644 642 646 744 690 985 682 679 629 562 612 571 612 583 370 613 591 242 242 549 242 876 591 600 612 612 376 528 327 591 562 818 546 562 552 631 407 610 618 646 593 620 566 619 620 288 288 288 302 288 511 300 466 460 500 1000 360 644 365 365 966 633 662 982 501 456 864 261 261 440 440 288 1000 1000 834 834 662 662 662 642 667 365 365 426 426 662 662 662 333 662 471 323 360 583 583 562 562 242 600 591 591 571 591 600 562 601',
+      i5: '266 709 657 734 722 603 589 748 744 273 575 688 565 913 756 767 642 769 648 646 653 740 709 1003 701 696 641 568 618 577 618 587 379 619 602 252 252 559 252 888 601 604 618 618 387 539 340 602 575 829 557 575 559 645 415 616 627 656 603 630 571 629 630 303 303 303 315 304 527 313 494 463 500 1000 370 653 369 369 983 638 667 993 520 463 910 277 277 474 471 303 1000 1000 858 858 667 667 667 646 673 369 369 441 441 667 667 667 346 667 476 337 370 587 587 568 568 252 604 602 601 577 602 604 568 603',
+      i6: '252 728 659 737 722 605 588 749 746 277 580 703 565 922 759 769 645 773 652 650 660 736 728 1020 720 714 652 574 624 583 624 591 389 626 612 262 262 570 262 900 612 609 624 624 397 549 353 612 587 839 569 589 566 660 423 623 636 666 612 640 576 640 640 319 319 319 329 321 543 326 523 465 500 1000 379 662 373 373 999 644 673 1004 540 469 956 294 294 507 501 319 1000 1000 881 881 673 673 673 650 679 373 373 455 455 673 673 673 359 673 482 351 379 591 591 574 574 262 609 612 612 583 612 609 574 605'
+    };
+    const ADV = {};
+    Object.keys(RAW).forEach((f) => {
+      const a = RAW[f].split(' ').map(Number);
+      ADV[f] = {};
+      [...CH].forEach((c, i) => { ADV[f][c] = a[i]; });
+    });
+    // Tabular figures (font-variant-numeric: tabular-nums) are one width per weight. DM Mono is 600 for every glyph.
+    const TNUM = { i4: 648, i5: 648, i6: 647 };
+    // Vertical metrics in em, per family (i = Inter, m = DM Mono). With line-height equal to the size, the baseline
+    // sits base em below the top of the box.
+    const VM = {
+      base: { i: 0.864, m: 0.841 }, cap: { i: 0.7275, m: 0.70 }, xh: { i: 0.546, m: 0.496 }, fig: { i: 0.737, m: 0.712 }
+    };
+    const baseOf = (f) => VM.base[f[0]];
+    const cap = (f, s) => VM.cap[f[0]] * s;
+    const fig = (f, s) => VM.fig[f[0]] * s;
+    const xh = (f, s) => VM.xh[f[0]] * s;
+    // A glyph outside the table comes from a fallback font: CJK and later scripts are a full em wide, the rest
+    // about 0.6em, so the estimate errs wide and a fit still fits.
+    const wide = (c) => c.codePointAt(0) >= 0x2E80;
+    const W = (s, f, size, ls = 0, tnum = false) => {
+      let a = 0, n = 0;
+      for (const c of String(s)) {
+        const digit = c >= '0' && c <= '9';
+        a += wide(c) ? 1000 : f[0] === 'm' ? 600 : tnum && digit ? TNUM[f] : (ADV[f][c] === undefined ? 600 : ADV[f][c]);
+        n += 1;
+      }
+      return (a / 1000 + ls * n) * size;
+    };
+    // Visible width: letter-spacing follows every character, so the last one is dropped.
+    const VW = (s, f, size, ls = 0, tnum = false) => W(s, f, size, ls, tnum) - ls * size;
+    const r1 = (x) => Math.round(x * 10) / 10;
+    const r2 = (x) => Math.round(x * 100) / 100;
+    // A size fitted to a room is rounded DOWN to the tenth, so a fit still fits.
+    const fit1 = (x) => Math.floor(x * 10 + 1e-6) / 10;
+
+    // ---------- Text helpers ----------
+    const cutToWidth = (s, f, size, ls, maxW) => {
+      if (VW(s, f, size, ls) <= maxW) return s;
+      let x = s;
+      while (x.length > 1 && VW(x + '…', f, size, ls) > maxW) x = x.slice(0, -1);
+      return x.trimEnd() + '…';
+    };
+    // A long project name is cut at its last '-', '_' or space inside the limit.
+    const cutName = (s, n) => {
+      if (s.length <= n) return s;
+      const head = s.slice(0, n - 1);
+      const i = Math.max(head.lastIndexOf('-'), head.lastIndexOf('_'), head.lastIndexOf(' '));
+      return (i >= 6 ? head.slice(0, i) : head).replace(/[-_ ]+$/, '') + '…';
+    };
+    const cutWords = (s, f, size, ls, maxW) => {
+      if (VW(s, f, size, ls) <= maxW) return s;
+      const ws = s.split(' ');
+      while (ws.length > 1) {
+        ws.pop();
+        const x = ws.join(' ').replace(/[\s,;:·–-]+$/, '') + '…';
+        if (VW(x, f, size, ls) <= maxW) return x;
+      }
+      return cutToWidth(s, f, size, ls, maxW);
+    };
+    // Emoji differ by platform and print in full colour, so they never reach a one-accent card.
+    const stripEmoji = (s) => String(s || '')
+      .replace(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\u{FE0E}\u{FE0F}\u{200D}\u{20E3}]/gu, '')
+      .replace(/(\w)'(\w)/g, '$1’$2').replace(/\s+/g, ' ').trim();
+    // Balanced line breaking: the fewest lines that fit, then the split with the least sum of squared line widths.
+    const tokens = (text, hyphens) => {
+      const out = [];
+      text.split(' ').forEach((word, wi) => {
+        const parts = hyphens ? word.split(/(?<=[-_/])(?=.)/) : [word];
+        parts.forEach((p, pi) => out.push({ t: p, space: pi === 0 && wi > 0 }));
+      });
+      return out;
+    };
+    const joinTok = (tk, i, j) => tk.slice(i, j).map((x, n) => (n && x.space ? ' ' : '') + x.t).join('');
+    // A line that ends on a short function word ('coding for a / week') costs as much as a quarter-measure of slack,
+    // so the breaker takes it only when nothing else fits.
+    const WEAK_END = new Set(['a', 'an', 'the', 'to', 'of', 'in', 'on', 'for', 'and', 'or', 'at', 'by', 'with', 'my', 'i', 'is']);
+    const balance = (text, f, s, ls, maxW, maxLines) => {
+      for (const hy of [false, true]) {
+        const tk = tokens(text, hy);
+        const m = tk.length;
+        const lw = (i, j) => VW(joinTok(tk, i, j), f, s, ls);
+        const weak = (j) => j < m && WEAK_END.has(tk[j - 1].t.toLowerCase().replace(/[^a-z]/g, ''));
+        for (let n = 1; n <= Math.min(maxLines, m); n += 1) {
+          const F = [], A = [];
+          for (let k = 0; k <= n; k += 1) { F.push(new Array(m + 1).fill(Infinity)); A.push(new Array(m + 1).fill(0)); }
+          F[0][0] = 0;
+          for (let k = 1; k <= n; k += 1) {
+            for (let j = k; j <= m; j += 1) {
+              for (let i = k - 1; i < j; i += 1) {
+                const w = lw(i, j);
+                if (w > maxW) continue;
+                const v = F[k - 1][i] + w * w + (weak(j) ? (0.25 * maxW) ** 2 : 0);
+                if (v < F[k][j]) { F[k][j] = v; A[k][j] = i; }
+              }
+            }
+          }
+          if (F[n][m] < Infinity) {
+            const lines = [];
+            let j = m;
+            for (let k = n; k >= 1; k -= 1) { const i = A[k][j]; lines.unshift(joinTok(tk, i, j)); j = i; }
+            return lines;
+          }
+        }
+      }
+      return null;
+    };
+    const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const signed = (n) => (n > 0 ? '+' + fmt(n) : n < 0 ? '−' + fmt(-n) : '±0');
+
+    // ---------- ISO weeks: the week before W01 is the last week of the previous ISO year, W52 or W53 ----------
+    // An ISO year has 53 weeks when Jan 1 is a Thursday, or a Wednesday in a leap year. In Ruby: Date.new(y, 12, 28).cweek.
+    const weeksIn = (y) => {
+      const jan1 = new Date(Date.UTC(y, 0, 1)).getUTCDay();
+      const leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+      return jan1 === 4 || (leap && jan1 === 3) ? 53 : 52;
+    };
+    const prevWeekOf = (iso) => {
+      const [y, w] = iso.split('-W').map(Number);
+      return w > 1 ? w - 1 : weeksIn(y - 1);
+    };
+
+    // ---------- Shapes, as path strings the server can write verbatim ----------
+    const rr = (x, y, w, h, r) => {
+      const k = Math.min(r, w / 2, h / 2);
+      return `M${r2(x + k)} ${r2(y)}H${r2(x + w - k)}A${k} ${k} 0 0 1 ${r2(x + w)} ${r2(y + k)}V${r2(y + h - k)}A${k} ${k} 0 0 1 ${r2(x + w - k)} ${r2(y + h)}H${r2(x + k)}A${k} ${k} 0 0 1 ${r2(x)} ${r2(y + h - k)}V${r2(y + k)}A${k} ${k} 0 0 1 ${r2(x + k)} ${r2(y)}Z`;
+    };
+    // 1px strokes sit on half pixels, so outlines stay crisp.
+    const rrLine = (x, y, w, h, r) => rr(Math.round(x) + 0.5, Math.round(y) + 0.5, Math.round(w) - 1, Math.round(h) - 1, r);
+    const hLine = (x1, x2, y) => `M${r2(x1)} ${Math.round(y) + 0.5}H${r2(x2)}`;
+    const diamond = (cx, cy, s) => `M${r2(cx)} ${r2(cy - s)}L${r2(cx + s)} ${r2(cy)}L${r2(cx)} ${r2(cy + s)}L${r2(cx - s)} ${r2(cy)}Z`;
+    const ring = (cx, cy, r) => `M${r2(cx - r)} ${r2(cy)}A${r} ${r} 0 1 0 ${r2(cx + r)} ${r2(cy)}A${r} ${r} 0 1 0 ${r2(cx - r)} ${r2(cy)}Z`;
+    const GITHUB = 'M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z';
+    // The Openstage mark, from the app's public/favicon.svg: three rising bars on a rounded tile, in one colour.
+    // Filled even-odd, so the bars are cut out of the tile and show the ground.
+    const OS_MARK = 'M112 0H400A112 112 0 0 1 512 112V400A112 112 0 0 1 400 512H112A112 112 0 0 1 0 400V112A112 112 0 0 1 112 0Z'
+      + 'M144 288H176A16 16 0 0 1 192 304V368A16 16 0 0 1 176 384H144A16 16 0 0 1 128 368V304A16 16 0 0 1 144 288Z'
+      + 'M240 224H272A16 16 0 0 1 288 240V368A16 16 0 0 1 272 384H240A16 16 0 0 1 224 368V240A16 16 0 0 1 240 224Z'
+      + 'M336 144H368A16 16 0 0 1 384 160V368A16 16 0 0 1 368 384H336A16 16 0 0 1 320 368V160A16 16 0 0 1 336 144Z';
+
+    // ---------- Colour helpers ----------
+    const rgbOf = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+    const hexOf = (a) => '#' + a.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('').toUpperCase();
+    const mix = (a, b, k) => { const A = rgbOf(a), B = rgbOf(b); return hexOf(A.map((v, i) => v + (B[i] - v) * k)); };
+
+    // ---------- Data, copied from recap-cards/wow/data.json (w41, w40, w38). wx, w0 and w7 are invented test weeks. ----------
+    const IDENTITIES = {
+      tux: { name: 'Tux', github: 'tuxnotfound', pro: true, page: 'openstage.dev/tuxnotfound' },
+      // Invented identities for the stress boards: a hyphenated name, and the longest name and handle a card must hold.
+      mid: { name: 'Jean-Baptiste Lemoine', github: 'jblemoine', pro: true, page: 'openstage.dev/jblemoine' },
+      long: { name: 'Alexandra Konstantinopoulou-Vasquez', github: 'alexandra-konstantinopoulou', pro: true, page: 'openstage.dev/alexandra-konstantinopoulou' }
+    };
+    const BUILDER = IDENTITIES[this.props.identity] || IDENTITIES.tux;
+    // Project markers keep the app's colours on both grounds: the repo name beside each dot carries the meaning.
+    const PROJECT = {
+      'wheels-off': '#1D9BF0', openstage: '#00BA7C', 'trained-on': '#FFB020', story_time_v1: '#8B5CF6',
+      // Invented projects for the stress week.
+      'build-in-public-newsletter-archive': '#14B8A6', cli: '#EC4899'
+    };
+    const projColor = (p) => PROJECT[p] || '#8A8F98';
+    // A day's stored headline is the builder's words, except where data.json marks it headline_is_auto_count (auto: true).
+    // Those count lines were written by the app and can contradict the day ('4 commits in wheels-off' on a 6-commit day),
+    // so the card never prints them: it rebuilds the line from the day's commits.
+    const WEEKS = {
+      w41: {
+        iso: '2026-W41', dates: 'Oct 5 – 11, 2026', goal: 'Launch on Product Hunt',
+        prev: { commits: 32, active: 5, shipped: 1, published: 1 },
+        code: { files: 212, added: 11976, removed: 2187 },
+        days: [
+          { label: 'MON 5', commits: {} },
+          { label: 'TUE 6', commits: { 'wheels-off': 4, openstage: 2 }, kind: 'built', headline: '4 commits in wheels-off', auto: true },
+          { label: 'WED 7', commits: { 'wheels-off': 16 }, kind: 'built', headline: 'Arcade mode: leaderboards, world record, name entry' },
+          { label: 'THU 8', commits: { 'wheels-off': 11 }, kind: 'shipped', headline: 'playwheelsoff.com is live' },
+          { label: 'FRI 9', commits: { openstage: 11, 'trained-on': 5 }, kind: 'published', headline: 'Posted on X' },
+          { label: 'SAT 10', commits: {} },
+          { label: 'SUN 11', commits: { 'wheels-off': 4, openstage: 21 }, kind: 'shipped', headline: 'Read-only private repos via a GitHub App' }
+        ]
+      },
+      w40: {
+        iso: '2026-W40', dates: 'Sep 28 – Oct 4, 2026', goal: 'Ship the wheels-off arcade mode',
+        prev: { commits: 43, active: 6, shipped: 0, published: 2 },
+        // The data pack marks w40's code numbers as invented.
+        code: { files: 64, added: 3402, removed: 611, invented: true },
+        days: [
+          { label: 'MON 28', commits: { 'trained-on': 13, openstage: 5 }, kind: 'built', headline: '13 commits in trained-on', auto: true },
+          { label: 'TUE 29', commits: { openstage: 4, 'trained-on': 2 }, kind: 'built', headline: 'Redesign: one frame, four-section landing' },
+          { label: 'WED 30', commits: { 'trained-on': 6 }, kind: 'built', headline: '6 commits in trained-on', auto: true },
+          { label: 'THU 1', commits: { 'trained-on': 1 }, kind: 'shipped', headline: 'Trained on me is live!!' },
+          { label: 'FRI 2', commits: { 'trained-on': 1 }, kind: 'published', headline: 'Posted on X' },
+          { label: 'SAT 3', commits: {} },
+          { label: 'SUN 4', commits: {} }
+        ]
+      },
+      w38: {
+        iso: '2026-W38', dates: 'Sep 14 – 20, 2026', goal: "Ship Story Time's PDF export",
+        prev: { commits: 20, active: 2, shipped: 0, published: 1 },
+        code: { files: 9, added: 412, removed: 96 },
+        days: [
+          { label: 'MON 14', commits: {} },
+          { label: 'TUE 15', commits: { openstage: 2, story_time_v1: 1 }, kind: 'built', headline: 'Story Time exports to PDF' },
+          { label: 'WED 16', commits: {} },
+          { label: 'THU 17', commits: { openstage: 1 }, kind: 'built', headline: '1 commit in openstage', auto: true },
+          { label: 'FRI 18', commits: {}, kind: 'published', headline: 'Posted on X' },
+          { label: 'SAT 19', commits: {} },
+          { label: 'SUN 20', commits: {} }
+        ]
+      },
+      // Invented stress week, set in the past: six projects in one day, a 34-character project name, 76 to 80
+      // character headlines, a 36-commit day, an auto day across three projects, two launches, a date range across
+      // two months, and five-digit line counts.
+      wx: {
+        iso: '2026-W31', dates: 'Jul 27 – Aug 2, 2026', goal: 'Answer every support email before lunch, every weekday',
+        prev: { commits: 19, active: 3, shipped: 0, published: 2 },
+        code: { files: 1204, added: 48210, removed: 19377, invented: true },
+        days: [
+          { label: 'MON 27', commits: { 'wheels-off': 3, openstage: 2, 'trained-on': 1, story_time_v1: 1, 'build-in-public-newsletter-archive': 2, cli: 1 }, kind: 'built', headline: 'Split the leaderboard into four workers, so one slow write never stalls a race' },
+          { label: 'TUE 28', commits: { 'build-in-public-newsletter-archive': 12 }, kind: 'shipped', headline: 'build-in-public-newsletter-archive v1.0 goes out to everyone on the waitlist' },
+          { label: 'WED 29', commits: {} },
+          { label: 'THU 30', commits: { openstage: 28, 'wheels-off': 8 }, kind: 'built', headline: 'Rewrote the card renderer twice, and now the fonts measure the same everywhere' },
+          { label: 'FRI 31', commits: { cli: 5 }, kind: 'published', headline: 'Essay: a full year of building in public, and every mistake I made along the way' },
+          { label: 'SAT 1', commits: { 'trained-on': 2, cli: 1, 'wheels-off': 1 }, kind: 'built' },
+          { label: 'SUN 2', commits: { story_time_v1: 9, openstage: 4 }, kind: 'shipped', headline: 'Story Time now reads bedtime stories aloud in three voices, and one is a dragon' }
+        ]
+      },
+      // Invented zero week: no commits and one post. Its last week is the w7 card below, so the deltas match that card.
+      w0: {
+        iso: '2026-W35', dates: 'Aug 24 – 30, 2026', goal: 'Back to the editor on Monday',
+        prev: { commits: 31, active: 7, shipped: 0, published: 1 },
+        code: null,
+        days: [
+          { label: 'MON 24', commits: {} },
+          { label: 'TUE 25', commits: {} },
+          { label: 'WED 26', commits: {} },
+          { label: 'THU 27', commits: {} },
+          { label: 'FRI 28', commits: {}, kind: 'published', headline: 'Why I stopped coding for a week to talk to twenty users' },
+          { label: 'SAT 29', commits: {} },
+          { label: 'SUN 30', commits: {} }
+        ]
+      },
+      // Invented: seven days straight, the densest one-line week, with an emoji the card strips.
+      w7: {
+        iso: '2026-W34', dates: 'Aug 17 – 23, 2026', goal: 'Take a real day off',
+        prev: { commits: 21, active: 4, shipped: 0, published: 1 },
+        code: { files: 58, added: 2840, removed: 910, invented: true },
+        days: [
+          { label: 'MON 17', commits: { openstage: 4 }, kind: 'built', headline: 'Week card editor: pick what goes on the card' },
+          { label: 'TUE 18', commits: { openstage: 6, 'wheels-off': 1 }, kind: 'built', headline: '6 commits in openstage', auto: true },
+          { label: 'WED 19', commits: { 'wheels-off': 5 }, kind: 'built', headline: 'Toon outlines on every car \u{1F3CE}\u{FE0F}' },
+          { label: 'THU 20', commits: { 'wheels-off': 2 }, kind: 'built', headline: '2 commits in wheels-off', auto: true },
+          { label: 'FRI 21', commits: { openstage: 3 }, kind: 'built', headline: 'Dark mode for the week card' },
+          { label: 'SAT 22', commits: { 'wheels-off': 7, openstage: 1 }, kind: 'built', headline: 'Night track with real headlights' },
+          { label: 'SUN 23', commits: { openstage: 2 }, kind: 'published', headline: 'Wrote up the week on Bluesky' }
+        ]
+      }
+    };
+
+    // ---------- Props and the derived week ----------
+    const dark = this.props.theme === 'dark';
+    const weekKey = WEEKS[this.props.week] ? this.props.week : 'w41';
+    const wk = WEEKS[weekKey];
+    const showCode = this.props.code !== 'hide' && Boolean(wk.code);
+    const uid = weekKey + (dark ? 'd' : 'l') + (this.props.identity || 'tux');
+    const [isoYear, isoWeekStr] = wk.iso.split('-W');
+    const weekN = Number(isoWeekStr);
+    // The app's count line, rebuilt from the day's commits. The number is always the day's total:
+    // one project '6 commits in wheels-off', two '6 commits in wheels-off and openstage', more '10 commits across 6 projects'.
+    const nCommits = (n) => `${fmt(n)} commit${n === 1 ? '' : 's'}`;
+    const autoLine = (ps, n) => (ps.length === 1 ? `${nCommits(n)} in ${cutName(ps[0], 22)}`
+      : ps.length === 2 ? `${nCommits(n)} in ${cutName(ps[0], 22)} and ${cutName(ps[1], 22)}`
+        : `${nCommits(n)} across ${ps.length} projects`);
+    // The short form, when the full line would push the project pills out.
+    const autoShort = (ps, n) => (ps.length > 1 ? `${nCommits(n)} across ${ps.length} projects` : nCommits(n));
+    const days = wk.days.map((d) => {
+      const [dow, dom] = d.label.split(' ');
+      const projects = Object.keys(d.commits).filter((p) => d.commits[p] > 0)
+        .sort((a, b) => d.commits[b] - d.commits[a] || a.localeCompare(b));
+      const total = projects.reduce((a, p) => a + d.commits[p], 0);
+      const words = d.auto ? '' : stripEmoji(d.headline);
+      const kind = d.kind || (total ? 'built' : '');
+      return {
+        ...d, dow, dom, projects, total, words, kind,
+        named: Boolean(words),
+        // A day counts as active when it has commits or a logged launch or post, as data.json counts it.
+        active: total > 0 || Boolean(words) || kind === 'published' || kind === 'shipped',
+        autoText: total ? autoLine(projects, total) : '',
+        autoShort: total ? autoShort(projects, total) : ''
+      };
+    });
+    const commits = days.reduce((s, d) => s + d.total, 0);
+    const activeDays = days.filter((d) => d.active).length;
+    const shipped = days.filter((d) => d.kind === 'shipped').length;
+    const published = days.filter((d) => d.kind === 'published').length;
+    const maxDay = Math.max(1, ...days.map((d) => d.total));
+    const nNamed = days.filter((d) => d.named).length;
+
+
+    // ---------- Palette: paper or night, Openstage's own ink and one accent (deep green) ----------
+    // faint is the quietest type on the card (the unused strip letters, the diffstat) and still holds 3:1.
+    const P = dark
+      ? { bg: '#0E1012', ink: '#ECEEEF', muted: '#8E959A', faint: '#6B7378', rule: '#22272B', ruleStrong: '#394046', cellLine: '#454D54', accent: '#00BA7C', onAccent: '#0E1012', avatarRing: '#2A3035' }
+      : { bg: '#F8F7F3', ink: '#14171A', muted: '#62665F', faint: '#8A8E86', rule: '#E4E3DC', ruleStrong: '#CDCBC1', cellLine: '#C3C1B6', accent: '#00875A', onAccent: '#FFFFFF', avatarRing: '#D9D7CE' };
+    // Activity cells: the accent mixed into the ground in four steps, as solid colours the server can write.
+    const LV = dark ? [0.34, 0.54, 0.76, 1] : [0.22, 0.44, 0.7, 1];
+    const t = { ...P, lvl1: mix(P.bg, P.accent, LV[0]), lvl2: mix(P.bg, P.accent, LV[1]), lvl3: mix(P.bg, P.accent, LV[2]), lvl4: P.accent,
+      // A shipped entry sits on a wash of the accent, so the week's launches lead the list.
+      wash: dark ? mix(P.bg, P.accent, 0.13) : '#E1F0E8',
+      // Pills are the ink at low opacity, so they sit the same on the paper and on a launch's wash.
+      pillA: dark ? 0.1 : 0.065,
+      pillText: mix(P.muted, P.ink, 0.25) };
+
+    // ---------- The display list ----------
+    const FF = { i: "'Inter', sans-serif", m: "'DM Mono', monospace" };
+    const FW = { i4: 400, i5: 500, i6: 600, m4: 400, m5: 500 };
+    const texts = [], textsR = [], dots = [], icons = [];
+    const g = { wash: '', rules: '', rulesStrong: '', cellEmpty: '', cellPost: '', cell1: '', cell2: '', cell3: '', cell4: '', pills: '', tagShip: '', tagPub: '', tagBuilt: '', chip: '' };
+    const piece = (text, f, size, x, baseline, color, ls = 0, tnum = false) => ({
+      text, ff: FF[f[0]], fw: FW[f], fs: r2(size), ls, num: tnum ? 'tabular-nums' : 'normal',
+      x: r2(x), y: r2(baseline - baseOf(f) * size), color
+    });
+    const put = (text, f, size, x, baseline, color, ls = 0, tnum = false) => {
+      texts.push(piece(text, f, size, x, baseline, color, ls, tnum));
+      return x + VW(text, f, size, ls, tnum);
+    };
+    // Right-aligned type is anchored at its right edge (text-anchor="end" in SVG). Chrome adds the tracking after the
+    // last glyph too, so the mock cancels it with margin-right; in the Ruby port, add tracking x size to x for every
+    // tracked run anchored at its end.
+    const putR = (text, f, size, xEnd, baseline, color, ls = 0, tnum = false) => {
+      textsR.push({ ...piece(text, f, size, 0, baseline, color, ls, tnum), r: r2(1200 - xEnd), mr: -ls });
+      return xEnd - VW(text, f, size, ls, tnum);
+    };
+
+    // ---------- The grid ----------
+    // A slim rail on the left (identity, the week's strip, four numbers), and the entries on the rest of the width.
+    const L = 60, R = 1140;
+    const COL_R = 314;                 // the rail
+    const X_DAY = 360, X_HEAD = 452;   // the entries: day and tag column, then the words
+    const HEAD_B = 60;                 // shared baseline of the name and the entries header
+    const LIST_TOP = 74, FOOT_RULE = 538, FOOT_B = 590;
+
+    // ---------- Identity: avatar, name, the Pro chip, GitHub handle ----------
+    const AV = 46;
+    const avatar = { x: L, y: 39, s: AV, c: AV / 2, ring: AV / 2 - 0.5, label: `${BUILDER.name}'s avatar` };
+    const nameX = L + AV + 14, NAME_LS = -0.01, nameRoom = COL_R - nameX;
+    const CHIP_TEXT = 'OPENSTAGE PRO', CHIP_S = 8.5, CHIP_LS = 0.1, CHIP_H = 15, CHIP_GAP = 8;
+    const chipTW = VW(CHIP_TEXT, 'm5', CHIP_S, CHIP_LS), chipW = Math.ceil(chipTW) + 12;
+    const chipNeed = BUILDER.pro ? CHIP_GAP + chipW : 0;
+    const nameW1 = VW(BUILDER.name, 'i6', 1, NAME_LS);
+    // The name never loses a letter while it can wrap. In order:
+    // 1. one line beside the chip, 20px down to 15px;
+    // 2. one line at 15px or more with the chip moved below the name;
+    // 3. two balanced lines at 17px down to 15px;
+    // 4. two lines at 15px, the second cut at a word.
+    let nameLines = null, NAME_S = 20, chipBeside = false;
+    const s1 = fit1(Math.min(20, (nameRoom - chipNeed) / nameW1));
+    if (s1 >= 15) { nameLines = [BUILDER.name]; NAME_S = s1; chipBeside = BUILDER.pro; }
+    if (!nameLines) {
+      const s2 = fit1(Math.min(20, nameRoom / nameW1));
+      if (s2 >= 15) { nameLines = [BUILDER.name]; NAME_S = s2; }
+    }
+    for (let s = 17; !nameLines && s >= 15; s -= 0.5) {
+      const ls = balance(BUILDER.name, 'i6', s, NAME_LS, nameRoom, 2);
+      if (ls) { nameLines = ls; NAME_S = s; }
+    }
+    if (!nameLines) {
+      const ws = BUILDER.name.split(' ');
+      let k = 1;
+      while (k < ws.length && VW(ws.slice(0, k + 1).join(' '), 'i6', 15, NAME_LS) <= nameRoom) k += 1;
+      const first = cutToWidth(ws.slice(0, k).join(' '), 'i6', 15, NAME_LS, nameRoom);
+      nameLines = k < ws.length ? [first, cutWords(ws.slice(k).join(' '), 'i6', 15, NAME_LS, nameRoom)] : [first];
+      NAME_S = 15;
+    }
+    const NAME_LH = Math.round(NAME_S * 1.2);
+    nameLines.forEach((ln, k) => put(ln, 'i6', NAME_S, nameX, HEAD_B + k * NAME_LH, t.ink, NAME_LS));
+    const lastNameB = HEAD_B + (nameLines.length - 1) * NAME_LH;
+    const lastNameW = VW(nameLines[nameLines.length - 1], 'i6', NAME_S, NAME_LS);
+    // GitHub usernames run to 39 characters; a long one steps down to 10px, then is cut.
+    const HANDLE_B = lastNameB + 19, handle = '@' + BUILDER.github;
+    const handleRoom = COL_R - nameX - 17;
+    const HANDLE_S = fit1(Math.max(10, Math.min(12.5, handleRoom / VW(handle, 'm4', 1))));
+    const handleText = cutToWidth(handle, 'm4', HANDLE_S, 0, handleRoom);
+    const ghMid = HANDLE_B - cap('m4', HANDLE_S) / 2;
+    icons.push({ x: nameX, y: r2(ghMid - 6), w: 12, h: 12, vb: '0 0 16 16', d: GITHUB, fill: t.muted });
+    const handleEnd = put(handleText, 'm4', HANDLE_S, nameX + 17, HANDLE_B, t.muted);
+    let idBottom = HANDLE_B + 3;
+    if (BUILDER.pro) {
+      // Beside the name when it fits; else after the handle; else on a line of its own.
+      let cx, mid;
+      if (chipBeside || nameX + lastNameW + chipNeed <= COL_R) { cx = nameX + lastNameW + CHIP_GAP; mid = lastNameB - cap('i6', NAME_S) / 2; }
+      else if (handleEnd + 10 + chipW <= COL_R) { cx = handleEnd + 10; mid = ghMid; }
+      else { cx = nameX; mid = HANDLE_B + 17; idBottom = mid + CHIP_H / 2; }
+      const top = Math.round(mid - CHIP_H / 2);
+      g.chip += rrLine(Math.round(cx), top, chipW, CHIP_H, 3);
+      put(CHIP_TEXT, 'm5', CHIP_S, Math.round(cx) + (chipW - chipTW) / 2, top + CHIP_H / 2 + cap('m5', CHIP_S) / 2, t.muted, CHIP_LS);
+    }
+
+    // ---------- The entries header: a small tag, the week, and the builder's page ----------
+    // 'CHANGELOG · 2026.41' is a tag now, not a title. The year comes from the ISO week (the year its Thursday falls
+    // in), never from the dates, so 2026-W53 stays 2026.
+    const tagText = `CHANGELOG · ${isoYear}.${isoWeekStr.padStart(2, '0')}`;
+    const tagEnd = put(tagText, 'm5', 10.5, X_DAY, HEAD_B, t.accent, 0.14);
+    const dateText = `Week ${weekN} · ${wk.dates}`;
+    const dateEnd = put(dateText, 'i5', 14, tagEnd + 18, HEAD_B, t.ink, -0.005);
+    g.rulesStrong += hLine(X_DAY, R, LIST_TOP - 1);
+    // The link is one run anchored at the right edge, the host muted and the builder's page in ink (two tspans).
+    const LINK_S = 13.5, LINK_LS = -0.005, MARK = 14;
+    const handlePart = BUILDER.page.split('/').pop();
+    const hostPart = BUILDER.page.slice(0, BUILDER.page.length - handlePart.length);
+    const link = { r: r2(1200 - R), y: r2(HEAD_B - baseOf('i5') * LINK_S), mr: -LINK_LS, fs: LINK_S, ls: LINK_LS, a: hostPart, b: handlePart };
+    const linkX = R - VW(BUILDER.page, 'i5', LINK_S, LINK_LS);
+    icons.push({ x: Math.round(linkX - 8 - MARK), y: Math.round(HEAD_B - cap('i5', LINK_S) / 2 - MARK / 2), w: MARK, h: MARK, vb: '0 0 512 512', d: OS_MARK, fill: t.muted });
+
+    // ---------- The activity strip: the seven days at a glance ----------
+    // A cell's strength is the day's commits on one fixed scale (1–2, 3–7, 8–15, 16+), so cards compare across weeks.
+    // A day with a post and no commits is outlined in the accent, and the key below says so. No marks, no stars.
+    const CELL = 32, CGAP = 5, CELL_H = 30;
+    // The rail's groups (identity, strip, numbers) stack from the top with one even gap between them, so any spare
+    // height collects once under the numbers instead of opening holes between the groups.
+    const RAIL_GAP = 40;
+    const CAP_B = Math.round(idBottom + RAIL_GAP + 4);
+    put('COMMITS PER DAY', 'm5', 9.5, L, CAP_B, t.muted, 0.12);
+    const CELL_TOP = CAP_B + 12;
+    const levelOf = (n) => (n >= 16 ? 4 : n >= 8 ? 3 : n >= 3 ? 2 : n >= 1 ? 1 : 0);
+    let stripMarked = 0, postOnly = 0;
+    days.forEach((d, i) => {
+      const cx = L + i * (CELL + CGAP);
+      const lv = levelOf(d.total);
+      if (lv) g[`cell${lv}`] += rr(cx, CELL_TOP, CELL, CELL_H, 5);
+      else if (d.active) { g.cellPost += rr(cx + 0.75, CELL_TOP + 0.75, CELL - 1.5, CELL_H - 1.5, 4.5); postOnly += 1; }
+      else g.cellEmpty += rrLine(cx, CELL_TOP, CELL, CELL_H, 5);
+      if (lv || d.active) stripMarked += 1;
+      const letter = d.dow[0];
+      put(letter, 'm5', 10, cx + CELL / 2 - VW(letter, 'm5', 10) / 2, CELL_TOP + CELL_H + 16, d.active ? t.muted : t.faint);
+    });
+    if (postOnly) {
+      const ky = CELL_TOP + CELL_H + 37;
+      g.cellPost += rr(L + 0.75, ky - 10 + 0.75, 16 - 1.5, 11 - 1.5, 3);
+      put('Outlined: a post, no commits', 'i4', 11, L + 24, ky, t.muted);
+    }
+
+    // ---------- Key numbers: this week and the change from last week ----------
+    const prevN = prevWeekOf(wk.iso);
+    const stripBottom = postOnly ? CELL_TOP + CELL_H + 37 : CELL_TOP + CELL_H + 16;
+    const KEY_ROW = 40, keyTop = Math.round(stripBottom + RAIL_GAP + 12), KEY_BOTTOM = keyTop + 4 * KEY_ROW;
+    const KEY_HEAD_B = keyTop - 9;
+    const VAL_R = COL_R - 58;
+    putR(`W${weekN}`, 'm5', 10, VAL_R, KEY_HEAD_B, t.muted, 0.12);
+    putR(`VS W${prevN}`, 'm5', 10, COL_R, KEY_HEAD_B, t.muted, 0.12);
+    g.rulesStrong += hLine(L, COL_R, keyTop);
+    const keys = [
+      ['Commits', commits, wk.prev.commits],
+      ['Days active', activeDays, wk.prev.active],
+      ['Shipped', shipped, wk.prev.shipped],
+      ['Published', published, wk.prev.published]
+    ];
+    // Every change prints, as a plain count with a true minus sign: '+42', '−16', '±0'. A percent would turn a quiet week
+    // into '−80%'. Gains take the accent; drops and ties stay muted, so the card is honest without shouting about a thin week.
+    keys.forEach(([label, v, was], i) => {
+      const top = keyTop + i * KEY_ROW;
+      if (i) g.rules += hLine(L, COL_R, top);
+      const b = top + KEY_ROW / 2 + fig('i6', 22) / 2;
+      put(label, 'i4', 14, L, b, t.muted);
+      putR(fmt(v), 'i6', 22, VAL_R, b, t.ink, -0.01, true);
+      const dlt = v - was;
+      putR(signed(dlt), 'm5', 12, COL_R, b, dlt > 0 ? t.accent : t.muted, 0, true);
+    });
+    // The diffstat is a footnote under the key numbers, and the editor can hide it:
+    // many investors and clients read lines of code as a vanity number.
+    const NOTE_B = KEY_BOTTOM + 24;
+    if (showCode) {
+      let x = put(`+${fmt(wk.code.added)}`, 'm5', 11, L, NOTE_B, t.muted);
+      x = put(`−${fmt(wk.code.removed)}`, 'm5', 11, x + 7, NOTE_B, t.muted);
+      put(`lines · ${fmt(wk.code.files)} files`, 'm4', 11, x + 7, NOTE_B, t.faint);
+    }
+
+    // ---------- The entries: one row per active day, then one line for the quiet days ----------
+    const HEAD_W = R - X_HEAD;
+    const HLS = -0.015;
+    const PILL_H = 20, TAG_H = 18, TAG_W = 72, META_GAP = 10, PS = 11, SA = 16, DAY_S = 12, DAY_LS = 0.04;
+    const TAG_S = 9.5, TAG_LS = 0.1;
+    const P_MIN = 9, FOLD_H = 46;
+    // Pills are that day's commits: each shows a project and its share. The meta line names the day's total first.
+    const pillOf = (d, p, showCnt) => {
+      const name = cutName(p, 22), nameW = VW(name, 'm4', PS), cnt = fmt(d.commits[p]), cntW = VW(cnt, 'm5', PS);
+      return { p, name, nameW, cnt, cntW, showCnt, w: Math.round(8 + 6 + 6 + nameW + (showCnt ? 5 + cntW : 0) + 8) };
+    };
+    // What does not fit is counted in plain text: '+3 projects', never a bare '+3' that could be commits.
+    const moreText = (k) => `+${k} project${k === 1 ? '' : 's'}`;
+    const pillsW = (ps, n) => ps.slice(0, n).reduce((a, q) => a + q.w, 0) + Math.max(0, n - 1) * 6
+      + (n < ps.length ? (n ? 10 : 0) + VW(moreText(ps.length - n), 'm4', PS) : 0);
+    const drawMeta = (d, mid) => {
+      const label = `${fmt(d.total)} ${d.total === 1 ? 'COMMIT' : 'COMMITS'}`;
+      const x0 = put(label, 'm5', 10, X_HEAD, mid + cap('m5', 10) / 2, t.muted, 0.1) + 14;
+      const ps = d.projects.map((p) => pillOf(d, p, d.projects.length > 1));
+      let shown = ps.length;
+      while (shown > 0 && x0 + pillsW(ps, shown) > R) shown -= 1;
+      let px = Math.round(x0);
+      const pillTop = Math.round(mid - PILL_H / 2);
+      ps.slice(0, shown).forEach((q) => {
+        g.pills += rr(px, pillTop, q.w, PILL_H, PILL_H / 2);
+        dots.push({ x: px + 8, y: pillTop + 7, s: 6, r: 3, c: projColor(q.p) });
+        put(q.name, 'm4', PS, px + 20, mid + cap('m4', PS) / 2, t.pillText);
+        if (q.showCnt) put(q.cnt, 'm5', PS, px + 20 + q.nameW + 5, mid + cap('m5', PS) / 2, t.ink);
+        px += q.w + 6;
+      });
+      if (shown < ps.length) put(moreText(ps.length - shown), 'm4', PS, shown ? px + 4 : px, mid + cap('m4', PS) / 2, t.muted);
+      return { label, pills: ps.slice(0, shown).map((q) => `${q.name}${q.showCnt ? ' ' + q.cnt : ''}`), more: ps.length - shown };
+    };
+
+    const items = days.filter((d) => d.active);
+    const quietDays = days.filter((d) => !d.active).map((d) => d.dow[0] + d.dow.slice(1).toLowerCase());
+    const foldText = quietDays.length ? `${quietDays.join(', ')} · no changes` : '';
+    const FOLD_H_USED = foldText ? FOLD_H : 0;
+    const LIST_H = FOOT_RULE - LIST_TOP;
+    const nNamedRows = items.filter((d) => d.named).length;
+    // A launch is set a weight heavier, so the week's news leads the list.
+    const fontOf = (d) => (d.kind === 'shipped' ? 'i6' : 'i5');
+    // One headline size for the list: 22px for a full week, up to 40px when one entry carries the week.
+    // It steps down by half pixels until every row fits with its minimum padding.
+    const S_MAX = nNamedRows >= 5 ? 22 : nNamedRows === 4 ? 25 : nNamedRows === 3 ? 28 : nNamedRows === 2 ? 34 : 42;
+    let S = S_MAX, rows = null, need = 0;
+    for (let s = S_MAX; s >= 15.5; s -= 0.5) {
+      const rs = items.map((d) => {
+        if (!d.named) {
+          const text = cutWords(VW(d.autoText, 'i4', SA) <= HEAD_W ? d.autoText : d.autoShort, 'i4', SA, 0, HEAD_W);
+          return { d, f: 'i4', size: SA, lh: Math.round(SA * 1.3), lines: [text], meta: false, color: t.muted, content: Math.max(cap('i4', SA) + 6, 10 + TAG_H) };
+        }
+        const f = fontOf(d), lh = Math.round(s * 1.25);
+        const lines = balance(d.words, f, s, HLS, HEAD_W, 3) || [cutWords(d.words, f, s, HLS, HEAD_W)];
+        const meta = d.total > 0;
+        const tail = meta ? META_GAP + PILL_H : Math.max(0.24 * s, 6);
+        return { d, f, size: s, lh, lines, meta, color: t.ink, content: Math.max(cap(f, s) + (lines.length - 1) * lh + tail, 10 + TAG_H) };
+      });
+      need = rs.reduce((a, r) => a + r.content + 2 * P_MIN, 0) + FOLD_H_USED;
+      S = s; rows = rs;
+      if (need <= LIST_H) break;
+    }
+    // Spare height goes to padding, up to a cap that is bigger when fewer entries share the list; what is left
+    // after that sits partly above the first row and partly below the last, so a thin week is centred and calm.
+    const nRows = Math.max(1, rows.length);
+    const spare = LIST_H - need;
+    const PAD_CAP = nRows <= 2 ? 50 : nRows <= 4 ? 30 : 22;
+    let pad = P_MIN, offset = 0;
+    if (spare > 0) {
+      const g1 = Math.min(spare / (2 * nRows), PAD_CAP - P_MIN);
+      pad += g1;
+      offset = (spare - g1 * 2 * nRows) * 0.4;
+    } else if (spare < 0) {
+      pad = Math.max(3, P_MIN + spare / (2 * nRows));
+    }
+    const tops = [];
+    let acc = LIST_TOP + offset;
+    rows.forEach((r) => { tops.push(Math.round(acc)); acc += r.content + 2 * pad; });
+    tops.push(Math.round(acc));
+
+    // Tags: SHIPPED is filled, PUBLISHED is outlined in the accent, BUILT is outlined quietly.
+    const TAGS = { shipped: 'SHIPPED', published: 'PUBLISHED', built: 'BUILT' };
+    const isWashed = (r) => r && r.d.kind === 'shipped' && r.d.named;
+    const rowFacts = [];
+    rows.forEach((r, i) => {
+      const top = tops[i], bot = tops[i + 1], h = bot - top;
+      const d = r.d, prev = rows[i - 1];
+      // Hairlines part the rows, except next to a launch, whose wash parts it.
+      if (i && !isWashed(r) && !isWashed(prev)) g.rules += hLine(X_DAY, R, top);
+      const dayText = `${d.dow} ${String(d.dom).padStart(2, '0')}`;
+      if (isWashed(r)) g.wash += rr(X_DAY - 14, top + 3, R - X_DAY + 28, h - 6, 8);
+      const firstB = top + pad + cap(r.f, r.size);
+      // The day sits on the headline's baseline, or at its cap line when the headline is big.
+      const dayB = r.size <= 24 ? firstB : top + pad + cap('m5', DAY_S);
+      put(dayText, 'm5', DAY_S, X_DAY, r1(dayB), d.named ? t.ink : t.muted, DAY_LS);
+      const kindText = TAGS[d.kind] || TAGS.built;
+      const tagTop = Math.round(dayB + 10), tm = tagTop + TAG_H / 2;
+      const tagTW = VW(kindText, 'm5', TAG_S, TAG_LS), tx = X_DAY + (TAG_W - tagTW) / 2, tb = tm + cap('m5', TAG_S) / 2;
+      if (d.kind === 'shipped') {
+        g.tagShip += rr(X_DAY, tagTop, TAG_W, TAG_H, 4);
+        put(kindText, 'm5', TAG_S, tx, tb, t.onAccent, TAG_LS);
+      } else if (d.kind === 'published') {
+        g.tagPub += rrLine(X_DAY, tagTop, TAG_W, TAG_H, 4);
+        put(kindText, 'm5', TAG_S, tx, tb, t.accent, TAG_LS);
+      } else {
+        g.tagBuilt += rrLine(X_DAY, tagTop, TAG_W, TAG_H, 4);
+        put(kindText, 'm5', TAG_S, tx, tb, t.muted, TAG_LS);
+      }
+      r.lines.forEach((ln, k) => put(ln, r.f, r.size, X_HEAD, r1(firstB + k * r.lh), r.color, d.named ? HLS : 0));
+      const lastB = firstB + (r.lines.length - 1) * r.lh;
+      let m = { label: '', pills: [], more: 0 };
+      if (r.meta) m = drawMeta(d, Math.round(lastB + META_GAP) + PILL_H / 2);
+      rowFacts.push({ day: dayText, tag: kindText, named: d.named, size: r.size, lines: r.lines, total: d.total, meta: m.label, pills: m.pills, more: m.more, h });
+    });
+    // The quiet days, in one line under the entries.
+    if (foldText) {
+      const ft = tops[tops.length - 1];
+      if (rows.length && !isWashed(rows[rows.length - 1])) g.rules += hLine(X_DAY, R, ft);
+      put(foldText, 'i4', 14, X_DAY, r1(ft + FOLD_H / 2 + cap('i4', 14) / 2), t.muted);
+    }
+
+    // ---------- Footer: next week's goal, given room ----------
+    g.rules += hLine(L, R, FOOT_RULE);
+    put('UP NEXT', 'm5', 10.5, L, FOOT_B, t.accent, 0.16);
+    const GOAL_LS = -0.01, goalRoom = R - X_DAY;
+    const goalText = stripEmoji(wk.goal);
+    const GOAL_S = fit1(Math.max(18, Math.min(nRows <= 3 ? 34 : 26, goalRoom / VW(goalText, 'i6', 1, GOAL_LS))));
+    const goal = cutWords(goalText, 'i6', GOAL_S, GOAL_LS, goalRoom);
+    put(goal, 'i6', GOAL_S, X_DAY, FOOT_B, t.ink, GOAL_LS);
+
+    return {
+      t, g, uid, avatar, link, dots, icons, texts, textsR,
+      checks: {
+        tag: tagText, iso: wk.iso, dates: wk.dates, prevLabel: `W${prevN}`,
+        commits, activeDays, shipped, published, stripMarked, prev: wk.prev,
+        deltas: keys.map(([label, v, was]) => `${label} ${v} (${signed(v - was)})`),
+        code: wk.code ? { files: wk.code.files, added: wk.code.added, removed: wk.code.removed, invented: Boolean(wk.code.invented), shown: showCode } : null,
+        name: { lines: nameLines, size: NAME_S, chip: BUILDER.pro }, handle: { text: handleText, size: HANDLE_S },
+        S, pad: r1(pad), offset: r1(offset), need, listEnd: tops[tops.length - 1], fold: foldText, goal, goalSize: GOAL_S, rows: rowFacts
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

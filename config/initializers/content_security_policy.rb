@@ -17,7 +17,8 @@ Rails.application.configure do
   config.content_security_policy do |policy|
     policy.default_src     :self
     policy.script_src      :self, "https://cloud.umami.is"
-    policy.connect_src     :self, "https://cloud.umami.is", "https://gateway.umami.is"
+    # GitHub avatars: the week card's download reads the avatar to draw it.
+    policy.connect_src     :self, "https://cloud.umami.is", "https://gateway.umami.is", "https://avatars.githubusercontent.com"
     policy.style_src       :self, :unsafe_inline
     policy.img_src         :self, :https, :data
     policy.font_src        :self, :data

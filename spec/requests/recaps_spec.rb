@@ -47,10 +47,11 @@ RSpec.describe "Recaps", type: :request do
     context "as the owner" do
       before { sign_in_as(owner) }
 
-      it "links the page from the nav" do
+      # The week card editor at /week ships unlinked (decided 2026-10-16).
+      it "links the page from the nav, and never the week card editor" do
         get "/dashboard"
         expect(response.body).to include(">Recap<")
-        expect(response.body).to include('href="/recap"')
+        expect(response.body).not_to include('href="/week"')
       end
 
       it "renders the quiet-week state when there is nothing worth posting" do

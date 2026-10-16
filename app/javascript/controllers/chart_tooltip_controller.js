@@ -1,16 +1,24 @@
 import { Controller } from "@hotwired/stimulus"
 
+// A hovered target either names a <template> the server rendered with the
+// whole tooltip (data-chart-tooltip-template-param), or carries a count and a
+// date to write one.
 export default class extends Controller {
   static targets = ["tooltip"]
 
   show(event) {
-    const t = event.currentTarget
-    const count = t.dataset.count
-    const date  = t.dataset.date
-    const label = t.dataset.label || (count === "1" ? "view" : "views")
-    this.tooltipTarget.innerHTML =
-      `<div class="font-medium">${count} ${label}</div>` +
-      `<div class="text-gray-300">${date}</div>`
+    const template = event.params.template && document.getElementById(event.params.template)
+    if (template) {
+      this.tooltipTarget.replaceChildren(template.content.cloneNode(true))
+    } else {
+      const t = event.currentTarget
+      const count = t.dataset.count
+      const date  = t.dataset.date
+      const label = t.dataset.label || (count === "1" ? "view" : "views")
+      this.tooltipTarget.innerHTML =
+        `<div class="font-medium">${count} ${label}</div>` +
+        `<div class="text-gray-300">${date}</div>`
+    }
     this.tooltipTarget.classList.remove("hidden")
     this.position(event)
   }

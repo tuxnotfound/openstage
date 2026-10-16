@@ -9,3 +9,8 @@
   animation: entry-highlight 2s ease-out forwards;
   border-radius: theme(borderRadius.lg);
 }
+
+/* A disc on the progress chart jumps to its row in the list. */
+[id^="progress-note-"]:target {
+  animation: entry-highlight 1s ease-out forwards;
+}

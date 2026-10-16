@@ -1,0 +1,43 @@
+<%# The Journey card, 1200x630. CardLayout::Journey measures and places every
+    line, since SVG cannot flow text; this writes what it drew, in its order.
+    Text stays on one line inside each <text>: a line break there would print
+    as a space. %>
+<% t = layout.palette %>
+<% avatar = layout.avatar %>
+<% num = CardLayout::Shapes.method(:num) %>
+<% paths = layout.canvas.paths %>
+<% wash, wash_from, wash_to = layout.wash_paint %>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img"
+     aria-label="<%= layout.section.labels.title %> progress card for <%= layout.user.display_name %>" data-week-card="journey">
+  <defs>
+    <style><%= card_face_css(CardLayout::Journey) %></style>
+    <% if avatar %><clipPath id="journey-avatar"><circle cx="88" cy="80" r="28"/></clipPath><% end %>
+    <linearGradient id="journey-wash" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="<%= wash %>" stop-opacity="<%= wash_from %>"/>
+      <stop offset="1" stop-color="<%= wash %>" stop-opacity="<%= wash_to %>"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="<%= t[:bg] %>"/>
+  <% if avatar %>
+    <circle cx="88" cy="80" r="30" fill="<%= t[:ring] %>"/>
+    <image href="<%= avatar[:url] %>" x="60" y="52" width="56" height="56" preserveAspectRatio="xMidYMid slice" clip-path="url(#journey-avatar)"/>
+  <% end %>
+  <% CardLayout::Journey::UNDER.except(:poles).each do |layer, paint| %>
+    <% if paths[layer].present? %><%= tag.path(d: paths[layer], **card_paint(paint, t)) %><% end %>
+  <% end %>
+  <path d="<%= layout.geometry.wash_path %>" fill="url(#journey-wash)"/>
+  <% if paths[:poles].present? %><%= tag.path(d: paths[:poles], **card_paint(CardLayout::Journey::UNDER[:poles], t)) %><% end %>
+  <% layout.strokes.each do |d, stroke, width| %>
+    <path d="<%= d %>" fill="none" stroke="<%= stroke %>" stroke-width="<%= width %>" stroke-linejoin="round" stroke-linecap="round"/>
+  <% end %>
+  <% layout.fills.each do |d, fill| %><%= tag.path(d: d, fill: fill) %><% end %>
+  <% layout.canvas.dots.each do |dot| %>
+    <circle cx="<%= num.call(dot.cx) %>" cy="<%= num.call(dot.cy) %>" r="<%= num.call(dot.r) %>" fill="<%= dot.fill %>"/>
+  <% end %>
+  <% CardLayout::Journey::OVER.each do |layer, paint| %>
+    <% if paths[layer].present? %><%= tag.path(d: paths[layer], **card_paint(paint, t)) %><% end %>
+  <% end %>
+  <% layout.canvas.runs.each do |run| %>
+    <%= card_run(run) %>
+  <% end %>
+</svg>

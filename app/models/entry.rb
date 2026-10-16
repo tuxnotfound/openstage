@@ -12,6 +12,11 @@ class Entry < ApplicationRecord
     posted: "posted"
   }
 
+  # What a builder shipped and what they published, as the week card and the
+  # progress section count them. A commit is neither.
+  SHIPPED_TYPES = %w[milestone released].freeze
+  PUBLISHED_TYPES = %w[posted link note].freeze
+
   enum :source, {
     github: "github",
     twitter: "twitter",
@@ -48,6 +53,8 @@ class Entry < ApplicationRecord
   scope :publicly_visible, -> { visible.where(visibility: :public_entry) }
   scope :chronological, -> { order(occurred_at: :desc) }
   scope :pinned_entries, -> { where(pinned: true) }
+  scope :commits, -> { where(source: :github, entry_type: :shipped) }
+  scope :highlights, -> { where(entry_type: SHIPPED_TYPES + PUBLISHED_TYPES) }
 
   # Case-insensitive match across the fields a builder would actually remember:
   # what it said, and which project it was.

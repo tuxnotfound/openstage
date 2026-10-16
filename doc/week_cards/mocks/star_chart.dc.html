@@ -1,0 +1,1210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Star Chart v3: the whole week under one sky</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400&amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;family=DM+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 1200px; height: 630px; overflow: hidden; background: {{t.g1}}; color: {{t.text}}; font-family: 'DM Sans', sans-serif">
+
+  <svg width="1200" height="630" viewBox="0 0 1200 630" style="position: absolute; left: 0; top: 0" aria-hidden="true">
+    <defs>
+      <radialGradient id="sc-ground" cx="{{C.x}}" cy="{{C.y}}" r="900" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="{{t.g0}}"></stop>
+        <stop offset="1" stop-color="{{t.g1}}"></stop>
+      </radialGradient>
+      <radialGradient id="sc-disc" cx="{{C.x}}" cy="{{C.y}}" r="{{C.R}}" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="{{t.disc0}}"></stop>
+        <stop offset="1" stop-color="{{t.disc1}}"></stop>
+      </radialGradient>
+      <filter id="sc-grain" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" stitchTiles="stitch"></feTurbulence>
+        <feColorMatrix type="matrix" values="0 0 0 0 {{t.grainInk}}  0 0 0 0 {{t.grainInk}}  0 0 0 0 {{t.grainInk}}  0 0 0 0.9 0"></feColorMatrix>
+      </filter>
+      <filter id="sc-aura" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="22"></feGaussianBlur></filter>
+      <filter id="sc-glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="2.8"></feGaussianBlur></filter>
+      <filter id="sc-lum" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="4.5"></feGaussianBlur></filter>
+      <filter id="sc-milky" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="9"></feGaussianBlur></filter>
+      <filter id="sc-nova" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="7"></feGaussianBlur></filter>
+      <filter id="sc-bloom" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="13"></feGaussianBlur></filter>
+      <filter id="sc-titleglow" x="-10%" y="-40%" width="120%" height="180%"><feGaussianBlur stdDeviation="9"></feGaussianBlur></filter>
+      <filter id="sc-dot" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="2.4"></feGaussianBlur></filter>
+      <linearGradient id="sc-tail-0" gradientUnits="userSpaceOnUse" x1="{{comets.0.x1}}" y1="{{comets.0.y1}}" x2="{{comets.0.x2}}" y2="{{comets.0.y2}}"><stop offset="0" stop-color="{{sky.comet}}" stop-opacity="0.95"></stop><stop offset="1" stop-color="{{sky.comet}}" stop-opacity="0"></stop></linearGradient>
+      <linearGradient id="sc-tail-1" gradientUnits="userSpaceOnUse" x1="{{comets.1.x1}}" y1="{{comets.1.y1}}" x2="{{comets.1.x2}}" y2="{{comets.1.y2}}"><stop offset="0" stop-color="{{sky.comet}}" stop-opacity="0.95"></stop><stop offset="1" stop-color="{{sky.comet}}" stop-opacity="0"></stop></linearGradient>
+      <linearGradient id="sc-tail-2" gradientUnits="userSpaceOnUse" x1="{{comets.2.x1}}" y1="{{comets.2.y1}}" x2="{{comets.2.x2}}" y2="{{comets.2.y2}}"><stop offset="0" stop-color="{{sky.comet}}" stop-opacity="0.95"></stop><stop offset="1" stop-color="{{sky.comet}}" stop-opacity="0"></stop></linearGradient>
+      <linearGradient id="sc-tail-3" gradientUnits="userSpaceOnUse" x1="{{comets.3.x1}}" y1="{{comets.3.y1}}" x2="{{comets.3.x2}}" y2="{{comets.3.y2}}"><stop offset="0" stop-color="{{sky.comet}}" stop-opacity="0.95"></stop><stop offset="1" stop-color="{{sky.comet}}" stop-opacity="0"></stop></linearGradient>
+      <linearGradient id="sc-tail-4" gradientUnits="userSpaceOnUse" x1="{{comets.4.x1}}" y1="{{comets.4.y1}}" x2="{{comets.4.x2}}" y2="{{comets.4.y2}}"><stop offset="0" stop-color="{{sky.comet}}" stop-opacity="0.95"></stop><stop offset="1" stop-color="{{sky.comet}}" stop-opacity="0"></stop></linearGradient>
+      <linearGradient id="sc-tail-5" gradientUnits="userSpaceOnUse" x1="{{comets.5.x1}}" y1="{{comets.5.y1}}" x2="{{comets.5.x2}}" y2="{{comets.5.y2}}"><stop offset="0" stop-color="{{sky.comet}}" stop-opacity="0.95"></stop><stop offset="1" stop-color="{{sky.comet}}" stop-opacity="0"></stop></linearGradient>
+      <linearGradient id="sc-tail-6" gradientUnits="userSpaceOnUse" x1="{{comets.6.x1}}" y1="{{comets.6.y1}}" x2="{{comets.6.x2}}" y2="{{comets.6.y2}}"><stop offset="0" stop-color="{{sky.comet}}" stop-opacity="0.95"></stop><stop offset="1" stop-color="{{sky.comet}}" stop-opacity="0"></stop></linearGradient>
+      <linearGradient id="sc-dtail-0" gradientUnits="userSpaceOnUse" x1="{{comets.0.x1}}" y1="{{comets.0.y1}}" x2="{{comets.0.x3}}" y2="{{comets.0.y3}}"><stop offset="0" stop-color="{{sky.cometDust}}" stop-opacity="0.5"></stop><stop offset="1" stop-color="{{sky.cometDust}}" stop-opacity="0"></stop></linearGradient>
+      <linearGradient id="sc-dtail-1" gradientUnits="userSpaceOnUse" x1="{{comets.1.x1}}" y1="{{comets.1.y1}}" x2="{{comets.1.x3}}" y2="{{comets.1.y3}}"><stop offset="0" stop-color="{{sky.cometDust}}" stop-opacity="0.5"></stop><stop offset="1" stop-color="{{sky.cometDust}}" stop-opacity="0"></stop></linearGradient>
+      <linearGradient id="sc-dtail-2" gradientUnits="userSpaceOnUse" x1="{{comets.2.x1}}" y1="{{comets.2.y1}}" x2="{{comets.2.x3}}" y2="{{comets.2.y3}}"><stop offset="0" stop-color="{{sky.cometDust}}" stop-opacity="0.5"></stop><stop offset="1" stop-color="{{sky.cometDust}}" stop-opacity="0"></stop></linearGradient>
+      <linearGradient id="sc-dtail-3" gradientUnits="userSpaceOnUse" x1="{{comets.3.x1}}" y1="{{comets.3.y1}}" x2="{{comets.3.x3}}" y2="{{comets.3.y3}}"><stop offset="0" stop-color="{{sky.cometDust}}" stop-opacity="0.5"></stop><stop offset="1" stop-color="{{sky.cometDust}}" stop-opacity="0"></stop></linearGradient>
+      <linearGradient id="sc-dtail-4" gradientUnits="userSpaceOnUse" x1="{{comets.4.x1}}" y1="{{comets.4.y1}}" x2="{{comets.4.x3}}" y2="{{comets.4.y3}}"><stop offset="0" stop-color="{{sky.cometDust}}" stop-opacity="0.5"></stop><stop offset="1" stop-color="{{sky.cometDust}}" stop-opacity="0"></stop></linearGradient>
+      <linearGradient id="sc-dtail-5" gradientUnits="userSpaceOnUse" x1="{{comets.5.x1}}" y1="{{comets.5.y1}}" x2="{{comets.5.x3}}" y2="{{comets.5.y3}}"><stop offset="0" stop-color="{{sky.cometDust}}" stop-opacity="0.5"></stop><stop offset="1" stop-color="{{sky.cometDust}}" stop-opacity="0"></stop></linearGradient>
+      <linearGradient id="sc-dtail-6" gradientUnits="userSpaceOnUse" x1="{{comets.6.x1}}" y1="{{comets.6.y1}}" x2="{{comets.6.x3}}" y2="{{comets.6.y3}}"><stop offset="0" stop-color="{{sky.cometDust}}" stop-opacity="0.5"></stop><stop offset="1" stop-color="{{sky.cometDust}}" stop-opacity="0"></stop></linearGradient>
+      <radialGradient id="sc-day" cx="{{C.x}}" cy="{{C.dayY}}" r="{{C.dayR}}" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="{{sky.day}}" stop-opacity="{{sky.dayO}}"></stop>
+        <stop offset="1" stop-color="{{sky.day}}" stop-opacity="0"></stop>
+      </radialGradient>
+      <clipPath id="sc-discclip"><circle cx="{{C.x}}" cy="{{C.y}}" r="{{C.R}}"></circle></clipPath>
+      <path id="sc-dustd" d="{{dust}}"></path>
+    </defs>
+
+    <rect width="1200" height="630" fill="url(#sc-ground)"></rect>
+    <text x="46" y="{{L.titleBase}}" font-family="Newsreader, serif" font-size="{{p.titleSize}}" letter-spacing="{{p.titleLs}}" fill="{{t.glowInk}}" opacity="{{t.glowO}}" filter="url(#sc-titleglow)">{{p.title}}</text>
+    <circle cx="{{C.x}}" cy="{{C.y}}" r="{{C.auraR}}" fill="{{t.aura}}" opacity="{{t.auraO}}" filter="url(#sc-aura)"></circle>
+    <circle cx="{{C.x}}" cy="{{C.y}}" r="{{C.R}}" fill="url(#sc-disc)"></circle>
+    <path d="{{dayHalf}}" fill="{{sky.dusk}}" opacity="{{sky.duskO}}"></path>
+    <path d="{{dayHalf}}" fill="url(#sc-day)"></path>
+    <g clip-path="url(#sc-discclip)">
+      <use href="#sc-dustd" fill="{{sky.milky}}" opacity="{{sky.milkyO}}" filter="url(#sc-milky)"></use>
+    </g>
+    <path d="{{nightHalf}}" fill="{{sky.night}}" opacity="{{sky.nightO}}"></path>
+    <g clip-path="url(#sc-discclip)">
+      <use href="#sc-dustd" fill="{{sky.dust}}"></use>
+      <path d="{{ringsOff}}" stroke="{{sky.ringOff}}" stroke-width="0.8" stroke-dasharray="2 4" fill="none"></path>
+      <path d="{{ringsOn}}" stroke="{{sky.ringOn}}" stroke-width="0.9" fill="none"></path>
+      <path d="{{horizon}}" stroke="{{sky.horizon}}" stroke-width="1" stroke-dasharray="2 5" fill="none"></path>
+    </g>
+    <rect width="1200" height="630" filter="url(#sc-grain)" opacity="{{t.grainO}}"></rect>
+
+    <circle cx="{{C.x}}" cy="{{C.y}}" r="{{C.R}}" fill="none" stroke="{{t.rimOut}}" stroke-width="1.2"></circle>
+    <circle cx="{{C.x}}" cy="{{C.y}}" r="{{C.R2}}" fill="none" stroke="{{sky.rimIn}}" stroke-width="0.6"></circle>
+    <path d="{{ticks.minor}}" stroke="{{t.tick}}" stroke-width="0.8" fill="none"></path>
+    <path d="{{ticks.hour}}" stroke="{{t.tick}}" stroke-width="1.1" fill="none"></path>
+    <path d="{{ticks.major}}" stroke="{{t.tickMajor}}" stroke-width="1.6" fill="none"></path>
+    <path d="{{arc.d}}" stroke="{{t.gold}}" stroke-width="3" opacity="{{arc.o}}" fill="none"></path>
+    <path d="{{arc.ends}}" stroke="{{t.gold}}" stroke-width="1.3" opacity="{{arc.o}}" fill="none"></path>
+    <text x="{{arc.l0.x}}" y="{{arc.l0.y}}" text-anchor="middle" font-family="DM Mono, monospace" font-size="10.5" letter-spacing="0.5" fill="{{t.gold}}">{{arc.l0.text}}</text>
+    <text x="{{arc.l1.x}}" y="{{arc.l1.y}}" text-anchor="middle" font-family="DM Mono, monospace" font-size="10.5" letter-spacing="0.5" fill="{{t.gold}}">{{arc.l1.text}}</text>
+
+    <path d="{{comets.0.glow}}" fill="{{sky.comet}}" opacity="0.55" filter="url(#sc-glow)"></path>
+    <path d="{{comets.0.dustTail}}" fill="url(#sc-dtail-0)"></path>
+    <path d="{{comets.0.tail}}" fill="url(#sc-tail-0)"></path>
+    <path d="{{comets.0.head}}" fill="{{sky.comet}}"></path>
+    <path d="{{comets.1.glow}}" fill="{{sky.comet}}" opacity="0.55" filter="url(#sc-glow)"></path>
+    <path d="{{comets.1.dustTail}}" fill="url(#sc-dtail-1)"></path>
+    <path d="{{comets.1.tail}}" fill="url(#sc-tail-1)"></path>
+    <path d="{{comets.1.head}}" fill="{{sky.comet}}"></path>
+    <path d="{{comets.2.glow}}" fill="{{sky.comet}}" opacity="0.55" filter="url(#sc-glow)"></path>
+    <path d="{{comets.2.dustTail}}" fill="url(#sc-dtail-2)"></path>
+    <path d="{{comets.2.tail}}" fill="url(#sc-tail-2)"></path>
+    <path d="{{comets.2.head}}" fill="{{sky.comet}}"></path>
+    <path d="{{comets.3.glow}}" fill="{{sky.comet}}" opacity="0.55" filter="url(#sc-glow)"></path>
+    <path d="{{comets.3.dustTail}}" fill="url(#sc-dtail-3)"></path>
+    <path d="{{comets.3.tail}}" fill="url(#sc-tail-3)"></path>
+    <path d="{{comets.3.head}}" fill="{{sky.comet}}"></path>
+    <path d="{{comets.4.glow}}" fill="{{sky.comet}}" opacity="0.55" filter="url(#sc-glow)"></path>
+    <path d="{{comets.4.dustTail}}" fill="url(#sc-dtail-4)"></path>
+    <path d="{{comets.4.tail}}" fill="url(#sc-tail-4)"></path>
+    <path d="{{comets.4.head}}" fill="{{sky.comet}}"></path>
+    <path d="{{comets.5.glow}}" fill="{{sky.comet}}" opacity="0.55" filter="url(#sc-glow)"></path>
+    <path d="{{comets.5.dustTail}}" fill="url(#sc-dtail-5)"></path>
+    <path d="{{comets.5.tail}}" fill="url(#sc-tail-5)"></path>
+    <path d="{{comets.5.head}}" fill="{{sky.comet}}"></path>
+    <path d="{{comets.6.glow}}" fill="{{sky.comet}}" opacity="0.55" filter="url(#sc-glow)"></path>
+    <path d="{{comets.6.dustTail}}" fill="url(#sc-dtail-6)"></path>
+    <path d="{{comets.6.tail}}" fill="url(#sc-tail-6)"></path>
+    <path d="{{comets.6.head}}" fill="{{sky.comet}}"></path>
+
+    <path d="{{halo.0}}" fill="{{hue.0}}" opacity="{{sky.haloO}}" filter="url(#sc-glow)"></path>
+    <path d="{{halo.1}}" fill="{{hue.1}}" opacity="{{sky.haloO}}" filter="url(#sc-glow)"></path>
+    <path d="{{halo.2}}" fill="{{hue.2}}" opacity="{{sky.haloO}}" filter="url(#sc-glow)"></path>
+    <path d="{{halo.3}}" fill="{{hue.3}}" opacity="{{sky.haloO}}" filter="url(#sc-glow)"></path>
+    <path d="{{halo.4}}" fill="{{hue.4}}" opacity="{{sky.haloO}}" filter="url(#sc-glow)"></path>
+    <path d="{{halo.5}}" fill="{{hue.5}}" opacity="{{sky.haloO}}" filter="url(#sc-glow)"></path>
+    <path d="{{halo.6}}" fill="{{hue.6}}" opacity="{{sky.haloO}}" filter="url(#sc-glow)"></path>
+    <path d="{{halo.7}}" fill="{{hue.7}}" opacity="{{sky.haloO}}" filter="url(#sc-glow)"></path>
+    <path d="{{core.0}}" fill="{{tint.0}}"></path>
+    <path d="{{core.1}}" fill="{{tint.1}}"></path>
+    <path d="{{core.2}}" fill="{{tint.2}}"></path>
+    <path d="{{core.3}}" fill="{{tint.3}}"></path>
+    <path d="{{core.4}}" fill="{{tint.4}}"></path>
+    <path d="{{core.5}}" fill="{{tint.5}}"></path>
+    <path d="{{core.6}}" fill="{{tint.6}}"></path>
+    <path d="{{core.7}}" fill="{{tint.7}}"></path>
+    <path d="{{centers}}" fill="{{sky.center}}"></path>
+
+    <path d="{{nova.bloom}}" fill="{{sky.novaGlow}}" opacity="0.38" filter="url(#sc-bloom)"></path>
+    <path d="{{nova.glow}}" fill="{{sky.novaGlow}}" opacity="0.95" filter="url(#sc-nova)"></path>
+    <path d="{{nova.flare}}" stroke="{{sky.novaName}}" stroke-width="0.8" opacity="0.5" fill="none" clip-path="url(#sc-discclip)"></path>
+    <path d="{{nova.ring}}" stroke="{{sky.novaGlow}}" stroke-width="0.9" opacity="0.7" fill="none"></path>
+    <path d="{{nova.star}}" fill="{{sky.nova}}"></path>
+    <path d="{{nova.core}}" fill="#FFFFFF"></path>
+
+    <circle cx="{{C.x}}" cy="{{C.y}}" r="{{C.hub}}" fill="{{t.hub}}" stroke="{{t.hubRing}}" stroke-width="1"></circle>
+
+    <path d="{{moon.d}}" fill="{{t.moonGlow}}" opacity="{{t.lumO}}" filter="url(#sc-lum)"></path>
+    <circle cx="{{moon.cx}}" cy="{{moon.cy}}" r="{{moon.r}}" fill="{{t.moon}}" opacity="{{t.earthO}}"></circle>
+    <path d="{{moon.d}}" fill="{{t.moon}}"></path>
+    <path d="{{sun.disc}}" fill="{{t.sunGlow}}" opacity="{{t.lumO}}" filter="url(#sc-lum)"></path>
+    <path d="{{sun.disc}}" fill="{{t.sun}}"></path>
+    <path d="{{sun.rays}}" stroke="{{t.sun}}" stroke-width="1.7" stroke-linecap="round" fill="none"></path>
+    <g font-family="DM Mono, monospace" font-size="12" letter-spacing="0.6" fill="{{t.hour}}">
+      <text x="{{hl.0.x}}" y="{{hl.0.y}}" text-anchor="{{hl.0.anchor}}">{{hl.0.text}}</text>
+      <text x="{{hl.1.x}}" y="{{hl.1.y}}" text-anchor="{{hl.1.anchor}}">{{hl.1.text}}</text>
+      <text x="{{hl.2.x}}" y="{{hl.2.y}}" text-anchor="{{hl.2.anchor}}">{{hl.2.text}}</text>
+      <text x="{{hl.3.x}}" y="{{hl.3.y}}" text-anchor="{{hl.3.anchor}}">{{hl.3.text}}</text>
+    </g>
+
+    <path d="{{dl.backs}}" fill="{{dl.knock}}" fill-opacity="0.9"></path>
+    <g font-family="DM Mono, monospace" font-size="{{dl.size}}" letter-spacing="{{dl.ls}}" text-anchor="middle">
+      <text x="{{dl.t.0.x}}" y="{{dl.t.0.y}}" fill="{{dl.t.0.c}}">{{dl.t.0.text}}</text>
+      <text x="{{dl.t.1.x}}" y="{{dl.t.1.y}}" fill="{{dl.t.1.c}}">{{dl.t.1.text}}</text>
+      <text x="{{dl.t.2.x}}" y="{{dl.t.2.y}}" fill="{{dl.t.2.c}}">{{dl.t.2.text}}</text>
+      <text x="{{dl.t.3.x}}" y="{{dl.t.3.y}}" fill="{{dl.t.3.c}}">{{dl.t.3.text}}</text>
+      <text x="{{dl.t.4.x}}" y="{{dl.t.4.y}}" fill="{{dl.t.4.c}}">{{dl.t.4.text}}</text>
+      <text x="{{dl.t.5.x}}" y="{{dl.t.5.y}}" fill="{{dl.t.5.c}}">{{dl.t.5.text}}</text>
+      <text x="{{dl.t.6.x}}" y="{{dl.t.6.y}}" fill="{{dl.t.6.c}}">{{dl.t.6.text}}</text>
+      <text x="{{dl.t.7.x}}" y="{{dl.t.7.y}}" fill="{{dl.t.7.c}}">{{dl.t.7.text}}</text>
+      <text x="{{dl.t.8.x}}" y="{{dl.t.8.y}}" fill="{{dl.t.8.c}}">{{dl.t.8.text}}</text>
+      <text x="{{dl.t.9.x}}" y="{{dl.t.9.y}}" fill="{{dl.t.9.c}}">{{dl.t.9.text}}</text>
+      <text x="{{dl.t.10.x}}" y="{{dl.t.10.y}}" fill="{{dl.t.10.c}}">{{dl.t.10.text}}</text>
+      <text x="{{dl.t.11.x}}" y="{{dl.t.11.y}}" fill="{{dl.t.11.c}}">{{dl.t.11.text}}</text>
+      <text x="{{dl.t.12.x}}" y="{{dl.t.12.y}}" fill="{{dl.t.12.c}}">{{dl.t.12.text}}</text>
+      <text x="{{dl.t.13.x}}" y="{{dl.t.13.y}}" fill="{{dl.t.13.c}}">{{dl.t.13.text}}</text>
+    </g>
+
+    <text x="{{wk.x}}" y="{{wk.y}}" text-anchor="end" font-family="DM Mono, monospace" font-size="{{wk.size}}" letter-spacing="{{wk.lsPx}}" fill="{{t.title}}">{{wk.text}}</text>
+  </svg>
+
+  <sc-if value="{{av.photo}}" hint-placeholder-val="{{true}}">
+    <img src="/_blob/1e393e927f6a7146a6c82436c6086f9c" alt="{{who.alt}}" style="position: absolute; left: {{C.avX}}px; top: {{C.avY}}px; width: {{C.av}}px; height: {{C.av}}px; border-radius: 50%; object-fit: cover">
+  </sc-if>
+  <sc-if value="{{av.mono}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; left: {{C.avX}}px; top: {{C.avY}}px; width: {{C.av}}px; height: {{C.av}}px; border-radius: 50%; background: {{av.bg}}; color: {{av.ink}}; display: flex; align-items: center; justify-content: center; font-family: 'Newsreader', serif; font-size: 34px; line-height: 1; letter-spacing: -0.01em">{{av.initials}}</div>
+  </sc-if>
+
+  <div style="position: absolute; left: 48px; top: 25px; width: 522px; display: flex; align-items: baseline; gap: 8px; white-space: nowrap">
+    <span style="font-size: {{hd.nameSize}}px; font-weight: 700; color: {{t.title}}">{{hd.name}}</span>
+    <span style="font-family: 'DM Mono', monospace; font-size: {{hd.size}}px; color: {{t.muted}}">{{hd.handle}}</span>
+    <sc-if value="{{hd.pro}}" hint-placeholder-val="{{true}}">
+      <span style="position: relative; top: -1px; font-family: 'DM Mono', monospace; font-size: 9.5px; line-height: 13px; letter-spacing: 0.12em; padding: 0 4px 0 5px; border: 1px solid {{t.proLine}}; border-radius: 3px; color: {{t.gold}}">PRO</span>
+    </sc-if>
+  </div>
+
+  <div style="position: absolute; left: 46px; top: {{L.titleTop}}px; font-family: 'Newsreader', serif; font-weight: 400; font-size: {{p.titleSize}}px; line-height: 1; letter-spacing: -0.02em; color: {{t.title}}; white-space: nowrap">{{p.title}}</div>
+  <div style="position: absolute; left: 48px; top: {{L.tagTop}}px; font-size: 16px; line-height: 21px; font-weight: 500; color: {{t.text}}; white-space: nowrap">{{p.tagline}}</div>
+  <div style="position: absolute; left: 48px; top: {{L.evTop}}px; font-family: 'DM Mono', monospace; font-size: 15px; line-height: 20px; letter-spacing: 0.04em; color: {{t.gold}}; white-space: nowrap">{{p.evidence}}</div>
+
+  <sc-for list="{{rows}}" as="r" hint-placeholder-count="7">
+    <div style="position: absolute; left: 48px; top: {{r.top}}px; width: 522px; height: {{r.h}}px; box-sizing: border-box; border-top: 1px solid {{r.rule}}">
+      <sc-if value="{{r.quiet}}" hint-placeholder-val="{{false}}">
+        <div style="position: absolute; left: 0; top: {{r.padT}}px; display: flex; align-items: baseline; line-height: 18px; white-space: nowrap">
+          <span style="flex-shrink: 0; min-width: {{L.headX}}px; padding-right: 12px; box-sizing: border-box; font-family: 'DM Mono', monospace; font-size: 11.5px; letter-spacing: 0.06em; color: {{t.faint}}">{{r.day}}</span>
+          <span style="font-family: 'Newsreader', serif; font-size: 15px; color: {{t.faint}}">{{r.note}}</span>
+        </div>
+      </sc-if>
+      <sc-if value="{{r.active}}" hint-placeholder-val="{{true}}">
+        <div style="position: absolute; left: 0; top: {{r.padT}}px; width: 522px; display: flex; align-items: baseline">
+          <div style="flex-shrink: 0; width: {{L.gutW}}px; font-family: 'DM Mono', monospace; white-space: nowrap">
+            <div style="height: {{r.lh}}px; line-height: {{r.lh}}px; font-size: 11.5px; letter-spacing: 0.06em; color: {{r.dayColor}}">{{r.day}}</div>
+            <div style="position: relative; top: {{r.tagNudge}}px; height: {{r.subH}}px; line-height: {{r.subH}}px; font-size: 9.5px; letter-spacing: 0.1em; color: {{r.tagColor}}">{{r.tag}}</div>
+          </div>
+          <div style="flex-shrink: 0; width: {{L.glyphW}}px; align-self: flex-start; margin-top: {{r.glyphTop}}px; height: 13px">
+            <svg width="13" height="13" viewBox="0 0 24 24" style="display: block; overflow: visible" aria-hidden="true"><path d="{{r.g.icon2}}" fill="{{r.g.fill2}}" opacity="{{r.g.o2}}"></path><path d="{{r.g.icon}}" fill="{{r.g.fill}}"></path></svg>
+          </div>
+          <div style="width: {{L.headW}}px; font-size: {{r.size}}px; font-weight: 500; color: {{r.color}}">
+            <sc-for list="{{r.lines}}" as="ln" hint-placeholder-count="1">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; height: {{r.lh}}px; line-height: {{r.lh}}px; white-space: nowrap">
+                <span>{{ln.text}}</span>
+                <sc-if value="{{ln.meta}}" hint-placeholder-val="{{false}}">
+                  <span style="display: flex; align-items: baseline; gap: 10px; font-family: 'DM Mono', monospace; font-size: 11.5px; font-weight: 400; color: {{t.num}}">
+                    <sc-for list="{{r.meta}}" as="m" hint-placeholder-count="2">
+                      <span style="display: flex; align-items: baseline; gap: 4px">
+                        <sc-if value="{{m.dot}}" hint-placeholder-val="{{true}}"><svg width="7" height="7" viewBox="0 0 7 7" style="position: relative; top: -0.5px" aria-hidden="true"><circle cx="3.5" cy="3.5" r="3.5" fill="{{m.color}}"></circle></svg></sc-if>
+                        <span>{{m.n}}</span>
+                      </span>
+                    </sc-for>
+                  </span>
+                </sc-if>
+              </div>
+            </sc-for>
+            <sc-if value="{{r.hasSub}}" hint-placeholder-val="{{true}}">
+              <div style="display: flex; align-items: baseline; gap: 14px; height: {{r.subH}}px; line-height: {{r.subH}}px; font-size: 12px; font-weight: 400; white-space: nowrap">
+                <sc-for list="{{r.sub}}" as="s" hint-placeholder-count="2">
+                  <span style="display: flex; align-items: baseline; gap: 5px">
+                    <sc-if value="{{s.dot}}" hint-placeholder-val="{{true}}"><svg width="7" height="7" viewBox="0 0 7 7" style="position: relative; top: -0.5px" aria-hidden="true"><circle cx="3.5" cy="3.5" r="3.5" fill="{{s.color}}"></circle></svg></sc-if>
+                    <span style="color: {{t.subName}}">{{s.name}}</span>
+                    <span style="font-family: 'DM Mono', monospace; font-size: 11.5px; color: {{t.num}}">{{s.n}}</span>
+                  </span>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </sc-for>
+
+  <sc-if value="{{tot.show}}" hint-placeholder-val="{{true}}">
+    <div style="position: absolute; left: 48px; top: {{L.totTop}}px; width: 522px; box-sizing: border-box; border-top: 1px solid {{t.rule}}; padding-top: 9px; white-space: nowrap">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; height: 16px">
+        <span style="display: flex; align-items: baseline; gap: 12px; font-size: 12.5px; line-height: 16px; color: {{t.muted}}">
+          <sc-for list="{{legend1}}" as="g" hint-placeholder-count="3">
+            <sc-if value="{{g.isItem}}" hint-placeholder-val="{{true}}">
+              <span style="display: flex; align-items: baseline; gap: 6px">
+                <svg width="8" height="8" viewBox="0 0 8 8" style="overflow: visible; position: relative; top: -0.5px" aria-hidden="true"><circle cx="4" cy="4" r="4.5" fill="{{g.color}}" opacity="{{g.glowO}}" filter="url(#sc-dot)"></circle><circle cx="4" cy="4" r="3.6" fill="{{g.color}}"></circle><circle cx="4" cy="4" r="1.3" fill="{{g.center}}"></circle></svg>
+                <span style="color: {{t.text}}">{{g.name}}</span>
+                <span style="font-family: 'DM Mono', monospace; font-size: 11.5px">{{g.n}}</span>
+              </span>
+            </sc-if>
+            <sc-if value="{{g.isMore}}" hint-placeholder-val="{{false}}"><span>{{g.text}}</span></sc-if>
+          </sc-for>
+        </span>
+        <span style="font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: {{t.muted}}"><span style="font-size: 13.5px; letter-spacing: 0; font-weight: 500; color: {{t.title}}">{{tot.n}}</span> {{tot.label}}</span>
+      </div>
+      <sc-if value="{{tot.two}}" hint-placeholder-val="{{false}}">
+        <div style="display: flex; align-items: baseline; gap: 12px; height: 17px; margin-top: 2px; font-size: 12.5px; line-height: 17px; color: {{t.muted}}">
+          <sc-for list="{{legend2}}" as="g" hint-placeholder-count="3">
+            <sc-if value="{{g.isItem}}" hint-placeholder-val="{{true}}">
+              <span style="display: flex; align-items: baseline; gap: 6px">
+                <svg width="8" height="8" viewBox="0 0 8 8" style="overflow: visible; position: relative; top: -0.5px" aria-hidden="true"><circle cx="4" cy="4" r="4.5" fill="{{g.color}}" opacity="{{g.glowO}}" filter="url(#sc-dot)"></circle><circle cx="4" cy="4" r="3.6" fill="{{g.color}}"></circle><circle cx="4" cy="4" r="1.3" fill="{{g.center}}"></circle></svg>
+                <span style="color: {{t.text}}">{{g.name}}</span>
+                <span style="font-family: 'DM Mono', monospace; font-size: 11.5px">{{g.n}}</span>
+              </span>
+            </sc-if>
+            <sc-if value="{{g.isMore}}" hint-placeholder-val="{{false}}"><span>{{g.text}}</span></sc-if>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{L.closeRule}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; left: 48px; top: {{L.listEnd}}px; width: 522px; height: 0; border-top: 1px solid {{t.rule}}"></div>
+  </sc-if>
+
+  <div style="position: absolute; left: 48px; top: {{L.goalTop}}px; width: 522px; display: flex; align-items: baseline">
+    <span style="flex-shrink: 0; width: {{L.gutW}}px; font-family: 'DM Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; color: {{t.gold}}; white-space: nowrap">{{goal.label}}</span>
+    <div style="flex-shrink: 0; width: {{L.glyphW}}px; align-self: flex-start; margin-top: 4px; height: 12px">
+      <svg width="12" height="12" viewBox="0 0 24 24" style="display: block" aria-hidden="true"><path d="M3 12h16M13 5.5l6.5 6.5-6.5 6.5" fill="none" stroke="{{t.gold}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    </div>
+    <div style="font-size: 16px; line-height: 20px; font-weight: 600; color: {{t.title}}">
+      <sc-for list="{{goal.lines}}" as="ln" hint-placeholder-count="1"><div style="white-space: nowrap">{{ln}}</div></sc-for>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 48px; top: 576px; width: 522px; box-sizing: border-box; border-top: 1px solid {{t.rule}}; padding-top: 10px; display: flex; justify-content: space-between; align-items: center; white-space: nowrap">
+    <span style="font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: {{t.muted}}">{{ft.mark}}</span>
+    <span style="font-size: {{ft.size}}px; font-weight: 700; color: {{t.title}}">{{ft.link}}</span>
+  </div>
+
+  <div style="position: absolute; left: {{key.left1}}px; top: {{key.top1}}px; height: 18px; display: flex; align-items: center; gap: {{key.gap}}px; font-size: 12px; line-height: 18px; color: {{t.keyText}}; white-space: nowrap">
+    <span style="display: flex; align-items: center; gap: 6px">
+      <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6.3" fill="none" stroke="{{t.keyIcon}}" stroke-width="1"></circle><circle cx="7" cy="7" r="4.2" fill="none" stroke="{{t.keyIcon}}" stroke-width="1"></circle><circle cx="7" cy="7" r="2.1" fill="none" stroke="{{t.keyIcon}}" stroke-width="1"></circle></svg>
+      <span>{{key.rings}}</span>
+    </span>
+    <span style="display: flex; align-items: center; gap: 6px">
+      <span style="display: flex; align-items: center; gap: 4px; font-family: 'DM Mono', monospace; font-size: 11px; color: {{t.keyText}}">
+        <svg width="{{key.s0.w}}" height="18" viewBox="0 0 {{key.s0.w}} 18" style="overflow: visible" aria-hidden="true"><circle cx="{{key.s0.c}}" cy="9" r="{{key.s0.halo}}" fill="{{key.starHue}}" opacity="{{key.starGlowO}}" filter="url(#sc-dot)"></circle><circle cx="{{key.s0.c}}" cy="9" r="{{key.s0.r}}" fill="{{key.starHue}}"></circle><circle cx="{{key.s0.c}}" cy="9" r="{{key.s0.ctr}}" fill="{{key.starCenter}}"></circle></svg>
+        <span style="margin-right: 3px">{{key.s0.n}}</span>
+        <svg width="{{key.s1.w}}" height="18" viewBox="0 0 {{key.s1.w}} 18" style="overflow: visible" aria-hidden="true"><circle cx="{{key.s1.c}}" cy="9" r="{{key.s1.halo}}" fill="{{key.starHue}}" opacity="{{key.starGlowO}}" filter="url(#sc-dot)"></circle><circle cx="{{key.s1.c}}" cy="9" r="{{key.s1.r}}" fill="{{key.starHue}}"></circle><circle cx="{{key.s1.c}}" cy="9" r="{{key.s1.ctr}}" fill="{{key.starCenter}}"></circle></svg>
+        <span style="margin-right: 3px">{{key.s1.n}}</span>
+        <svg width="{{key.s2.w}}" height="18" viewBox="0 0 {{key.s2.w}} 18" style="overflow: visible" aria-hidden="true"><circle cx="{{key.s2.c}}" cy="9" r="{{key.s2.halo}}" fill="{{key.starHue}}" opacity="{{key.starGlowO}}" filter="url(#sc-dot)"></circle><circle cx="{{key.s2.c}}" cy="9" r="{{key.s2.r}}" fill="{{key.starHue}}"></circle><circle cx="{{key.s2.c}}" cy="9" r="{{key.s2.ctr}}" fill="{{key.starCenter}}"></circle></svg>
+        <span>{{key.s2.n}}</span>
+      </span>
+      <span>{{key.sizes}}</span>
+    </span>
+    <sc-if value="{{key.localUp}}" hint-placeholder-val="{{false}}">
+      <span style="display: flex; align-items: center; gap: 6px">
+        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="none" stroke="{{t.keyIcon}}" stroke-width="1.1"></circle><path d="M6 2.8V6l2.3 1.5" fill="none" stroke="{{t.keyIcon}}" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <span>{{key.local}}</span>
+      </span>
+    </sc-if>
+  </div>
+  <div style="position: absolute; left: {{key.left2}}px; top: {{key.top2}}px; height: 18px; display: flex; align-items: center; gap: {{key.gap}}px; font-size: 12px; line-height: 18px; color: {{t.keyText}}; white-space: nowrap">
+    <span style="display: flex; align-items: center; gap: 5px">
+      <svg width="14" height="14" viewBox="0 0 24 24" style="overflow: visible" aria-hidden="true"><path d="{{key.novaD}}" fill="{{t.gold}}"></path></svg>
+      <span>{{key.shipped}}</span>
+    </span>
+    <span style="display: flex; align-items: center; gap: 5px">
+      <svg width="14" height="14" viewBox="0 0 24 24" style="overflow: visible" aria-hidden="true"><path d="{{key.cometTail}}" fill="{{t.pub}}" opacity="0.5"></path><path d="{{key.cometHead}}" fill="{{t.pub}}"></path></svg>
+      <span>{{key.published}}</span>
+    </span>
+    <sc-if value="{{key.hasDust}}" hint-placeholder-val="{{true}}">
+      <span style="display: flex; align-items: center; gap: 6px">
+        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="{{key.dustD}}" fill="{{t.keyIcon}}"></path></svg>
+        <span>{{key.dust}}</span>
+      </span>
+    </sc-if>
+    <sc-if value="{{key.localDown}}" hint-placeholder-val="{{true}}">
+      <span style="display: flex; align-items: center; gap: 6px">
+        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="none" stroke="{{t.keyIcon}}" stroke-width="1.1"></circle><path d="M6 2.8V6l2.3 1.5" fill="none" stroke="{{t.keyIcon}}" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <span>{{key.local}}</span>
+      </span>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"week":{"editor":"enum","options":["w41","w40","w38","z0","z6","zl","zc","zr"],"default":"w41"},"$preview":{"width":1200,"height":630}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = this.props.theme !== 'light';
+    const KEYS = ['w41', 'w40', 'w38', 'z0', 'z6', 'zl', 'zc', 'zr'];
+    const weekKey = KEYS.includes(this.props.week) ? this.props.week : 'w41';
+
+    // ---------- colour ----------
+    // Inside the disc the sky keeps one palette in both themes: a night half above the horizon, a dusk-lit day half below.
+    const sky = {
+      ringOn: 'rgba(200,212,255,0.25)', ringOff: 'rgba(200,212,255,0.14)', horizon: 'rgba(200,212,255,0.4)', rimIn: 'rgba(200,212,255,0.45)',
+      tag: '#B3BDE6', tagDay: '#D6DCF6', tagOff: '#7882AE', tagOffDay: '#959FCB',
+      dust: 'rgba(214,224,255,0.5)', milky: '#7E92FF', milkyO: 0.55, haloO: 0.85, center: '#FFFFFF',
+      nova: '#FFF5DA', novaGlow: '#FFCF6E', novaName: '#FFE7B0', novaTag: '#F2CB74', cometTag: '#C3CFFF', comet: '#E8EEFF', cometDust: '#B9C6FF',
+      night: '#0A0F29', nightO: 0.6, knock: '#0A0E26', knockDay: '#1C275A',
+      dusk: '#3A4FAA', duskO: dark ? 0.18 : 0.14, day: '#6F88E6', dayO: dark ? 0.3 : 0.24, dayR: 440
+    };
+    const t = dark
+      ? { g0: '#0C1330', g1: '#05070F', grainInk: 1, grainO: 0.07, aura: '#2F44C4', auraO: 0.42,
+          disc0: '#141D45', disc1: '#070B1C', hub: '#060914', hubRing: 'rgba(200,212,255,0.45)',
+          rimOut: 'rgba(200,212,255,0.5)', tick: 'rgba(200,212,255,0.4)', tickMajor: 'rgba(226,232,255,0.9)', hour: '#B9C1E0',
+          keyText: '#AAB2D2', keyIcon: '#C9D2F5',
+          title: '#F2ECDF', text: '#F2ECDF', muted: '#9AA3C4', faint: '#6C759A', gold: '#E2BC6A', pub: '#AFC0FF', auto: '#9AA3C4', num: '#D5DAEE', subName: '#AEB6D4',
+          hair: 'rgba(154,163,196,0.16)', rule: 'rgba(154,163,196,0.34)', proLine: 'rgba(226,188,106,0.6)',
+          outside: '#FFE7B0', paper: '#05070F',
+          moon: '#E9ECF8', moonGlow: '#AFC0FF', sun: '#F2CB74', sunGlow: '#FFCF6E', lumO: 0.7, earthO: 0.14,
+          // Starlight on the title: a blurred copy of the text behind it.
+          glowInk: '#FFD696', glowO: 0.26 }
+      : { g0: '#F7F2E6', g1: '#EFE7D4', grainInk: 0.12, grainO: 0.10, aura: '#0B1230', auraO: 0.16,
+          disc0: '#1B2650', disc1: '#0B1230', hub: '#F4EEE1', hubRing: 'rgba(30,43,71,0.6)',
+          rimOut: 'rgba(30,43,71,0.6)', tick: 'rgba(30,43,71,0.45)', tickMajor: 'rgba(30,43,71,0.9)', hour: '#34405D',
+          keyText: '#4A5470', keyIcon: '#34405D',
+          title: '#1E2B47', text: '#1E2B47', muted: '#5E6680', faint: '#8A8F9F', gold: '#946500', pub: '#3B57B8', auto: '#5E6680', num: '#1E2B47', subName: '#4A5470',
+          hair: 'rgba(30,43,71,0.12)', rule: 'rgba(30,43,71,0.26)', proLine: 'rgba(148,101,0,0.55)',
+          outside: '#946500', paper: '#F7F2E6',
+          moon: '#2E3A5C', moonGlow: '#2E3A5C', sun: '#946500', sunGlow: '#946500', lumO: 0, earthO: 0.1,
+          glowInk: '#1E2B47', glowO: 0 };
+
+    // Each project's stored colour, as in data.json projects[p].color. The two long names in z6 are invented, with hues kept apart from the rest.
+    const STORED = { 'wheels-off': '#1D9BF0', openstage: '#00BA7C', 'trained-on': '#FFB020', story_time_v1: '#8B5CF6',
+      'a-very-long-project-name-for-testing': '#F0506E', 'invoice-reconciliation-service': '#8FD14F' };
+    const hexRgb = (hex) => [1, 3, 5].map((k) => parseInt(hex.slice(k, k + 2), 16) / 255);
+    const rgbHsl = ([r, g, b]) => {
+      const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+      if (mx === mn) return [0, 0, l];
+      const d = mx - mn, s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+      const h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+      return [h * 60, s, l];
+    };
+    const hslHex = (h, s, l) => {
+      const a = s * Math.min(l, 1 - l), f = (n) => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); };
+      return '#' + [f(0), f(8), f(4)].map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join('').toUpperCase();
+    };
+    const lumOf = (hex) => { const c = hexRgb(hex).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+    const contrast = (a, b) => { const x = lumOf(a), y = lumOf(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+    // Three tones from one stored colour: a halo that glows on the night sky, a pale core, and a dot that keeps 3:1 on the paper.
+    const tones = (hex) => {
+      const [h, s, l] = rgbHsl(hexRgb(hex));
+      const halo = hslHex(h, Math.min(s, 0.85), Math.max(0.62, Math.min(0.74, l + 0.08)));
+      const core = hslHex(h, Math.min(s, 0.9), 0.9);
+      let pl = Math.min(l, 0.5), paper = hslHex(h, Math.min(s, 0.8), pl);
+      while (contrast(paper, '#F3EDE0') < 3 && pl > 0.2) { pl -= 0.02; paper = hslHex(h, Math.min(s, 0.8), pl); }
+      return [halo, core, paper];
+    };
+
+    // ---------- the weeks (data.json; z0, z6, zl, zc and zr are invented weeks) ----------
+    // c lists each day's projects in the order the mock hands them that day's hours (a filler: production knows each commit's repo).
+    // at and post are the logged times of a launch and a post, in hours (invented: data.json has no times for logs).
+    // auto marks a headline the app wrote (headline_is_auto_count); the card writes its own instead.
+    // History, invented for the mock: best = the most commits in any earlier week (null when unknown, so the real weeks never claim a record);
+    // quiet = weeks right before this one with no commits and nothing logged; streak = streak_days_current (it may start in an earlier week).
+    // prev is real for w41, w40 and w38 (previous_week.commits); earlier = commits before this week (the dust); since = building_since.
+    const weeks = {
+      w41: { no: 41, dates: 'Oct 5 – 11, 2026', earlier: 1210, prev: 32, best: null, quiet: 0, streak: 1, since: '2026-03-23', goal: 'Launch on Product Hunt',
+        days: [
+          { s: 'MON 5', c: [], h: [] },
+          { s: 'TUE 6', c: [['wheels-off', 4], ['openstage', 2]], kind: 'built', title: '4 commits in wheels-off', auto: true, h: [19, 20, 20, 21, 22, 23] },
+          { s: 'WED 7', c: [['wheels-off', 16]], kind: 'built', title: 'Arcade mode: leaderboards, world record, name entry', h: [0, 10, 11, 12, 15, 15, 15, 16, 19, 19, 19, 20, 20, 20, 21, 23] },
+          { s: 'THU 8', c: [['wheels-off', 11]], kind: 'shipped', title: 'playwheelsoff.com is live', at: 21.25, h: [0, 1, 9, 10, 12, 13, 15, 15, 18, 19, 20] },
+          { s: 'FRI 9', c: [['trained-on', 5], ['openstage', 11]], kind: 'published', title: 'Posted on X', post: 16, h: [10, 11, 12, 13, 15, 15, 16, 16, 19, 19, 20, 20, 21, 22, 23, 23] },
+          { s: 'SAT 10', c: [], h: [] },
+          { s: 'SUN 11', c: [['wheels-off', 4], ['openstage', 21]], kind: 'shipped', title: 'Read-only private repos via a GitHub App', at: 23.75, h: [0, 10, 12, 15, 15, 15, 16, 19, 19, 19, 19, 19, 20, 20, 20, 20, 20, 21, 21, 22, 22, 23, 23, 23, 23] }
+        ] },
+      w40: { no: 40, dates: 'Sep 28 – Oct 4, 2026', earlier: 1178, prev: 43, best: null, quiet: 0, streak: 0, since: '2026-03-23', goal: 'Ship the wheels-off arcade mode',
+        days: [
+          { s: 'MON 28', c: [['openstage', 5], ['trained-on', 13]], kind: 'built', title: '13 commits in trained-on', auto: true, h: [9, 10, 10, 11, 11, 12, 14, 14, 15, 15, 16, 16, 17, 21, 21, 22, 22, 23] },
+          { s: 'TUE 29', c: [['openstage', 4], ['trained-on', 2]], kind: 'built', title: 'Redesign: one frame, four-section landing', h: [10, 11, 20, 21, 21, 22] },
+          { s: 'WED 30', c: [['trained-on', 6]], kind: 'built', title: '6 commits in trained-on', auto: true, h: [19, 20, 20, 21, 22, 23] },
+          { s: 'THU 1', c: [['trained-on', 1]], kind: 'shipped', title: 'Trained on me is live!!', at: 12.25, h: [11] },
+          { s: 'FRI 2', c: [['trained-on', 1]], kind: 'published', title: 'Posted on X', post: 18, h: [9] },
+          { s: 'SAT 3', c: [], h: [] },
+          { s: 'SUN 4', c: [], h: [] }
+        ] },
+      w38: { no: 38, dates: 'Sep 14 – 20, 2026', earlier: 1131, prev: 20, best: null, quiet: 0, streak: 0, since: '2026-03-23', goal: "Ship Story Time's PDF export",
+        days: [
+          { s: 'MON 14', c: [], h: [] },
+          { s: 'TUE 15', c: [['story_time_v1', 1], ['openstage', 2]], kind: 'built', title: 'Story Time exports to PDF', h: [22, 23, 23] },
+          { s: 'WED 16', c: [], h: [] },
+          { s: 'THU 17', c: [['openstage', 1]], kind: 'built', title: '1 commit in openstage', auto: true, h: [10] },
+          { s: 'FRI 18', c: [], kind: 'published', title: 'Posted on X', post: 20, h: [] },
+          { s: 'SAT 19', c: [], h: [] },
+          { s: 'SUN 20', c: [], h: [] }
+        ] },
+      // No commits and one post.
+      z0: { no: 42, dates: 'Oct 12 – 18, 2026', earlier: 1284, prev: 74, best: 74, quiet: 0, streak: 0, since: '2026-03-23', goal: 'Launch on Product Hunt',
+        days: [
+          { s: 'MON 12', c: [], h: [] },
+          { s: 'TUE 13', c: [], h: [] },
+          { s: 'WED 14', c: [], kind: 'published', title: 'Wrote the launch plan and posted it on X', post: 21, h: [] },
+          { s: 'THU 15', c: [], h: [] },
+          { s: 'FRI 16', c: [], h: [] },
+          { s: 'SAT 17', c: [], h: [] },
+          { s: 'SUN 18', c: [], h: [] }
+        ] },
+      // Another builder: six projects, long repo names, 80-character headlines, seven active days, a long name and handle, no photo.
+      z6: { no: 43, dates: 'Oct 19 – 25, 2026', earlier: 2906, prev: 38, best: null, quiet: 0, streak: 7, since: '2025-01-06', goal: 'Raise prices, then write a changelog entry for every change',
+        name: 'Bartholomew Pennington', handle: 'bartholomew-pennington', initials: 'BP',
+        days: [
+          { s: 'MON 19', c: [['a-very-long-project-name-for-testing', 3], ['openstage', 2]], kind: 'built', title: 'Rebuilt onboarding so a new builder sees their own page within the first minute', h: [9, 10, 11, 20, 21] },
+          { s: 'TUE 20', c: [['invoice-reconciliation-service', 6]], kind: 'built', title: 'Reconciliation handles partial refunds, multi-currency invoices and late fees', h: [13, 14, 14, 15, 16, 17] },
+          { s: 'WED 21', c: [['story_time_v1', 4], ['trained-on', 2]], kind: 'built', title: 'Story Time reads aloud now: a narrator voice, page turns and a bedtime timer', h: [19, 20, 21, 22, 23, 23] },
+          { s: 'THU 22', c: [['wheels-off', 8]], kind: 'shipped', title: 'Wheels-off 1.0 is out with ghost racing, weekly leaderboards and a photo mode', at: 22.75, h: [10, 11, 13, 15, 16, 18, 21, 22] },
+          { s: 'FRI 23', c: [['openstage', 5], ['invoice-reconciliation-service', 1]], kind: 'published', title: 'Posted a long thread on X about pricing experiments that did not work at all', post: 17, h: [9, 10, 12, 14, 16, 18] },
+          { s: 'SAT 24', c: [['trained-on', 3], ['invoice-reconciliation-service', 1]], kind: 'built', title: 'Internationalization-pipeline rebuilt for twelve locales', h: [11, 12, 15, 16] },
+          { s: 'SUN 25', c: [['a-very-long-project-name-for-testing', 6], ['story_time_v1', 4]], kind: 'shipped', title: 'Shipped the long-awaited dark mode across every single page of the app today', at: 21.75, h: [9, 10, 11, 13, 14, 14, 15, 16, 20, 21] }
+        ] },
+      // A launch week with no commits: the launch and three posts are logged, the code shipped the week before.
+      zl: { no: 44, dates: 'Oct 26 – Nov 1, 2026', earlier: 1329, prev: 45, best: 74, quiet: 0, streak: 0, since: '2026-03-23', goal: 'Answer every launch comment, then fix the top three bugs',
+        days: [
+          { s: 'MON 26', c: [], h: [] },
+          { s: 'TUE 27', c: [], kind: 'shipped', title: 'Openstage is live on Product Hunt', at: 9, h: [] },
+          { s: 'WED 28', c: [], kind: 'published', title: 'Wrote up launch day: what worked and what flopped', post: 21, h: [] },
+          { s: 'THU 29', c: [], kind: 'published', title: 'Thanked every hunter by name on X', post: 13, h: [] },
+          { s: 'FRI 30', c: [], kind: 'published', title: 'Posted on X', post: 18, h: [] },
+          { s: 'SAT 31', c: [], h: [] },
+          { s: 'SUN 1', c: [], h: [] }
+        ] },
+      // A comeback: commits again after two weeks with no commits and nothing logged.
+      zc: { no: 47, dates: 'Nov 16 – 22, 2026', earlier: 1329, prev: 0, best: 74, quiet: 2, streak: 0, since: '2026-03-23', goal: 'Ship ghost racing to every player',
+        days: [
+          { s: 'MON 16', c: [], h: [] },
+          { s: 'TUE 17', c: [['openstage', 6]], kind: 'built', title: 'Fixed the three bugs launch day turned up', h: [20, 21, 21, 22, 23, 23] },
+          { s: 'WED 18', c: [['openstage', 7], ['wheels-off', 2]], kind: 'built', title: 'Weekly digest emails, rebuilt from scratch', h: [10, 11, 13, 14, 15, 16, 21, 22, 22] },
+          { s: 'THU 19', c: [], h: [] },
+          { s: 'FRI 20', c: [['wheels-off', 5]], kind: 'built', title: 'Ghost cars now race your best lap', h: [19, 20, 20, 21, 23] },
+          { s: 'SAT 21', c: [['trained-on', 3]], kind: 'published', title: 'Wrote up what two quiet weeks taught me', post: 11, h: [9, 10, 10] },
+          { s: 'SUN 22', c: [], h: [] }
+        ] },
+      // A record week: 96 commits against an old best of 74 (w41), four projects, a Thursday launch and an auto-count day.
+      zr: { no: 48, dates: 'Nov 23 – 29, 2026', earlier: 1352, prev: 23, best: 74, quiet: 0, streak: 0, since: '2026-03-23', goal: 'Onboard the first ten teams',
+        days: [
+          { s: 'MON 23', c: [['openstage', 14], ['wheels-off', 3]], kind: 'built', title: 'Team pages: one link for a whole crew', h: [9, 10, 10, 11, 13, 14, 15, 15, 16, 19, 20, 20, 21, 21, 22, 23, 23] },
+          { s: 'TUE 24', c: [['openstage', 12], ['story_time_v1', 4]], kind: 'built', title: 'Invites, roles and a shared activity feed', h: [9, 10, 11, 11, 12, 14, 15, 16, 17, 19, 20, 20, 21, 22, 22, 23] },
+          { s: 'WED 25', c: [['wheels-off', 15]], kind: 'built', title: 'Ghost racing works online, against friends', h: [10, 11, 12, 14, 15, 15, 16, 19, 19, 20, 21, 21, 22, 23, 23] },
+          { s: 'THU 26', c: [['openstage', 18], ['trained-on', 2]], kind: 'shipped', title: 'Team pages are live for every Pro builder', at: 22.75, h: [9, 10, 10, 11, 12, 13, 14, 15, 15, 16, 17, 18, 19, 19, 20, 20, 21, 21, 22, 22] },
+          { s: 'FRI 27', c: [['openstage', 9], ['wheels-off', 5], ['story_time_v1', 3]], kind: 'built', title: '', auto: true, h: [10, 11, 11, 12, 13, 14, 15, 15, 16, 17, 19, 20, 20, 21, 22, 23, 23] },
+          { s: 'SAT 28', c: [['trained-on', 6], ['openstage', 5]], kind: 'published', title: 'How team pages came together in one week', post: 13, h: [11, 12, 12, 14, 15, 16, 17, 19, 20, 21, 22] },
+          { s: 'SUN 29', c: [], h: [] }
+        ] }
+    };
+    const w = weeks[weekKey];
+    const who = { name: w.name || 'Tux', handle: w.handle || 'tuxnotfound', pro: true, initials: w.initials || '' };
+    who.alt = `${who.name}'s avatar`;
+    const av = { photo: !who.initials, mono: Boolean(who.initials), initials: who.initials, bg: '#2C3B72', ink: '#F2ECDF' };
+
+    // ---------- text metrics: the server measures text, so the mock does too ----------
+    // Per-character advances in thousandths of an em, measured in Chrome with the same fonts (kerning makes real runs up to 1% shorter).
+    let CH = '';
+    for (let c = 32; c < 127; c++) CH += String.fromCharCode(c);
+    CH += '–—·’…✦→×☄';
+    const TAB = {
+      nr46: '227,256,340,576,576,783,726,187,273,273,409,539,233,335,227,392,576,576,576,576,576,576,576,576,576,576,255,268,539,539,539,446,890,708,642,700,761,646,592,750,803,337,410,734,602,991,765,782,612,782,660,548,686,770,688,977,712,680,636,304,392,304,539,410,500,472,554,444,564,467,341,493,564,272,244,543,264,840,573,538,569,552,389,388,342,546,533,754,523,528,441,300,234,300,539,504,669,244,231,651,793,1000,539,602',
+      nri12: '247,289,362,600,600,837,730,203,303,303,443,551,246,365,238,414,600,600,600,600,600,600,600,651,600,600,273,283,551,551,551,496,928,721,663,712,771,664,613,770,809,361,466,737,602,984,779,780,625,780,674,579,676,770,706,971,729,690,633,341,391,342,551,392,500,560,520,432,560,451,345,466,561,320,286,529,293,857,603,505,568,523,445,401,357,583,525,746,547,534,477,339,266,339,551,509,665,257,250,664,793,1000,551,659',
+      nri15: '236,274,349,575,575,815,698,195,283,283,434,525,235,349,228,408,575,575,575,575,575,575,575,650,575,575,260,270,525,525,525,459,915,689,634,690,751,634,584,743,781,340,434,706,578,952,751,760,599,759,643,551,645,746,673,932,692,661,616,324,379,325,525,391,500,510,481,392,514,410,317,431,514,294,264,490,269,790,554,465,524,479,408,361,328,533,484,685,502,492,434,322,254,321,525,502,659,246,240,641,794,1000,525,659',
+      dm4: '266,250,291,805,580,786,735,160,374,374,480,550,183,541,199,393,685,313,576,591,608,610,629,535,609,629,203,228,550,550,550,525,1005,665,604,718,689,565,535,759,681,235,501,585,528,841,691,775,580,775,595,580,561,655,670,969,604,580,541,315,393,315,623,660,214,545,626,573,628,569,340,559,575,240,244,505,224,891,575,594,626,628,370,502,393,574,528,764,496,556,459,428,235,428,550,670,874,199,210,566,794,1000,550,603',
+      dm5: '257,270,315,821,588,823,749,172,384,384,491,560,202,553,216,403,690,329,577,596,621,614,630,535,616,630,219,244,560,560,560,529,1019,679,614,724,694,571,542,765,692,247,515,606,538,855,704,777,591,777,605,588,573,665,682,984,625,598,553,334,403,334,640,681,221,558,636,584,636,579,351,570,589,251,253,527,237,907,588,599,636,636,383,512,405,587,540,781,520,571,469,441,247,441,560,678,888,216,225,604,793,1000,560,603',
+      dm6: '245,292,346,842,598,868,768,187,396,396,504,571,228,565,236,418,698,349,577,601,638,618,633,536,625,633,239,264,571,571,571,535,1034,696,628,732,702,578,551,772,705,263,530,634,550,873,719,781,604,781,620,598,587,676,696,1004,651,619,567,359,418,359,661,706,229,574,646,598,646,593,362,585,606,265,266,557,255,927,605,605,646,646,398,523,422,604,555,804,550,591,481,458,263,458,571,688,905,236,242,651,793,1000,571,603',
+      dm7: '236,310,368,856,604,902,782,198,405,405,514,580,246,576,252,429,704,364,578,604,650,622,635,537,633,635,255,279,580,580,580,540,1047,709,639,738,708,584,557,777,715,273,542,653,560,886,730,784,614,784,631,604,598,685,707,1019,671,636,578,378,429,378,677,726,235,586,654,607,655,603,371,597,619,274,275,578,268,941,618,610,654,655,410,532,434,617,566,821,571,604,491,471,273,471,580,696,919,252,256,688,793,1000,580,603'
+    };
+    // DM Sans 400 at 12px, for the sub-lines and the key (the same measuring page, metrics.json "dm12").
+    Object.assign(TAB, { dm12: '267,250,292,805,581,786,734,160,374,374,480,551,182,542,199,393,685,313,577,591,608,611,629,535,608,629,203,228,551,551,551,525,1005,664,604,717,689,565,535,759,682,234,501,585,527,841,691,775,581,775,595,581,561,656,669,969,604,581,542,315,393,315,622,660,214,544,626,573,628,569,341,559,576,241,243,505,224,892,574,594,626,628,371,503,393,574,527,763,496,557,458,427,234,427,551,669,874,199,211,566,793,1000,551,603' });
+    const MET = {};
+    Object.keys(TAB).forEach((k) => { MET[k] = TAB[k].split(',').map(Number); });
+    const widthOf = (s, k, size, ls) => {
+      let u = 0, len = 0;
+      for (const c of s) { const i = CH.indexOf(c); u += i < 0 ? 600 : MET[k][i]; len++; }
+      return (u / 1000) * size + (ls || 0) * size * len;
+    };
+    // DM Mono advances 0.601em per character.
+    const monoW = (s, size, ls) => [...s].length * size * (0.601 + (ls || 0));
+    const toks = (text, hy) => {
+      const out = [];
+      text.split(' ').forEach((word, wi) => (hy ? word.split(/(?<=-)(?=.)/) : [word]).forEach((p, pi) => out.push({ t: p, sp: pi === 0 && wi > 0 })));
+      return out;
+    };
+    const joinT = (tk, i, j) => tk.slice(i, j).map((x, k) => (k && x.sp ? ' ' : '') + x.t).join('');
+    // Line breaking: the fewest lines that fit, then the most even split (least sum of squared widths).
+    // A break after a colon, comma, semicolon or dash costs nothing extra; any other break costs a little, so phrases stay whole.
+    // tail is room kept at the end of the last line (for a row's project dots). Breaks after hyphens only when spaces are not enough.
+    const breakLines = (text, fw, maxW, maxLines, tail) => {
+      for (const hy of [false, true]) {
+        const tk = toks(text, hy), m = tk.length;
+        for (let nl = 1; nl <= Math.min(maxLines, m); nl++) {
+          const F = [], A = [];
+          for (let k = 0; k <= nl; k++) { F.push(new Array(m + 1).fill(Infinity)); A.push(new Array(m + 1).fill(0)); }
+          F[0][0] = 0;
+          for (let k = 1; k <= nl; k++) for (let j = k; j <= m; j++) for (let i = k - 1; i < j; i++) {
+            const wd = fw(joinT(tk, i, j)) + (j === m ? tail || 0 : 0);
+            if (wd > maxW || F[k - 1][i] === Infinity) continue;
+            const soft = j < m && !/[:,;–—-]$/.test(tk[j - 1].t) ? 0.06 * maxW * maxW : 0;
+            const v = F[k - 1][i] + wd * wd + soft;
+            if (v < F[k][j]) { F[k][j] = v; A[k][j] = i; }
+          }
+          if (F[nl][m] < Infinity) {
+            const lines = [];
+            let j = m;
+            for (let k = nl; k >= 1; k--) { const i = A[k][j]; lines.unshift(joinT(tk, i, j)); j = i; }
+            return lines;
+          }
+        }
+      }
+      return null;
+    };
+    // Last resort for a word longer than the line: break it anywhere.
+    const hardWrap = (text, fw, maxW) => {
+      const out = [];
+      let cur = '';
+      for (const ch of text) { if (cur && fw(cur + ch) > maxW) { out.push(cur); cur = ch.trim() ? ch : ''; } else cur += ch; }
+      if (cur) out.push(cur);
+      return out;
+    };
+    // Only for things the builder did not write (repo names, a handle): cut with an ellipsis.
+    const cut = (s, fw, maxW) => {
+      if (fw(s) <= maxW) return s;
+      let k = s.length;
+      while (k > 1 && fw(s.slice(0, k).replace(/[\s\-_.]+$/, '') + '…') > maxW) k--;
+      return s.slice(0, k).replace(/[\s\-_.]+$/, '') + '…';
+    };
+    const plural = (x, one, many) => `${x.toLocaleString('en-US')} ${x === 1 ? one : many}`;
+    const words = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+    const timesWord = (k) => (k === 1 ? 'ONCE' : k === 2 ? 'TWICE' : `${k} TIMES`);
+    const DAYNAME = { MON: 'MONDAY', TUE: 'TUESDAY', WED: 'WEDNESDAY', THU: 'THURSDAY', FRI: 'FRIDAY', SAT: 'SATURDAY', SUN: 'SUNDAY' };
+
+    // ---------- the week's facts ----------
+    const commits = [];
+    w.days.forEach((d, i) => {
+      const owners = d.c.flatMap(([p, k]) => Array(k).fill(p));
+      d.h.forEach((h, k) => commits.push({ i, h, p: owners[k] }));
+    });
+    const n = commits.length;
+    const totals = {};
+    commits.forEach((c) => { totals[c.p] = (totals[c.p] || 0) + 1; });
+    const projects = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+    const order = projects.map(([p]) => p);
+    const shipDays = w.days.map((d, i) => ({ d, i })).filter(({ d }) => d.kind === 'shipped');
+    const postDays = w.days.map((d, i) => ({ d, i })).filter(({ d }) => d.kind === 'published');
+    const ships = shipDays.length, posts = postDays.length;
+    const activeDays = w.days.filter((d) => d.h.length).length;
+    let runNow = 0, bestRun = 0;
+    w.days.forEach((d) => { runNow = d.h.length ? runNow + 1 : 0; bestRun = Math.max(bestRun, runNow); });
+    const allTime = w.earlier + n;
+    const dayName = (i) => DAYNAME[w.days[i].s.split(' ')[0]];
+    // [a, b) on a 24-hour clock; a window may run past midnight.
+    const inWin = (h, a, b) => (a < b ? h >= a && h < b : h >= a || h < b);
+    const count = (a, b) => commits.filter((c) => inWin(c.h, a, b)).length;
+    const fact = (k, win) => (n === 1 ? `YOUR ONE COMMIT LANDED ${win}`
+      : n === 2 ? (k === 2 ? `BOTH COMMITS LANDED ${win}` : `ONE OF TWO COMMITS LANDED ${win}`)
+      : `${k} OF ${n} COMMITS ${win}`);
+
+    // ---------- the persona: the week's rarest fact names it ----------
+    // Rules, in order; the first that holds names the week. Commit hours are only the fallback.
+    // 1. A record week:           The Record Breaker  "96 COMMITS, YOUR MOST IN A WEEK · THE OLD BEST WAS 74" (needs a known best week).
+    // 2. A streak of 7+ days:     The Marathoner      "7 DAYS IN A ROW · <commits clause>" (streak_days_current; it may start in an earlier week).
+    // 3. A comeback:              The Comeback Kid    "BACK AFTER TWO QUIET WEEKS · 23 COMMITS IN 4 DAYS" (a quiet week has no commits and nothing logged).
+    // 4. Shipped twice or more:   The Serial Shipper  "SHIPPED TWICE IN 4 DAYS · <commits clause>" (first to last launch, both days counted).
+    // 5. One launch, no commits, two posts or more: The Headliner  "SHIPPED TUESDAY · THEN 3 POSTS" ("· 3 POSTS" when some came first).
+    // 6. Shipped once:            The Launcher        "SHIPPED THURSDAY, AFTER 30 COMMITS IN 3 DAYS" (this week's commits before the launch day);
+    //                                                 with none before it: "SHIPPED TUESDAY · <commits clause>".
+    // 7. Posts, no commits:       The Storyteller     "1 POST · 1,284 COMMITS SO FAR".
+    // 8. Commit hours:            The Nighthawk (half after 10 PM), The Night Owl (half 7 PM – 4 AM), The Early Bird (30% 4 – 9 AM),
+    //                             The Daylighter (60% 9 AM – 6 PM), else The Double Shift (by day and after 7 PM).
+    // 9. Nothing logged:          The Stargazer       "A CLEAR SKY · 1,284 COMMITS SO FAR".
+    // The commits clause: "74 COMMITS, UP FROM 32" when up on last week, else "32 COMMITS". The evidence never says "down from".
+    const record = n > 0 && w.best != null && n > w.best;
+    const streakDays = Math.max(w.streak || 0, bestRun);
+    const clause = n === 0 ? '' : w.prev != null && w.prev > 0 && n > w.prev ? `${n} COMMITS, UP FROM ${w.prev}` : plural(n, 'COMMIT', 'COMMITS');
+    let title, tagline, evidence, alt = '', windowHours = null;
+    if (record) {
+      title = 'The Record Breaker';
+      tagline = 'Your most commits in a single week';
+      evidence = `${n} COMMITS, THE OLD BEST WAS ${w.best}`;
+    } else if (streakDays >= 7) {
+      title = 'The Marathoner'; tagline = 'You built every day for a week or more';
+      evidence = `${streakDays} DAYS IN A ROW`;
+      alt = clause;
+    } else if (n > 0 && (w.quiet || 0) >= 2) {
+      title = 'The Comeback Kid'; tagline = 'Back to building after a quiet stretch';
+      evidence = `BACK AFTER ${(words[w.quiet] || w.quiet).toUpperCase()} QUIET WEEKS`;
+      alt = `${plural(n, 'COMMIT', 'COMMITS')} IN ${plural(activeDays, 'DAY', 'DAYS')}`;
+    } else if (ships >= 2) {
+      const first = shipDays[0].i, last = shipDays[ships - 1].i;
+      title = 'The Serial Shipper'; tagline = 'You launched more than once in one week';
+      evidence = `SHIPPED ${timesWord(ships)} IN ${last - first + 1} DAYS`;
+      alt = clause;
+    } else if (ships === 1 && n === 0 && posts >= 2) {
+      const at0 = shipDays[0].i;
+      title = 'The Headliner'; tagline = 'You launched, then spent the week talking about it';
+      evidence = `SHIPPED ${dayName(at0)}`;
+      alt = postDays.every(({ i }) => i > at0) ? `THEN ${plural(posts, 'POST', 'POSTS')}` : plural(posts, 'POST', 'POSTS');
+    } else if (ships === 1) {
+      const at0 = shipDays[0].i;
+      const before = w.days.slice(0, at0).reduce((a, d) => a + d.h.length, 0);
+      const daysBefore = w.days.slice(0, at0).filter((d) => d.h.length).length;
+      title = 'The Launcher'; tagline = 'You put something out into the world';
+      if (before) evidence = `SHIPPED ${dayName(at0)}, AFTER ${plural(before, 'COMMIT', 'COMMITS')} IN ${plural(daysBefore, 'DAY', 'DAYS')}`;
+      else { evidence = `SHIPPED ${dayName(at0)}`; alt = n ? clause : posts ? (postDays.every(({ i }) => i > at0) ? `THEN ${plural(posts, 'POST', 'POSTS')}` : plural(posts, 'POST', 'POSTS')) : ''; }
+    } else if (n === 0 && posts) {
+      title = 'The Storyteller'; tagline = 'No commits this week, but you wrote about the work';
+      evidence = plural(posts, 'POST', 'POSTS');
+      alt = `${allTime.toLocaleString('en-US')} COMMITS SO FAR`;
+    } else if (n > 0) {
+      const night = count(19, 4), late = count(22, 4), early = count(4, 9), daytime = count(9, 18), byDay = count(9, 19);
+      if (late / n >= 0.5) { title = 'The Nighthawk'; tagline = 'Most of your building happens after 10 PM'; evidence = fact(late, 'AFTER 10 PM'); windowHours = [22, 28]; }
+      else if (night / n >= 0.5) { title = 'The Night Owl'; tagline = 'Most of your building happens after dark'; evidence = fact(night, 'BETWEEN 7 PM AND 4 AM'); windowHours = [19, 28]; }
+      else if (early / n >= 0.3) { title = 'The Early Bird'; tagline = 'A good share of your building lands before 9 AM'; evidence = fact(early, 'BETWEEN 4 AM AND 9 AM'); windowHours = [4, 9]; }
+      else if (daytime / n >= 0.6) { title = 'The Daylighter'; tagline = 'Most of your building happens in the working day'; evidence = fact(daytime, 'BETWEEN 9 AM AND 6 PM'); windowHours = [9, 18]; }
+      else { title = 'The Double Shift'; tagline = 'You build by day and again after dark'; evidence = `${plural(byDay, 'COMMIT', 'COMMITS')} BY DAY · ${night} AFTER 7 PM`; }
+    } else {
+      title = 'The Stargazer'; tagline = 'A quiet week with nothing logged';
+      evidence = 'A CLEAR SKY';
+      alt = `${allTime.toLocaleString('en-US')} COMMITS SO FAR`;
+    }
+    // The second clause prints only when the whole line fits the column.
+    if (alt && monoW(`${evidence} · ${alt}`, 15, 0.04) <= 522) evidence = `${evidence} · ${alt}`;
+    const titleSize = widthOf(title, 'nr46', 48, -0.02) <= 520 ? 48 : 42;
+
+    // ---------- header: name, handle and Pro on the left; the week sits in the top-right corner ----------
+    // When the row overflows: the handle's mono steps down, then Pro goes, then the name steps down to 17px,
+    // then the handle is shortened, then the name (the link in the footer always carries the full handle).
+    const fNameAt = (ns) => (s) => widthOf(s, 'dm7', ns);
+    const handle = `@${who.handle}`;
+    const PROW = 8 + 33;
+    let hd = null;
+    for (const [size, pro, ns] of [[12, true, 19], [11.5, true, 19], [11, true, 19], [11, false, 19], [11, false, 17]]) {
+      if (fNameAt(ns)(who.name) + 8 + monoW(handle, size) + (pro ? PROW : 0) <= 522) { hd = { size, name: who.name, handle, pro, nameSize: ns }; break; }
+    }
+    if (!hd) {
+      const size = 11, fh = (s) => monoW(s, size), fn = fNameAt(17);
+      const name = cut(who.name, fn, Math.max(160, 522 - 8 - fh(handle.slice(0, 12) + '…')));
+      hd = { size, name, handle: cut(handle, fh, 522 - 8 - fn(name)), pro: false, nameSize: 17 };
+    }
+    // The week, right-aligned in the top-right corner on the name's baseline, clear of the 00h label (it may start at x = 946).
+    const wk = (() => {
+      const full = `WEEK ${w.no} · ${w.dates.toUpperCase()}`;
+      const compact = `WEEK ${w.no} · ${w.dates.toUpperCase().replace(/, \d{4} – /, ' – ')}`;
+      const RIGHT = 1164, ROOM = RIGHT - 946;
+      for (const [text, size, ls] of [[full, 12, 0.08], [full, 12, 0.04], [full, 11.5, 0.04], [full, 11.5, 0], [compact, 11.5, 0.04], [compact, 11, 0]]) {
+        // Chrome adds the letter spacing after the last character too, so the anchor moves right by one spacing.
+        if (monoW(text, size, ls) <= ROOM) return { text, size, lsPx: Math.round(ls * size * 100) / 100, x: Math.round((RIGHT + ls * size) * 10) / 10, y: 44, x0: RIGHT - monoW(text, size, ls) };
+      }
+      return { text: compact, size: 11, lsPx: 0, x: RIGHT, y: 44, x0: RIGHT - monoW(compact, 11) };
+    })();
+
+    // ---------- project colours ----------
+    // A project without a stored colour (never in production) gets a hue from its name, so two of them never share one.
+    const nameHue = (p) => { let h = 0; for (const ch of p) h = (h * 31 + ch.charCodeAt(0)) % 360; return hslHex(h, 0.7, 0.55); };
+    const hues = order.map((p) => tones(STORED[p] || nameHue(p)));
+    const hueOf = (p) => hues[Math.max(0, order.indexOf(p))] || ['#FFFFFF', '#FFFFFF', '#888888'];
+    const dotColor = (p) => (dark ? hueOf(p)[0] : hueOf(p)[2]);
+
+    // ---------- the week, one row per day, in order (the Tour's day list) ----------
+    // An active row: the day and its kind (BUILT, SHIPPED or PUBLISHED) in the gutter, a glyph that matches the sky
+    // (✦ a launch, a comet a post, a dot a day of commits), the builder's words, and under them a sub-line that names each project with its commits.
+    // A quiet day is a slim row that keeps its place. Runs of quiet days share one row only when seven rows cannot fit.
+    const icons = {
+      star: 'M12 2.5l2.3 7.2 7.2 2.3-7.2 2.3L12 21.5l-2.3-7.2L2.5 12l7.2-2.3z',
+      dot: 'M12 12m-3.6 0a3.6 3.6 0 1 0 7.2 0a3.6 3.6 0 1 0 -7.2 0',
+      cometHead: 'M12.2 8.2a3.8 3.8 0 1 0 7.6 0a3.8 3.8 0 1 0 -7.6 0Z',
+      cometTail: 'M18.4 10.6L2.6 21.4L13.6 5.6Z'
+    };
+    const glyph = (kind) => (kind === 'shipped' ? { icon: icons.star, fill: t.gold, icon2: '', fill2: 'none', o2: 0 }
+      : kind === 'published' ? { icon: icons.cometHead, fill: t.pub, icon2: icons.cometTail, fill2: t.pub, o2: 0.5 }
+      : { icon: icons.dot, fill: t.muted, icon2: '', fill2: 'none', o2: 0 });
+    const L = { gutW: 66, glyphW: 20 };
+    L.headX = L.gutW + L.glyphW;
+    L.headW = 522 - L.headX;
+    const META_S = 11.5, SUB_S = 12, SUB_GAP = 14;
+    const tagOf = (kind) => (kind === 'shipped' ? 'SHIPPED' : kind === 'published' ? 'PUBLISHED' : 'BUILT');
+    // The card writes a day's words only when the builder did not: an auto-count day, or a day with no headline.
+    const autoTitle = (d, list) => {
+      const k = d.h.length;
+      if (!k) return d.kind === 'shipped' ? 'Shipped' : d.kind === 'published' ? 'Published' : 'Built';
+      return list.length > 1 ? `${k} commits in ${list.length} projects` : `${plural(k, 'commit', 'commits')} in ${list[0][0]}`;
+    };
+    // The sub-line: every project of the day with its commits. Long repo names are shortened before a project is dropped.
+    const fSub = (s) => widthOf(s, 'dm12', SUB_S);
+    const subItemW = (s) => (s.dot ? 7 + 5 : 0) + (s.name ? fSub(s.name) + 5 : 0) + monoW(s.n, META_S);
+    const subW = (xs) => xs.reduce((a, s) => a + subItemW(s), 0) + SUB_GAP * Math.max(0, xs.length - 1);
+    const fitSub = (list) => {
+      const all = list.map(([p, k]) => ({ dot: true, p, name: p, full: p, n: String(k), color: dotColor(p) }));
+      for (let keep = all.length; keep >= 1; keep--) {
+        const xs = all.slice(0, keep).map((s) => ({ ...s }));
+        if (keep < all.length) xs.push({ dot: false, name: '', n: `+${all.length - keep}`, color: 'none' });
+        for (let guard = 0; subW(xs) > L.headW && guard < 40; guard++) {
+          const named = xs.filter((s) => s.name);
+          const s = named.reduce((a, b) => (fSub(b.name) > fSub(a.name) ? b : a), named[0]);
+          const now = fSub(s.name);
+          if (now <= 96) break;
+          s.name = cut(s.full, fSub, Math.max(96, now - (subW(xs) - L.headW) - 1));
+        }
+        if (subW(xs) <= L.headW) return xs;
+      }
+      return all.slice(0, 1);
+    };
+    // Inline (dense weeks): dots and counts close the last line, as many as fit, then "+N".
+    const inlineMeta = (list) => {
+      const shown = list.slice(0, list.length > 3 ? 2 : 3).map(([p, k]) => ({ n: String(k), color: dotColor(p), dot: true }));
+      if (list.length > shown.length) shown.push({ n: `+${list.length - shown.length}`, color: 'none', dot: false });
+      const wd = shown.reduce((a, m) => a + (m.dot ? 11 : 0) + monoW(m.n, META_S), 0) + 10 * Math.max(0, shown.length - 1);
+      return { items: shown, w: wd };
+    };
+    const buildItems = (mergeMin) => {
+      const out = [];
+      let run = [];
+      const flush = () => {
+        if (run.length >= mergeMin) out.push({ quiet: true, from: run[0], to: run[run.length - 1] });
+        else run.forEach((i) => out.push({ quiet: true, from: i, to: i }));
+        run = [];
+      };
+      w.days.forEach((d, i) => {
+        if (!(d.h.length > 0 || d.kind)) { run.push(i); return; }
+        flush();
+        const list = d.c.slice().sort((a, b) => b[1] - a[1]);
+        const auto = Boolean(d.auto) || !d.title;
+        out.push({ quiet: false, i, d, list, auto, text: auto ? autoTitle(d, list) : d.title, tag: tagOf(d.kind), sub: list.length ? fitSub(list) : [] });
+      });
+      flush();
+      return out;
+    };
+    // Sizes from roomy to tight. The first plan that fits the column wins, so a thin week reads large and a full one stays whole.
+    // The builder's words are never cut: a row wraps (up to three lines) and shrinks before anything else gives way.
+    // Plans, in order: seven rows with named sub-lines (22 to 15px); seven rows with dots inline (22 to 15px);
+    // then runs of two or more quiet days merge and both ladders run again; the last resort goes down to 13px.
+    // A thin week keeps all seven rows (they mirror the seven rings) and fills the column with larger type and air, not a gap.
+    const LEVELS = [
+      { size: 22, lh: 28, pad: 11, qpad: 9, subH: 18 }, { size: 20, lh: 26, pad: 10, qpad: 8, subH: 17 }, { size: 19, lh: 25, pad: 9, qpad: 7, subH: 17 }, { size: 18, lh: 24, pad: 8, qpad: 6, subH: 17 }, { size: 18, lh: 23, pad: 7, qpad: 6, subH: 16 },
+      { size: 17, lh: 22, pad: 7, qpad: 6, subH: 16 }, { size: 16, lh: 21, pad: 6, qpad: 5, subH: 16 }, { size: 16, lh: 20, pad: 5, qpad: 4, subH: 15 },
+      { size: 15, lh: 19, pad: 5, qpad: 4, subH: 15 }, { size: 15, lh: 18, pad: 4, qpad: 3, subH: 15 }, { size: 14, lh: 17, pad: 3, qpad: 3, subH: 14 },
+      { size: 13, lh: 16, pad: 2, qpad: 2, subH: 14 }
+    ];
+    const fitRow = (it, lv, mode) => {
+      const fw = (s) => widthOf(s, 'dm5', lv.size);
+      if (mode === 'sub') {
+        const lines = breakLines(it.text, fw, L.headW, 3, 0) || hardWrap(it.text, fw, L.headW);
+        // A day without commits has no sub-line; its row only needs room for the tag under the day.
+        const body = it.sub.length ? lines.length * lv.lh + lv.subH : Math.max(lines.length * lv.lh, lv.lh + lv.subH);
+        return { lines: lines.map((text) => ({ text, meta: false })), meta: [], sub: it.sub, h: 2 * lv.pad + body };
+      }
+      const mt = inlineMeta(it.list);
+      const tail = mt.items.length ? mt.w + 16 : 0;
+      let lines = breakLines(it.text, fw, L.headW, 3, tail), own = false;
+      if (!lines) { lines = breakLines(it.text, fw, L.headW, 3, 0) || hardWrap(it.text, fw, L.headW); own = tail > 0; }
+      const out = lines.map((text, k) => ({ text, meta: !own && tail > 0 && k === lines.length - 1 }));
+      if (own) out.push({ text: '', meta: true });
+      return { lines: out, meta: mt.items, sub: [], h: 2 * lv.pad + Math.max(out.length * lv.lh, lv.lh + lv.subH) };
+    };
+    // The goal sits on the footer; the list and its totals fill the space between the reading and the goal.
+    L.titleTop = 61;
+    // Newsreader's baseline sits 0.737 of the size below the top of a line-height-1 box (measured in Chrome).
+    L.titleBase = L.titleTop + Math.round(titleSize * 0.737);
+    L.tagTop = L.titleBase + 12;
+    L.evTop = L.tagTop + 25;
+    L.listTop = L.evTop + 20 + 12;
+    const fGoal = (s) => widthOf(s, 'dm6', 16);
+    const goalLines = breakLines(w.goal, fGoal, L.headW, 2, 0) || hardWrap(w.goal, fGoal, L.headW);
+    L.goalTop = 576 - 14 - goalLines.length * 20;
+
+    // ---------- totals: each project's commits this week, then the week's total ----------
+    // Every project is named, up to six (past six the rest are "+N more"). The line wraps to a second one before a name is cut.
+    const LEG_S = 12.5, LEG_GAP = 12;
+    const legW = (g) => (g.isMore ? widthOf(g.text, 'dm4', LEG_S) : 8 + 6 + widthOf(g.name, 'dm4', LEG_S) + 6 + monoW(String(g.n), 11.5));
+    const lineW = (xs) => xs.reduce((a, g) => a + legW(g), 0) + LEG_GAP * Math.max(0, xs.length - 1);
+    const totLabel = n === 1 ? 'COMMIT' : 'COMMITS';
+    const totW = widthOf(String(n), 'dm4', 13.5) + 6 + monoW(totLabel, 11, 0.08);
+    const ROOM1 = 522 - totW - 16, ROOM2 = 522;
+    const legItems = projects.slice(0, 6).map(([p, c]) => ({
+      isItem: true, isMore: false, name: p, full: p, n: c, color: dark ? hueOf(p)[0] : hueOf(p)[2], center: dark ? '#FFFFFF' : hueOf(p)[1], glowO: dark ? 0.85 : 0.3
+    }));
+    if (projects.length > 6) legItems.push({ isItem: false, isMore: true, text: `+${projects.length - 6} more` });
+    let legend1 = legItems, legend2 = [];
+    if (lineW(legItems) > ROOM1) {
+      // Two lines: keep the biggest projects on the first line and the order within each line; choose the split that fits,
+      // then the one that leaves the most on the first line. Names are shortened only when no split fits.
+      const m = legItems.length;
+      let bestSplit = null;
+      for (let mask = 1; mask < (1 << m); mask++) {
+        if (!(mask & 1)) continue;
+        const a = legItems.filter((_, k) => mask & (1 << k)), b = legItems.filter((_, k) => !(mask & (1 << k)));
+        if (lineW(a) > ROOM1 || lineW(b) > ROOM2) continue;
+        const score = a.reduce((s, g) => s + (m - legItems.indexOf(g)) * 10, 0) - b.reduce((s, g) => s + legItems.indexOf(g), 0);
+        if (!bestSplit || score > bestSplit.score) bestSplit = { a, b, score };
+      }
+      if (bestSplit) { legend1 = bestSplit.a; legend2 = bestSplit.b; }
+      else {
+        const fn = (x) => widthOf(x, 'dm4', LEG_S);
+        let k = 0, x = 0;
+        for (; k < m; k++) { const wd = legW(legItems[k]) + (k ? LEG_GAP : 0); if (x + wd > ROOM1 && k > 0) break; x += wd; }
+        legend1 = legItems.slice(0, Math.max(1, k)).map((g) => ({ ...g }));
+        legend2 = legItems.slice(Math.max(1, k)).map((g) => ({ ...g }));
+        [[legend1, ROOM1], [legend2, ROOM2]].forEach(([xs, room]) => {
+          for (let guard = 0; lineW(xs) > room && guard < 60; guard++) {
+            const named = xs.filter((g) => g.isItem);
+            const g = named.reduce((a, b2) => (fn(b2.name) > fn(a.name) ? b2 : a), named[0]);
+            const now = fn(g.name);
+            if (now <= 80) break;
+            g.name = cut(g.full, fn, Math.max(80, now - (lineW(xs) - room) - 1));
+          }
+        });
+      }
+    }
+    const tot = { show: n > 0, two: legend2.length > 0, n: n.toLocaleString('en-US'), label: totLabel };
+    const TOT_H = n > 0 ? 26 + (tot.two ? 19 : 0) : 0;
+
+    const budget = L.goalTop - 14 - TOT_H - L.listTop;
+    const merges = [Infinity, 2];
+    const plans = [];
+    merges.forEach((mg) => {
+      LEVELS.filter((lv) => lv.size >= 15).forEach((lv) => plans.push({ mg, mode: 'sub', lv }));
+      LEVELS.filter((lv) => lv.size >= 15).forEach((lv) => plans.push({ mg, mode: 'inline', lv }));
+    });
+    LEVELS.filter((lv) => lv.size < 15).forEach((lv) => plans.push({ mg: 2, mode: 'inline', lv }));
+    let plan = null, fitted = null, items = null;
+    for (let k = 0; k < plans.length; k++) {
+      const pl = plans[k];
+      const its = buildItems(pl.mg);
+      const f = its.map((it) => (it.quiet ? { h: 18 + 2 * pl.lv.qpad } : fitRow(it, pl.lv, pl.mode)));
+      if (f.reduce((a, r) => a + r.h, 0) <= budget || k === plans.length - 1) { plan = pl; fitted = f; items = its; break; }
+    }
+    const lv = plan.lv;
+    // Spare room opens the rows up (at most 12px a side); the rest falls below the totals.
+    const used = fitted.reduce((a, r) => a + r.h, 0);
+    const extra = Math.max(0, Math.min(12, Math.floor((budget - used) / (2 * items.length))));
+    let y = L.listTop;
+    // DM Sans and DM Mono both set their baseline 0.99 em below the top of a 1.3 em content box (measured in Chrome).
+    const baseIn = (box, size) => (box - 1.3 * size) / 2 + 0.99 * size;
+    const rows = items.map((it, k) => {
+      const f = fitted[k];
+      const h = f.h + 2 * extra;
+      const top = y;
+      y += h;
+      const rule = k === 0 ? t.rule : t.hair;
+      if (it.quiet) {
+        const a = w.days[it.from].s, b = w.days[it.to].s;
+        return { quiet: true, active: false, top, h, rule, padT: (h - 18) / 2 - 0.5, day: it.from === it.to ? a : `${a} – ${b}`, note: 'quiet' };
+      }
+      const d = it.d;
+      const lineBase = baseIn(lv.lh, lv.size);
+      return {
+        quiet: false, active: true, top, h, rule, padT: lv.pad + extra - 0.5, size: lv.size, lh: lv.lh, subH: lv.subH,
+        day: d.s, dayColor: d.kind === 'shipped' ? t.gold : t.muted, tag: it.tag,
+        tagColor: d.kind === 'shipped' ? t.gold : d.kind === 'published' ? t.pub : t.faint,
+        // The gutter hangs from the day's baseline, which flex aligns with the headline's; the tag then lines up with the sub-line
+        // when the headline takes one line, and with the headline's second line otherwise (DM Mono and DM Sans share 1.3 em boxes, baseline at 0.99 em).
+        tagNudge: Math.round((f.lines.length === 1 && plan.mode === 'sub' && f.sub.length
+          ? baseIn(lv.subH, SUB_S) - (baseIn(lv.lh, lv.size) - baseIn(lv.lh, 11.5)) - baseIn(lv.subH, 9.5)
+          : f.lines.length > 1 ? baseIn(lv.lh, 11.5) - baseIn(lv.subH, 9.5) : 0) * 10) / 10,
+        g: glyph(d.kind), glyphTop: Math.round((lineBase - 0.25 * lv.size - 6.5) * 10) / 10,
+        lines: f.lines, meta: f.meta, hasSub: plan.mode === 'sub' && f.sub.length > 0, sub: f.sub, color: it.auto ? t.auto : t.title
+      };
+    });
+    L.listEnd = y;
+    L.totTop = L.listEnd;
+    L.closeRule = n === 0;
+
+    // Footer: the series mark on the left, the link (the growth loop) on the right. The link is never cut.
+    const link = `openstage.dev/${who.handle}`;
+    const ft = { mark: 'STAR CHART BY OPENSTAGE', link, size: 16 };
+    const ftFits = () => monoW(ft.mark, 11, 0.1) + 20 + widthOf(link, 'dm7', ft.size) <= 522;
+    if (!ftFits()) ft.size = 14;
+    if (!ftFits()) ft.mark = 'OPENSTAGE';
+    if (!ftFits()) ft.size = 13;
+
+    // ---------- the sky ----------
+    // Midnight at the top, the hours clockwise; Monday is the inner ring and Sunday the outer one.
+    const C = { x: 880, y: 290, R: 240, R2: 234, hub: 46, av: 84 };
+    C.avX = C.x - C.av / 2; C.avY = C.y - C.av / 2; C.auraR = C.R + 8;
+    C.dayY = C.y + C.R; C.dayR = sky.dayR;
+    const ringR = (i) => 71 + 25 * i;
+    const ang = (h) => (h / 24) * Math.PI * 2 - Math.PI / 2;
+    const at = (r, h) => ({ x: C.x + r * Math.cos(ang(h)), y: C.y + r * Math.sin(ang(h)) });
+    const f1 = (v) => String(Math.round(v * 10) / 10);
+    const circ = (x, y, r) => `M${f1(x - r)} ${f1(y)}a${f1(r)} ${f1(r)} 0 1 0 ${f1(2 * r)} 0a${f1(r)} ${f1(r)} 0 1 0 ${f1(-2 * r)} 0Z`;
+    const rng = (s) => {
+      let h = 2166136261;
+      for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+      return () => { h += 0x6D2B79F5; let x = h; x = Math.imul(x ^ (x >>> 15), x | 1); x ^= x + Math.imul(x ^ (x >>> 7), x | 61); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
+    };
+    const overlaps = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+    const hitsCircle = (b, c) => { const dx = Math.max(b.x0 - c.x, 0, c.x - b.x1), dy = Math.max(b.y0 - c.y, 0, c.y - b.y1); return dx * dx + dy * dy < c.r * c.r; };
+    const segHits = (b, A, B) => { for (let k = 0; k <= 8; k++) { const x = A.x + ((B.x - A.x) * k) / 8, y2 = A.y + ((B.y - A.y) * k) / 8; if (x > b.x0 && x < b.x1 && y2 > b.y0 && y2 < b.y1) return true; } return false; };
+    const segDist = (A, B, P) => { const L2 = (B.x - A.x) ** 2 + (B.y - A.y) ** 2 || 1; const u = Math.max(0, Math.min(1, ((P.x - A.x) * (B.x - A.x) + (P.y - A.y) * (B.y - A.y)) / L2)); return Math.hypot(P.x - (A.x + (B.x - A.x) * u), P.y - (A.y + (B.y - A.y) * u)); };
+    const SLOTS = 8;
+    const slotOf = (p) => Math.min(SLOTS - 1, Math.max(0, order.indexOf(p)));
+    const hue = Array.from({ length: SLOTS }, (_, k) => (hues[k] ? hues[k][0] : '#FFFFFF'));
+    const tint = Array.from({ length: SLOTS }, (_, k) => (hues[k] ? hues[k][1] : '#FFFFFF'));
+    // A star is one hour of one project on one day: it sits on that day's ring, in the middle of that hour.
+    // Its size and glow grow with the commits in that hour (core radius 1.3 + 1.9 times the square root); the key shows 1, 5 and 10.
+    // Projects that share an hour on one day sit side by side along the ring, so each stays on its day.
+    const halo = Array(SLOTS).fill(''), core = Array(SLOTS).fill('');
+    let centers = '';
+    const stars = [];
+    const lastStar = {};
+    w.days.forEach((d, i) => {
+      const r0 = ringR(i);
+      const owners = d.c.flatMap(([p, k]) => Array(k).fill(p));
+      const groups = [];
+      d.h.forEach((h, k) => {
+        const p = owners[k];
+        let g2 = groups.find((x) => x.h === h && x.p === p);
+        if (!g2) { g2 = { h, p, n: 0 }; groups.push(g2); }
+        g2.n++;
+      });
+      const byH = {};
+      groups.forEach((g2) => { (byH[g2.h] = byH[g2.h] || []).push(g2); });
+      const step = Math.min(0.42, (10 / (2 * Math.PI * r0)) * 24);
+      Object.values(byH).forEach((list) => {
+        list.sort((a, b) => order.indexOf(a.p) - order.indexOf(b.p));
+        list.forEach((g2, j) => { g2.hh = g2.h + 0.5 + (j - (list.length - 1) / 2) * step; });
+      });
+      groups.sort((a, b) => a.hh - b.hh);
+      groups.forEach((g2) => {
+        const q = at(r0, g2.hh);
+        const cr = 1.3 + 1.9 * Math.sqrt(g2.n);
+        const s = { x: q.x, y: q.y, cr, h: g2.h, hh: g2.hh, p: g2.p, n: g2.n, i };
+        const k = slotOf(g2.p);
+        halo[k] += circ(s.x, s.y, cr * 2.4);
+        core[k] += circ(s.x, s.y, cr);
+        centers += circ(s.x, s.y, Math.max(0.9, cr * 0.42));
+        stars.push(s);
+        lastStar[i] = s;
+      });
+    });
+    // A launch is a nova at its logged time on its day's ring. Without a logged time it sits on the day's last commit
+    // (the port always has the time; the mock gives every launch one).
+    const novas = [];
+    shipDays.forEach(({ d, i }) => {
+      const q = d.at != null ? at(ringR(i), d.at) : lastStar[i];
+      if (q) novas.push({ x: q.x, y: q.y, day: d, i });
+    });
+    const nova = { glow: '', bloom: '', ring: '', star: '', flare: '', core: '' };
+    novas.forEach((q) => {
+      const Ls = 18, wd = 2.2, Lf = 28;
+      nova.bloom += circ(q.x, q.y, 23);
+      nova.glow += circ(q.x, q.y, 14);
+      nova.ring += circ(q.x, q.y, 9);
+      nova.core += circ(q.x, q.y, 2.3);
+      nova.flare += `M${f1(q.x - Lf)} ${f1(q.y)}H${f1(q.x + Lf)}M${f1(q.x)} ${f1(q.y - Lf)}V${f1(q.y + Lf)}`;
+      nova.star += `M${f1(q.x)} ${f1(q.y - Ls)}L${f1(q.x + wd)} ${f1(q.y - wd)}L${f1(q.x + Ls)} ${f1(q.y)}L${f1(q.x + wd)} ${f1(q.y + wd)}L${f1(q.x)} ${f1(q.y + Ls)}L${f1(q.x - wd)} ${f1(q.y + wd)}L${f1(q.x - Ls)} ${f1(q.y)}L${f1(q.x - wd)} ${f1(q.y - wd)}Z`;
+    });
+
+    // Each post is a comet: the head at the post's logged time on its day's ring, the tail always trailing back in time
+    // (counter-clockwise), as if the comet moved with the clock. The tail leans outward, or inward when that crosses fewer stars.
+    const comets = [];
+    const timed = postDays.filter(({ d }) => d.post != null);
+    const cometHours = timed.map(({ d }) => d.post);
+    timed.forEach(({ d, i }) => {
+      const hour = d.post;
+      const quad = Math.floor((((hour % 24) + 24) % 24) / 6);
+      const crowd = cometHours.filter((h) => Math.floor((((h % 24) + 24) % 24) / 6) === quad).length;
+      const k = (n === 0 && timed.length === 1 ? 1.45 : 1) * (crowd > 1 ? 0.82 : 1);
+      const r0 = ringR(i), a = ang(hour), H = at(r0, hour);
+      const back = { x: Math.sin(a), y: -Math.cos(a) }, out = { x: Math.cos(a), y: Math.sin(a) };
+      const tip = (len, tilt, dr) => ({ x: H.x + len * (Math.cos(tilt) * back.x + Math.sin(tilt) * dr * out.x), y: H.y + len * (Math.cos(tilt) * back.y + Math.sin(tilt) * dr * out.y) });
+      let best = null;
+      [[1, 0.34], [-1, 0.34], [1, 0.6], [-1, 0.6]].forEach(([dr, tilt], v) => {
+        const E = tip(50 * k, tilt, dr), E2 = tip(60 * k, tilt + 0.24, dr);
+        const rr = [E, E2].map((B) => Math.hypot(B.x - C.x, B.y - C.y));
+        if (Math.max(...rr) > C.R2 - 3 || Math.min(...rr) < C.hub + 14) return;
+        let s = v * 0.3;
+        stars.forEach((st) => { if ([E, E2].some((B) => segDist(H, B, st) < st.cr * 2.4 + 2)) s += 1; });
+        novas.forEach((q) => { if ([E, E2].some((B) => segDist(H, B, q) < 22)) s += 2; });
+        if (!best || s < best.s) best = { s, E, E2 };
+      });
+      if (!best) best = { E: tip(50 * k, 0.34, 1), E2: tip(60 * k, 0.58, 1) };
+      const { E, E2 } = best;
+      const len = Math.hypot(H.x - E.x, H.y - E.y), nx = -(H.y - E.y) / len, ny = (H.x - E.x) / len;
+      const bx = (H.x + E.x) / 2 + nx * 4 * k, by = (H.y + E.y) / 2 + ny * 4 * k;
+      const len2 = Math.hypot(H.x - E2.x, H.y - E2.y), mx2 = -(H.y - E2.y) / len2, my2 = (H.x - E2.x) / len2;
+      const b2x = (H.x + E2.x) / 2 + mx2 * 7 * k, b2y = (H.y + E2.y) / 2 + my2 * 7 * k;
+      const hw = 3.4 * Math.max(1, k);
+      comets.push({
+        tail: `M${f1(H.x + nx * hw)} ${f1(H.y + ny * hw)}Q${f1(bx + nx * 3 * k)} ${f1(by + ny * 3 * k)} ${f1(E.x)} ${f1(E.y)}Q${f1(bx - nx * 1.5 * k)} ${f1(by - ny * 1.5 * k)} ${f1(H.x - nx * hw)} ${f1(H.y - ny * hw)}Z`,
+        dustTail: `M${f1(H.x + mx2 * 5 * k)} ${f1(H.y + my2 * 5 * k)}Q${f1(b2x + mx2 * 6 * k)} ${f1(b2y + my2 * 6 * k)} ${f1(E2.x)} ${f1(E2.y)}Q${f1(b2x - mx2 * 2 * k)} ${f1(b2y - my2 * 2 * k)} ${f1(H.x - mx2 * 2 * k)} ${f1(H.y - my2 * 2 * k)}Z`,
+        head: circ(H.x, H.y, 3.2 * Math.max(1, k)), glow: circ(H.x, H.y, 8.5 * Math.max(1, k)),
+        x1: f1(H.x), y1: f1(H.y), x2: f1(E.x), y2: f1(E.y), x3: f1(E2.x), y3: f1(E2.y),
+        H, E, E2, k: Math.max(1, k), hour, i
+      });
+    });
+    // Seven slots: one per day, so no logged post goes missing.
+    const cometSlots = Array.from({ length: 7 }, (_, j) => comets[j] || { tail: '', dustTail: '', head: '', glow: '', x1: 0, y1: 0, x2: 1, y2: 1, x3: 1, y3: 1 });
+
+    // ---------- the dust: every earlier commit, on its weekday's ring at its hour ----------
+    // The port reads each earlier commit's weekday and local time from the commits table (from building_since to the week before)
+    // and draws it exactly there. The mock has no history before these weeks, so it resamples the builder's real commits
+    // from the weeks above, each with an invented minute: positions invented, rhythm real.
+    // Radial jitter stays within ±9px, under half the 25px gap between rings, so a dot never reads as the next day.
+    // Above 1,500 earlier commits one dot stands for several, so the file stays small; the key says so.
+    const POOL = { tuxnotfound: ['w41', 'w40', 'w38'], 'bartholomew-pennington': ['z6'] };
+    const pool = (POOL[who.handle] || [weekKey]).flatMap((key) => weeks[key].days.flatMap((d, i) => d.h.map((h) => [i, h])));
+    const dustStep = w.earlier > 1500 ? Math.ceil(w.earlier / 1500) : 1;
+    let dust = '';
+    const dustPts = [];
+    {
+      const rand = rng(`history|${who.handle}`);
+      for (let j = 0; j < w.earlier; j++) {
+        const [di, hr] = pool[Math.floor(rand() * pool.length)];
+        const h = hr + rand();
+        const rr = ringR(di) + (rand() - 0.5) * 18;
+        const r = 0.5 + rand() * rand();
+        if (j % dustStep === 0 && pool.length) { const q = at(rr, h); dust += circ(q.x, q.y, r); dustPts.push({ di, h, dr: rr - ringR(di) }); }
+      }
+    }
+
+    // The rings: a day with commits or a log is a faint solid ring, a quiet day a fainter dashed one.
+    let ringsOn = '', ringsOff = '';
+    w.days.forEach((d, i) => { if (d.h.length || d.kind) ringsOn += circ(C.x, C.y, ringR(i)); else ringsOff += circ(C.x, C.y, ringR(i)); });
+    const horizon = `M${C.x - C.R2} ${C.y}H${C.x + C.R2}`;
+    const nightHalf = `M${C.x - C.R} ${C.y}A${C.R} ${C.R} 0 0 1 ${C.x + C.R} ${C.y}Z`;
+    const dayHalf = `M${C.x - C.R} ${C.y}A${C.R} ${C.R} 0 0 0 ${C.x + C.R} ${C.y}Z`;
+    // Hour ticks on the rim: quarter hours, hours, and long marks at 00, 06, 12 and 18.
+    const ticks = { minor: '', hour: '', major: '' };
+    for (let j = 0; j < 96; j++) {
+      const kind = j % 24 === 0 ? 'major' : j % 4 === 0 ? 'hour' : 'minor';
+      const l = kind === 'major' ? 12 : kind === 'hour' ? 6.5 : 2.5;
+      const a = at(C.R, j / 4), b = at(C.R + l, j / 4);
+      ticks[kind] += `M${f1(a.x)} ${f1(a.y)}L${f1(b.x)} ${f1(b.y)}`;
+    }
+    // The window the title is read from (hour personas only), lit in gold between the two rims.
+    const arc = { d: '', ends: '', o: 0, l0: { x: 0, y: 0, text: '' }, l1: { x: 0, y: 0, text: '' } };
+    const arcBoxes = [];
+    if (windowHours) {
+      const rr = (C.R + C.R2) / 2, a = at(rr, windowHours[0]), b = at(rr, windowHours[1]);
+      const largeArc = windowHours[1] - windowHours[0] > 12 ? 1 : 0;
+      arc.d = `M${f1(a.x)} ${f1(a.y)}A${rr} ${rr} 0 ${largeArc} 1 ${f1(b.x)} ${f1(b.y)}`;
+      arc.o = 0.9;
+      windowHours.forEach((h, k) => {
+        const p0 = at(C.R2 - 3, h), p1 = at(C.R + 9, h);
+        arc.ends += `M${f1(p0.x)} ${f1(p0.y)}L${f1(p1.x)} ${f1(p1.y)}`;
+        const hh = h % 24;
+        if (hh % 6 === 0) return;
+        const q = at(C.R + 22, h);
+        arc[`l${k}`] = { x: f1(q.x), y: f1(q.y + 3.7), text: `${String(hh).padStart(2, '0')}h` };
+        arcBoxes.push({ x0: q.x - 15, y0: q.y - 8, x1: q.x + 15, y1: q.y + 8 });
+      });
+    }
+
+    // A crescent above midnight and a sun below noon: the night half and the day half read at a glance.
+    const mq = { x: C.x, y: C.y - C.R - 25 }, sq = { x: C.x, y: C.y + C.R + 25 };
+    const moon = (() => {
+      const R1 = 11.5, R2c = 9.8, ox = 5.6, oy = -3.4;
+      const d2 = Math.hypot(ox, oy), aa = (R1 * R1 - R2c * R2c + d2 * d2) / (2 * d2), hh = Math.sqrt(Math.max(0, R1 * R1 - aa * aa));
+      const ux = ox / d2, uy = oy / d2;
+      const p1 = { x: mq.x + ux * aa - uy * hh, y: mq.y + uy * aa + ux * hh }, p2 = { x: mq.x + ux * aa + uy * hh, y: mq.y + uy * aa - ux * hh };
+      return { d: `M${f1(p1.x)} ${f1(p1.y)}A${R1} ${R1} 0 1 1 ${f1(p2.x)} ${f1(p2.y)}A${R2c} ${R2c} 0 1 0 ${f1(p1.x)} ${f1(p1.y)}Z`, cx: f1(mq.x), cy: f1(mq.y), r: R1 };
+    })();
+    const sun = (() => {
+      let rays = '';
+      for (let k = 0; k < 8; k++) { const a = (k * Math.PI) / 4; rays += `M${f1(sq.x + Math.cos(a) * 8.4)} ${f1(sq.y + Math.sin(a) * 8.4)}L${f1(sq.x + Math.cos(a) * 12)} ${f1(sq.y + Math.sin(a) * 12)}`; }
+      return { disc: circ(sq.x, sq.y, 5.4), rays };
+    })();
+    const hl = [
+      { text: '00h', x: f1(mq.x + 20), y: f1(mq.y + 4.2), anchor: 'start' },
+      { text: '06h', x: f1(C.x + C.R + 34), y: f1(C.y + 4.2), anchor: 'middle' },
+      { text: '12h', x: f1(sq.x + 20), y: f1(sq.y + 4.2), anchor: 'start' },
+      { text: '18h', x: f1(C.x - C.R - 34), y: f1(C.y + 4.2), anchor: 'middle' }
+    ];
+
+    // ---------- day names on the horizontal line, mirrored ----------
+    // Each ring crosses the horizontal line twice, at 6h (right) and 18h (left). MON sits nearest the avatar, SUN at the rim.
+    // Every name is three letters of mono at 9.5px on a small dark backing, so stars near 6 PM and 6 AM never collide with it.
+    const DL_S = 9.5, DL_LS = 0.5, DL_W = 21, DL_H = 13;
+    const dl = { size: DL_S, ls: DL_LS, knock: sky.knock, backs: '', t: [] };
+    // A name steps aside when a mark sits on its spot (a post or launch at exactly 6 AM or 6 PM, say): the other side still names the ring.
+    const hits = (b) => stars.some((st) => hitsCircle(b, { x: st.x, y: st.y, r: st.cr * 1.6 + 1 }))
+      || novas.some((nv) => hitsCircle(b, { x: nv.x, y: nv.y, r: 13 }))
+      || comets.some((cm) => hitsCircle(b, { x: cm.H.x, y: cm.H.y, r: 7 * cm.k }) || segHits(b, cm.H, cm.E) || segHits(b, cm.H, cm.E2));
+    const slots = [];
+    for (const side of [1, -1]) {
+      w.days.forEach((d, i) => {
+        const cx = C.x + side * ringR(i);
+        const box = { x0: cx - DL_W / 2, y0: C.y - DL_H / 2, x1: cx + DL_W / 2, y1: C.y + DL_H / 2 };
+        slots.push({ i, side, cx, d, box, hit: hits(box) });
+      });
+    }
+    slots.forEach((sl) => {
+      const mirror = slots.find((o) => o.i === sl.i && o.side !== sl.side);
+      if (sl.hit && !(sl.side === 1 && mirror.hit)) return;
+      const on = Boolean(sl.d.h.length || sl.d.kind);
+      const x0 = sl.box.x0, y0 = sl.box.y0, r = 3;
+      dl.backs += `M${f1(x0 + r)} ${f1(y0)}H${f1(x0 + DL_W - r)}Q${f1(x0 + DL_W)} ${f1(y0)} ${f1(x0 + DL_W)} ${f1(y0 + r)}V${f1(y0 + DL_H - r)}Q${f1(x0 + DL_W)} ${f1(y0 + DL_H)} ${f1(x0 + DL_W - r)} ${f1(y0 + DL_H)}H${f1(x0 + r)}Q${f1(x0)} ${f1(y0 + DL_H)} ${f1(x0)} ${f1(y0 + DL_H - r)}V${f1(y0 + r)}Q${f1(x0)} ${f1(y0)} ${f1(x0 + r)} ${f1(y0)}Z`;
+      // Chrome adds the letter spacing after the last glyph, so the middle anchor sits half a spacing left of true centre.
+      dl.t.push({ x: f1(sl.cx + DL_LS / 2), y: f1(C.y + 3.4), c: on ? sky.tagDay : sky.tagOff, text: sl.d.s.split(' ')[0] });
+    });
+    while (dl.t.length < 14) dl.t.push({ x: 0, y: 0, c: 'none', text: '' });
+
+    // ---------- the key: two lines under the chart, in readable type ----------
+    // Line 1 reads the dial: a ring per day, and a star per hour with commits, sized by how many (drawn at sky size for 1, 5 and 10).
+    // Line 2 names the marks, the dust (with the day the history starts) and the clock. The dust is drawn only because the key names it.
+    const fK = (s) => widthOf(s, 'dm12', 12);
+    const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const [sy, sm, sd] = w.since.split('-').map(Number);
+    const weekYear = Number(w.dates.slice(-4));
+    const sinceText = sy === weekYear ? `${MON[sm - 1]} ${sd}` : `${MON[sm - 1]} ${sy}`;
+    const coreR = (k) => 1.3 + 1.9 * Math.sqrt(k);
+    const sizes = [1, 5, 10].map((k) => {
+      const r = coreR(k), c = r + 1.5;
+      return { n: String(k), r: f1(r), halo: f1(r + 1.6), ctr: f1(Math.max(0.9, r * 0.42)), c: f1(c), w: f1(2 * c) };
+    });
+    const sizesW = sizes.reduce((a, s) => a + Number(s.w) + monoW(s.n, 11) + 3, 0) + 4 * 5;
+    const earlierN = w.earlier.toLocaleString('en-US');
+    // The copy says what the dust is, when it starts, and that it sits on the same clock as the stars.
+    const dustCopy = dustStep > 1
+      ? [`${earlierN} earlier commits since ${sinceText}, at their day and hour, 1 dot per ${dustStep}`, `${earlierN} earlier commits since ${sinceText}, 1 dot per ${dustStep}`, `Earlier commits since ${sinceText}, 1 dot per ${dustStep}`]
+      : [`${earlierN} earlier commits since ${sinceText}, at their day and hour`, `${earlierN} earlier commits since ${sinceText}`, `Earlier commits since ${sinceText}`];
+    const K = { rings: 'Each ring is a day', sizes: 'commits in an hour', shipped: 'Shipped', published: 'Published', local: 'Local time' };
+    const kw = { rings: 14 + 6 + fK(K.rings), sizes: sizesW + 6 + fK(K.sizes), shipped: 14 + 5 + fK(K.shipped), published: 14 + 5 + fK(K.published), local: 12 + 6 + fK(K.local) };
+    // The ladder keeps the dust count longest: first "Local time" moves up to line 1, then the gaps close, then the dust copy shortens.
+    let key = null;
+    for (const dc of dustCopy) {
+      for (const gap of [20, 16]) {
+        for (const localUp of [false, true]) {
+          const w1 = kw.rings + gap + kw.sizes + (localUp ? gap + kw.local : 0);
+          const w2 = kw.shipped + gap + kw.published + gap + (12 + 6 + fK(dc)) + (localUp ? 0 : gap + kw.local);
+          // At most 548px, so each line starts 40px clear of the link at x = 570.
+          if (!key && w1 <= 548 && w2 <= 548) key = { gap, dust: dc, w1, w2, localUp };
+        }
+      }
+    }
+    if (!key) key = { gap: 16, dust: '', w1: kw.rings + 16 + kw.sizes, w2: kw.shipped + 16 + kw.published + 16 + kw.local, localUp: false };
+    const keyOut = {
+      top1: 572, top2: 590, gap: key.gap, left1: Math.round(C.x - key.w1 / 2), left2: Math.round(C.x - key.w2 / 2),
+      rings: K.rings, sizes: K.sizes, shipped: K.shipped, published: K.published, local: K.local, dust: key.dust, hasDust: Boolean(key.dust),
+      localUp: key.localUp, localDown: !key.localUp,
+      s0: sizes[0], s1: sizes[1], s2: sizes[2],
+      starHue: dark ? '#DCE5FF' : '#3B4A78', starCenter: dark ? '#FFFFFF' : '#E8EEFF', starGlowO: dark ? 0.7 : 0.25,
+      novaD: icons.star, cometHead: icons.cometHead, cometTail: icons.cometTail,
+      dustD: `${circ(2.4, 3.2, 0.9)}${circ(6.6, 2.2, 0.7)}${circ(9.6, 5.4, 1)}${circ(4.2, 7.6, 0.8)}${circ(8, 9.6, 0.7)}${circ(1.8, 10.2, 0.6)}`
+    };
+
+    return {
+      t, sky, C, w, who, av, hd, wk, ft, L, hue, tint, halo, core, centers, nova, comets: cometSlots, dust, ringsOn, ringsOff, horizon, nightHalf, dayHalf, ticks, arc,
+      hl, moon, sun, dl, key: keyOut, rows, legend1, legend2, tot,
+      goal: { label: 'NEXT', lines: goalLines },
+      p: { title, tagline, titleSize, titleLs: f1(-0.02 * titleSize), evidence },
+      // For the checks (not bound in the markup).
+      debug: { stars, novas, comets, dustPts, dustStep, plan: { mode: plan.mode, size: lv.size, merge: plan.mg } }
+    };
+  }
+}
+</script>
+</body>
+</html>

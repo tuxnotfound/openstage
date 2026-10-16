@@ -17,6 +17,15 @@ RSpec.describe GithubRepos::RecordService do
     described_class.new(user: user, listing: listing(**attributes)).tap(&:call!).repo
   end
 
+  it "keeps the star count when the listing has one" do
+    starred = GithubAppGateway::Repo.new(id: 77, name: "app", full_name: "tuxnotfound/app", description: nil,
+                                         html_url: "https://github.com/tuxnotfound/app", default_branch: "main", private: false,
+                                         stargazers_count: 12)
+
+    expect(described_class.new(user: user, listing: starred).tap(&:call!).repo.stars_count).to eq(12)
+    expect(record(name: "app", private: false, id: 77).stars_count).to eq(12)
+  end
+
   it "excludes a newly discovered private repo and includes a public one" do
     expect(record(name: "secret", private: true)).to have_attributes(private_repo: true, included: false)
     expect(record(name: "open", private: false)).to have_attributes(private_repo: false, included: true)

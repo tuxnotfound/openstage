@@ -1,0 +1,137 @@
+<%# The Star Chart card, 1200x630. CardLayout::StarChart works out the sky and
+    places every line of the left column; this writes them in the mock's
+    drawing order. Glows are SVG gradients and filters, which the PNG download
+    draws too. Text stays on one line inside each <text>. %>
+<% chart = CardLayout::StarChart.new(card) %>
+<% t = chart.palette %>
+<% sky = CardLayout::StarChart::SKY %>
+<% c = CardLayout::StarChart::C %>
+<% num = CardLayout::Shapes.method(:num) %>
+<% stars = chart.stars %>
+<% nova = stars.nova %>
+<% hue = ->(k) { chart.hues[k] ? chart.hues[k][0] : "#FFFFFF" } %>
+<% tint = ->(k) { chart.hues[k] ? chart.hues[k][1] : "#FFFFFF" } %>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="<%= card.label %> card for <%= card.user.display_name %>" data-week-card="star_chart">
+  <defs>
+    <style><%= card_face_css(card.week_card.template) %></style>
+    <radialGradient id="sc-ground" cx="<%= c[:x] %>" cy="<%= c[:y] %>" r="900" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="<%= t[:g0] %>"/><stop offset="1" stop-color="<%= t[:g1] %>"/></radialGradient>
+    <radialGradient id="sc-disc" cx="<%= c[:x] %>" cy="<%= c[:y] %>" r="<%= c[:r] %>" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="<%= t[:disc0] %>"/><stop offset="1" stop-color="<%= t[:disc1] %>"/></radialGradient>
+    <radialGradient id="sc-day" cx="<%= c[:x] %>" cy="<%= c[:y] - c[:r] %>" r="<%= sky[:day_r] %>" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="<%= sky[:day] %>" stop-opacity="<%= t[:day_o] %>"/><stop offset="1" stop-color="<%= sky[:day] %>" stop-opacity="0"/></radialGradient>
+    <filter id="sc-grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" stitchTiles="stitch"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 <%= t[:grain_ink] %>  0 0 0 0 <%= t[:grain_ink] %>  0 0 0 0 <%= t[:grain_ink] %>  0 0 0 0.9 0"/>
+    </filter>
+    <% [ [ "aura", 22, -30, 160 ], [ "glow", 2.8, -100, 300 ], [ "lum", 4.5, -100, 300 ], [ "milky", 9, -20, 140 ], [ "nova", 7, -100, 300 ], [ "bloom", 13, -100, 300 ], [ "dot", 2.4, -150, 400 ] ].each do |name, blur, at, size| %>
+      <filter id="sc-<%= name %>" x="<%= at %>%" y="<%= at %>%" width="<%= size %>%" height="<%= size %>%"><feGaussianBlur stdDeviation="<%= blur %>"/></filter>
+    <% end %>
+    <filter id="sc-titleglow" x="-10%" y="-40%" width="120%" height="180%"><feGaussianBlur stdDeviation="9"/></filter>
+    <% stars.comets.each_with_index do |comet, j| %>
+      <linearGradient id="sc-tail-<%= j %>" gradientUnits="userSpaceOnUse" x1="<%= num.call(comet.head[0]) %>" y1="<%= num.call(comet.head[1]) %>" x2="<%= num.call(comet.tail_end[0]) %>" y2="<%= num.call(comet.tail_end[1]) %>"><stop offset="0" stop-color="<%= sky[:comet] %>" stop-opacity="0.95"/><stop offset="1" stop-color="<%= sky[:comet] %>" stop-opacity="0"/></linearGradient>
+      <linearGradient id="sc-dtail-<%= j %>" gradientUnits="userSpaceOnUse" x1="<%= num.call(comet.head[0]) %>" y1="<%= num.call(comet.head[1]) %>" x2="<%= num.call(comet.dust_end[0]) %>" y2="<%= num.call(comet.dust_end[1]) %>"><stop offset="0" stop-color="<%= sky[:comet_dust] %>" stop-opacity="0.5"/><stop offset="1" stop-color="<%= sky[:comet_dust] %>" stop-opacity="0"/></linearGradient>
+    <% end %>
+    <clipPath id="sc-discclip"><circle cx="<%= c[:x] %>" cy="<%= c[:y] %>" r="<%= c[:r] %>"/></clipPath>
+    <clipPath id="sc-avatar"><circle cx="<%= c[:x] %>" cy="<%= c[:y] %>" r="<%= c[:avatar] / 2 %>"/></clipPath>
+    <path id="sc-dust" d="<%= stars.dust %>"/>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#sc-ground)"/>
+  <text x="46" y="<%= chart.title[:baseline] %>" class="<%= card_face_class(:newsreader_title) %>" font-size="<%= chart.title[:size] %>" letter-spacing="<%= CardLayout::StarChart.f1(-0.02 * chart.title[:size]) %>" fill="<%= t[:glow_ink] %>" opacity="<%= t[:glow_o] %>" filter="url(#sc-titleglow)"><%= chart.title[:text] %></text>
+  <circle cx="<%= c[:x] %>" cy="<%= c[:y] %>" r="<%= c[:r] + 8 %>" fill="<%= t[:aura] %>" opacity="<%= t[:aura_o] %>" filter="url(#sc-aura)"/>
+  <circle cx="<%= c[:x] %>" cy="<%= c[:y] %>" r="<%= c[:r] %>" fill="url(#sc-disc)"/>
+  <path d="<%= chart.sky.day_half %>" fill="<%= sky[:dusk] %>" opacity="<%= t[:dusk_o] %>"/>
+  <path d="<%= chart.sky.day_half %>" fill="url(#sc-day)"/>
+  <g clip-path="url(#sc-discclip)"><use href="#sc-dust" fill="<%= sky[:milky] %>" opacity="<%= sky[:milky_o] %>" filter="url(#sc-milky)"/></g>
+  <path d="<%= chart.sky.night_half %>" fill="<%= sky[:night] %>" opacity="<%= sky[:night_o] %>"/>
+  <g clip-path="url(#sc-discclip)">
+    <use href="#sc-dust" fill="<%= sky[:dust] %>"/>
+    <path d="<%= chart.sky.rings_off %>" stroke="<%= sky[:ring_off] %>" stroke-width="0.8" stroke-dasharray="2 4" fill="none"/>
+    <path d="<%= chart.sky.rings_on %>" stroke="<%= sky[:ring_on] %>" stroke-width="0.9" fill="none"/>
+    <path d="<%= chart.sky.horizon %>" stroke="<%= sky[:horizon] %>" stroke-width="1" stroke-dasharray="2 5" fill="none"/>
+  </g>
+  <rect width="1200" height="630" filter="url(#sc-grain)" opacity="<%= t[:grain_o] %>"/>
+
+  <circle cx="<%= c[:x] %>" cy="<%= c[:y] %>" r="<%= c[:r] %>" fill="none" stroke="<%= t[:rim_out] %>" stroke-width="1.2"/>
+  <circle cx="<%= c[:x] %>" cy="<%= c[:y] %>" r="<%= c[:r2] %>" fill="none" stroke="<%= sky[:rim_in] %>" stroke-width="0.6"/>
+  <path d="<%= chart.sky.ticks[:minor] %>" stroke="<%= t[:tick] %>" stroke-width="0.8" fill="none"/>
+  <path d="<%= chart.sky.ticks[:hour] %>" stroke="<%= t[:tick] %>" stroke-width="1.1" fill="none"/>
+  <path d="<%= chart.sky.ticks[:major] %>" stroke="<%= t[:tick_major] %>" stroke-width="1.6" fill="none"/>
+  <% if (arc = chart.sky.arc) %>
+    <path d="<%= arc[:d] %>" stroke="<%= t[:gold] %>" stroke-width="3" opacity="0.9" fill="none"/>
+    <path d="<%= arc[:ends] %>" stroke="<%= t[:gold] %>" stroke-width="1.3" opacity="0.9" fill="none"/>
+    <% arc[:labels].each do |label| %>
+      <text x="<%= label.x %>" y="<%= label.y %>" text-anchor="middle" class="<%= card_face_class(:dm_mono_regular) %>" font-size="10.5" letter-spacing="0.5" fill="<%= t[:gold] %>"><%= label.text %></text>
+    <% end %>
+  <% end %>
+
+  <% stars.comets.each_with_index do |comet, j| %>
+    <path d="<%= comet.glow %>" fill="<%= sky[:comet] %>" opacity="0.55" filter="url(#sc-glow)"/>
+    <path d="<%= comet.dust_tail %>" fill="url(#sc-dtail-<%= j %>)"/>
+    <path d="<%= comet.tail %>" fill="url(#sc-tail-<%= j %>)"/>
+    <path d="<%= comet.head_path %>" fill="<%= sky[:comet] %>"/>
+  <% end %>
+
+  <% stars.halos.each_with_index do |d, k| %><% if d.present? %><path d="<%= d %>" fill="<%= hue.call(k) %>" opacity="<%= sky[:halo_o] %>" filter="url(#sc-glow)"/><% end %><% end %>
+  <% stars.cores.each_with_index do |d, k| %><% if d.present? %><path d="<%= d %>" fill="<%= tint.call(k) %>"/><% end %><% end %>
+  <% if stars.centers.present? %><path d="<%= stars.centers %>" fill="<%= sky[:center] %>"/><% end %>
+
+  <% if stars.novas.any? %>
+    <path d="<%= nova[:bloom] %>" fill="<%= sky[:nova_glow] %>" opacity="0.38" filter="url(#sc-bloom)"/>
+    <path d="<%= nova[:glow] %>" fill="<%= sky[:nova_glow] %>" opacity="0.95" filter="url(#sc-nova)"/>
+    <path d="<%= nova[:flare] %>" stroke="<%= sky[:nova_name] %>" stroke-width="0.8" opacity="0.5" fill="none" clip-path="url(#sc-discclip)"/>
+    <path d="<%= nova[:ring] %>" stroke="<%= sky[:nova_glow] %>" stroke-width="0.9" opacity="0.7" fill="none"/>
+    <path d="<%= nova[:star] %>" fill="<%= sky[:nova] %>"/>
+    <path d="<%= nova[:core] %>" fill="#FFFFFF"/>
+  <% end %>
+
+  <circle cx="<%= c[:x] %>" cy="<%= c[:y] %>" r="<%= c[:hub] %>" fill="<%= t[:hub] %>" stroke="<%= t[:hub_ring] %>" stroke-width="1"/>
+  <% moon = chart.sky.moon %>
+  <path d="<%= moon[:d] %>" fill="<%= t[:moon_glow] %>" opacity="<%= t[:lum_o] %>" filter="url(#sc-lum)"/>
+  <circle cx="<%= moon[:cx] %>" cy="<%= moon[:cy] %>" r="<%= moon[:r] %>" fill="<%= t[:moon] %>" opacity="<%= t[:earth_o] %>"/>
+  <path d="<%= moon[:d] %>" fill="<%= t[:moon] %>"/>
+  <% sun = chart.sky.sun %>
+  <path d="<%= sun[:disc] %>" fill="<%= t[:sun_glow] %>" opacity="<%= t[:lum_o] %>" filter="url(#sc-lum)"/>
+  <path d="<%= sun[:disc] %>" fill="<%= t[:sun] %>"/>
+  <path d="<%= sun[:rays] %>" stroke="<%= t[:sun] %>" stroke-width="1.7" stroke-linecap="round" fill="none"/>
+  <g class="<%= card_face_class(:dm_mono_regular) %>" font-size="12" letter-spacing="0.6" fill="<%= t[:hour] %>">
+    <% chart.sky.hour_labels.each do |label| %>
+      <text x="<%= label.x %>" y="<%= label.y %>"<%= %( text-anchor="#{label.anchor}").html_safe unless label.anchor == "start" %>><%= label.text %></text>
+    <% end %>
+  </g>
+  <path d="<%= chart.day_labels.backs %>" fill="<%= sky[:knock] %>" fill-opacity="0.9"/>
+  <g class="<%= card_face_class(:dm_mono_regular) %>" font-size="<%= CardLayout::StarChart::DayLabels::SIZE %>" letter-spacing="<%= CardLayout::StarChart::DayLabels::SPACING %>" text-anchor="middle">
+    <% chart.day_labels.labels.each do |label| %>
+      <text x="<%= label.x %>" y="<%= label.y %>" fill="<%= label.on ? sky[:tag_day] : sky[:tag_off] %>"><%= label.text %></text>
+    <% end %>
+  </g>
+
+  <% if (avatar = chart.avatar) %>
+    <image href="<%= avatar[:url] %>" x="<%= avatar[:x] %>" y="<%= avatar[:y] %>" width="<%= avatar[:size] %>" height="<%= avatar[:size] %>" preserveAspectRatio="xMidYMid slice" clip-path="url(#sc-avatar)"/>
+  <% elsif (initials = chart.initials) %>
+    <circle cx="<%= c[:x] %>" cy="<%= c[:y] %>" r="<%= c[:avatar] / 2 %>" fill="#2C3B72"/>
+    <text x="<%= c[:x] %>" y="<%= num.call(c[:y] - 17 + (34 * 0.737)) %>" text-anchor="middle" class="<%= card_face_class(:newsreader_title) %>" font-size="34" letter-spacing="-0.34" fill="#F2ECDF"><%= initials %></text>
+  <% else %>
+    <svg x="<%= c[:x] - 10 %>" y="<%= c[:y] - 10 %>" width="20" height="20" viewBox="0 0 24 24"><path d="<%= CardLayout::StarChart::STAR %>" fill="<%= t[:gold] %>"/></svg>
+  <% end %>
+
+  <% chart.canvas.paths.each do |layer, d| %>
+    <% if d.present? %><%= tag.path(d: d, **card_paint(CardLayout::StarChart::LAYERS.fetch(layer), t)) %><% end %>
+  <% end %>
+  <% chart.canvas.icons.each do |icon| %>
+    <svg x="<%= num.call(icon.x) %>" y="<%= num.call(icon.y) %>" width="<%= icon.size %>" height="<%= icon.size %>" viewBox="<%= icon.view_box %>" overflow="visible"><path d="<%= icon.path %>" fill="<%= icon.fill %>"<%= %( opacity="#{icon.opacity}").html_safe unless icon.opacity == 1 %>/></svg>
+  <% end %>
+  <% chart.canvas.dots.each do |dot| %>
+    <circle cx="<%= num.call(dot.cx) %>" cy="<%= num.call(dot.cy) %>" r="<%= num.call(dot.r) %>" fill="<%= dot.fill %>"/>
+  <% end %>
+  <% chart.legend.dots.each do |dot| %>
+    <circle cx="<%= num.call(dot[:x]) %>" cy="<%= num.call(dot[:y]) %>" r="4.5" fill="<%= dot[:color] %>" opacity="<%= chart.dark ? 0.85 : 0.3 %>" filter="url(#sc-dot)"/>
+    <circle cx="<%= num.call(dot[:x]) %>" cy="<%= num.call(dot[:y]) %>" r="3.6" fill="<%= dot[:color] %>"/>
+    <circle cx="<%= num.call(dot[:x]) %>" cy="<%= num.call(dot[:y]) %>" r="1.3" fill="<%= dot[:center] %>"/>
+  <% end %>
+  <% if (arrow = chart.arrow) %>
+    <svg x="<%= num.call(arrow[:x]) %>" y="<%= num.call(arrow[:y]) %>" width="12" height="12" viewBox="0 0 24 24"><path d="M3 12h16M13 5.5l6.5 6.5-6.5 6.5" fill="none" stroke="<%= t[:gold] %>" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <% end %>
+  <%= render "week_cards/star_chart_key", chart: chart, t: t, num: num %>
+  <% chart.canvas.runs.each do |run| %>
+    <%= card_run(run) %>
+  <% end %>
+</svg>

@@ -23,121 +23,76 @@
 <% end %>
 
 <!-- Profile header -->
-<%# The shape of a GitHub profile, which developers read without thinking: who
-    on the left, the work on the right. Subscribe sits with the identity rather
-    than between the header and the work. %>
-<div class="grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)] items-start">
-  <aside class="space-y-5 lg:sticky lg:top-6">
-    <div class="flex lg:flex-col items-center lg:items-start gap-4">
-      <img src="<%= @user.avatar_url %>"
-           alt="<%= @user.display_name %>"
-           class="w-16 h-16 lg:w-24 lg:h-24 rounded-full ring-2 ring-gray-100 shrink-0">
-      <div class="min-w-0">
-        <div class="flex flex-wrap items-center gap-2">
-          <h1 class="text-xl font-bold text-gray-900 truncate"><%= @user.display_name %></h1>
-          <% if @user.pro? %>
-            <span class="inline-flex items-center gap-1 text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">✦ Pro</span>
-          <% end %>
-        </div>
-        <p class="text-gray-400 text-sm font-mono">@<%= @user.username %></p>
-      </div>
+<%# Who, across the top: the progress section and the timeline below get the
+    full width. Subscribe sits with the identity, for visitors only. %>
+<section aria-label="Profile" class="flex flex-wrap items-start gap-6 pb-6 border-b border-gray-200">
+  <img src="<%= @user.avatar_url %>" alt="<%= @user.display_name %>"
+       class="size-[88px] rounded-full ring-2 ring-gray-100 shrink-0">
+  <div class="flex-[1_1_360px] min-w-0">
+    <div class="flex flex-wrap items-center gap-2">
+      <h1 class="text-2xl font-bold text-gray-900"><%= @user.display_name %></h1>
+      <% if @user.pro? %>
+        <span class="inline-flex items-center gap-1 text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">✦ Pro</span>
+      <% end %>
+      <span class="text-sm text-gray-400 font-mono">@<%= @user.username %></span>
     </div>
 
     <% if @user.bio.present? %>
-      <p class="text-gray-600 text-sm leading-relaxed"><%= @user.bio %></p>
+      <p class="mt-2 text-sm/relaxed text-gray-600"><%= @user.bio %></p>
     <% end %>
 
-    <div class="flex flex-wrap lg:flex-col gap-x-4 gap-y-2 text-sm text-gray-500">
-      <a href="https://github.com/<%= @user.github_username %>"
-         target="_blank" rel="noopener"
-         class="flex items-center gap-1.5 hover:text-gray-900 transition-colors">
-        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+    <div class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[13px] text-gray-500">
+      <a href="https://github.com/<%= @user.github_username %>" target="_blank" rel="noopener"
+         class="inline-flex items-center gap-1.5 hover:text-gray-900 transition-colors">
+        <svg class="size-[15px]" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
           <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/>
         </svg>
         <%= @user.github_username %>
       </a>
-
       <% if (website = safe_external_url(@user.website_url)) %>
-        <a href="<%= website %>" target="_blank" rel="noopener"
-           class="flex items-center gap-1.5 min-w-0 hover:text-gray-900 transition-colors">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/>
-          </svg>
-          <span class="truncate"><%= website.gsub(%r{\Ahttps?://}, "") %></span>
-        </a>
+        <a href="<%= website %>" target="_blank" rel="noopener" class="min-w-0 truncate hover:text-gray-900 transition-colors"><%= website.gsub(%r{\Ahttps?://}, "") %></a>
       <% end %>
-
       <% if @user.building_since.present? %>
-        <span class="flex items-center gap-1.5">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5"/>
-          </svg>
-          Building since <%= @user.building_since.strftime("%B %Y") %>
-        </span>
+        <span>Building since <%= @user.building_since.strftime("%B %Y") %></span>
       <% end %>
-
-      <span class="flex items-center gap-4" data-controller="share"
+      <span><strong class="font-semibold text-gray-900"><%= @total_entries %></strong> entries</span>
+      <span><strong class="font-semibold text-gray-900"><%= @repos_synced %></strong> repos</span>
+      <span><strong class="font-semibold text-gray-900"><%= @milestones %></strong> milestones</span>
+      <% if @streak > 0 %>
+        <span><%= streak_emoji(@streak) %> <strong class="font-semibold text-gray-900"><%= @streak %></strong> day streak</span>
+      <% end %>
+      <span class="inline-flex items-center gap-5" data-controller="share"
             data-share-url-value="<%= profile_url(@user.username) %>"
             data-share-title-value="<%= @user.display_name %>'s proof-of-work page">
         <button type="button" data-action="share#share" data-share-target="button"
-                class="flex items-center gap-1.5 hover:text-gray-900 transition-colors cursor-pointer" data-share-button>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/>
-          </svg>
-          Share
-        </button>
-        <a href="<%= profile_url(@user.username, format: :rss) %>" class="flex items-center gap-1.5 hover:text-gray-900 transition-colors" title="RSS feed" data-rss-link>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12.75 19.5v-.75a7.5 7.5 0 00-7.5-7.5H4.5m0-6.75h.75c7.87 0 14.25 6.38 14.25 14.25v.75M6 18.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/>
-          </svg>
-          RSS
-        </a>
+                class="hover:text-gray-900 transition-colors cursor-pointer" data-share-button>Share</button>
+        <a href="<%= profile_url(@user.username, format: :rss) %>" class="hover:text-gray-900 transition-colors" title="RSS feed" data-rss-link>RSS</a>
       </span>
     </div>
+  </div>
 
-    <div class="grid grid-cols-4 lg:grid-cols-2 gap-3 py-4 border-y border-gray-200">
-      <div>
-        <div class="text-xl font-bold text-gray-900"><%= @total_entries %></div>
-        <div class="text-xs text-gray-400 uppercase tracking-wide">entries</div>
-      </div>
-      <div>
-        <div class="text-xl font-bold text-gray-900"><%= @repos_synced %></div>
-        <div class="text-xs text-gray-400 uppercase tracking-wide">repos</div>
-      </div>
-      <div>
-        <div class="text-xl font-bold text-gray-900"><%= @milestones %></div>
-        <div class="text-xs text-gray-400 uppercase tracking-wide">milestones</div>
-      </div>
-      <% if @streak > 0 %>
-        <div>
-          <div class="text-xl font-bold text-gray-900"><%= streak_emoji(@streak) %> <%= @streak %></div>
-          <div class="text-xs text-gray-400 uppercase tracking-wide">day streak</div>
+  <!-- Subscribe box: visitors only, never a count -->
+  <% unless current_user == @user %>
+    <div class="flex-[0_1_320px] min-w-0" data-subscribe-box>
+      <%= form_with url: profile_subscribe_path(@user.username), method: :post do |f| %>
+        <label for="subscribe-email" class="block text-sm font-medium text-gray-900 mb-2">Get <%= @user.display_name %>'s updates by email</label>
+        <div class="flex gap-2">
+          <%= f.email_field :email, id: "subscribe-email", placeholder: "you@example.com", required: true, autocomplete: "email",
+                class: "flex-1 min-w-0 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" %>
+          <%# Honeypot: hidden from people, filled by scripts. %>
+          <div class="hidden" aria-hidden="true"><%= f.text_field :website, tabindex: -1, autocomplete: "off" %></div>
+          <%= f.submit "Subscribe", class: "px-3 py-2 text-sm rounded-lg bg-gray-900 text-white hover:bg-gray-800 cursor-pointer shrink-0" %>
         </div>
       <% end %>
+      <p class="text-xs text-gray-400 mt-1.5">Double opt-in, one-click unsubscribe. Your address goes to <%= @user.display_name %>, not to a list of ours.</p>
     </div>
+  <% end %>
+</section>
 
-    <!-- Subscribe box: visitors only, never a count -->
-    <% unless current_user == @user %>
-      <div data-subscribe-box>
-        <%= form_with url: profile_subscribe_path(@user.username), method: :post do |f| %>
-          <label for="subscribe-email" class="block text-sm font-medium text-gray-900 mb-2">Get <%= @user.display_name %>'s updates by email</label>
-          <div class="flex gap-2">
-            <%= f.email_field :email, id: "subscribe-email", placeholder: "you@example.com", required: true, autocomplete: "email",
-                  class: "flex-1 min-w-0 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" %>
-            <%# Honeypot: hidden from people, filled by scripts. %>
-            <div class="hidden" aria-hidden="true"><%= f.text_field :website, tabindex: -1, autocomplete: "off" %></div>
-            <%= f.submit "Subscribe", class: "px-3 py-2 text-sm rounded-lg bg-gray-900 text-white hover:bg-gray-800 cursor-pointer shrink-0" %>
-          </div>
-        <% end %>
-        <p class="text-xs text-gray-400 mt-1.5">Double opt-in, one-click unsubscribe. Your address goes to <%= @user.display_name %>, not to a list of ours.</p>
-      </div>
-    <% end %>
-  </aside>
-
-  <div class="min-w-0">
+<div class="min-w-0">
     <% if @syncing %>
       <meta http-equiv="refresh" content="10">
-      <div class="mb-6 rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 flex items-center gap-3" data-syncing>
+      <div class="mt-6 rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 flex items-center gap-3" data-syncing>
         <svg class="w-4 h-4 text-gray-400 animate-spin shrink-0" fill="none" viewBox="0 0 24 24" aria-hidden="true">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
@@ -149,50 +104,11 @@
       </div>
     <% end %>
 
-    <!-- Activity heatmap -->
-    <%# Right-to-left scroll container so a narrow screen opens on the latest
-        weeks, not the oldest; the grid inside stays left-to-right. %>
-    <% if @heatmap_data.any? %>
-      <div class="pb-5 border-b border-gray-200 overflow-x-auto [direction:rtl]">
-        <% weeks = (0..51).map { |w| (51 - w).weeks.ago.to_date.beginning_of_week(:sunday) } %>
-        <div class="flex gap-[3px] min-w-max [direction:ltr]">
-          <% weeks.each do |week_start| %>
-            <div class="flex flex-col gap-[3px]">
-              <% (0..6).each do |day_offset| %>
-                <% date = week_start + day_offset %>
-                <% count = @heatmap_data[date.to_s] || 0 %>
-                <% color = if count == 0 then "bg-gray-100"
-                            elsif count == 1 then "bg-green-200"
-                            elsif count <= 3 then "bg-green-400"
-                            else "bg-green-600"
-                            end %>
-                <div class="w-2.5 h-2.5 rounded-sm <%= color %>"
-                     title="<%= date.strftime("%b %-d") %>: <%= count %> <%= "entry".pluralize(count) %>"></div>
-              <% end %>
-            </div>
-          <% end %>
-        </div>
-      </div>
+    <% if @progress %>
+      <%= render "profiles/progress/section", user: @user, section: @progress %>
     <% end %>
 
-    <!-- Pinned entries -->
-    <% if @pinned_entries.any? %>
-      <div class="py-5 border-b border-gray-200">
-        <div class="flex items-center gap-2 mb-3">
-          <svg class="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
-          </svg>
-          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Pinned</span>
-        </div>
-        <div class="space-y-1">
-          <% @pinned_entries.each do |entry| %>
-            <%= render "profiles/entry_card", entry: entry %>
-          <% end %>
-        </div>
-      </div>
-    <% end %>
-
-    <!-- Filter row: type tabs + repo dropdown -->
+    <!-- Filter row: type tabs and the project they are scoped to -->
     <div class="flex items-center justify-between mt-6 border-b border-gray-100 gap-4">
       <div class="flex gap-1 overflow-x-auto">
         <% type_tabs = [["all", "All"], ["shipped", "Shipped"], ["milestone", "Milestones"], ["note", "Notes"]] %>
@@ -205,22 +121,8 @@
         <% end %>
       </div>
 
-      <% if @available_repos.any? %>
-        <div class="shrink-0 pb-1">
-          <form action="<%= profile_path(@user.username) %>" method="get" data-turbo-frame="timeline" data-controller="autosubmit">
-            <%= hidden_field_tag :filter, @filter == "all" ? nil : @filter %>
-            <select name="repo" data-action="change->autosubmit#submit"
-                    class="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 cursor-pointer">
-              <option value="">All repos</option>
-              <% @available_repos.each do |repo| %>
-                <option value="<%= repo %>" <%= "selected" if @repo_filter == repo %>>
-                  <%= repo.split("/").last %>
-                </option>
-              <% end %>
-            </select>
-          </form>
-        </div>
-      <% end %>
+      <%# The project filter above scopes the timeline too; this says which. %>
+      <span class="shrink-0 mb-1 text-xs text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1.5"><%= if @progress&.filtered? then @progress.selection_name elsif @repo_filter then @repo_filter.map { |repo| repo.split("/").last }.join(" + ") else "All repos" end %></span>
     </div>
 
     <!-- Timeline -->
@@ -259,4 +161,3 @@
       <% end %>
     </footer>
   </div>
-</div>

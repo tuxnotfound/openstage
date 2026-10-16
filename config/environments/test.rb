@@ -45,6 +45,10 @@ Rails.application.configure do
   config.action_mailer.delivery_method = :test
   config.action_mailer.default_url_options = { host: "openstage.dev", protocol: "https" }
 
+  # Jobs are enqueued, never run on a background thread: that thread would
+  # share the example's transactional connection and deadlock with it.
+  config.active_job.queue_adapter = :test
+
   # Print deprecation notices to the stderr.
   config.active_support.deprecation = :stderr
 
