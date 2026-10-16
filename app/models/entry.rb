@@ -13,8 +13,9 @@ class Entry < ApplicationRecord
   }
 
   # What a builder shipped and what they published, as the week card and the
-  # progress section count them. A commit is neither.
-  SHIPPED_TYPES = %w[milestone released].freeze
+  # progress section count them. A commit is neither, though it is stored as
+  # shipped: only a Shipped entry the builder logged counts.
+  SHIPPED_TYPES = %w[shipped milestone released].freeze
   PUBLISHED_TYPES = %w[posted link note].freeze
 
   enum :source, {
@@ -54,7 +55,8 @@ class Entry < ApplicationRecord
   scope :chronological, -> { order(occurred_at: :desc) }
   scope :pinned_entries, -> { where(pinned: true) }
   scope :commits, -> { where(source: :github, entry_type: :shipped) }
-  scope :highlights, -> { where(entry_type: SHIPPED_TYPES + PUBLISHED_TYPES) }
+  # where.not on two keys leaves out only the rows that match both: commits.
+  scope :highlights, -> { where(entry_type: SHIPPED_TYPES + PUBLISHED_TYPES).where.not(source: :github, entry_type: :shipped) }
 
   # Case-insensitive match across the fields a builder would actually remember:
   # what it said, and which project it was.
@@ -79,5 +81,13 @@ class Entry < ApplicationRecord
   # The repos these entries came from, for a repo filter.
   def self.repo_names
     where.not(repo_name: nil).distinct.order(:repo_name).pluck(:repo_name)
+  end
+
+  def commit?
+    github? && shipped?
+  end
+
+  def highlight?
+    !commit? && (SHIPPED_TYPES + PUBLISHED_TYPES).include?(entry_type)
   end
 end
