@@ -26,11 +26,11 @@ module ProgressChart
     end
 
     # A small open dot where each line ends, today or at the period's end.
-    def ends
+    def ends(radius = 2.6)
       return "" if @buckets.empty?
 
       x = center(@buckets.last.span.index)
-      shown.map { |repo| dot(x, scale.y(@sums[repo].last), 2.6) }.join
+      shown.map { |repo| dot(x, scale.y(@sums[repo].last), radius) }.join
     end
 
     # The area under one project's line, for its wash under a filter.

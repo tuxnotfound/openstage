@@ -36,6 +36,17 @@ RSpec.describe "Admin", type: :request do
         expect(response.body).to include('data-weekly-step="digests_mailed" data-count="1"')
       end
 
+      it "counts the builders who downloaded a progress card or copied its post, leaving the owner out" do
+        builder = create(:user)
+        Event.track("progress_card_downloaded", user: builder, detail: "bars")
+        Event.track("progress_card_downloaded", user: builder, detail: "lines")
+        Event.track("progress_post_copied", user: owner, detail: "lines")
+
+        get "/admin"
+        expect(response.body).to include('data-card-step="progress_card_downloaded" data-count="1"')
+        expect(response.body).to include('data-card-step="progress_post_copied" data-count="0"')
+      end
+
       it "leaves test accounts out of every number" do
         tester = create(:user, username: "tester", signup_ref: "direct", created_at: 1.day.ago, internal: true,
                                weekly_email_sent_at: 1.day.ago)

@@ -63,15 +63,14 @@ RSpec.describe "Making a card from the progress section" do
     expect(page.at_css("[data-clipboard-target='source']").text).to eq("trained-on, 2026 so far:\nTrained on me is live!!\n31 trained-on commits on 9 days.")
   end
 
-  it "draws the Journey card for the Lines chart, its post from the flags it places" do
+  it "draws the card with lines for the Lines chart, with the same notes" do
     sign_in_as(user)
     get "/tux", params: { chart: "lines" }
     expect(page.at_css("turbo-frame#progress_card")["src"]).to eq("/progress/card?chart=lines")
 
     get "/progress/card", params: { chart: "lines" }
-    expect(page.at_css("svg[data-week-card='journey']")).to be_present
+    expect(page.css("svg[data-week-card='footnotes'] path[stroke-width='2.5']").size).to eq(7)
     expect(page.at_css("[data-clipboard-target='source']").text.lines.size).to eq(8)
-    expect(page.text).to include("This card puts words only where the line has room for them")
     expect(page.css("nav[aria-label='Card theme'] a").first["href"]).to eq("/progress/card?chart=lines&theme=light")
   end
 
@@ -83,6 +82,23 @@ RSpec.describe "Making a card from the progress section" do
     expect(draft.lines.first).to eq("openstage + wheels-off, 2026 so far:\n")
     expect(draft.lines.last).to eq("238 openstage + wheels-off commits on 39 days.")
     expect(page.css("nav[aria-label='Card theme'] a").first["href"]).to include("repo%5B%5D=#{CGI.escape(progress_repo(0))}")
+  end
+
+  it "reports a download and a copy with the card they came from" do
+    sign_in_as(user)
+    get "/progress/card", params: { chart: "lines" }
+
+    box = page.at_css("[data-controller='card-export clipboard']")
+    expect(box.to_h.slice("data-card-export-event-value", "data-card-export-detail-value", "data-clipboard-event-value",
+                          "data-clipboard-detail-value", "data-clipboard-track-url-value"))
+      .to eq("data-card-export-event-value" => "progress_card_downloaded", "data-card-export-detail-value" => "lines",
+             "data-clipboard-event-value" => "progress_post_copied", "data-clipboard-detail-value" => "lines",
+             "data-clipboard-track-url-value" => "/recap/track")
+
+    post "/recap/track", params: { name: "progress_card_downloaded", detail: "lines" }, as: :json
+    post "/recap/track", params: { name: "progress_post_copied", detail: "elsewhere" }, as: :json
+    expect(Event.where(user: user).where.not(name: "seen").pluck(:name, :detail))
+      .to contain_exactly([ "progress_card_downloaded", "lines" ], [ "progress_post_copied", "" ])
   end
 
   it "sends a visitor to sign in" do

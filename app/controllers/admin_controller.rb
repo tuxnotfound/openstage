@@ -83,6 +83,9 @@ class AdminController < ApplicationController
       [ name, recap_events.named(name).distinct.count(:user_id) ]
     end
     @recap_quiet = recap_events.named("recap_quiet").distinct.count(:user_id)
+    @card_funnel = %w[progress_card_downloaded progress_post_copied].map do |name|
+      [ name, recap_events.named(name).distinct.count(:user_id) ]
+    end
   end
 
   # F2's funnel. An email open cannot be seen without a tracking pixel, so the

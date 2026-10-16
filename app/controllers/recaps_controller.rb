@@ -22,7 +22,7 @@ class RecapsController < ApplicationController
     name = params[:name].to_s
     return head(:unprocessable_entity) unless Event::CLIENT_NAMES.include?(name)
 
-    detail = Event::INTENT_DETAILS.include?(params[:detail].to_s) ? params[:detail].to_s : ""
+    detail = Event::DETAILS.fetch(name, []).include?(params[:detail].to_s) ? params[:detail].to_s : ""
     Event.track(name, user: current_user, detail: detail)
     head :no_content
   end

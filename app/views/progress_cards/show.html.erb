@@ -1,7 +1,6 @@
 <% section = @section %>
 <% labels = section.labels %>
-<% journey = @layout.is_a?(CardLayout::Journey) %>
-<% items = journey ? @layout.items : @layout.fit.notes.map(&:item) %>
+<% items = @layout.fit.notes.map(&:item) %>
 <% left_out = @layout.left_out %>
 <% swapped = section.pick.swapped_ids %>
 <% here = { range: params[:range].presence, offset: params[:offset].presence, repo: Array(params[:repo]).compact_blank.presence, chart: params[:chart].presence } %>
@@ -9,17 +8,21 @@
 <%= turbo_frame_tag "progress_card" do %>
   <%# Outside the SVG: the download embeds its own copies of these files. %>
   <style>
-    <% card_fonts(@layout.class.fonts).each do |font| %>
+    <% card_fonts(CardLayout::Footnotes.fonts).each do |font| %>
       @font-face { font-family: '<%= font[:family] %>'; font-style: <%= font[:style] %>; font-weight: <%= font[:weight] %>; font-display: swap; src: url('<%= font[:url] %>') format('woff2'); }
     <% end %>
   </style>
   <div data-controller="card-export clipboard"
-       data-card-export-fonts-value="<%= { (journey ? "journey" : "footnotes") => card_fonts(@layout.class.fonts) }.to_json %>"
-       data-card-export-filename-value="openstage-<%= labels.file_name %>.png">
+       data-card-export-fonts-value="<%= { "footnotes" => card_fonts(CardLayout::Footnotes.fonts) }.to_json %>"
+       data-card-export-filename-value="openstage-<%= labels.file_name %>.png"
+       data-card-export-track-url-value="<%= recap_track_path %>" data-card-export-event-value="progress_card_downloaded"
+       data-card-export-detail-value="<%= @layout.kind %>"
+       data-clipboard-track-url-value="<%= recap_track_path %>" data-clipboard-event-value="progress_post_copied"
+       data-clipboard-detail-value="<%= @layout.kind %>">
     <p class="text-sm text-gray-500"><%= [ (section.selection_name if section.filtered?), labels.title, labels.subtitle ].compact.join(" · ") %></p>
 
     <div id="card_preview" class="mt-4 rounded-[10px] overflow-hidden ring-1 ring-gray-200 [&_svg]:block [&_svg]:w-full [&_svg]:h-auto">
-      <%= render(journey ? "progress_cards/journey" : "progress_cards/footnotes", layout: @layout) %>
+      <%= render "progress_cards/footnotes", layout: @layout %>
     </div>
 
     <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
@@ -54,9 +57,6 @@
     <% if left_out.any? %>
       <div class="mt-4">
         <p class="mb-1 text-xs font-semibold text-gray-500">Not on the card</p>
-        <% if journey %>
-          <p class="mb-1 text-xs text-gray-500">This card puts words only where the line has room for them, so an entry swapped in may still stay off.</p>
-        <% end %>
         <ul class="list-none m-0 p-0">
           <% left_out.each do |item| %>
             <li class="flex items-center gap-2 py-1.5 border-b border-gray-100 text-[13px]">
