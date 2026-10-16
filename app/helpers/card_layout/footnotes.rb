@@ -8,9 +8,7 @@ module CardLayout
     R = 1140
     NOTES_X = 680
     TEXT_X = 716
-    # Inter's baseline sits this far below the middle of its line box, in ems;
-    # DM Mono's at 0.34. Measured in Chrome, so the mock's CSS boxes land.
-    INTER_BASE = 0.364
+    INTER_BASE = ProgressHeader::INTER_BASE
     FAMILIES = [ "Inter", "DM Mono" ].freeze
     PALETTES = {
       "light" => { bg: "#F8F7F3", ink: "#14171A", muted: "#62665F", faint: "#8A8E86", rule: "#E4E3DC",
@@ -80,11 +78,18 @@ module CardLayout
     private
 
     def draw
-      Header.new(self).draw
+      ProgressHeader.new(self, dateline: dateline, dot: 10).draw
       canvas.draw(:rules, Shapes.rule(L, R, 136))
       canvas.draw(:rules, "M650.5,166V580")
       Chart.new(self, fit.notes.map(&:item)).draw
       Column.new(self).draw
+    end
+
+    # "Jan 1 – Oct 15, so far · 380 commits on 64 days"
+    def dateline
+      totals = section.tally.totals
+      "#{section.labels.subtitle.sub(' · so far', ', so far')} · #{totals.commits} #{'commit'.pluralize(totals.commits)} " \
+        "on #{totals.active_days} #{'day'.pluralize(totals.active_days)}"
     end
   end
 end
