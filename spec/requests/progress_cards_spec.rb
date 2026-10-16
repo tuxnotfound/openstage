@@ -85,6 +85,23 @@ RSpec.describe "Making a card from the progress section" do
     expect(page.css("nav[aria-label='Card theme'] a").first["href"]).to include("repo%5B%5D=#{CGI.escape(progress_repo(0))}")
   end
 
+  it "reports a download and a copy with the card they came from" do
+    sign_in_as(user)
+    get "/progress/card", params: { chart: "lines" }
+
+    box = page.at_css("[data-controller='card-export clipboard']")
+    expect(box.to_h.slice("data-card-export-event-value", "data-card-export-detail-value", "data-clipboard-event-value",
+                          "data-clipboard-detail-value", "data-clipboard-track-url-value"))
+      .to eq("data-card-export-event-value" => "progress_card_downloaded", "data-card-export-detail-value" => "journey",
+             "data-clipboard-event-value" => "progress_post_copied", "data-clipboard-detail-value" => "journey",
+             "data-clipboard-track-url-value" => "/recap/track")
+
+    post "/recap/track", params: { name: "progress_card_downloaded", detail: "journey" }, as: :json
+    post "/recap/track", params: { name: "progress_post_copied", detail: "elsewhere" }, as: :json
+    expect(Event.where(user: user).where.not(name: "seen").pluck(:name, :detail))
+      .to contain_exactly([ "progress_card_downloaded", "journey" ], [ "progress_post_copied", "" ])
+  end
+
   it "sends a visitor to sign in" do
     get "/progress/card"
 

@@ -6,8 +6,8 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["button"]
   // fonts: each template's fonts, by its key, so the PNG carries only the ones
-  // its template draws with.
-  static values = { fonts: Object, filename: String, trackUrl: String }
+  // its template draws with. event and detail: what a download reports.
+  static values = { fonts: Object, filename: String, trackUrl: String, event: { type: String, default: "card_downloaded" }, detail: String }
 
   async download() {
     const svg = document.querySelector("#card_preview svg[data-week-card]")
@@ -21,7 +21,7 @@ export default class extends Controller {
       link.download = this.filenameValue
       link.click()
       setTimeout(() => URL.revokeObjectURL(link.href), 2000)
-      this.report("card_downloaded")
+      this.report(this.eventValue)
     } finally {
       this.busy(false)
     }
@@ -87,7 +87,7 @@ export default class extends Controller {
       method: "POST",
       keepalive: true,
       headers: { "Content-Type": "application/json", "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content },
-      body: JSON.stringify({ name, detail: "" })
+      body: JSON.stringify({ name, detail: this.detailValue })
     }).catch(() => {})
   }
 }

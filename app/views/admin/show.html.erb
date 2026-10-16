@@ -110,6 +110,21 @@
     <p class="text-xs text-gray-400 mt-1.5">Distinct builders per step. A page that merely rendered is never counted.</p>
   </section>
 
+  <!-- Progress cards: the Make a card dialog on a builder's own page -->
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Progress cards, builders other than you</h2>
+    <div class="rounded-xl border border-gray-200 divide-y divide-gray-100 text-sm">
+      <% labels = { "progress_card_downloaded" => "Downloaded a card", "progress_post_copied" => "Copied the post" } %>
+      <% @card_funnel.each do |name, builders| %>
+        <div class="flex items-center justify-between px-4 py-2.5" data-card-step="<%= name %>" data-count="<%= builders %>">
+          <span class="text-gray-700"><%= labels[name] %></span>
+          <span class="font-medium text-gray-900"><%= builders %></span>
+        </div>
+      <% end %>
+    </div>
+    <p class="text-xs text-gray-400 mt-1.5">Distinct builders per step, to set beside the recap's.</p>
+  </section>
+
   <!-- Weekly email (F2) -->
   <section>
     <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Weekly email, builders other than you</h2>

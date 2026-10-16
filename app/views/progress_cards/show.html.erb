@@ -15,7 +15,11 @@
   </style>
   <div data-controller="card-export clipboard"
        data-card-export-fonts-value="<%= { (journey ? "journey" : "footnotes") => card_fonts(@layout.class.fonts) }.to_json %>"
-       data-card-export-filename-value="openstage-<%= labels.file_name %>.png">
+       data-card-export-filename-value="openstage-<%= labels.file_name %>.png"
+       data-card-export-track-url-value="<%= recap_track_path %>" data-card-export-event-value="progress_card_downloaded"
+       data-card-export-detail-value="<%= journey ? 'journey' : 'footnotes' %>"
+       data-clipboard-track-url-value="<%= recap_track_path %>" data-clipboard-event-value="progress_post_copied"
+       data-clipboard-detail-value="<%= journey ? 'journey' : 'footnotes' %>">
     <p class="text-sm text-gray-500"><%= [ (section.selection_name if section.filtered?), labels.title, labels.subtitle ].compact.join(" · ") %></p>
 
     <div id="card_preview" class="mt-4 rounded-[10px] overflow-hidden ring-1 ring-gray-200 [&_svg]:block [&_svg]:w-full [&_svg]:h-auto">
