@@ -38,6 +38,17 @@ module ProgressHelper
     end
   end
 
+  # The post that goes with a card: the period, the card's entries word for
+  # word, then the commits.
+  def progress_card_draft(section, items)
+    labels = section.labels
+    period = labels.range == "all" ? labels.subtitle : "#{labels.short}#{' so far' if labels.running?}"
+    totals = section.tally.totals
+    commits = section.project ? "#{totals.commits} #{section.project.name} commits" : pluralize(totals.commits, "commit")
+    [ "#{"#{section.project.name}, " if section.project}#{period}:", *items.map(&:title),
+      "#{commits} on #{pluralize(totals.active_days, 'day')}." ].join("\n")
+  end
+
   def progress_run_in(item, section)
     names = section.tally.projects.all.map(&:name)
     Progress::RunIn.capped(Progress::RunIn.of(item.title, item.body, names))

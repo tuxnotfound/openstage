@@ -52,6 +52,9 @@ Rails.application.routes.draw do
     resource :project, only: :update, module: :entries
   end
 
+  # The Make a card dialog on the builder's own page.
+  get "/progress/card", to: "progress_cards#show", as: :progress_card
+
   # Checkout / Billing
   post "/checkout", to: "checkouts#create", as: :checkout
   get "/billing", to: "checkouts#billing_portal", as: :billing_portal

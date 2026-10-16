@@ -75,8 +75,9 @@ export default class extends Controller {
   busy(on) {
     if (!this.hasButtonTarget) return
 
+    this.label ??= this.buttonTarget.textContent
     this.buttonTarget.disabled = on
-    this.buttonTarget.textContent = on ? "Drawing…" : "Download card"
+    this.buttonTarget.textContent = on ? "Drawing…" : this.label
   }
 
   report(name) {
