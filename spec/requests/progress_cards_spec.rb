@@ -63,6 +63,18 @@ RSpec.describe "Making a card from the progress section" do
     expect(page.at_css("[data-clipboard-target='source']").text).to eq("trained-on, 2026 so far:\nTrained on me is live!!\n31 trained-on commits on 9 days.")
   end
 
+  it "draws the Journey card for the Lines chart, its post from the flags it places" do
+    sign_in_as(user)
+    get "/tux", params: { chart: "lines" }
+    expect(page.at_css("turbo-frame#progress_card")["src"]).to eq("/progress/card?chart=lines")
+
+    get "/progress/card", params: { chart: "lines" }
+    expect(page.at_css("svg[data-week-card='journey']")).to be_present
+    expect(page.at_css("[data-clipboard-target='source']").text.lines.size).to eq(8)
+    expect(page.text).to include("This card puts words only where the line has room for them")
+    expect(page.css("nav[aria-label='Card theme'] a").first["href"]).to eq("/progress/card?chart=lines&theme=light")
+  end
+
   it "sends a visitor to sign in" do
     get "/progress/card"
 

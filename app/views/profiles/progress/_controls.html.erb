@@ -57,7 +57,8 @@
             <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
           </button>
         </div>
-        <%= turbo_frame_tag "progress_card", src: progress_card_path(range: params[:range].presence, offset: params[:offset].presence, repo: params[:repo].presence),
+        <%= turbo_frame_tag "progress_card", src: progress_card_path(range: params[:range].presence, offset: params[:offset].presence,
+                                                                     repo: params[:repo].presence, chart: params[:chart].presence),
               loading: :lazy do %>
           <p class="mt-4 text-sm text-gray-400">Drawing your card…</p>
         <% end %>
