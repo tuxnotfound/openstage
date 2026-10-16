@@ -73,6 +73,14 @@ RSpec.describe Progress::TallyService do
     expect(tally("week").totals.commits).to eq(79)
   end
 
+  it "counts an entry logged as Shipped as shipped, not as a commit" do
+    create(:entry, user: user, source: "manual", title: "Launched on Product Hunt", occurred_at: 1.hour.ago)
+    week = tally("week")
+
+    expect(week.items.map { |item| [ item.title, item.shipped? ] }).to eq([ [ "Launched on Product Hunt", true ] ])
+    expect(numbers(week.totals).first(3)).to eq([ 1, 0, 79 ])
+  end
+
   it "counts days in the zone of the builder's last saved week card" do
     create(:entry, user: user, repo_name: progress_repo(0), occurred_at: Time.utc(2026, 10, 14, 23, 30))
     expect(tally("week").buckets.map(&:total)[2, 2]).to eq([ 9, 0 ])

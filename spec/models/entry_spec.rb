@@ -69,6 +69,18 @@ RSpec.describe Entry, type: :model do
       expect(Entry.visible).to contain_exactly(on_main, other_builder)
       expect(Entry.publicly_visible).to contain_exactly(on_main, other_builder)
     end
+
+    it "highlights count a logged Shipped entry but never a commit, also stored as shipped" do
+      commit = create(:entry, user: user)
+      logged = create(:entry, user: user, source: "manual")
+      milestone = create(:entry, user: user, source: "manual", entry_type: "milestone")
+      post = create(:entry, user: user, source: "manual", entry_type: "posted")
+      create(:entry, user: user, entry_type: "repo_created")
+
+      expect(Entry.highlights).to contain_exactly(logged, milestone, post)
+      expect(Entry.commits).to contain_exactly(commit)
+      expect([ commit, logged ].map { |entry| [ entry.commit?, entry.highlight? ] }).to eq([ [ true, false ], [ false, true ] ])
+    end
   end
 
   describe ".repo_names" do

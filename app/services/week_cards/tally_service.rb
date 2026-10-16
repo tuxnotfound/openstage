@@ -125,11 +125,11 @@ module WeekCards
     end
 
     def commits
-      @commits ||= entries.select { |entry| entry.github? && entry.shipped? }
+      @commits ||= entries.select(&:commit?)
     end
 
     def highlights_on(date)
-      entries.select { |entry| (SHIPPED + PUBLISHED).include?(entry.entry_type) && local_date(entry) == date }
+      entries.select { |entry| entry.highlight? && local_date(entry) == date }
     end
 
     def shown_commits_on(date)

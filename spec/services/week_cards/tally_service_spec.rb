@@ -78,6 +78,17 @@ RSpec.describe WeekCards::TallyService do
       expect(tally.totals).to have_attributes(launches: 1, posts: 1)
     end
 
+    it "counts an entry logged as Shipped as a launch, not as a commit" do
+      create(:entry, user: user, source: "manual", entry_type: "shipped", title: "Launched on Product Hunt",
+                     occurred_at: Time.utc(2026, 10, 8, 16))
+      commit_at("me/openstage", Time.utc(2026, 10, 8, 18))
+
+      expect(tally.days[3]).to have_attributes(total: 1, hours: { 19 => { "openstage" => 1 } })
+      expect(tally.days[3].launches.map(&:title)).to eq([ "Launched on Product Hunt" ])
+      expect(tally.days[3].headline).to have_attributes(text: "Launched on Product Hunt", kind: "shipped")
+      expect(tally.totals).to have_attributes(commits: 1, shipped: 1, launches: 1)
+    end
+
     it "starts the week's peak at its busiest two hours" do
       [ 18, 18, 19, 19, 20, 20, 20 ].each { |hour| commit_at("me/app", Time.utc(2026, 10, 7, hour)) }
 
