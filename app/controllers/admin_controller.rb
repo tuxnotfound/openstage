@@ -94,7 +94,7 @@ class AdminController < ApplicationController
     @weekly_mailed  = User.counted.where(weekly_email_sent_at: @since..).where.not(id: current_user.id).count
     @weekly_opened  = Event.since(@since).named("recap_from_email").where(user_id: counted_ids)
                            .where.not(user_id: current_user.id).distinct.count(:user_id)
-    @digests_mailed = Subscription.where(digest_sent_at: @since.., user_id: counted_ids).count
+    @digests_mailed = Subscription.where(digest_sent_at: @since.., user_id: counted_ids).where.not(user_id: current_user.id).count
   end
 
   def posted_recaps
