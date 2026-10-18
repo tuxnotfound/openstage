@@ -9,10 +9,13 @@ RSpec.describe WeeklyEmails::SendService do
     ActiveJob::Base.queue_adapter = adapter
   end
 
+  # A Friday send: Week 43 runs Mon Oct 19 to today.
+  before { travel_to Time.utc(2026, 10, 23, 13) }
+
   let(:builder) { create(:user, email: "builder@example.com") }
 
-  def ship(count, user: builder)
-    count.times { |i| create(:entry, user: user, title: "Commit #{i}", repo_name: "me/app", occurred_at: 1.day.ago) }
+  def ship(count, user: builder, at: 1.day.ago)
+    count.times { |i| create(:entry, user: user, title: "Commit #{i}", repo_name: "me/app", occurred_at: at) }
   end
 
   def subscriber(email, confirmed: true)
@@ -38,6 +41,21 @@ RSpec.describe WeeklyEmails::SendService do
     subscriber("reader@example.com")
 
     expect { described_class.new(user: builder).call! }.not_to have_enqueued_mail
+  end
+
+  it "judges the week the emails show, not the last seven days" do
+    ship(3, at: Time.utc(2026, 10, 17, 12))
+    subscriber("reader@example.com")
+
+    expect { described_class.new(user: builder).call! }.not_to have_enqueued_mail
+  end
+
+  it "counts shipped and published entries with the commits" do
+    ship(1)
+    create(:entry, user: builder, entry_type: "milestone", source: "manual", occurred_at: 2.days.ago)
+    create(:entry, user: builder, entry_type: "note", source: "manual", occurred_at: 2.days.ago)
+
+    expect { described_class.new(user: builder).call! }.to have_enqueued_mail(WeeklyMailer, :week_ready)
   end
 
   it "still sends the digest to subscribers of a builder who turned their email off" do

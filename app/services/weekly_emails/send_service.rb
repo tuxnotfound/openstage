@@ -6,6 +6,8 @@ module WeeklyEmails
   class SendService < ApplicationService
     # Shorter than a week, so a run that starts a little early next week still sends.
     RESEND_AFTER = 6.days
+    # Commits, shipped and published entries: fewer is a quiet week.
+    WORTH_SENDING = 3
 
     attr_accessor :user
     attr_reader :builder_mailed, :digests_sent
@@ -17,10 +19,21 @@ module WeeklyEmails
     def execute
       @builder_mailed = false
       @digests_sent = 0
-      return if RecapDraft.for_user(user, days: 7).quiet?
+      return if quiet?
 
       mail_builder
       mail_subscribers
+    end
+
+    # Judged on the week the emails show, the Week view so far, so neither
+    # ever arrives with an empty chart.
+    def quiet?
+      week = Progress::TallyService.new(user: user, range: "week")
+      week.call
+      return true unless absorb_errors(week)
+
+      totals = week.totals
+      totals.commits + totals.shipped + totals.published < WORTH_SENDING
     end
 
     def mail_builder

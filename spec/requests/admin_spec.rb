@@ -29,6 +29,7 @@ RSpec.describe "Admin", type: :request do
         owner.update!(weekly_email_sent_at: 2.days.ago)
         Event.track("recap_from_email", user: builder)
         builder.subscriptions.create!(email: "r@example.com", confirmed_at: 1.week.ago, digest_sent_at: 2.days.ago)
+        owner.subscriptions.create!(email: "mine@example.com", confirmed_at: 1.week.ago, digest_sent_at: 2.days.ago)
 
         get "/admin"
         expect(response.body).to include('data-weekly-step="weekly_mailed" data-count="1"')
@@ -110,6 +111,35 @@ RSpec.describe "Admin", type: :request do
 
         expect { post "/admin/test_email" }.to change { ActionMailer::Base.deliveries.count }.by(1)
         expect(flash[:notice]).to match(/me@example\.com/)
+      end
+
+      it "sends me both weekly emails" do
+        owner.update!(email: "me@example.com")
+
+        expect { post "/admin/test_weekly_email" }.to change { ActionMailer::Base.deliveries.count }.by(2)
+        expect(response).to redirect_to(admin_path)
+        expect(flash[:notice]).to match(/me@example\.com/)
+      end
+
+      it "refuses the weekly test when I have no address" do
+        owner.update!(email: nil)
+
+        expect { post "/admin/test_weekly_email" }.not_to change { ActionMailer::Base.deliveries.count }
+        expect(flash[:alert]).to match(/no email/i)
+      end
+
+      it "says so when the weekly test cannot be delivered" do
+        owner.update!(email: "me@example.com")
+        allow(ActionMailer::Base).to receive(:perform_deliveries).and_return(false)
+
+        post "/admin/test_weekly_email"
+        expect(flash[:alert]).to match(/Delivery failed: MailDeliveryGuard::Error/)
+      end
+
+      it "404s the weekly test for a non-owner" do
+        sign_in_as(create(:user, github_username: "someone_else"))
+        post "/admin/test_weekly_email"
+        expect(response).to have_http_status(:not_found)
       end
 
       it "404s the test email for a non-owner" do

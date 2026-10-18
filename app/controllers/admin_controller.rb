@@ -38,6 +38,19 @@ class AdminController < ApplicationController
     redirect_to admin_path, alert: "Delivery failed: #{e.class} - #{e.message.truncate(120)}"
   end
 
+  # Both weekly emails for my own week, to read in a real inbox before Friday.
+  def test_weekly_email
+    service = WeeklyEmails::TestService.new(user: current_user)
+    if service.call
+      redirect_to admin_path, notice: "Both weekly emails sent to #{current_user.email}, marked [Test]."
+    else
+      redirect_to admin_path, alert: service.errors.full_messages.to_sentence
+    end
+  rescue Net::SMTPError, Net::OpenTimeout, MailDeliveryGuard::Error => e
+    Rails.error.report(e)
+    redirect_to admin_path, alert: "Delivery failed: #{e.class} - #{e.message.truncate(120)}"
+  end
+
   private
 
   # Test accounts (internal) are left out of every number on this page.
@@ -94,7 +107,7 @@ class AdminController < ApplicationController
     @weekly_mailed  = User.counted.where(weekly_email_sent_at: @since..).where.not(id: current_user.id).count
     @weekly_opened  = Event.since(@since).named("recap_from_email").where(user_id: counted_ids)
                            .where.not(user_id: current_user.id).distinct.count(:user_id)
-    @digests_mailed = Subscription.where(digest_sent_at: @since.., user_id: counted_ids).count
+    @digests_mailed = Subscription.where(digest_sent_at: @since.., user_id: counted_ids).where.not(user_id: current_user.id).count
   end
 
   def posted_recaps

@@ -178,9 +178,14 @@
   <!-- Email smoke test -->
   <section class="pt-6 border-t border-gray-100">
     <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Email</h2>
-    <%= button_to "Send myself a test email", admin_test_email_path,
-          class: "px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer" %>
+    <div class="flex flex-wrap gap-2">
+      <%= button_to "Send myself a test email", admin_test_email_path,
+            class: "px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer" %>
+      <%= button_to "Send myself both weekly emails", admin_test_weekly_email_path,
+            class: "px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer" %>
+    </div>
     <p class="text-xs text-gray-400 mt-1.5">Delivery stays off until <code>RESEND_API_KEY</code> is set in Render.</p>
+    <p class="text-xs text-gray-400 mt-1">The weekly emails show my own week as it stands, the builder's and a subscriber's, marked [Test]. Friday still sends.</p>
   </section>
 
   <p class="text-xs text-gray-400">
