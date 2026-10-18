@@ -86,6 +86,13 @@ RSpec.describe WeeklyMailer do
       expect(text).not_to include("Log an entry")
     end
 
+    it "leads with the builder's face and name, which the builder's own email does not" do
+      html = mail.html_part.body.to_s
+      expect(html).to include(builder.avatar_url, "openstage.dev/maker")
+      expect(html.index(builder.avatar_url)).to be < html.index("Week 43")
+      expect(described_class.week_ready(builder).html_part.body.to_s).not_to include(builder.avatar_url)
+    end
+
     it "never carries a private or hidden entry, nor counts one" do
       [ mail.text_part.body.to_s, mail.html_part.body.to_s ].each do |body|
         expect(body).not_to include("Secret plan")
