@@ -24,6 +24,7 @@ Rails.application.routes.draw do
   # Owner-only funnel metrics; the gates are scored off this
   get "/admin", to: "admin#show", as: :admin
   post "/admin/test_email", to: "admin#test_email", as: :admin_test_email
+  post "/admin/test_weekly_email", to: "admin#test_weekly_email", as: :admin_test_weekly_email
 
   # The week card: what the builder shipped, published and built, as a picture
   # to post. /week opens the current week.
