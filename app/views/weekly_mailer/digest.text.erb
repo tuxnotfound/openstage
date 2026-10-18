@@ -1,16 +1,6 @@
 <%= @builder.display_name %>'s week on Openstage
 
-<%= @draft.skeleton %>
-
-<% @draft.candidates_by_repo.each do |repo, list| %>
-<%= repo %>
-<% list.each do |candidate| %>
-- <%= candidate.title %>
-<% end %>
-
-<% end %>
-Full timeline: <%= @profile_url %>
-
+<%= render "week", section: @section, link_label: "See the week on #{@builder.display_name}'s page", link_url: @profile_url %>
 You subscribed to <%= @builder.display_name %>'s updates on openstage.dev/<%= @builder.username %>.
 Unsubscribe: <%= @unsub_url %>
 

@@ -1,10 +1,14 @@
-# F2's two emails. Both rebuild the week when they are sent, from the builder's
-# public entries only, so nothing private reaches a subscriber.
+# F2's two emails. Both show the Week view of the builder's progress section
+# as it stands when they are sent, from public entries only, so nothing
+# private reaches a subscriber and the page they link to says the same.
 class WeeklyMailer < ApplicationMailer
+  helper :progress
+
   # The builder's own week, and one link: the picker. It never posts.
   def week_ready(user)
-    @draft      = RecapDraft.for_user(user, days: 7)
+    @section    = week_of(user)
     @picker_url = recap_url(from: "weekly")
+    @log_url    = dashboard_url
     @stop_url   = weekly_email_unsubscribe_url(token: user.signed_id(purpose: :weekly_email))
     one_click_unsubscribe(@stop_url)
 
@@ -14,16 +18,20 @@ class WeeklyMailer < ApplicationMailer
   # The week a subscriber asked for when they confirmed on the builder's page.
   def digest(subscription)
     @builder     = subscription.user
-    @draft       = RecapDraft.for_user(@builder, days: 7)
-    @profile_url = profile_url(@builder.username, ref: "digest")
+    @section     = week_of(@builder)
+    @profile_url = profile_url(@builder.username, range: "week", ref: "digest")
     @home_url    = root_url(ref: "digest")
     @unsub_url   = unsubscribe_subscription_url(subscription.token)
     one_click_unsubscribe(@unsub_url)
 
-    mail(to: subscription.email, subject: "What #{@builder.display_name} shipped this week")
+    mail(to: subscription.email, subject: "#{@builder.display_name}'s week on Openstage")
   end
 
   private
+
+  def week_of(user)
+    Progress::ComposeService.new(user: user, range: "week").tap(&:call!).section
+  end
 
   def one_click_unsubscribe(url)
     headers["List-Unsubscribe"] = "<#{url}>"

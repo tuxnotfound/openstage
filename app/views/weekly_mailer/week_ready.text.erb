@@ -1,13 +1,4 @@
-<%= @draft.skeleton %>
-
-<% @draft.candidates_by_repo.each do |repo, list| %>
-<%= repo %>
-<% list.each do |candidate| %>
-- <%= candidate.title %>
-<% end %>
-
-<% end %>
-Pick what to share: <%= @picker_url %>
+<%= render "week", section: @section, link_label: "Pick what to share", link_url: @picker_url, log_url: @log_url %>
 Nothing is posted until you post it yourself.
 
 You get this on Fridays when your week has three or more things in it.
