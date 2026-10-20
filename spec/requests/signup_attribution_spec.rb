@@ -26,8 +26,8 @@ RSpec.describe "Signup attribution", type: :request do
       expect(session[:signup_ref]).to eq("launch")
     end
 
-    it "attributes each launch venue that has a gate read of its own" do
-      %w[peerlist producthunt].each do |venue|
+    it "attributes each launch venue and free board to its own tag" do
+      %w[peerlist producthunt devhunt saashub alternativeto].each do |venue|
         reset!
         get "/", params: { ref: venue }
         expect(session[:signup_ref]).to eq(venue)
