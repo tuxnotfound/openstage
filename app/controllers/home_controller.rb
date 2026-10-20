@@ -9,7 +9,7 @@ class HomeController < ApplicationController
     # wrote. A pinned one wins, because the builder chose it. With nothing
     # written by hand, the card falls back to three commits.
     if @demo_user
-      shown = @demo_user.entries.publicly_visible
+      shown = @demo_user.entries.publicly_visible.without_tooling_noise
       @demo_highlight = shown.where(entry_type: %w[milestone note released])
                              .order(pinned: :desc, occurred_at: :desc).first
       @demo_entries = shown.where(entry_type: RecapDraft::COMMIT_TYPES).chronological

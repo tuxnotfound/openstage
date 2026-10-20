@@ -70,6 +70,20 @@ RSpec.describe "Home layout", type: :request do
       expect(response.body.scan("Commit message").size).to eq(2)
     end
 
+    # The profile already drops them; the card showed "Merge pull request #5"
+    # to Product Hunt visitors on 2026-10-20.
+    it "leaves merge and dependency-bump commits off the card, as the profile does" do
+      demo.entries.update_all(occurred_at: 1.hour.ago)
+      create(:entry, user: demo, title: "Merge pull request #5 from tuxnotfound/fix/weekly-email-body", occurred_at: 1.minute.ago)
+      create(:entry, user: demo, title: "Bump rack from 2.2.8 to 2.2.9", occurred_at: 2.minutes.ago)
+
+      get "/"
+
+      expect(response.body).not_to include("Merge pull request #5")
+      expect(response.body).not_to include("Bump rack")
+      expect(response.body.scan("Commit message").size).to eq(3)
+    end
+
     it "falls back to three commits when nothing was written by hand" do
       get "/"
 
