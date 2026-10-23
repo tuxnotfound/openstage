@@ -32,8 +32,6 @@ module ApplicationHelper
   # from inside a tab (an entry's edit form, the week card) keeps that tab lit.
   NAV_TABS = {
     "dashboard" => :dashboard, "entries" => :dashboard,
-    "progress_cards" => :page,
-    "week_cards" => :week,
     "analytics" => :analytics,
     "settings" => :settings, "github_repos" => :settings
   }.freeze

@@ -92,47 +92,11 @@
     <p class="os-xs os-muted mt-2">One per browser session, signed-out humans only. This is the top of the funnel that "signups by first touch" is the bottom of.</p>
   </section>
 
-  <!-- Recap funnel -->
-  <section class="os-panel">
-    <h2 class="os-h3">Recap, builders other than you</h2>
-    <div class="mt-2.5">
-      <% labels = { "recap_opened" => "Opened the picker", "recap_picked" => "Ticked at least one commit",
-                    "recap_copied" => "Copied the post", "recap_intent" => "Opened a compose box" } %>
-      <% @recap_funnel.each do |name, builders| %>
-        <div class="os-row os-between py-2" data-recap-step="<%= name %>" data-count="<%= builders %>">
-          <span class="os-sm"><%= labels[name] %></span>
-          <span class="os-sm os-num font-bold"><%= builders %></span>
-        </div>
-      <% end %>
-      <div class="os-row os-between py-2" data-recap-step="recap_quiet" data-count="<%= @recap_quiet %>">
-        <span class="os-sm os-muted">Saw the quiet-week state instead</span>
-        <span class="os-sm os-muted font-bold"><%= @recap_quiet %></span>
-      </div>
-    </div>
-    <p class="os-xs os-muted mt-2">Distinct builders per step. A page that merely rendered is never counted.</p>
-  </section>
-
-  <!-- Progress cards: the Make a card dialog on a builder's own page -->
-  <section class="os-panel">
-    <h2 class="os-h3">Progress cards, builders other than you</h2>
-    <div class="mt-2.5">
-      <% labels = { "progress_card_downloaded" => "Downloaded a card", "progress_post_copied" => "Copied the post" } %>
-      <% @card_funnel.each do |name, builders| %>
-        <div class="os-row os-between py-2" data-card-step="<%= name %>" data-count="<%= builders %>">
-          <span class="os-sm"><%= labels[name] %></span>
-          <span class="os-sm os-num font-bold"><%= builders %></span>
-        </div>
-      <% end %>
-    </div>
-    <p class="os-xs os-muted mt-2">Distinct builders per step, to set beside the recap's.</p>
-  </section>
-
   <!-- Weekly email (F2) -->
   <section class="os-panel">
     <h2 class="os-h3">Weekly email, builders other than you</h2>
     <div class="mt-2.5">
       <% [ [ "weekly_mailed", "Got the weekly email", @weekly_mailed ],
-           [ "weekly_opened", "Opened the picker from it", @weekly_opened ],
            [ "digests_mailed", "Subscribers sent a digest", @digests_mailed ] ].each do |key, label, count| %>
         <div class="os-row os-between py-2" data-weekly-step="<%= key %>" data-count="<%= count %>">
           <span class="os-sm"><%= label %></span>
@@ -140,7 +104,7 @@
         </div>
       <% end %>
     </div>
-    <p class="os-xs os-muted mt-2">Last send per builder and per subscriber. The picker step above shows what they did next.</p>
+    <p class="os-xs os-muted mt-2">Last send per builder and per subscriber.</p>
   </section>
 
   <!-- Repos with more than one builder -->

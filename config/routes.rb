@@ -29,19 +29,10 @@ Rails.application.routes.draw do
   post "/admin/test_email", to: "admin#test_email", as: :admin_test_email
   post "/admin/test_weekly_email", to: "admin#test_weekly_email", as: :admin_test_weekly_email
 
-  # The week card: what the builder shipped, published and built, as a picture
-  # to post. /week opens the current week.
-  get "/week", to: "week_cards#show", as: :current_week_card
-  get "/week/:week", to: "week_cards#show", as: :week_card, constraints: { week: /\d{4}-W\d{2}/ }
-  patch "/week/:week", to: "week_cards#update", constraints: { week: /\d{4}-W\d{2}/ }
-  get "/week/:week/preview", to: "week_cards#preview", as: :week_card_preview, constraints: { week: /\d{4}-W\d{2}/ }
-
-  # The recap picker is gone; links in weekly emails already sent open the
-  # week card instead, still counted as opened from the email.
-  get "/recap", to: redirect { |_params, request| [ "/week", request.query_string.presence ].compact.join("?") }
-
-  # What the cards report from the browser: downloads, copies, compose boxes.
-  post "/events", to: "events#create", as: :events
+  # The week card and the recap picker are gone; their links in weekly emails
+  # already sent open the dashboard.
+  get "/week(/*rest)", to: redirect("/dashboard")
+  get "/recap", to: redirect("/dashboard")
 
   # Analytics (Pro)
   get "/analytics", to: "analytics#index", as: :analytics
@@ -60,9 +51,6 @@ Rails.application.routes.draw do
     # The progress section's tag panel, for any entry type.
     resource :project, only: :update, module: :entries
   end
-
-  # The Make a card dialog on the builder's own page.
-  get "/progress/card", to: "progress_cards#show", as: :progress_card
 
   # Checkout / Billing
   post "/checkout", to: "checkouts#create", as: :checkout

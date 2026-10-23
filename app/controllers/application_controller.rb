@@ -48,7 +48,7 @@ class ApplicationController < ActionController::Base
     current_user.present?
   end
 
-  # A link from an email (the weekly one opens the week card) must land
+  # A link from an email (the weekly one opens the dashboard) must land
   # where it pointed once the builder has signed in, not on the dashboard.
   def require_authentication
     return if user_signed_in?

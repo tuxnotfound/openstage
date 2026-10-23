@@ -40,7 +40,9 @@ class GithubReposController < ApplicationController
 
     respond_to do |format|
       format.turbo_stream
-      format.html { redirect_to dashboard_path }
+      # Back to the dashboard's chart, in the window it showed, so the line
+      # that went or came back is in view.
+      format.html { redirect_to dashboard_path(range: params[:range].presence_in(Progress::Window::RANGES), anchor: "activity") }
     end
   end
 

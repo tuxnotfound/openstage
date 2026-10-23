@@ -1,39 +1,28 @@
 <% content_for :title, "Dashboard — Openstage" %>
 <% content_for :dark_mode, true %>
-<% content_for :main_class, "os-wrap pt-1.5" %>
+<% content_for :main_class, "os-wrap os-stack pt-1.5" %>
 
 <% if @show_pro_activated %>
-  <p role="status" class="mb-4 rounded-control bg-accent-soft px-4 py-3 os-sm font-semibold">🎉 You're Pro! All features are now unlocked.</p>
+  <p role="status" class="rounded-control bg-accent-soft px-4 py-3 os-sm font-semibold">🎉 You're Pro! All features are now unlocked.</p>
 <% end %>
 
-<div class="os-between mb-3.5">
-  <div class="flex items-center gap-2.5">
-    <h1 class="os-h2 text-[30px]">Dashboard</h1>
-    <% if current_user.pro? %><span class="os-tag pro">✦ Pro</span><% end %>
-  </div>
-  <%= link_to profile_path(current_user.username), class: "os-btn2 sm" do %>View your page <span aria-hidden="true">↗</span><% end %>
+<div class="flex items-center gap-2.5">
+  <h1 class="os-h2 text-[30px]">Dashboard</h1>
+  <% if current_user.pro? %><span class="os-tag pro">✦ Pro</span><% end %>
 </div>
 
-<%# The work on the left, the page and its audience on the right. On a phone
-    the side column sits between the week and the entry list, so a long list
-    never buries the page link. %>
-<div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:grid-rows-[auto_1fr]">
-  <div class="os-stack min-w-0 lg:col-start-1 lg:row-start-1">
-    <%= render "dashboard/this_week", section: @activity %>
-    <%= render "dashboard/composer" %>
-    <%= render "dashboard/activity", section: @activity if @activity %>
-  </div>
+<%= render "dashboard/this_week", section: @activity %>
+<%= render "dashboard/composer" %>
 
-  <aside class="os-stack min-w-0 lg:col-start-2 lg:row-start-1 lg:row-span-2">
-    <%= render "dashboard/page_card" %>
-    <%= render "dashboard/projects", repos: @repos, section: @activity if @repos.any? %>
-    <%= render "dashboard/audience" %>
+<%# The chart beside the switches that change it: hiding a project reloads
+    the page here, and its line is gone. %>
+<div id="activity" class="grid scroll-mt-4 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+  <div class="min-w-0"><%= render "dashboard/activity", section: @activity if @activity %></div>
+  <div class="os-stack min-w-0">
+    <%= render "dashboard/projects", repos: @repos, section: @activity %>
     <%= render "dashboard/badge" if @badge_nudge %>
     <%= render "dashboard/upgrade" unless current_user.pro? %>
-    <%= render "dashboard/later" %>
-  </aside>
-
-  <div class="min-w-0 lg:col-start-1 lg:row-start-2">
-    <%= render "dashboard/entries" %>
   </div>
 </div>
+
+<%= render "dashboard/entries" %>

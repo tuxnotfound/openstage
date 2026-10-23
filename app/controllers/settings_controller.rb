@@ -49,9 +49,11 @@ class SettingsController < ApplicationController
     @github_repos_section = github_repos_section
     @badge_markdown       = "[![openstage](#{profile_badge_url(current_user.username)})](#{profile_url(current_user.username)}?ref=badge)"
     @embed_script_tag     = "<script src=\"#{profile_embed_url(current_user.username)}\"></script>"
+    # Free sees how many; Pro sees who, and for which page.
+    @subscribers          = current_user.subscriptions.confirmed.includes(:github_repo).order(confirmed_at: :desc)
   end
 
   def profile_params
-    params.require(:user).permit(:display_name, :bio, :website_url, :building_since, :weekly_email, :branch_commits, :shipped_list)
+    params.require(:user).permit(:display_name, :bio, :website_url, :building_since, :weekly_email, :branch_commits)
   end
 end

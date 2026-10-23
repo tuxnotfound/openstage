@@ -1,7 +1,7 @@
 require "rails_helper"
 require "support/progress_data"
 
-RSpec.describe "The public page's chart and its list" do
+RSpec.describe "The public page's chart and what shipped" do
   include ProgressData
 
   let(:user) { create(:user, username: "tux") }
@@ -16,20 +16,18 @@ RSpec.describe "The public page's chart and its list" do
     Nokogiri::HTML(response.body).at_css("section[aria-label='Profile']")
   end
 
-  def listed
-    panel.css("ol li").map { |row| row.at_css("a").text.squish }
+  def shipped
+    Nokogiri::HTML(response.body).at_css("section[aria-labelledby='what-shipped']").text.squish
   end
 
-  it "opens on the last 12 months, with the counts and the six entries that get words" do
+  it "opens on the last 12 months, with the counts, and what shipped below" do
     get "/tux"
 
     expect(panel.at_css(".os-label").text.squish).to eq("Commits · all 7 projects, last 12 months")
     expect(panel.at_css(".os-big").text).to eq(progress_commits(Date.new(2025, 11, 1)..today).to_s)
     expect(panel.text.squish).to include("since the first commit, March 26",
                                          "10 shipped · 10 published · 7 projects with commits · 64 active days")
-    expect(listed.size).to eq(6)
-    expect(listed.first).to eq("live on Hacker News")
-    expect(panel.text.squish).to include("14 more in the last 12 months, all listed under What shipped.")
+    expect(shipped).to include("20 in the last 12 months", "live on Hacker News")
   end
 
   it "measures 30 and 90 days against the same stretch just before" do
@@ -62,7 +60,8 @@ RSpec.describe "The public page's chart and its list" do
     travel_to ProgressData::TODAY + 60.days
     get "/tux", params: { range: "30d" }
 
-    expect(panel.text).to include("No commits in the last 30 days.", "Nothing shipped or published in the last 30 days.")
+    expect(panel.text).to include("No commits in the last 30 days.")
+    expect(shipped).to include("Nothing shipped or published in the last 30 days.")
     expect(panel.css("svg[role='img'] path")).to be_empty
   end
 
@@ -71,10 +70,10 @@ RSpec.describe "The public page's chart and its list" do
 
     expect(panel.at_css(".os-label").text.squish).to eq("Commits · trained-on, last 12 months")
     expect(panel.at_css(".os-big").text).to eq(progress_commits(Date.new(2025, 11, 1)..today, [ 4 ]).to_s)
-    expect(listed).to eq([ "Trained on me is live!!" ])
+    expect(shipped).to include("Trained on me is live!!")
 
     get "/tux", params: { repo: progress_repo(0) }
-    expect(panel.text).to include("No entries tagged openstage in the last 12 months.")
+    expect(shipped).to include("No entries tagged openstage in the last 12 months.")
   end
 
   it "switches a project in or out with its chip, keeping the window on every link" do
@@ -95,23 +94,21 @@ RSpec.describe "The public page's chart and its list" do
     expect(windows["30 days"]).to include("range=30d")
   end
 
-  it "numbers a disc per listed entry, linked to its row" do
+  it "draws the lines alone, with no numbered discs or list beside the chart" do
     get "/tux"
 
-    discs = panel.css("a[href^='#progress-note-']")
-    expect(discs.map(&:text)).to eq(%w[1 2 3 4 5 6])
-    expect(discs.first["aria-label"]).to eq("Number 1: live on Hacker News")
-    expect(panel.at_css("li#progress-note-1")).to be_present
+    expect(panel.css(".os-disc")).to be_empty
+    expect(panel.css("ol")).to be_empty
+    expect(panel.css("svg[role='img'] path[stroke-width='4.5']").size).to eq(7)
   end
 
-  it "shows a visitor the owner's page without Make a card and the tag line" do
+  it "shows the owner, and only the owner, the tag line, and nobody Make a card" do
     get "/tux"
-    expect(panel.at_css("[data-controller='dialog']")).to be_nil
     expect(panel.text).not_to include("have no project")
 
     sign_in_as(user)
     get "/tux"
-    expect(panel.at_css("turbo-frame#progress_card")["src"]).to eq("/progress/card?range=12m")
+    expect(panel.at_css("turbo-frame#progress_card")).to be_nil
     expect(panel.text.squish).to include("#{progress_untagged(Date.new(2025, 11, 1)..today)} entries in the last 12 months have no project. Tag them")
   end
 

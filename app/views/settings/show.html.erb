@@ -41,9 +41,8 @@
 
       <section class="os-panel" aria-labelledby="your-page-settings">
         <h2 id="your-page-settings" class="os-h3">Your page</h2>
-        <% [ [ :weekly_email, "Weekly email", "On Fridays, when your week has three or more things in it: your week, ready to turn into a card." ],
-             [ :branch_commits, "Commits on other branches", "Work not yet on your default branch shows on your page, marked with its branch, until it merges." ],
-             [ :shipped_list, "Shipped and published beside the chart", "Your launches and posts, numbered on the chart and listed beside it. Off, the chart fills the width." ] ].each do |field, title, about| %>
+        <% [ [ :weekly_email, "Weekly email", "On Fridays, when your week has three or more things in it: your week, with a link to your page." ],
+             [ :branch_commits, "Commits on other branches", "Work not yet on your default branch shows on your page, marked with its branch, until it merges." ] ].each do |field, title, about| %>
           <div class="os-row flex items-start justify-between gap-[18px] py-3.5">
             <%= f.label field, class: "min-w-0" do %>
               <span class="block font-bold"><%= title %></span>
@@ -55,6 +54,24 @@
         <div class="pt-3"><%= f.submit "Save changes", class: "os-btn" %></div>
       </section>
     <% end %>
+
+    <section class="os-panel" aria-labelledby="subscribers" data-subscribers data-count="<%= @subscribers.size %>">
+      <div class="os-between">
+        <h2 id="subscribers" class="os-h3">Subscribers</h2>
+        <% unless current_user.pro? %><%= link_to "See who, with Pro", pricing_path, class: "os-link text-[13px]" %><% end %>
+      </div>
+      <p class="os-sm os-ink2 mt-1"><b class="text-ink"><%= pluralize(@subscribers.size, "person") %></b> confirmed they want your updates, from the box on your page or one project's. They get that week by email on Fridays, when it has three or more things in it. Nobody else sees how many.</p>
+      <% if current_user.pro? && @subscribers.any? %>
+        <ul class="mt-2.5">
+          <% @subscribers.each do |subscriber| %>
+            <li class="os-row os-sm flex items-center justify-between gap-3 py-2">
+              <span class="truncate font-mono"><%= subscriber.email %></span>
+              <span class="os-muted shrink-0"><%= subscriber.github_repo ? "#{subscriber.github_repo.name} · " : "" %><%= subscriber.confirmed_at.strftime("%b %-d") %></span>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </section>
 
     <section class="os-panel" aria-labelledby="username">
       <h2 id="username" class="os-h3">Username</h2>

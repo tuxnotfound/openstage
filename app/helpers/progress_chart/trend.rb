@@ -23,17 +23,16 @@ module ProgressChart
 
     attr_reader :section
 
-    # discs: false when the builder hides the shipped and published list.
-    # items: the entries that get discs, in date order; the section's picks
-    # unless a card fits fewer.
-    def initialize(section, discs: true, items: nil)
+    # discs: the weekly emails number the section's picks on their lines;
+    # the pages draw the lines alone.
+    def initialize(section, discs: false)
       @section = section
       @show_discs = discs
-      @items = items
     end
 
+    # The entries that get discs, in date order.
     def items
-      @items || section.pick.kept
+      section.pick.kept
     end
 
     # Only the page's 30-day window averages; a calendar week counts each day.
@@ -162,8 +161,10 @@ module ProgressChart
       (100.0 * value / WIDTH).round(2)
     end
 
+    # 12.5 or 12, never 12.0, so the paths stay short.
     def num(value)
-      CardLayout::Shapes.num(value)
+      rounded = value.to_f.round(2)
+      rounded == rounded.to_i ? rounded.to_i.to_s : rounded.to_s
     end
 
     # Each listed entry as a disc on its project's line at its point. An

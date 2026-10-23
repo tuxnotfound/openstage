@@ -111,16 +111,6 @@ module ProgressHelper
     end
   end
 
-  # The post that goes with a card: the window, the card's entries word for
-  # word, then the commits.
-  def progress_card_draft(section, items)
-    totals = section.tally.totals
-    name = section.selection_name if section.filtered?
-    commits = name ? "#{totals.commits} #{name} commits" : pluralize(totals.commits, "commit")
-    [ "#{name ? "#{name}, #{section.labels.words}" : section.labels.words.upcase_first}:", *items.map(&:title),
-      "#{commits} on #{pluralize(totals.active_days, 'day')}." ].join("\n")
-  end
-
   def progress_run_in(item, section)
     names = section.tally.projects.all.map(&:name)
     Progress::RunIn.capped(Progress::RunIn.of(item.title, item.body, names))

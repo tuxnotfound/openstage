@@ -5,8 +5,8 @@ RSpec.describe ProgressChart::Trend do
 
   before { travel_to Time.utc(2026, 10, 15, 12) }
 
-  def chart(range, repos: [])
-    described_class.new(Progress::ComposeService.new(user: user, range: range, repos: repos, rolling: true).tap(&:call!).section)
+  def chart(range, repos: [], discs: false)
+    described_class.new(Progress::ComposeService.new(user: user, range: range, repos: repos, rolling: true).tap(&:call!).section, discs: discs)
   end
 
   def commits(repo, at, count = 1)
@@ -37,12 +37,20 @@ RSpec.describe ProgressChart::Trend do
     expect(twelve.axis).to eq([ "Nov 2025", "May", "Today" ])
   end
 
+  it "draws the lines alone on a page; discs are the weekly email's" do
+    commits("me/app", Time.utc(2026, 10, 13, 10), 4)
+    milestone("Shipped", Time.utc(2026, 10, 13, 12), repo: "me/app")
+
+    expect(chart("90d").discs).to be_empty
+    expect(chart("90d", discs: true).discs.size).to eq(1)
+  end
+
   it "stands a listed entry's disc on its own project's line, and one with no project in no colour" do
     commits("me/app", Time.utc(2026, 10, 13, 10), 4)
     commits("me/other", Time.utc(2026, 10, 13, 11), 2)
     milestone("Untagged", Time.utc(2026, 9, 1, 12))
     milestone("Other shipped", Time.utc(2026, 10, 13, 12), repo: "me/other")
-    trend = chart("90d")
+    trend = chart("90d", discs: true)
     untagged, tagged = trend.discs
 
     expect([ untagged.number, untagged.rank, untagged.top ]).to eq([ 1, nil, 94 ])
@@ -53,7 +61,7 @@ RSpec.describe ProgressChart::Trend do
     commits("me/app", Time.utc(2026, 10, 12, 10), 4)
     milestone("First", Time.utc(2026, 10, 13, 12), repo: "me/app")
     milestone("Second", Time.utc(2026, 10, 14, 12), repo: "me/app")
-    first, second = chart("90d").discs
+    first, second = chart("90d", discs: true).discs
 
     expect(second.top).to eq((first.top + 24).round(2))
   end

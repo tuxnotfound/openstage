@@ -6,7 +6,6 @@
       <nav class="os-nav md:ml-3 max-md:order-last max-md:w-full max-md:flex-nowrap max-md:overflow-x-auto max-md:py-3" aria-label="Main">
         <%= nav_link "Dashboard", dashboard_path, :dashboard %>
         <%= nav_link safe_join([ "Your page ", tag.span("↗", aria: { hidden: true }) ]), profile_path(current_user.username), :page %>
-        <%= nav_link "Week card", current_week_card_path, :week %>
         <% if current_user.pro? %>
           <%= nav_link "Analytics", analytics_path, :analytics %>
         <% end %>

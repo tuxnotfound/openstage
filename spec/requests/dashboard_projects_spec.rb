@@ -34,7 +34,7 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     get "/dashboard"
 
     expect(project_rows.keys).to eq(%w[builder/app builder/bare])
-    expect(project_rows["builder/app"]).to include("Shown on your page · 3 commits in the last 90 days", "Add website and picture · Edit")
+    expect(project_rows["builder/app"]).to include("app 3 commits", "Add website and picture · Edit")
     expect(project_rows["builder/bare"]).to include("Add description, website, and picture · Edit")
     expect(page.at_css("[data-project-row='builder/bare'] a")["href"]).to eq("/projects/#{bare.id}/edit")
     expect(idle).to be_persisted
@@ -46,10 +46,10 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     expect(switch["aria-checked"]).to eq("true")
 
     patch "/github_repos/#{tool.id}", params: { included: "false" }
-    expect(response).to redirect_to(dashboard_path)
+    expect(response).to redirect_to("/dashboard#activity")
 
     get "/dashboard"
-    expect(project_rows["builder/app"]).to include("Hidden from your page")
+    expect(project_rows["builder/app"]).to include("Hidden")
     expect(page.at_css("[data-project-row='builder/app'] button[role='switch']")["aria-checked"]).to eq("false")
     expect(user.entries.where(repo_name: "builder/app").pluck(:hidden).uniq).to eq([ true ])
   end

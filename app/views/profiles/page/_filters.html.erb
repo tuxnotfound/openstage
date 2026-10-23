@@ -23,8 +23,5 @@
               class: "os-pill max-sm:px-2", aria: { current: (section.labels.range == range ? "page" : nil) } %>
       <% end %>
     </nav>
-    <% if current_user == user %>
-      <%= render "profiles/page/make_card", section: section %>
-    <% end %>
   </div>
 </div>

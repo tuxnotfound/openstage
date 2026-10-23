@@ -1,16 +1,8 @@
-<%# Commits is the one number GitHub gives every project today; the tab row
-    is where the others will sit. %>
+<%# Commits, the one number GitHub gives every project today. %>
 <% totals = section.tally.totals %>
 <% arrow, change, up = progress_change(section) %>
 <% shares = section.tally.projects.all.filter_map { |project| [ project, totals.counts[project.repo] ] if totals.counts[project.repo].to_i.positive? } %>
-<div class="os-pills mt-[26px]">
-  <span class="os-pill on h-auto flex-col items-start px-[18px] py-2">
-    <span class="block text-xs opacity-90">Commits</span>
-    <span class="os-num text-[22px]"><%= totals.commits %></span>
-  </span>
-</div>
-
-<div class="mt-[22px]">
+<div class="mt-[26px]">
   <p class="os-label">Commits · <%= progress_scope(section) %>, <%= section.labels.words %></p>
   <div class="mt-0.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-1.5">
     <span class="os-num os-big"><%= totals.commits %></span>

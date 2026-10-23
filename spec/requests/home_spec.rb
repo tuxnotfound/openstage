@@ -28,18 +28,15 @@ RSpec.describe "Home", type: :request do
       expect(response.body).not_to include("@alice")
     end
 
-    it "shows only public entries of the demo page" do
+    it "counts only the demo page's public commits" do
       demo = create(:user, username: "tuxnotfound")
       create(:entry, user: demo)
-      create(:entry, user: demo, title: "Public entry", entry_type: "note", source: "manual", occurred_at: 1.hour.ago)
-      create(:entry, user: demo, title: "Hidden entry", hidden: true, entry_type: "note", source: "manual", occurred_at: 2.hours.ago)
-      create(:entry, user: demo, title: "Private entry", visibility: "private", entry_type: "note", source: "manual", occurred_at: 3.hours.ago)
+      create(:entry, user: demo, hidden: true)
+      create(:entry, user: demo, visibility: "private")
 
       get "/"
 
-      expect(response.body).to include("Public entry")
-      expect(response.body).not_to include("Hidden entry")
-      expect(response.body).not_to include("Private entry")
+      expect(response.body).to match(%r{<span class="os-num[^"]*">1</span>\s*<span[^>]*>commits, last 12 months})
     end
   end
 end

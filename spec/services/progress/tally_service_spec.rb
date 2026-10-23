@@ -81,11 +81,11 @@ RSpec.describe Progress::TallyService do
     expect(numbers(week.totals).first(3)).to eq([ 1, 0, 79 ])
   end
 
-  it "counts days in the zone of the builder's last saved week card" do
+  it "counts days in the builder's zone" do
     create(:entry, user: user, repo_name: progress_repo(0), occurred_at: Time.utc(2026, 10, 14, 23, 30))
     expect(tally("week").buckets.map(&:total)[2, 2]).to eq([ 9, 0 ])
 
-    WeekCard.create!(user: user, week_start: Date.new(2026, 10, 12), time_zone: "Europe/Lisbon")
+    user.update!(time_zone: "Europe/Lisbon")
     expect(tally("week").buckets.map(&:total)[2, 2]).to eq([ 8, 1 ])
   end
 

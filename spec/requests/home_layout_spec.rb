@@ -41,25 +41,23 @@ RSpec.describe "Home layout", type: :request do
     expect(response.body).to include("What each project is")
   end
 
-  # The recap picker is gone; Make a card is what a builder posts.
-  it "sells Make a card, not the recap picker" do
+  # The recap picker, the week card and Make a card are gone.
+  it "sells none of the removed tools" do
     get "/"
 
-    expect(response.body).to include("Make a card")
-    expect(response.body).not_to match(/recap/i)
+    expect(response.body).not_to match(/recap|week card|make a card/i)
   end
 
   describe "demo card" do
-    it "draws the page's last 12 months: the number, the chart and the latest shipped" do
+    it "draws the page's last 12 months: the number, the colour bar and the chart, nothing more" do
       create(:entry, user: demo, entry_type: "milestone", source: "manual", title: "Rebirth begins", occurred_at: 3.weeks.ago)
+      create(:entry, user: demo, repo_name: "tuxnotfound/app")
 
       get "/"
 
       card = response.body[/<div class="os-card min-w-0 p-5">.*A real Openstage page/m]
-      expect(card).to include("commits, last 12 months")
-      expect(card).to include("os-chart")
-      expect(card).to include("Rebirth begins")
-      expect(card).to include(%(href="/tuxnotfound"))
+      expect(card).to include("commits, last 12 months", "os-sharebar", "os-chart")
+      expect(card).not_to include("Rebirth begins", "os-disc")
     end
 
     # The page already leaves them out; the card showed "Merge pull request #5"

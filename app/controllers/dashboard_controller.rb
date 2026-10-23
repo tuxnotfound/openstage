@@ -44,7 +44,7 @@ class DashboardController < ApplicationController
   def load_page
     load_entry_tabs
     load_sync
-    load_audience
+    load_badge
     load_week
     @activity = activity
     # Every repo with synced work, shown or hidden, so a hidden one can come back.
@@ -63,24 +63,15 @@ class DashboardController < ApplicationController
     @sync_logs = current_user.sync_logs.order(ran_at: :desc).limit(5)
   end
 
-  # Free sees how many subscribers and 7 days of views; Pro sees who, and 30.
-  # The breakdown by entry, country and referrer lives on /analytics.
-  def load_audience
-    @subscribers_count = current_user.subscriptions.confirmed.count
-    @subscribers = current_user.pro? ? current_user.subscriptions.confirmed.includes(:github_repo).order(confirmed_at: :desc) : nil
-    views = current_user.profile_views
-    @analytics = { total_views: views.count, unique_7d: views.unique_visitor_count(since: 7.days.ago),
-                   sparkline_7d: views.daily_counts(days: 7) }
-    @analytics[:sparkline_30d] = views.daily_counts(days: 30) if current_user.pro?
-
-    # Onboarding step 3. Shown until a badge has been rendered from anywhere,
-    # which is the only honest evidence that it was actually added somewhere.
+  # Onboarding step 3. Shown until a badge has been rendered from anywhere,
+  # which is the only honest evidence that it was actually added somewhere.
+  def load_badge
     @badge_nudge = current_user.badge_impressions.none?
     @badge_markdown = "[![openstage](#{profile_badge_url(current_user.username)})](#{profile_url(current_user.username)}?ref=badge)"
   end
 
-  # Points at /recap only when the week has something to say. A quiet week
-  # gets no prompt, so the card never nags an empty page.
+  # The week's numbers when it has something to say; a quiet week gets a
+  # line, never a nag.
   def load_week
     recap = RecapDraft.for_user(current_user)
     @recap_prompt = recap unless recap.quiet?

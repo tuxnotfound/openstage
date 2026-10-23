@@ -11,7 +11,6 @@ class AdminController < ApplicationController
     load_signups
     load_cohort
     load_strangers
-    load_recap_funnel
     load_weekly_email
 
     @posted_recaps  = posted_recaps.count
@@ -90,23 +89,10 @@ class AdminController < ApplicationController
     @second_week = Event.second_week_user_ids(week_old).size
   end
 
-  def load_recap_funnel
-    recap_events  = Event.since(@since).where(user_id: counted_ids).where.not(user_id: current_user.id)
-    @recap_funnel = %w[recap_opened recap_picked recap_copied recap_intent].map do |name|
-      [ name, recap_events.named(name).distinct.count(:user_id) ]
-    end
-    @recap_quiet = recap_events.named("recap_quiet").distinct.count(:user_id)
-    @card_funnel = %w[progress_card_downloaded progress_post_copied].map do |name|
-      [ name, recap_events.named(name).distinct.count(:user_id) ]
-    end
-  end
-
-  # F2's funnel. An email open cannot be seen without a tracking pixel, so the
-  # first step after sending is the picker opened from the email's link.
+  # F2: who got the weekly emails. An open cannot be seen without a tracking
+  # pixel, and there is none.
   def load_weekly_email
     @weekly_mailed  = User.counted.where(weekly_email_sent_at: @since..).where.not(id: current_user.id).count
-    @weekly_opened  = Event.since(@since).named("recap_from_email").where(user_id: counted_ids)
-                           .where.not(user_id: current_user.id).distinct.count(:user_id)
     @digests_mailed = Subscription.where(digest_sent_at: @since.., user_id: counted_ids).where.not(user_id: current_user.id).count
   end
 

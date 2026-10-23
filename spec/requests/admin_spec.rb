@@ -27,25 +27,12 @@ RSpec.describe "Admin", type: :request do
       it "shows the weekly email funnel, leaving the owner out" do
         builder = create(:user, weekly_email_sent_at: 2.days.ago)
         owner.update!(weekly_email_sent_at: 2.days.ago)
-        Event.track("recap_from_email", user: builder)
         builder.subscriptions.create!(email: "r@example.com", confirmed_at: 1.week.ago, digest_sent_at: 2.days.ago)
         owner.subscriptions.create!(email: "mine@example.com", confirmed_at: 1.week.ago, digest_sent_at: 2.days.ago)
 
         get "/admin"
         expect(response.body).to include('data-weekly-step="weekly_mailed" data-count="1"')
-        expect(response.body).to include('data-weekly-step="weekly_opened" data-count="1"')
         expect(response.body).to include('data-weekly-step="digests_mailed" data-count="1"')
-      end
-
-      it "counts the builders who downloaded a progress card or copied its post, leaving the owner out" do
-        builder = create(:user)
-        Event.track("progress_card_downloaded", user: builder, detail: "bars")
-        Event.track("progress_card_downloaded", user: builder, detail: "lines")
-        Event.track("progress_post_copied", user: owner, detail: "lines")
-
-        get "/admin"
-        expect(response.body).to include('data-card-step="progress_card_downloaded" data-count="1"')
-        expect(response.body).to include('data-card-step="progress_post_copied" data-count="0"')
       end
 
       it "leaves test accounts out of every number" do
@@ -53,14 +40,12 @@ RSpec.describe "Admin", type: :request do
                                weekly_email_sent_at: 1.day.ago)
         create(:entry, user: tester, repo_name: "shared/repo")
         create(:entry, user: owner, repo_name: "shared/repo")
-        Event.track("recap_opened", user: tester)
         create(:user, username: "real", signup_ref: "recap", created_at: 1.day.ago)
 
         get "/admin"
         expect(response.body).not_to include('data-ref="direct"')
         expect(response.body).to include('data-ref="recap" data-count="1"')
         expect(response.body).to include("0 of 1")
-        expect(response.body).to include('data-recap-step="recap_opened" data-count="0"')
         expect(response.body).to include('data-weekly-step="weekly_mailed" data-count="0"')
         expect(response.body).not_to include("shared/repo")
       end

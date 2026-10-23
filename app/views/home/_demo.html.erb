@@ -1,5 +1,5 @@
 <%# A real page above the fold, drawn by the page's own code: the headline
-    number, the share bar, the chart and the latest of what shipped. %>
+    number, the share bar and the chart, nothing more. %>
 <% totals = section.tally.totals %>
 <% shares = section.tally.projects.all.filter_map { |project| [ project, totals.counts[project.repo] ] if totals.counts[project.repo].to_i.positive? } %>
 <div class="os-card min-w-0 p-5">
@@ -23,24 +23,9 @@
     </div>
   <% end %>
 
-  <div class="mt-3.5">
-    <%= render "profiles/page/chart", section: section, chart: chart, linked: false, height: "h-[150px]" %>
+  <div class="mt-5">
+    <%= render "profiles/page/chart", section: section, chart: chart, height: "h-[200px]" %>
   </div>
 
-  <% latest = chart.discs.last(3).reverse %>
-  <% if latest.any? %>
-    <ol class="m-0 mt-1 list-none p-0">
-      <% latest.each do |disc| %>
-        <% project = disc.item.repo_name && section.tally.projects.find(disc.item.repo_name) %>
-        <li class="os-row flex items-start gap-2.5 py-2">
-          <span class="os-disc <%= project_class(disc.rank) %> bg-(--project) text-(--on-project)"><%= disc.number %></span>
-          <span class="min-w-0">
-            <span class="block text-sm font-bold"><%= disc.item.title %></span>
-            <span class="os-xs os-muted"><%= disc.item.date.strftime("%b %-d") %><%= " · #{project.name}" if project %></span>
-          </span>
-        </li>
-      <% end %>
-    </ol>
-  <% end %>
   <p class="os-note mt-2">A real Openstage page, as it stands today.</p>
 </div>

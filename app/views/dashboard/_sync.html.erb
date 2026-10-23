@@ -1,17 +1,8 @@
-<%# The product is the page, so the dashboard keeps it one glance away: the
-    link to share, and whether it is up to date. %>
+<%# Whether the projects below are up to date, and the way to fix it if not. %>
 <% last_log = @sync_logs.first %>
-<section class="os-panel" data-page-card aria-labelledby="your-page">
-  <h2 id="your-page" class="os-h3">Your page</h2>
-  <%= link_to "openstage.dev/#{current_user.username}", profile_path(current_user.username), class: "os-field mt-2.5 flex items-center truncate text-sm hover:border-ink-3" %>
-  <div class="mt-2.5 flex gap-2" data-controller="clipboard">
-    <span data-clipboard-target="source" class="hidden"><%= profile_url(current_user.username) %></span>
-    <button type="button" data-action="clipboard#copy" data-clipboard-target="button" class="os-btn sm">Copy link</button>
-    <%= link_to "View page", profile_path(current_user.username), class: "os-btn2 sm" %>
-  </div>
-
-  <div class="os-between mt-3.5">
-    <span class="os-xs os-muted"><%= @last_github_sync ? "Synced #{time_ago_in_words(@last_github_sync)} ago" : "Not synced yet" %></span>
+<div data-sync-status>
+  <div class="os-between">
+    <span class="os-xs os-muted"><%= @last_github_sync ? "Synced from GitHub #{time_ago_in_words(@last_github_sync)} ago" : "Not synced from GitHub yet" %></span>
     <% if last_log&.token_rejected? %>
       <%# A sign-in stores a new token; the old one cannot sync. %>
       <%= button_to "Reconnect GitHub", "/auth/github", method: :post, data: { turbo: false }, class: "os-btn sm" %>
@@ -25,7 +16,7 @@
   <% end %>
 
   <% if @sync_logs.any? %>
-    <details class="mt-2">
+    <details class="mt-1.5">
       <summary class="os-xs os-muted cursor-pointer list-none hover:text-ink [&::-webkit-details-marker]:hidden">Sync history</summary>
       <ul class="mt-2 space-y-1.5">
         <% @sync_logs.each do |log| %>
@@ -41,4 +32,4 @@
       </ul>
     </details>
   <% end %>
-</section>
+</div>

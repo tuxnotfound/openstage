@@ -12,7 +12,7 @@ RSpec.describe WeeklyEmails::TestService do
 
     mails = ActionMailer::Base.deliveries.last(2)
     expect(mails.map(&:to)).to all(eq([ "me@example.com" ]))
-    expect(mails.map(&:subject)).to eq([ "[Test] Your week is ready to review", "[Test] Owner's week on Openstage" ])
+    expect(mails.map(&:subject)).to eq([ "[Test] Your week on Openstage", "[Test] Owner's week on Openstage" ])
   end
 
   it "sends on a quiet week, and claims nothing and saves no subscription" do

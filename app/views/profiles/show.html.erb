@@ -54,7 +54,7 @@
       <% elsif (section = @page&.section) %>
         <%= render "profiles/page/headline", user: @user, section: section %>
         <%= render "profiles/page/filters", user: @user, section: section %>
-        <%= render "profiles/page/trend", user: @user, section: section, chart: ProgressChart::Trend.new(section, discs: @user.shipped_list?) %>
+        <div class="mt-[22px]"><%= render "profiles/page/chart", section: section, chart: ProgressChart::Trend.new(section) %></div>
         <% if current_user == @user %>
           <%= render "profiles/page/untagged", user: @user, section: section %>
         <% end %>
@@ -62,9 +62,11 @@
     </section>
 
     <% if @page %>
-      <%= render "profiles/page/recent", user: @user, groups: @page.recent, linked: @linked if @page.recent.any? %>
       <%= render "profiles/page/projects", user: @user, cards: @page.cards if @page.cards.any? %>
-      <%= render "profiles/page/shipped", section: @page.section, linked: @linked unless @total_entries.zero? %>
+      <div class="os-grid2 items-start">
+        <%= render "profiles/page/recent", user: @user, groups: @page.recent, linked: @linked if @page.recent.any? %>
+        <%= render "profiles/page/shipped", section: @page.section, linked: @linked unless @total_entries.zero? %>
+      </div>
     <% end %>
 
     <footer class="flex flex-wrap justify-center gap-x-6 gap-y-2 pt-2 os-sm">

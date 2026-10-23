@@ -15,11 +15,11 @@ RSpec.describe "Sessions", type: :request do
       let!(:user) { create(:user) }
 
       it "lands there after sign-in, once" do
-        get "/week", params: { from: "weekly" }
+        get "/settings", params: { tab: "billing" }
         expect(response).to redirect_to(root_path)
 
         sign_in_as(user)
-        expect(response).to redirect_to("/week?from=weekly")
+        expect(response).to redirect_to("/settings?tab=billing")
 
         sign_in_as(user)
         expect(response).to redirect_to(dashboard_path)

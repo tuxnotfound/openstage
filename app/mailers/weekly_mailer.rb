@@ -4,16 +4,16 @@
 class WeeklyMailer < ApplicationMailer
   helper :progress
 
-  # The builder's own week, and one link: its card. It never posts.
+  # The builder's own week, and one link: their page. It never posts.
   def week_ready(user)
     @section    = week_of(user)
     attach_chart(@section)
-    @card_url   = current_week_card_url(from: "weekly")
+    @page_url   = profile_url(user.username, range: "30d", ref: "weekly")
     @log_url    = dashboard_url
     @stop_url   = weekly_email_unsubscribe_url(token: user.signed_id(purpose: :weekly_email))
     one_click_unsubscribe(@stop_url)
 
-    mail(to: user.email, subject: "Your week is ready to review")
+    mail(to: user.email, subject: "Your week on Openstage")
   end
 
   # The week a subscriber asked for when they confirmed: the builder's whole
@@ -47,7 +47,7 @@ class WeeklyMailer < ApplicationMailer
   # The page's chart, as a picture the email carries; none for a week with no
   # commits, which the email says in words instead.
   def attach_chart(section)
-    chart = ProgressChart::Trend.new(section)
+    chart = ProgressChart::Trend.new(section, discs: true)
     attachments.inline[ProgressChart::EmailImage::FILE] = ProgressChart::EmailImage.new(chart).png if chart.lines.any?
   end
 

@@ -138,17 +138,17 @@ RSpec.describe "Email subscribe", type: :request do
       sign_in_as(builder)
     end
 
-    it "shows a free builder how many confirmed, not who" do
-      get "/dashboard"
+    it "shows a free builder how many confirmed, not who, in Settings" do
+      get "/settings"
       expect(response.body).to include('data-subscribers data-count="2"')
-      expect(response.body).to include("2 subscribers")
+      expect(response.body).to include("2 people")
       expect(response.body).not_to include("a@example.com")
       expect(response.body).to include("See who, with Pro")
     end
 
-    it "shows a Pro builder the list" do
+    it "shows a Pro builder the list, in Settings" do
       builder.update!(pro: true)
-      get "/dashboard"
+      get "/settings"
       expect(response.body).to include("a@example.com")
       expect(response.body).to include("b@example.com")
       expect(response.body).not_to include("pending@example.com")

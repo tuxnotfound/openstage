@@ -132,6 +132,11 @@ class User < ApplicationRecord
   # the OAuth nickname on every sign-in, and GitHub frees a login for
   # re-registration when an account is renamed, so the handle alone would hand
   # ownership to whoever claimed it next.
+  # The zone the builder's page counts days in; UTC until one is known.
+  def zone
+    ActiveSupport::TimeZone[time_zone.to_s] || ActiveSupport::TimeZone["UTC"]
+  end
+
   def owner?
     if (uid = ENV["OWNER_GITHUB_UID"].presence)
       return github_uid.to_s == uid

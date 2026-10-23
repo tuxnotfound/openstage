@@ -29,7 +29,7 @@
 <% end %>
 
 <% if (image = attachments[ProgressChart::EmailImage::FILE]) %>
-  <% chart = ProgressChart::Trend.new(section) %>
+  <% chart = ProgressChart::Trend.new(section, discs: true) %>
   <p style="margin: 16px 0 0; font-size: 12px; color: #43464D;">
     <% chart.lines.each do |line| %>
       <span style="display: inline-block; margin-right: 14px; white-space: nowrap;"><span style="display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; background: <%= ProgressChart::Palette.project_color(line.rank) %>;"></span> <%= line.name %> <strong style="color: #0E0F12;"><%= line.total %></strong></span>

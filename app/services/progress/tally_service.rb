@@ -3,9 +3,9 @@ module Progress
   # commits per project in each bucket, active days, what they shipped and
   # published, and the same counts over the same span of the period before.
   # With repos, only those projects' commits and the entries tagged with them
-  # count; nothing is inferred from text. Days are in the zone of the
-  # builder's last saved week card, else UTC. Rolling, the period is a Window
-  # that ends today (the public page); otherwise a calendar Period (the cards).
+  # count; nothing is inferred from text. Days are in the builder's zone
+  # (User#zone), else UTC. Rolling, the period is a Window that ends today
+  # (the public page); otherwise a calendar Period (the weekly emails).
   class TallyService < ApplicationService
     # A shipped or published entry on its day in the builder's zone.
     Item = Data.define(:entry, :date, :kind) do
@@ -44,7 +44,7 @@ module Progress
     private
 
     def execute
-      @zone = ActiveSupport::TimeZone[WeekCard.last_time_zone_for(user).to_s] || ActiveSupport::TimeZone["UTC"]
+      @zone = user.zone
       @projects = Projects.new(public_entries)
       @period = period_for(Time.current.in_time_zone(zone).to_date, first_day_of(public_entries))
       @items = items_on(period.first..period.last_day)

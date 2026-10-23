@@ -24,7 +24,7 @@ RSpec.describe WeeklyMailer do
 
     it "sends the builder the Week view of their page, with the counters" do
       expect(mail.to).to eq([ "mia@example.com" ])
-      expect(mail.subject).to eq("Your week is ready to review")
+      expect(mail.subject).to eq("Your week on Openstage")
       expect(mail.text_part.body.to_s).to include("Week 43 · Oct 19–25 · so far")
       expect(mail.text_part.body.to_s).to include("1 shipped · 1 published · 2 commits · 2 active days · 1 project")
     end
@@ -49,11 +49,12 @@ RSpec.describe WeeklyMailer do
       expect(html).not_to include("<svg")
     end
 
-    it "puts the one link to the picker before the list" do
+    it "puts the one link, to their page, before the list" do
       html = mail.html_part.body.to_s
-      expect(html).to include("https://openstage.dev/week?from=weekly")
-      expect(html.index("https://openstage.dev/week?from=weekly")).to be < html.index("Opened the beta")
-      expect(mail.text_part.body.to_s).to include("Make your week's card: https://openstage.dev/week?from=weekly")
+      url = "https://openstage.dev/maker?range=30d&amp;ref=weekly"
+      expect(html).to include(url)
+      expect(html.index(url)).to be < html.index("Opened the beta")
+      expect(mail.text_part.body.to_s).to include("See your page: https://openstage.dev/maker?range=30d&ref=weekly")
     end
 
     it "carries a stop link that works in one click" do

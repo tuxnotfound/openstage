@@ -4,6 +4,7 @@
 class Event < ApplicationRecord
   belongs_to :user, optional: true
 
+  # The recap and card names stay for the rows already recorded.
   NAMES = %w[
     seen
     ref_visit
@@ -12,13 +13,6 @@ class Event < ApplicationRecord
     card_opened card_downloaded
     progress_card_downloaded progress_post_copied
   ].freeze
-
-  # Only these may be reported by the browser; the rest are recorded server-side.
-  CLIENT_NAMES = %w[recap_copied recap_intent card_downloaded progress_card_downloaded progress_post_copied].freeze
-  # What the browser may say about one: where a post went, or which chart a
-  # progress card was drawn with.
-  DETAILS = { "recap_intent" => %w[x bluesky], "progress_card_downloaded" => %w[bars lines],
-              "progress_post_copied" => %w[bars lines] }.freeze
 
   validates :name, inclusion: { in: NAMES }
 

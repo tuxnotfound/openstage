@@ -67,7 +67,7 @@
       <% end %>
     </nav>
   </div>
-  <%= render "profiles/page/trend", user: @user, section: section, chart: ProgressChart::Trend.new(section, discs: @user.shipped_list?) %>
+  <div class="mt-[22px]"><%= render "profiles/page/chart", section: section, chart: ProgressChart::Trend.new(section) %></div>
 </section>
 
 <div class="flex flex-wrap items-start gap-4.5">

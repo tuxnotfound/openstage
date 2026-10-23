@@ -1,6 +1,6 @@
 module WeeklyEmails
   # One builder's two weekly emails (F2). The builder gets their week, ready to
-  # review, with one link to its week card; their confirmed subscribers get
+  # review, with one link to their page; their confirmed subscribers get
   # the week itself, and a project's followers that project's week. A quiet
   # week (fewer than three things) sends neither, a quiet project sends its
   # followers nothing, and nothing is ever posted for anyone.
