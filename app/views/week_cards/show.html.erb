@@ -1,5 +1,6 @@
 <% content_for :title, "Your week" %>
-<% content_for :main_class, "max-w-6xl mx-auto px-4 py-5" %>
+<% content_for :main_class, "os-wrap pt-1.5" %>
+<% content_for :dark_mode, true %>
 <% fonts = card_fonts %>
 <% content_for :head do %>
   <style>
@@ -20,14 +21,13 @@
    } %>
 <% previous_week = wc.week_start - 7 %>
 <% next_week = wc.week_start + 7 %>
-<% field = "w-full min-w-0 rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" %>
-<%# A segmented control: the radios stay in the form, the labels are the buttons. %>
-<% segments = "flex rounded-lg bg-gray-100 p-1 gap-1" %>
-<% segment = "flex-auto sm:flex-none whitespace-nowrap text-center rounded-md px-2 sm:px-3 py-1.5 text-[13px] sm:text-sm text-gray-600 cursor-pointer select-none hover:text-gray-900 has-checked:bg-white has-checked:text-gray-900 has-checked:font-medium has-checked:shadow-sm has-focus-visible:ring-2 has-focus-visible:ring-gray-900" %>
-<% legend = "text-xs font-medium text-gray-500 mb-1 px-1" %>
-<% option = "flex items-center gap-2 min-w-0 py-1 text-sm cursor-pointer" %>
-<% box = "size-4 shrink-0 accent-gray-900" %>
-<% tab = "px-4 py-2.5 text-sm font-medium data-[active=true]:text-gray-900 data-[active=true]:border-b-2 data-[active=true]:border-gray-900 data-[active=true]:-mb-px data-[active=false]:text-gray-500 data-[active=false]:hover:text-gray-900" %>
+<% field = "os-field h-9 text-sm" %>
+<%# A segmented control: the radios stay in the form, the labels are the pills. %>
+<% segments = "os-pills" %>
+<% segment = "os-pill cursor-pointer select-none max-sm:px-3 has-checked:bg-accent has-checked:text-on-accent has-focus-visible:outline-2 has-focus-visible:outline-accent" %>
+<% legend = "os-label mb-1.5" %>
+<% option = "flex min-w-0 cursor-pointer items-center gap-2 py-1 text-sm" %>
+<% box = "size-4 shrink-0 accent-(--color-accent)" %>
 
 <div data-controller="card-editor card-export"
      data-action="turbo:frame-load->card-editor#follow"
@@ -38,12 +38,15 @@
      data-card-export-filename-value="openstage-<%= wc.to_param.downcase %>.png"
      data-card-export-track-url-value="<%= events_path %>">
 
-  <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-4">
-    <h1 class="text-xl font-bold">Your week <span class="ml-1 text-sm font-normal text-gray-500"><%= @card.label %> · <%= @card.dates %></span></h1>
-    <nav class="flex items-center gap-2 text-sm" aria-label="Weeks">
-      <%= link_to "‹ Week #{previous_week.cweek}", week_card_path(WeekCard.param_for(previous_week)), class: "px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:border-gray-400" %>
+  <div class="os-between mb-3.5">
+    <div>
+      <h1 class="os-h2 text-[30px]">Your week</h1>
+      <p class="os-sm os-muted mt-0.5"><%= @card.label %> · <%= @card.dates %></p>
+    </div>
+    <nav class="flex gap-2" aria-label="Weeks">
+      <%= link_to "‹ Week #{previous_week.cweek}", week_card_path(WeekCard.param_for(previous_week)), class: "os-btn2 sm" %>
       <% if next_week <= Date.current %>
-        <%= link_to "Week #{next_week.cweek} ›", week_card_path(WeekCard.param_for(next_week)), class: "px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:border-gray-400" %>
+        <%= link_to "Week #{next_week.cweek} ›", week_card_path(WeekCard.param_for(next_week)), class: "os-btn2 sm" %>
       <% end %>
     </nav>
   </div>
@@ -52,161 +55,161 @@
         data: { card_editor_target: "form", action: "input->card-editor#queue change->card-editor#queue submit->card-editor#save" } do %>
     <%= hidden_field_tag "week_card[time_zone]", wc.time_zone, id: nil, data: { card_editor_target: "zone" } %>
 
-    <%# The toolbar: how the card looks. %>
-    <div class="flex flex-wrap items-end gap-x-3 gap-y-2">
-      <fieldset class="min-w-0 w-full sm:w-auto">
-        <legend class="<%= legend %>">Template</legend>
-        <div class="<%= segments %>">
-          <% WeekCardTemplate.all.each do |choice| %>
-            <label class="<%= segment %>">
-              <%= radio_button_tag "week_card[style]", choice.key, choice == template, class: "sr-only", data: { action: "change->card-editor#filter" } %>
-              <%= choice.name %>
-            </label>
-          <% end %>
-        </div>
-      </fieldset>
-
-      <fieldset class="min-w-0">
-        <legend class="<%= legend %>">Mode</legend>
-        <div class="<%= segments %>">
-          <% [ [ "light", "Light" ], [ "dark", "Dark" ] ].each do |value, label| %>
-            <label class="<%= segment %>">
-              <%= radio_button_tag "week_card[theme]", value, wc.theme == value, class: "sr-only" %>
-              <%= label %>
-            </label>
-          <% end %>
-        </div>
-      </fieldset>
-
-      <%= tag.fieldset(class: "min-w-0", **card_choice_attributes(WeekCardTemplate.all.select(&:days_choice), template)) do %>
-        <legend class="<%= legend %>">Days</legend>
-        <div class="<%= segments %>">
-          <% [ [ "week", "All days" ], [ "active", "Worked days" ] ].each do |value, label| %>
-            <label class="<%= segment %>">
-              <%= radio_button_tag "week_card[layout]", value, wc.layout == value, class: "sr-only" %>
-              <%= label %>
-            </label>
-          <% end %>
-        </div>
-      <% end %>
-    </div>
-    <% WeekCardTemplate.all.each do |choice| %>
-      <%= tag.p(choice.description, class: "text-xs text-gray-500 mt-2 px-1", **card_choice_attributes([ choice ], template)) %>
-    <% end %>
-
-    <div class="mt-4 grid gap-5 lg:grid-cols-[minmax(0,8fr)_minmax(0,7fr)] items-start">
+    <div class="flex flex-wrap items-start gap-4">
       <%# The card stays in view while the builder edits: pinned to the top on a phone. %>
-      <div class="sticky top-0 z-10 -mx-4 bg-white px-4 pb-3 pt-2 lg:top-4 lg:mx-0 lg:px-0 lg:pb-0 lg:pt-0 min-w-0">
-        <section class="rounded-xl border border-gray-200 bg-white p-2 lg:p-3" aria-label="Card preview">
+      <div class="sticky top-0 z-10 min-w-0 flex-[999_1_600px] bg-ground pt-2 pb-3 lg:top-4 lg:bg-transparent lg:p-0">
+        <section class="os-panel" aria-label="Card preview">
           <%= render "week_cards/preview", card: @card %>
+          <div class="mt-3.5 flex flex-wrap items-center gap-2">
+            <button type="button" class="os-btn" data-action="card-export#download" data-card-export-target="button">Download card</button>
+            <span class="os-xs os-muted max-sm:hidden">Every change saves and redraws the card.</span>
+          </div>
         </section>
-        <div class="mt-3 flex flex-wrap items-center gap-3">
-          <button type="button" class="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-700" data-action="card-export#download" data-card-export-target="button">Download card</button>
-          <p class="hidden sm:block text-xs text-gray-500">Every change saves and redraws the card.</p>
-        </div>
       </div>
 
-      <div class="min-w-0 rounded-xl border border-gray-200 bg-white" data-controller="tabs">
-        <div class="flex border-b border-gray-200 px-2" role="tablist">
-          <% [ [ "words", "Your words" ], [ "parts", "On the card" ] ].each do |key, label| %>
-            <button type="button" role="tab" class="<%= tab %>" data-tabs-target="tab" data-tabs-tab="<%= key %>" data-action="tabs#show"><%= label %></button>
-          <% end %>
-        </div>
-
-        <div class="px-4 py-3" data-tabs-target="panel" data-tabs-panel="words" role="tabpanel">
-          <p class="text-xs text-gray-500 pb-1">What mattered each day, up to <%= WeekCard::HEADLINE_LENGTH %> characters. Start from a commit or post with the list button. Left empty, the card shows the day's work.</p>
-          <% @card.days.each do |day| %>
-            <% written = wc.headline_on(day.date) %>
-            <% shown = day.headline %>
-            <% input_id = "headline_#{day.date.iso8601}" %>
-            <%# On a phone the day sits above its words; wider, beside them. %>
-            <div class="grid grid-cols-[minmax(0,1fr)_2rem_auto] sm:grid-cols-[4.5rem_minmax(0,1fr)_2rem_auto] items-center gap-x-2 gap-y-1 py-1.5 sm:py-1" data-controller="headline">
-              <label for="<%= input_id %>" class="col-span-3 sm:col-span-1 text-sm font-medium leading-tight">
-                <%= day.date.strftime("%a %-d") %>
-                <span class="sm:block text-[11px] font-normal text-gray-400"><%= day.total.positive? ? pluralize(day.total, "commit") : (day.active ? "no commits" : "quiet") %></span>
-              </label>
-              <%= text_field_tag "week_card[headlines][#{day.date.iso8601}][text]", written&.dig("text"),
-                    id: input_id, maxlength: WeekCard::HEADLINE_LENGTH,
-                    placeholder: shown && !written ? "Now on the card: #{shown.text}" : "What mattered this day?",
-                    class: field, data: { headline_target: "input" } %>
-              <% if day.suggestions.any? %>
-                <%# A list button: the menu sits over the icon, so the browser opens it at full width. %>
-                <span class="relative flex size-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-900 has-focus-visible:ring-2 has-focus-visible:ring-gray-900" title="Fill in from a commit or post">
-                  <svg class="size-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4h7M2.5 8h7M2.5 12h4M12 9.5l1.5 1.5 1.5-1.5M13.5 4v7"/></svg>
-                  <select class="absolute inset-0 w-full cursor-pointer opacity-0" aria-label="Fill <%= day.date.strftime('%A') %>'s words from one of its commits or posts" data-action="change->headline#pick">
-                    <option value="">Fill in from a commit or post, then edit it…</option>
-                    <% day.suggestions.each do |suggestion| %>
-                      <option value="<%= suggestion %>"><%= suggestion.truncate(90) %></option>
-                    <% end %>
-                  </select>
-                </span>
-              <% else %>
-                <span></span>
-              <% end %>
-              <%= select_tag "week_card[headlines][#{day.date.iso8601}][kind]",
-                    options_for_select([ [ "Built", "built" ], [ "Shipped", "shipped" ], [ "Published", "published" ] ], written&.dig("kind") || shown&.kind || "built"),
-                    id: nil, "aria-label": "What kind of thing it was on #{day.date.strftime('%A')}",
-                    class: "rounded-lg border border-gray-200 px-1.5 py-1.5 text-xs" %>
-            </div>
-          <% end %>
-          <div class="grid sm:grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1 pt-2 mt-1 border-t border-gray-100">
-            <label for="next_goal" class="text-sm font-medium leading-tight">Goal <span class="sm:block text-[11px] font-normal text-gray-400">next week</span></label>
-            <%= text_field_tag "week_card[next_goal]", wc.next_goal, id: "next_goal", maxlength: WeekCard::GOAL_LENGTH,
-                  placeholder: "One thing, up to #{WeekCard::GOAL_LENGTH} characters. It ends your post too.", class: field %>
-          </div>
-        </div>
-
-        <div class="hidden px-4 py-3 space-y-3" data-tabs-target="panel" data-tabs-panel="parts" role="tabpanel">
-          <% sections.each do |group, choices| %>
-            <%= tag.div(**card_choice_attributes(WeekCardTemplate.having(*choices.keys), template)) do %>
-              <p class="text-xs text-gray-400"><%= group %></p>
-              <div class="grid grid-cols-2 gap-x-4">
-                <% choices.each do |section, label| %>
-                  <%= tag.label(class: option, **card_choice_attributes(WeekCardTemplate.having(section), template)) do %>
-                    <%= hidden_field_tag "week_card[sections][#{section}]", "0", id: nil %>
-                    <%= check_box_tag "week_card[sections][#{section}]", "1", wc.shows?(section), id: "section_#{section}", class: box %>
-                    <%= label %>
-                  <% end %>
-                <% end %>
-              </div>
-            <% end %>
-          <% end %>
-          <div>
-            <p class="text-xs text-gray-400">Projects</p>
-            <% if @card.projects.empty? %>
-              <p class="text-sm text-gray-500 py-1">No commits this week.</p>
-            <% end %>
-            <div class="grid grid-cols-2 gap-x-4">
-              <% @card.projects.each_with_index do |project, i| %>
-                <label class="<%= option %>">
-                  <%= hidden_field_tag "week_card[projects][#{project.name}]", "0", id: nil %>
-                  <%= check_box_tag "week_card[projects][#{project.name}]", "1", project.shown, id: "project_#{i}", class: box %>
-                  <span class="truncate"><%= project.name %></span>
-                  <span class="ml-auto text-gray-400 tabular-nums"><%= project.n %></span>
+      <aside class="os-stack min-w-0 flex-[1_1_420px]">
+        <section class="os-panel" aria-labelledby="card-settings">
+          <h2 id="card-settings" class="os-h3">Card</h2>
+          <fieldset class="mt-3 min-w-0">
+            <legend class="<%= legend %>">Template</legend>
+            <div class="<%= segments %>">
+              <% WeekCardTemplate.all.each do |choice| %>
+                <label class="<%= segment %>">
+                  <%= radio_button_tag "week_card[style]", choice.key, choice == template, class: "sr-only", data: { action: "change->card-editor#filter" } %>
+                  <%= choice.name %>
                 </label>
               <% end %>
             </div>
+          </fieldset>
+          <% WeekCardTemplate.all.each do |choice| %>
+            <%= tag.p(choice.description, class: "os-xs os-muted mt-2", **card_choice_attributes([ choice ], template)) %>
+          <% end %>
+          <fieldset class="mt-3 min-w-0">
+            <legend class="<%= legend %>">Mode</legend>
+            <div class="<%= segments %>">
+              <% [ [ "light", "Light" ], [ "dark", "Dark" ] ].each do |value, label| %>
+                <label class="<%= segment %>">
+                  <%= radio_button_tag "week_card[theme]", value, wc.theme == value, class: "sr-only" %>
+                  <%= label %>
+                </label>
+              <% end %>
+            </div>
+          </fieldset>
+          <%= tag.fieldset(class: "mt-3 min-w-0", **card_choice_attributes(WeekCardTemplate.all.select(&:days_choice), template)) do %>
+            <legend class="<%= legend %>">Days</legend>
+            <div class="<%= segments %>">
+              <% [ [ "week", "All days" ], [ "active", "Worked days" ] ].each do |value, label| %>
+                <label class="<%= segment %>">
+                  <%= radio_button_tag "week_card[layout]", value, wc.layout == value, class: "sr-only" %>
+                  <%= label %>
+                </label>
+              <% end %>
+            </div>
+          <% end %>
+        </section>
+
+        <section class="os-panel" data-controller="tabs" aria-label="What the card says">
+          <div class="os-pills" role="tablist">
+            <% [ [ "words", "Your words" ], [ "parts", "On the card" ] ].each do |key, label| %>
+              <button type="button" role="tab" class="os-pill data-[active=true]:bg-accent data-[active=true]:text-on-accent"
+                      data-tabs-target="tab" data-tabs-tab="<%= key %>" data-action="tabs#show"><%= label %></button>
+            <% end %>
           </div>
-          <p class="text-xs text-gray-400">A part with nothing to show this week stays off the card. Private repos you include in <%= link_to "Settings", settings_path(tab: "integrations"), class: "underline" %> show here by name.</p>
-        </div>
 
-      </div>
+          <div class="mt-3" data-tabs-target="panel" data-tabs-panel="words" role="tabpanel">
+            <p class="os-xs os-muted pb-1">What mattered each day, up to <%= WeekCard::HEADLINE_LENGTH %> characters. Start from a commit or post with the list button. Left empty, the card shows the day's work.</p>
+            <% @card.days.each do |day| %>
+              <% written = wc.headline_on(day.date) %>
+              <% shown = day.headline %>
+              <% input_id = "headline_#{day.date.iso8601}" %>
+              <%# On a phone the day sits above its words; wider, beside them. %>
+              <div class="os-row grid grid-cols-[minmax(0,1fr)_2.25rem_auto] items-center gap-x-2 gap-y-1 py-2 sm:grid-cols-[4rem_minmax(0,1fr)_2.25rem_auto]" data-controller="headline">
+                <label for="<%= input_id %>" class="col-span-3 text-sm font-bold leading-tight sm:col-span-1">
+                  <%= day.date.strftime("%a %-d") %>
+                  <span class="os-muted text-[11px] font-normal sm:block"><%= day.total.positive? ? pluralize(day.total, "commit") : (day.active ? "no commits" : "quiet") %></span>
+                </label>
+                <%= text_field_tag "week_card[headlines][#{day.date.iso8601}][text]", written&.dig("text"),
+                      id: input_id, maxlength: WeekCard::HEADLINE_LENGTH,
+                      placeholder: shown && !written ? "Now on the card: #{shown.text}" : "What mattered this day?",
+                      class: field, data: { headline_target: "input" } %>
+                <% if day.suggestions.any? %>
+                  <%# A list button: the menu sits over the icon, so the browser opens it at full width. %>
+                  <span class="relative flex size-9 items-center justify-center rounded-control border border-line text-ink-3 hover:border-ink-3 hover:text-ink has-focus-visible:outline-2 has-focus-visible:outline-accent" title="Fill in from a commit or post">
+                    <svg class="size-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4h7M2.5 8h7M2.5 12h4M12 9.5l1.5 1.5 1.5-1.5M13.5 4v7"/></svg>
+                    <select class="absolute inset-0 w-full cursor-pointer opacity-0" aria-label="Fill <%= day.date.strftime('%A') %>'s words from one of its commits or posts" data-action="change->headline#pick">
+                      <option value="">Fill in from a commit or post, then edit it…</option>
+                      <% day.suggestions.each do |suggestion| %>
+                        <option value="<%= suggestion %>"><%= suggestion.truncate(90) %></option>
+                      <% end %>
+                    </select>
+                  </span>
+                <% else %>
+                  <span></span>
+                <% end %>
+                <%= select_tag "week_card[headlines][#{day.date.iso8601}][kind]",
+                      options_for_select([ [ "Built", "built" ], [ "Shipped", "shipped" ], [ "Published", "published" ] ], written&.dig("kind") || shown&.kind || "built"),
+                      id: nil, "aria-label": "What kind of thing it was on #{day.date.strftime('%A')}",
+                      class: "os-field h-9 w-[92px] px-2 text-xs" %>
+              </div>
+            <% end %>
+            <div class="os-row grid items-center gap-x-2 gap-y-1 py-2 sm:grid-cols-[4rem_minmax(0,1fr)]">
+              <label for="next_goal" class="text-sm font-bold leading-tight">Goal <span class="os-muted text-[11px] font-normal sm:block">next week</span></label>
+              <%= text_field_tag "week_card[next_goal]", wc.next_goal, id: "next_goal", maxlength: WeekCard::GOAL_LENGTH,
+                    placeholder: "One thing, up to #{WeekCard::GOAL_LENGTH} characters. It ends your post too.", class: field %>
+            </div>
+          </div>
+
+          <div class="mt-3 hidden space-y-3" data-tabs-target="panel" data-tabs-panel="parts" role="tabpanel">
+            <% sections.each do |group, choices| %>
+              <%= tag.div(**card_choice_attributes(WeekCardTemplate.having(*choices.keys), template)) do %>
+                <p class="os-label"><%= group %></p>
+                <div class="grid grid-cols-2 gap-x-4">
+                  <% choices.each do |section, label| %>
+                    <%= tag.label(class: option, **card_choice_attributes(WeekCardTemplate.having(section), template)) do %>
+                      <%= hidden_field_tag "week_card[sections][#{section}]", "0", id: nil %>
+                      <%= check_box_tag "week_card[sections][#{section}]", "1", wc.shows?(section), id: "section_#{section}", class: box %>
+                      <%= label %>
+                    <% end %>
+                  <% end %>
+                </div>
+              <% end %>
+            <% end %>
+            <div>
+              <p class="os-label">Projects</p>
+              <% if @card.projects.empty? %>
+                <p class="os-sm os-muted py-1">No commits this week.</p>
+              <% end %>
+              <div class="grid grid-cols-2 gap-x-4">
+                <% @card.projects.each_with_index do |project, i| %>
+                  <label class="<%= option %>">
+                    <%= hidden_field_tag "week_card[projects][#{project.name}]", "0", id: nil %>
+                    <%= check_box_tag "week_card[projects][#{project.name}]", "1", project.shown, id: "project_#{i}", class: box %>
+                    <span class="truncate"><%= project.name %></span>
+                    <span class="os-muted ml-auto tabular-nums"><%= project.n %></span>
+                  </label>
+                <% end %>
+              </div>
+            </div>
+            <p class="os-xs os-muted">A part with nothing to show this week stays off the card. Private repos you include in <%= link_to "Settings", settings_path(tab: "integrations"), class: "underline" %> show here by name.</p>
+          </div>
+        </section>
+
+        <section class="os-panel" aria-labelledby="your-post">
+          <div class="os-between">
+            <label id="your-post" for="post_text" class="os-h3">Your post</label>
+            <span class="os-xs os-muted tabular-nums" data-card-editor-target="counter"></span>
+          </div>
+          <%= text_area_tag "week_card[post_text]", wc.post_text.presence || @card.draft, id: "post_text", rows: 5,
+                class: "os-area mt-2.5 text-sm", data: { card_editor_target: "post", action: "input->card-editor#count" } %>
+          <div class="mt-2.5 flex flex-wrap items-center gap-2">
+            <button type="button" class="os-btn sm" data-action="card-editor#copy" data-card-editor-target="copyButton">Copy post</button>
+            <a href="https://x.com/intent/post" target="_blank" rel="noopener" class="os-btn2 sm"
+               data-card-editor-target="intent" data-base="https://x.com/intent/post?text=" data-network="x" data-action="card-editor#intent">Post on X</a>
+          </div>
+          <p class="os-xs os-muted mt-2">Drafted from your card, it changes with the card until you edit it. <button type="button" class="underline" data-action="card-editor#useDraft">Rebuild from the card</button></p>
+          <p class="os-xs os-muted mt-1">Post on X opens X with your text only: download the card and attach it there yourself.</p>
+        </section>
+      </aside>
     </div>
-
-    <section class="mt-5 rounded-xl border border-gray-200 bg-white px-4 py-3 space-y-2">
-      <div class="flex items-baseline justify-between">
-        <label for="post_text" class="text-sm font-medium">Your post</label>
-        <span class="text-xs text-gray-400 tabular-nums" data-card-editor-target="counter"></span>
-      </div>
-      <%= text_area_tag "week_card[post_text]", wc.post_text.presence || @card.draft, id: "post_text", rows: 5,
-            class: "#{field} leading-relaxed", data: { card_editor_target: "post", action: "input->card-editor#count" } %>
-      <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <button type="button" class="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-700" data-action="card-editor#copy" data-card-editor-target="copyButton">Copy post</button>
-        <a href="https://x.com/intent/post" target="_blank" rel="noopener" class="px-4 py-2 rounded-lg border border-gray-200 text-sm hover:border-gray-400"
-           data-card-editor-target="intent" data-base="https://x.com/intent/post?text=" data-network="x" data-action="card-editor#intent">Post on X</a>
-        <p class="text-xs text-gray-500">Drafted from your card, it changes with the card until you edit it. <button type="button" class="underline" data-action="card-editor#useDraft">Rebuild from the card</button></p>
-      </div>
-      <p class="text-xs text-gray-400">Post on X opens X with your text only: download the card and attach it there yourself.</p>
-    </section>
   <% end %>
 </div>
