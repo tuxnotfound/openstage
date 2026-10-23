@@ -1,4 +1,4 @@
-<div style="max-width: 600px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color: #111827;">
+<div style="max-width: 600px; font-family: 'Funnel Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color: #0E0F12;">
   <%# Whose week this is, before anything else: the reader asked for this
       builder's updates, so the email leads with them, not with the numbers. %>
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 20px; border-collapse: collapse;">
@@ -9,13 +9,13 @@
         </td>
       <% end %>
       <td style="vertical-align: middle;">
-        <div style="font-size: 16px; font-weight: 600; color: #111827;"><%= @builder.display_name %></div>
-        <div style="margin-top: 2px; font-size: 13px;"><a href="<%= @profile_url %>" style="color: #6B7280; text-decoration: none;">openstage.dev/<%= @builder.username %></a></div>
+        <div style="font-size: 16px; font-weight: 600; color: #0E0F12;"><%= @builder.display_name %></div>
+        <div style="margin-top: 2px; font-size: 13px;"><a href="<%= @profile_url %>" style="color: #666A73; text-decoration: none;">openstage.dev/<%= @builder.username %></a></div>
       </td>
     </tr>
   </table>
   <%= render "week", section: @section, link_label: "See the week on #{@builder.display_name}'s page", link_url: @profile_url %>
 
-  <p style="margin: 28px 0 0; color: #6b7280; font-size: 12px;">You subscribed to <%= @builder.display_name %>'s updates on openstage.dev/<%= @builder.username %>. <%= link_to "Unsubscribe", @unsub_url, style: "color: #6b7280;" %>.</p>
-  <p style="margin: 8px 0 0; color: #6b7280; font-size: 12px;">Openstage turns GitHub commits into a public proof-of-work page. <%= link_to "Get yours", @home_url, style: "color: #6b7280;" %>.</p>
+  <p style="margin: 28px 0 0; color: #666A73; font-size: 12px;">You subscribed to <%= @builder.display_name %>'s updates on openstage.dev/<%= @builder.username %>. <%= link_to "Unsubscribe", @unsub_url, style: "color: #666A73;" %>.</p>
+  <p style="margin: 8px 0 0; color: #666A73; font-size: 12px;">Openstage keeps a public page of what you're building, project by project. <%= link_to "Get yours", @home_url, style: "color: #666A73;" %>.</p>
 </div>
