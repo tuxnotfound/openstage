@@ -15,7 +15,9 @@ module CardText
     { family: "Inter", style: "normal", weight: "400 700", file: "inter.woff2" },
     { family: "Press Start 2P", style: "normal", weight: "400", file: "press-start-2p.woff2" },
     { family: "Pixelify Sans", style: "normal", weight: "500 600", file: "pixelify-sans.woff2" },
-    { family: "Tiny5", style: "normal", weight: "400", file: "tiny5.woff2" }
+    { family: "Tiny5", style: "normal", weight: "400", file: "tiny5.woff2" },
+    { family: "Funnel Card Sans", style: "normal", weight: "300 800", file: "funnel-card-sans.woff2" },
+    { family: "Funnel Card Display", style: "normal", weight: "300 800", file: "funnel-card-display.woff2" }
   ].freeze
   CHARS = ((32..126).map(&:chr) + %w[· – — − ↑ ↓ … × ’]).each_with_index.to_h.freeze
   SANS = {
@@ -61,7 +63,7 @@ module CardText
   # Each face is one instance of its fonts: the families tried for each
   # character in order, weight, axis values and features, with its widths. The
   # card pins the same values (WeekCardTypeHelper), so it draws what was measured.
-  FACES = [ Inter, Newsreader, DmSans, DmMono, PressStart, PixelifySans ].map { |table| table::FACES }.reduce(:merge).freeze
+  FACES = [ Inter, Newsreader, DmSans, DmMono, PressStart, PixelifySans, FunnelCard ].map { |table| table::FACES }.reduce(:merge).freeze
   # Any other character in those faces, and one a face's files lack, which the
   # browser draws from a fallback font. Wider than every Latin glyph and than
   # the CJK fallbacks (1.000 to 1.004 em), so unknown text measures safe.

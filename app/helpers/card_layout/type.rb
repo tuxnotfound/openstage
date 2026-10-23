@@ -4,7 +4,8 @@ module CardLayout
   # last one included, so the last one's is left out.
   module Type
     # Cap and figure heights in ems, measured in Chrome, by family.
-    HEIGHTS = { "Inter" => { cap: 0.7275, fig: 0.737 }, "DM Mono" => { cap: 0.70, fig: 0.712 } }.freeze
+    HEIGHTS = { "Inter" => { cap: 0.7275, fig: 0.737 }, "DM Mono" => { cap: 0.70, fig: 0.712 },
+                "Funnel Card Sans" => { cap: 0.675, fig: 0.685 }, "Funnel Card Display" => { cap: 0.675, fig: 0.685 } }.freeze
 
     module_function
 

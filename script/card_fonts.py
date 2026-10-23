@@ -69,6 +69,10 @@ FILES = {
     "pixelify-sans.woff2": ("Pixelify Sans", "500 600", "PixelifySans[wght].ttf", {"wght": (500, 600)}, LATIN),
     "tiny5.woff2": ("Tiny5", "400", "Tiny5[BLED,JITT,ROND,wdth,wght].ttf",
                     {"wght": 400, "wdth": 100, "ROND": 0, "BLED": 0, "JITT": 0}, DIGITS),
+    # The page's own type, for the progress card. Named apart from the site's
+    # Funnel files, which split Latin over two files the card cannot embed.
+    "funnel-card-sans.woff2": ("Funnel Card Sans", "300 800", "FunnelSans[wght].ttf", {"wght": (300, 800)}, LATIN),
+    "funnel-card-display.woff2": ("Funnel Card Display", "300 800", "FunnelDisplay[wght].ttf", {"wght": (300, 800)}, LATIN),
 }
 
 # Every instance the cards set, by name, grouped by the module that holds its
@@ -102,6 +106,12 @@ FACES = {
     "PixelifySans": {
         "pixelify_medium": (["tiny5.woff2", "pixelify-sans.woff2"], 500, None, "normal"),
         "pixelify_semibold": (["tiny5.woff2", "pixelify-sans.woff2"], 600, None, "normal"),
+    },
+    "FunnelCard": {
+        "funnel_sans_regular": (["funnel-card-sans.woff2"], 400, None, "normal"),
+        "funnel_sans_semibold": (["funnel-card-sans.woff2"], 600, None, "normal"),
+        "funnel_display_bold": (["funnel-card-display.woff2"], 700, None, "normal"),
+        "funnel_display_figures": (["funnel-card-display.woff2"], 600, None, "'tnum' 1"),
     },
 }
 
