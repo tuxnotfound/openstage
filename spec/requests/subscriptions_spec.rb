@@ -155,6 +155,61 @@ RSpec.describe "Email subscribe", type: :request do
     end
   end
 
+  describe "following one project" do
+    let!(:repo) { create(:github_repo, user: builder, name: "side.app", full_name: "builder/side.app") }
+
+    before { create(:entry, user: builder, repo_name: "builder/side.app") }
+
+    it "has its own box on the project's page" do
+      get "/builder/side.app"
+
+      expect(response.body).to include("Follow side.app by email")
+      expect(response.body).to match(/<input value="#{repo.id}"[^>]*name="project"/)
+    end
+
+    it "creates a pending follow of that project and lands back on its page" do
+      expect {
+        post "/builder/subscribe", params: { email: "fan@example.com", project: repo.id }, headers: browser
+      }.to change { repo.subscriptions.pending.count }.by(1)
+        .and have_enqueued_mail(SubscriptionMailer, :confirm)
+
+      expect(response).to redirect_to("/builder/side.app")
+    end
+
+    it "keeps a follow of the whole page apart from a follow of one project" do
+      builder.subscriptions.create!(email: "fan@example.com", confirmed_at: Time.current)
+
+      expect {
+        post "/builder/subscribe", params: { email: "fan@example.com", project: repo.id }, headers: browser
+      }.to change(Subscription, :count).by(1)
+    end
+
+    it "404s for a repo that is not the builder's" do
+      other = create(:github_repo)
+
+      post "/builder/subscribe", params: { email: "fan@example.com", project: other.id }, headers: browser
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "confirms and unsubscribes on the project's page, and the mail names the project" do
+      follow = builder.subscriptions.create!(email: "fan@example.com", github_repo: repo)
+      mail = SubscriptionMailer.confirm(follow)
+      expect(mail.subject).to eq("Confirm: side.app updates from Bea on Openstage")
+      expect(mail.text_part.body.to_s).to include("updates on side.app, a project by Bea (openstage.dev/builder/side.app)")
+
+      get "/subscriptions/#{follow.token}/confirm"
+      expect(response).to redirect_to("/builder/side.app")
+      expect(flash[:notice]).to eq("Confirmed. You will get side.app's updates.")
+
+      get "/subscriptions/#{follow.token}/unsubscribe"
+      expect(response.body).to include("No more email about side.app, by Bea,")
+      post "/subscriptions/#{follow.token}/unsubscribe"
+      expect(response).to redirect_to("/builder/side.app")
+      expect(Subscription.exists?(follow.id)).to be(false)
+    end
+  end
+
   it "reserves the route prefix as a username" do
     expect(User::RESERVED_USERNAMES).to include("subscriptions")
   end

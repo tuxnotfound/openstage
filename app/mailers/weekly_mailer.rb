@@ -16,23 +16,32 @@ class WeeklyMailer < ApplicationMailer
     mail(to: user.email, subject: "Your week is ready to review")
   end
 
-  # The week a subscriber asked for when they confirmed on the builder's page.
+  # The week a subscriber asked for when they confirmed: the builder's whole
+  # page, or one project's.
   def digest(subscription)
     @builder     = subscription.user
-    @section     = week_of(@builder)
+    @project     = subscription.github_repo
+    @section     = week_of(@builder, @project)
     attach_chart(@section)
-    @profile_url = profile_url(@builder.username, range: "30d", ref: "digest")
+    @page_url    = digest_page_url
     @home_url    = root_url(ref: "digest")
     @unsub_url   = unsubscribe_subscription_url(subscription.token)
     one_click_unsubscribe(@unsub_url)
 
-    mail(to: subscription.email, subject: "#{@builder.display_name}'s week on Openstage")
+    subject = @project ? "#{@project.name} this week, by #{@builder.display_name}" : "#{@builder.display_name}'s week on Openstage"
+    mail(to: subscription.email, subject: subject)
   end
 
   private
 
-  def week_of(user)
-    Progress::ComposeService.new(user: user, range: "week").tap(&:call!).section
+  def week_of(user, project = nil)
+    Progress::ComposeService.new(user: user, range: "week", repos: Array(project&.full_name)).tap(&:call!).section
+  end
+
+  def digest_page_url
+    return profile_url(@builder.username, range: "30d", ref: "digest") unless @project
+
+    project_page_url(@builder.username, @project.name, range: "30d", ref: "digest")
   end
 
   # The page's chart, as a picture the email carries; none for a week with no

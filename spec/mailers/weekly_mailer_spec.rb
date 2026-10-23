@@ -108,5 +108,19 @@ RSpec.describe WeeklyMailer do
       expect(mail.header["List-Unsubscribe"].value).to include("/subscriptions/#{subscription.token}/unsubscribe")
       expect(mail.header["List-Unsubscribe-Post"].value).to eq("List-Unsubscribe=One-Click")
     end
+
+    context "for one project's follower" do
+      let(:repo) { create(:github_repo, user: builder, name: "app", full_name: "maker/app") }
+      let(:subscription) { builder.subscriptions.create!(email: "fan@example.com", github_repo: repo, confirmed_at: 1.week.ago) }
+
+      it "sends that project's week only, linked to its page" do
+        create(:entry, user: builder, title: "Other project work", repo_name: "maker/other", occurred_at: 1.day.ago)
+
+        expect(mail.subject).to eq("app this week, by Mia Maker")
+        text = mail.text_part.body.to_s
+        expect(text).to include("2 commits", "https://openstage.dev/maker/app?range=30d&ref=digest", "updates on openstage.dev/maker/app")
+        expect(text).not_to include("Opened the beta", "Other project work")
+      end
+    end
   end
 end

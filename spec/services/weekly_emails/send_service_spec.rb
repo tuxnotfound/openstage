@@ -36,6 +36,36 @@ RSpec.describe WeeklyEmails::SendService do
     expect(service.digests_sent).to eq(1)
   end
 
+  describe "a project's followers" do
+    let(:repo) { create(:github_repo, user: builder, name: "app", full_name: "me/app") }
+
+    def follower(email)
+      builder.subscriptions.create!(email: email, github_repo: repo, confirmed_at: Time.current)
+    end
+
+    it "get that project's week, unless they follow the whole page already" do
+      ship(3)
+      fan = follower("fan@example.com")
+      subscriber("both@example.com")
+      follower("both@example.com")
+
+      service = described_class.new(user: builder)
+      expect { service.call! }.to have_enqueued_mail(WeeklyMailer, :digest).with(fan).exactly(:once)
+      expect(service.digests_sent).to eq(2)
+    end
+
+    it "get nothing when their project had a quiet week" do
+      ship(3, at: 1.day.ago)
+      builder.entries.update_all(repo_name: "me/other")
+      create(:entry, user: builder, repo_name: "me/app", occurred_at: 1.day.ago)
+      follower("fan@example.com")
+
+      service = described_class.new(user: builder)
+      service.call!
+      expect(service.digests_sent).to eq(0)
+    end
+  end
+
   it "sends nothing on a quiet week" do
     ship(2)
     subscriber("reader@example.com")

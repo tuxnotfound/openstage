@@ -1,4 +1,8 @@
-<p>You asked for email updates from <%= @builder.display_name %> (openstage.dev/<%= @builder.username %>).</p>
+<% if @project %>
+  <p>You asked for email updates on <%= @project.name %>, a project by <%= @builder.display_name %> (<%= @page %>).</p>
+<% else %>
+  <p>You asked for email updates from <%= @builder.display_name %> (<%= @page %>).</p>
+<% end %>
 
 <p style="margin: 24px 0;"><%= link_to "Yes, send me their updates", @confirm_url, style: "display: inline-block; padding: 12px 20px; border-radius: 12px; background: #006B72; color: #FFFFFF; font-size: 15px; font-weight: 700; text-decoration: none;" %></p>
 

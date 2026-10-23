@@ -1,4 +1,4 @@
-You asked for email updates from <%= @builder.display_name %> (openstage.dev/<%= @builder.username %>).
+<% if @project %>You asked for email updates on <%= @project.name %>, a project by <%= @builder.display_name %> (<%= @page %>).<% else %>You asked for email updates from <%= @builder.display_name %> (<%= @page %>).<% end %>
 
 Confirm here: <%= @confirm_url %>
 

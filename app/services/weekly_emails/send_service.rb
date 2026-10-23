@@ -1,8 +1,9 @@
 module WeeklyEmails
   # One builder's two weekly emails (F2). The builder gets their week, ready to
   # review, with one link to its week card; their confirmed subscribers get
-  # the week itself. A quiet week (fewer than three things) sends neither, and
-  # nothing is ever posted for anyone.
+  # the week itself, and a project's followers that project's week. A quiet
+  # week (fewer than three things) sends neither, a quiet project sends its
+  # followers nothing, and nothing is ever posted for anyone.
   class SendService < ApplicationService
     # Shorter than a week, so a run that starts a little early next week still sends.
     RESEND_AFTER = 6.days
@@ -26,9 +27,10 @@ module WeeklyEmails
     end
 
     # Judged on the week the emails show, the Week view so far, so neither
-    # ever arrives with an empty chart.
-    def quiet?
-      week = Progress::TallyService.new(user: user, range: "week")
+    # ever arrives with an empty chart. project: a repo's full name, for its
+    # followers.
+    def quiet?(project = nil)
+      week = Progress::TallyService.new(user: user, range: "week", repos: Array(project))
       week.call
       return true unless absorb_errors(week)
 
@@ -44,13 +46,24 @@ module WeeklyEmails
       @builder_mailed = true
     end
 
+    # A reader who follows the whole page already gets every project in it.
     def mail_subscribers
-      user.subscriptions.confirmed.find_each do |subscription|
-        next unless claim(Subscription.where(id: subscription.id), :digest_sent_at)
+      confirmed = user.subscriptions.confirmed
+      confirmed.whole_page.find_each { |subscription| mail_digest(subscription) }
 
-        WeeklyMailer.digest(subscription).deliver_later
-        @digests_sent += 1
+      everything = confirmed.whole_page.pluck(:email).to_set
+      confirmed.projects.includes(:github_repo).group_by(&:github_repo).each do |repo, followers|
+        next if quiet?(repo.full_name)
+
+        followers.each { |subscription| mail_digest(subscription) unless everything.include?(subscription.email) }
       end
+    end
+
+    def mail_digest(subscription)
+      return unless claim(Subscription.where(id: subscription.id), :digest_sent_at)
+
+      WeeklyMailer.digest(subscription).deliver_later
+      @digests_sent += 1
     end
 
     # Marks the row sent, unless it was sent this week, in one statement: a

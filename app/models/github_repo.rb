@@ -1,5 +1,6 @@
 class GithubRepo < ApplicationRecord
   belongs_to :user
+  has_many :subscriptions, dependent: :delete_all
 
   validates :github_repo_id, presence: true, uniqueness: { scope: :user_id }
   validates :name, presence: true

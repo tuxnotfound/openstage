@@ -67,7 +67,7 @@ class DashboardController < ApplicationController
   # The breakdown by entry, country and referrer lives on /analytics.
   def load_audience
     @subscribers_count = current_user.subscriptions.confirmed.count
-    @subscribers = current_user.pro? ? current_user.subscriptions.confirmed.order(confirmed_at: :desc) : nil
+    @subscribers = current_user.pro? ? current_user.subscriptions.confirmed.includes(:github_repo).order(confirmed_at: :desc) : nil
     views = current_user.profile_views
     @analytics = { total_views: views.count, unique_7d: views.unique_visitor_count(since: 7.days.ago),
                    sparkline_7d: views.daily_counts(days: 7) }
