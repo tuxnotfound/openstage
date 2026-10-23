@@ -5,7 +5,6 @@
 <% labels = section.labels %>
 <% now = section.tally.totals %>
 <% before = section.tally.previous_totals %>
-<% chart = ProgressChart::Email.new(section) %>
 <% pick = section.pick %>
 <% tiles = [
      [ "● Shipped", now.shipped, before&.shipped ],
@@ -29,35 +28,16 @@
   <p style="margin: 6px 0 0; font-size: 11px; color: #9CA3AF;">Changes <%= versus %>.</p>
 <% end %>
 
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top: 16px; border-collapse: collapse; table-layout: fixed;">
-  <tr>
-    <% chart.days.each do |day| %>
-      <td valign="bottom" style="height: <%= chart.column_height %>px; padding: 0 3px; vertical-align: bottom; text-align: center; border-bottom: 1px solid #D1D5DB;">
-        <% day.discs.each do |disc| %>
-          <span style="display: inline-block; min-width: 14px; height: 16px; padding: 0 2px; margin-bottom: 4px; border: 2px solid #111827; border-radius: 10px; font-size: 10px; line-height: 16px; font-weight: 600; <%= disc.shipped? ? 'background: #111827; color: #ffffff;' : 'background: #ffffff; color: #111827;' %>"><%= disc.label %></span>
-        <% end %>
-        <% day.segments.each_with_index do |segment, i| %>
-          <div style="max-width: 28px; height: <%= segment.height %>px; margin: 0 auto; background: <%= segment.color %>; font-size: 0; line-height: 0; <%= i.zero? ? 'border-radius: 3px 3px 0 0;' : 'border-top: 2px solid #ffffff;' %>">&nbsp;</div>
-        <% end %>
-      </td>
-    <% end %>
-  </tr>
-  <tr>
-    <% chart.days.each do |day| %>
-      <td style="padding-top: 6px; text-align: center; font-size: 11px; white-space: nowrap; <%= day.current ? 'color: #111827; font-weight: 600;' : 'color: #9CA3AF;' %>"><%= day.label %></td>
-    <% end %>
-  </tr>
-</table>
-
-<% if (legend = chart.legend) %>
-  <p style="margin: 10px 0 0; font-size: 12px; color: #4B5563;">
-    <% legend.first(ProgressChart::Page::LEGEND_SIZE).each do |row| %>
-      <span style="display: inline-block; margin-right: 12px; white-space: nowrap;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: <%= row.color %>;"></span> <%= row.name %> <span style="color: #9CA3AF;"><%= row.n %></span></span>
-    <% end %>
-    <% if legend.size > ProgressChart::Page::LEGEND_SIZE %>
-      <span style="color: #9CA3AF;">+<%= legend.size - ProgressChart::Page::LEGEND_SIZE %> more</span>
+<% if (image = attachments[ProgressChart::EmailImage::FILE]) %>
+  <% chart = ProgressChart::Trend.new(section) %>
+  <p style="margin: 16px 0 0; font-size: 12px; color: #43464D;">
+    <% chart.lines.each do |line| %>
+      <span style="display: inline-block; margin-right: 14px; white-space: nowrap;"><span style="display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; background: <%= ProgressChart::Palette.project_color(line.rank) %>;"></span> <%= line.name %> <strong style="color: #0E0F12;"><%= line.total %></strong></span>
     <% end %>
   </p>
+  <img src="<%= image.url %>" width="600" alt="Commits per day by project <%= labels.word %>: <%= ProgressChart::EmailImage.new(chart).summary %>" style="display: block; width: 100%; max-width: 600px; height: auto; margin-top: 10px; border: 0;">
+<% else %>
+  <p style="margin: 16px 0 0; font-size: 13px; color: #666A73;">No commits <%= labels.word %><%= " yet" if labels.running? %>.</p>
 <% end %>
 
 <p style="margin: 24px 0;">
@@ -71,12 +51,13 @@
       <% project = item.repo_name && section.tally.projects.find(item.repo_name) %>
       <tr>
         <td valign="top" style="width: 30px; padding: 10px 0; vertical-align: top; border-bottom: 1px solid #F3F4F6;">
-          <span style="display: inline-block; width: 18px; height: 18px; border: 2px solid #111827; border-radius: 11px; text-align: center; font-size: 11px; line-height: 18px; font-weight: 600; <%= item.shipped? ? 'background: #111827; color: #ffffff;' : 'background: #ffffff; color: #111827;' %>"><%= i + 1 %></span>
+          <% disc = project ? ProgressChart::Palette.project_color(project.rank) : "#0E0F12" %>
+          <span style="display: inline-block; width: 22px; height: 22px; border-radius: 11px; text-align: center; font-size: 11px; line-height: 22px; font-weight: 700; background: <%= disc %>; color: <%= ProgressChart::Palette.ink_on(disc) %>;"><%= i + 1 %></span>
         </td>
         <td style="padding: 10px 0; border-bottom: 1px solid #F3F4F6;">
           <div style="font-size: 14px; line-height: 20px; color: #111827; font-weight: <%= item.shipped? ? 600 : 500 %>;"><%= item.title %><% if (run_in = progress_run_in(item, section)).present? %><span style="font-weight: 400; color: #6B7280;"><%= run_in %></span><% end %></div>
           <div style="margin-top: 3px; font-size: 12px; color: #9CA3AF;">
-            <%= item.date.strftime("%b %-d") %><% if project %> · <span style="display: inline-block; width: 7px; height: 7px; border-radius: 4px; background: <%= ProgressChart::Palette.project_color(project.rank) %>;"></span> <%= project.name %><% end %>
+            <%= item.date.strftime("%b %-d") %><%= " · #{project.name}" if project %> · <%= item.shipped? ? "Shipped" : "Published" %>
           </div>
         </td>
       </tr>

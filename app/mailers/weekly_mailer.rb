@@ -7,6 +7,7 @@ class WeeklyMailer < ApplicationMailer
   # The builder's own week, and one link: its card. It never posts.
   def week_ready(user)
     @section    = week_of(user)
+    attach_chart(@section)
     @card_url   = current_week_card_url(from: "weekly")
     @log_url    = dashboard_url
     @stop_url   = weekly_email_unsubscribe_url(token: user.signed_id(purpose: :weekly_email))
@@ -19,7 +20,8 @@ class WeeklyMailer < ApplicationMailer
   def digest(subscription)
     @builder     = subscription.user
     @section     = week_of(@builder)
-    @profile_url = profile_url(@builder.username, range: "week", ref: "digest")
+    attach_chart(@section)
+    @profile_url = profile_url(@builder.username, range: "30d", ref: "digest")
     @home_url    = root_url(ref: "digest")
     @unsub_url   = unsubscribe_subscription_url(subscription.token)
     one_click_unsubscribe(@unsub_url)
@@ -31,6 +33,13 @@ class WeeklyMailer < ApplicationMailer
 
   def week_of(user)
     Progress::ComposeService.new(user: user, range: "week").tap(&:call!).section
+  end
+
+  # The page's chart, as a picture the email carries; none for a week with no
+  # commits, which the email says in words instead.
+  def attach_chart(section)
+    chart = ProgressChart::Trend.new(section)
+    attachments.inline[ProgressChart::EmailImage::FILE] = ProgressChart::EmailImage.new(chart).png if chart.lines.any?
   end
 
   def one_click_unsubscribe(url)

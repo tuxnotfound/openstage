@@ -27,8 +27,9 @@ module ProgressChart
       @section = section
     end
 
+    # Only the page's 30-day window averages; a calendar week counts each day.
     def average?
-      period.unit == :day
+      period.range == "30d"
     end
 
     # The projects in view with commits in the window, busiest of all time first.
@@ -85,6 +86,10 @@ module ProgressChart
 
     def note
       average? ? "A 7-day average of commits per day, one line per project." : "Commits per #{labels.unit_word}, one line per project."
+    end
+
+    def labels_for(bucket)
+      labels.axis(bucket)
     end
 
     # The point a dated entry falls on; the last one when it is outside.

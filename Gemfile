@@ -61,6 +61,10 @@ gem "kaminari"
 # OG image generation
 gem "mini_magick"
 
+# The weekly email's chart: SVG to PNG through libvips, which the Docker image
+# already installs (with librsvg, for SVG)
+gem "ruby-vips"
+
 # Payments
 gem "stripe"
 

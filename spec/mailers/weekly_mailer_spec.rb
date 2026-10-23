@@ -38,12 +38,15 @@ RSpec.describe WeeklyMailer do
       end
     end
 
-    it "draws the chart as table cells, one column per day so far" do
+    it "draws the page's chart as a picture carried inline, since mail shows no SVG" do
+      image = mail.attachments[ProgressChart::EmailImage::FILE]
       html = mail.html_part.body.to_s
-      expect(html).to include("Mon 19", "Fri 23")
-      expect(html).not_to include("Sat 24")
+
+      expect(image).to be_inline
+      expect(image.mime_type).to eq("image/png")
+      expect(image.body.decoded.byteslice(0, 8)).to eq("\x89PNG\r\n\x1A\n".b)
+      expect(html).to include(%(src="#{image.url}"), "alt=\"Commits per day by project this week: app 2\"")
       expect(html).not_to include("<svg")
-      expect(html).to include("background: #{ProgressChart::Palette.project_color(0)}")
     end
 
     it "puts the one link to the picker before the list" do
@@ -81,7 +84,7 @@ RSpec.describe WeeklyMailer do
       expect(mail.subject).to eq("Mia Maker's week on Openstage")
       text = mail.text_part.body.to_s
       expect(text).to include("1. ● Opened the beta (Oct 21)", "2. ○ Wrote about pricing (Oct 22)")
-      expect(text).to include("https://openstage.dev/maker?range=week&ref=digest")
+      expect(text).to include("https://openstage.dev/maker?range=30d&ref=digest")
       expect(text).to include("https://openstage.dev/?ref=digest")
       expect(text).not_to include("Log an entry")
     end
