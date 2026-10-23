@@ -40,9 +40,10 @@ RSpec.describe "Kit", type: :request do
   # A page not yet drawn in the new look has fixed colours, so it stays light
   # whatever the visitor picked elsewhere, and offers no switch.
   it "pins a page not yet in the new look to light" do
+    sign_in_as(create(:user, pro: true))
     cookies[:theme] = "dark"
 
-    get "/pricing"
+    get "/analytics"
 
     expect(body_tag).to include('data-theme="light"')
     expect(response.body).not_to include('data-controller="theme"')
