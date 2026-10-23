@@ -200,7 +200,8 @@
   .os-link { font-size: 15px; font-weight: 700; color: var(--color-accent-ink); text-decoration: underline; text-underline-offset: 3px; }
 
   /* Toggles, tabs and filters */
-  .os-pills { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: var(--color-surface); border-radius: 999px; }
+  /* 22px: round on one row of pills, a rounded box when they wrap. */
+  .os-pills { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: var(--color-surface); border-radius: 22px; }
   .os-pill { display: inline-flex; align-items: center; height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--color-ink-3); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
   .os-pill:hover { color: var(--color-ink); }
   .os-pill.on, .os-pill[aria-selected="true"], .os-pill[aria-current="page"], .os-pill[aria-pressed="true"] { background: var(--color-accent); color: var(--color-on-accent); }
