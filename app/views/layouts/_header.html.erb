@@ -1,0 +1,51 @@
+<header class="os-wrap">
+  <% if user_signed_in? %>
+    <%# On a phone the tabs take a row of their own and scroll sideways. %>
+    <div class="os-top max-md:h-auto max-md:flex-wrap max-md:gap-x-3 max-md:gap-y-1 max-md:pt-3">
+      <%= link_to "openstage", root_path, class: "os-logo" %>
+      <nav class="os-nav md:ml-3 max-md:order-last max-md:w-full max-md:flex-nowrap max-md:overflow-x-auto max-md:py-3" aria-label="Main">
+        <%= nav_link "Dashboard", dashboard_path, :dashboard %>
+        <%= nav_link safe_join([ "Your page ", tag.span("↗", aria: { hidden: true }) ]), profile_path(current_user.username), :page %>
+        <%= nav_link "Recap", recap_path, :recap %>
+        <% if current_user.pro? %>
+          <%= nav_link "Analytics", analytics_path, :analytics %>
+        <% end %>
+        <%= nav_link "Settings", settings_path, :settings %>
+      </nav>
+      <span class="ml-auto"></span>
+      <%= render "layouts/theme_toggle" %>
+
+      <details class="relative" data-controller="dropdown">
+        <summary class="list-none [&::-webkit-details-marker]:hidden cursor-pointer rounded-full" aria-label="Account menu">
+          <img src="<%= current_user.avatar_url %>" alt="" class="os-avatar size-8.5">
+        </summary>
+        <div class="os-card absolute right-0 top-full z-20 mt-2 w-56 p-1.5 text-sm shadow-lg">
+          <p class="px-3 py-2 os-xs os-muted truncate">@<%= current_user.username %></p>
+          <%= link_to "Explore builders", feed_path, class: "block rounded-[10px] px-3 py-2 hover:bg-fill" %>
+          <% unless current_user.pro? %>
+            <%= link_to "Upgrade to Pro", pricing_path, class: "block rounded-[10px] px-3 py-2 hover:bg-fill" %>
+          <% end %>
+          <% if current_user.owner? %>
+            <%= link_to "Admin", admin_path, class: "block rounded-[10px] px-3 py-2 hover:bg-fill" %>
+          <% end %>
+          <div class="mt-1 border-t border-line pt-1">
+            <%= button_to "Sign out", sign_out_path, method: :delete, data: { turbo: false },
+                  class: "w-full cursor-pointer rounded-[10px] px-3 py-2 text-left text-ink-3 hover:bg-fill hover:text-ink" %>
+          </div>
+        </div>
+      </details>
+    </div>
+  <% else %>
+    <div class="os-top max-sm:gap-3">
+      <%= link_to "openstage", root_path, class: "os-logo" %>
+      <nav class="os-nav ml-auto" aria-label="Main">
+        <%= link_to "Pricing", pricing_path %>
+        <%= link_to "Blog", blog_path, class: "max-sm:hidden" %>
+      </nav>
+      <%= render "layouts/theme_toggle" %>
+      <%= button_to "/auth/github", method: :post, data: { turbo: false }, class: "os-btn sm" do %>
+        <span>Sign in<span class="max-sm:hidden"> with GitHub</span></span>
+      <% end %>
+    </div>
+  <% end %>
+</header>

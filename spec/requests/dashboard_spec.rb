@@ -58,23 +58,51 @@ RSpec.describe "Dashboard", type: :request do
     end
   end
 
-  # Three places a builder goes, plus an account menu. It used to be up to
-  # eight links in a row, which wrapped on a phone.
+  # The app's tabs, as the revamp drafts drew them, plus an account menu
+  # behind the avatar for the rest.
   describe "signed-in nav" do
     let(:user) { create(:user, username: "builder") }
 
     before { sign_in_as(user) }
 
-    it "has Dashboard, Recap and My page, and tucks the rest into a menu" do
+    it "has the tabs, marks the one shown, and tucks the rest into a menu" do
       get "/dashboard"
 
-      nav = response.body[/<header.*?<\/header>/m]
-      expect(nav).to include(">Dashboard<", ">Recap<", ">My page<")
-      expect(nav).to include('aria-current="page"')
+      nav = response.body[/<nav class="os-nav.*?<\/nav>/m]
+      expect(nav).to include(">Dashboard<", "Your page ", ">Recap<", ">Settings<")
+      expect(nav).to include(%(<a aria-current="page" href="/dashboard">Dashboard</a>))
 
-      menu = nav[/<details.*?<\/details>/m]
-      expect(menu).to include(">Settings<", ">Explore builders<", "Sign out")
+      menu = response.body[/<details.*?<\/details>/m]
+      expect(menu).to include(">Explore builders<", ">Upgrade to Pro<", "Sign out")
       expect(menu).not_to include(">Admin<")
+    end
+
+    it "shows Analytics as a tab to Pro builders only" do
+      get "/dashboard"
+      expect(response.body).not_to include(">Analytics<")
+
+      user.update!(pro: true)
+      get "/dashboard"
+      expect(response.body).to include(">Analytics<")
+      expect(response.body).not_to include(">Upgrade to Pro<")
+    end
+
+    it "keeps the Dashboard tab lit on an entry's edit form" do
+      entry = create(:entry, user: user)
+
+      get "/entries/#{entry.id}/edit"
+
+      expect(response.body).to include(%(<a aria-current="page" href="/dashboard">Dashboard</a>))
+    end
+
+    it "lights Your page on the builder's own page only" do
+      create(:user, username: "someone")
+
+      get "/builder"
+      expect(response.body).to include(%(<a aria-current="page" href="/builder">))
+
+      get "/someone"
+      expect(response.body[/<nav class="os-nav.*?<\/nav>/m]).not_to include('aria-current="page"')
     end
   end
 end

@@ -22,12 +22,36 @@ module ApplicationHelper
     "https://twitter.com/intent/tweet?text=#{CGI.escape(parts.join("\n\n"))}"
   end
 
-  # Top-level nav link, marked when it is the page being shown.
-  def nav_link(label, path)
-    active = current_page?(path)
-    link_to label, path,
-            class: "px-1.5 sm:px-2 py-1 rounded-md whitespace-nowrap #{active ? 'text-gray-900 font-medium bg-gray-100' : 'text-gray-600 hover:text-gray-900'}",
-            aria: { current: (active ? "page" : nil) }
+  # The tab each controller's pages sit under in the app header. A page reached
+  # from inside a tab (an entry's edit form, the week card) keeps that tab lit.
+  NAV_TABS = {
+    "dashboard" => :dashboard, "entries" => :dashboard,
+    "progress_cards" => :page,
+    "recaps" => :recap, "week_cards" => :recap,
+    "analytics" => :analytics,
+    "settings" => :settings, "github_repos" => :settings
+  }.freeze
+
+  # A tab in the app header, marked when the page being shown sits under it.
+  def nav_link(label, path, tab)
+    link_to label, path, aria: { current: (current_nav_tab == tab ? "page" : nil) }
+  end
+
+  # The builder's own profile is their page; someone else's sits under no tab.
+  def current_nav_tab
+    return :page if controller_name == "profiles" && current_page?(profile_path(current_user.username))
+
+    NAV_TABS[controller_name]
+  end
+
+  # The body's data-theme. A page in the new look says so with
+  # content_for :dark_mode and follows the visitor's pick, or the system's
+  # until they pick (nil). Every other page is pinned to light, because its
+  # colours are fixed and would not survive a dark ground.
+  def color_theme
+    return "light" unless content_for?(:dark_mode)
+
+    cookies[:theme].presence_in(%w[light dark])
   end
 
   def streak_emoji(streak)
