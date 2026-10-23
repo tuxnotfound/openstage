@@ -1,16 +1,17 @@
 <% content_for :title, "Admin" %>
+<% content_for :dark_mode, true %>
+<% content_for :main_class, "os-wrap os-stack pt-1.5" %>
 
 <% peak = [ @signups_by_day.values.max, 1 ].max %>
 
-<div class="max-w-2xl mx-auto px-4 py-8 space-y-8">
 
   <div>
-    <h1 class="text-2xl font-semibold text-gray-900">Admin</h1>
-    <p class="text-sm text-gray-500 mt-1">Last <%= AdminController::DAYS %> days. The numbers the gates are scored on, and nothing else.</p>
+    <h1 class="os-h2 text-[30px]">Admin</h1>
+    <p class="os-sm os-muted mt-0.5">Last <%= AdminController::DAYS %> days. The numbers the gates are scored on, and nothing else.</p>
   </div>
 
   <!-- Gate numbers -->
-  <section class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+  <section class="grid grid-cols-2 gap-3 sm:grid-cols-5" aria-label="Gate numbers">
     <% [
          [ "Signups", @cohort, "in window" ],
          [ "Activated", @activated, "#{@cohort.zero? ? 0 : (100.0 * @activated / @cohort).round}% of signups" ],
@@ -18,38 +19,39 @@
          [ "With email", @with_email, "of #{@cohort} signups" ],
          [ "Subscribes", @subscribes, "confirmed, any page" ]
        ].each do |label, value, sub| %>
-      <div class="rounded-xl border border-gray-200 px-4 py-3">
-        <p class="text-xs uppercase tracking-wide text-gray-400"><%= label %></p>
-        <p class="text-2xl font-semibold text-gray-900 mt-0.5"><%= value %></p>
-        <p class="text-xs text-gray-400 mt-0.5"><%= sub %></p>
+      <div class="os-card">
+        <p class="os-label"><%= label %></p>
+        <p class="os-num mt-0.5 text-[32px] leading-none"><%= value %></p>
+        <p class="os-xs os-muted mt-1"><%= sub %></p>
       </div>
     <% end %>
   </section>
 
+  <div class="os-grid3 items-start">
   <!-- Attribution -->
-  <section>
-    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Signups by first touch</h2>
+  <section class="os-panel">
+    <h2 class="os-h3">Signups by first touch</h2>
     <% if @signups_by_ref.any? %>
-      <div class="rounded-xl border border-gray-200 divide-y divide-gray-100">
+      <div class="mt-2.5">
         <% @signups_by_ref.each do |ref, count| %>
-          <div class="flex items-center justify-between px-4 py-2.5" data-ref="<%= ref %>" data-count="<%= count %>">
-            <span class="text-sm text-gray-700"><%= ref %></span>
-            <span class="text-sm font-medium text-gray-900"><%= count %></span>
+          <div class="os-row os-between py-2" data-ref="<%= ref %>" data-count="<%= count %>">
+            <span class="os-sm"><%= ref %></span>
+            <span class="os-sm os-num font-bold"><%= count %></span>
           </div>
         <% end %>
       </div>
     <% else %>
-      <p class="text-sm text-gray-400 rounded-xl border border-gray-200 px-4 py-3">No signups in the window.</p>
+      <p class="os-sm os-muted mt-2.5">No signups in the window.</p>
     <% end %>
-    <p class="text-xs text-gray-400 mt-1.5">Tagged links carry <code>?ref=</code>. Older rows predate the tagging and read as "unattributed".</p>
+    <p class="os-xs os-muted mt-2">Tagged links carry <code>?ref=</code>. Older rows predate the tagging and read as "unattributed".</p>
   </section>
 
   <!-- Signups per day -->
-  <section>
-    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Signups per day</h2>
-    <div class="flex items-end gap-0.5 h-16 rounded-xl border border-gray-200 px-3 py-2">
+  <section class="os-panel">
+    <h2 class="os-h3">Signups per day</h2>
+    <div class="mt-2.5 flex h-16 items-end gap-0.5">
       <% @signups_by_day.each do |date, count| %>
-        <div class="flex-1 bg-gray-200 rounded-sm <%= "bg-gray-900" if count.positive? %>"
+        <div class="flex-1 rounded-sm <%= count.positive? ? "bg-accent" : "bg-line" %>"
              style="height: <%= count.zero? ? 2 : (100.0 * count / peak).round %>%"
              title="<%= date %>: <%= pluralize(count, 'signup') %>"></div>
       <% end %>
@@ -57,139 +59,140 @@
   </section>
 
   <!-- Returns: the Gate 1 north star -->
-  <section>
-    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Did they come back</h2>
-    <div class="rounded-xl border border-gray-200 divide-y divide-gray-100 text-sm">
-      <div class="flex items-center justify-between px-4 py-2.5" data-metric="returned" data-count="<%= @returned %>">
-        <span class="text-gray-700">Came back on a later day</span>
-        <span class="font-medium text-gray-900"><%= @returned %> of <%= @strangers %></span>
+  <section class="os-panel">
+    <h2 class="os-h3">Did they come back</h2>
+    <div class="mt-2.5">
+      <div class="os-row os-between py-2" data-metric="returned" data-count="<%= @returned %>">
+        <span class="os-sm">Came back on a later day</span>
+        <span class="os-sm os-num font-bold"><%= @returned %> of <%= @strangers %></span>
       </div>
-      <div class="flex items-center justify-between px-4 py-2.5" data-metric="second-week" data-count="<%= @second_week %>">
-        <span class="text-gray-700">Came back in their second week</span>
-        <span class="font-medium text-gray-900"><%= @second_week %> of <%= @week_old %> old enough</span>
+      <div class="os-row os-between py-2" data-metric="second-week" data-count="<%= @second_week %>">
+        <span class="os-sm">Came back in their second week</span>
+        <span class="os-sm os-num font-bold"><%= @second_week %> of <%= @week_old %> old enough</span>
       </div>
     </div>
-    <p class="text-xs text-gray-400 mt-1.5">Signups in the window, not counting you. Counted from 2026-09-21; earlier visits were never recorded.</p>
+    <p class="os-xs os-muted mt-2">Signups in the window, not counting you. Counted from 2026-09-21; earlier visits were never recorded.</p>
   </section>
 
   <!-- Tagged link visits -->
-  <section>
-    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Visits from tagged links</h2>
+  <section class="os-panel">
+    <h2 class="os-h3">Visits from tagged links</h2>
     <% if @ref_visits.any? %>
-      <div class="rounded-xl border border-gray-200 divide-y divide-gray-100">
+      <div class="mt-2.5">
         <% @ref_visits.each do |ref, count| %>
-          <div class="flex items-center justify-between px-4 py-2.5" data-ref-visit="<%= ref %>" data-count="<%= count %>">
-            <span class="text-sm text-gray-700"><%= ref %></span>
-            <span class="text-sm font-medium text-gray-900"><%= count %></span>
+          <div class="os-row os-between py-2" data-ref-visit="<%= ref %>" data-count="<%= count %>">
+            <span class="os-sm"><%= ref %></span>
+            <span class="os-sm os-num font-bold"><%= count %></span>
           </div>
         <% end %>
       </div>
     <% else %>
-      <p class="text-sm text-gray-400 rounded-xl border border-gray-200 px-4 py-3">No tagged visits yet.</p>
+      <p class="os-sm os-muted mt-2.5">No tagged visits yet.</p>
     <% end %>
-    <p class="text-xs text-gray-400 mt-1.5">One per browser session, signed-out humans only. This is the top of the funnel that "signups by first touch" is the bottom of.</p>
+    <p class="os-xs os-muted mt-2">One per browser session, signed-out humans only. This is the top of the funnel that "signups by first touch" is the bottom of.</p>
   </section>
 
   <!-- Recap funnel -->
-  <section>
-    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Recap, builders other than you</h2>
-    <div class="rounded-xl border border-gray-200 divide-y divide-gray-100 text-sm">
+  <section class="os-panel">
+    <h2 class="os-h3">Recap, builders other than you</h2>
+    <div class="mt-2.5">
       <% labels = { "recap_opened" => "Opened the picker", "recap_picked" => "Ticked at least one commit",
                     "recap_copied" => "Copied the post", "recap_intent" => "Opened a compose box" } %>
       <% @recap_funnel.each do |name, builders| %>
-        <div class="flex items-center justify-between px-4 py-2.5" data-recap-step="<%= name %>" data-count="<%= builders %>">
-          <span class="text-gray-700"><%= labels[name] %></span>
-          <span class="font-medium text-gray-900"><%= builders %></span>
+        <div class="os-row os-between py-2" data-recap-step="<%= name %>" data-count="<%= builders %>">
+          <span class="os-sm"><%= labels[name] %></span>
+          <span class="os-sm os-num font-bold"><%= builders %></span>
         </div>
       <% end %>
-      <div class="flex items-center justify-between px-4 py-2.5" data-recap-step="recap_quiet" data-count="<%= @recap_quiet %>">
-        <span class="text-gray-500">Saw the quiet-week state instead</span>
-        <span class="font-medium text-gray-500"><%= @recap_quiet %></span>
+      <div class="os-row os-between py-2" data-recap-step="recap_quiet" data-count="<%= @recap_quiet %>">
+        <span class="os-sm os-muted">Saw the quiet-week state instead</span>
+        <span class="os-sm os-muted font-bold"><%= @recap_quiet %></span>
       </div>
     </div>
-    <p class="text-xs text-gray-400 mt-1.5">Distinct builders per step. A page that merely rendered is never counted.</p>
+    <p class="os-xs os-muted mt-2">Distinct builders per step. A page that merely rendered is never counted.</p>
   </section>
 
   <!-- Progress cards: the Make a card dialog on a builder's own page -->
-  <section>
-    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Progress cards, builders other than you</h2>
-    <div class="rounded-xl border border-gray-200 divide-y divide-gray-100 text-sm">
+  <section class="os-panel">
+    <h2 class="os-h3">Progress cards, builders other than you</h2>
+    <div class="mt-2.5">
       <% labels = { "progress_card_downloaded" => "Downloaded a card", "progress_post_copied" => "Copied the post" } %>
       <% @card_funnel.each do |name, builders| %>
-        <div class="flex items-center justify-between px-4 py-2.5" data-card-step="<%= name %>" data-count="<%= builders %>">
-          <span class="text-gray-700"><%= labels[name] %></span>
-          <span class="font-medium text-gray-900"><%= builders %></span>
+        <div class="os-row os-between py-2" data-card-step="<%= name %>" data-count="<%= builders %>">
+          <span class="os-sm"><%= labels[name] %></span>
+          <span class="os-sm os-num font-bold"><%= builders %></span>
         </div>
       <% end %>
     </div>
-    <p class="text-xs text-gray-400 mt-1.5">Distinct builders per step, to set beside the recap's.</p>
+    <p class="os-xs os-muted mt-2">Distinct builders per step, to set beside the recap's.</p>
   </section>
 
   <!-- Weekly email (F2) -->
-  <section>
-    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Weekly email, builders other than you</h2>
-    <div class="rounded-xl border border-gray-200 divide-y divide-gray-100 text-sm">
+  <section class="os-panel">
+    <h2 class="os-h3">Weekly email, builders other than you</h2>
+    <div class="mt-2.5">
       <% [ [ "weekly_mailed", "Got the weekly email", @weekly_mailed ],
            [ "weekly_opened", "Opened the picker from it", @weekly_opened ],
            [ "digests_mailed", "Subscribers sent a digest", @digests_mailed ] ].each do |key, label, count| %>
-        <div class="flex items-center justify-between px-4 py-2.5" data-weekly-step="<%= key %>" data-count="<%= count %>">
-          <span class="text-gray-700"><%= label %></span>
-          <span class="font-medium text-gray-900"><%= count %></span>
+        <div class="os-row os-between py-2" data-weekly-step="<%= key %>" data-count="<%= count %>">
+          <span class="os-sm"><%= label %></span>
+          <span class="os-sm os-num font-bold"><%= count %></span>
         </div>
       <% end %>
     </div>
-    <p class="text-xs text-gray-400 mt-1.5">Last send per builder and per subscriber. The picker step above shows what they did next.</p>
+    <p class="os-xs os-muted mt-2">Last send per builder and per subscriber. The picker step above shows what they did next.</p>
   </section>
 
   <!-- Repos with more than one builder -->
-  <section>
-    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Repos with more than one builder</h2>
+  <section class="os-panel">
+    <h2 class="os-h3">Repos with more than one builder</h2>
     <% if @shared_repos.any? %>
-      <div class="rounded-xl border border-gray-200 divide-y divide-gray-100">
+      <div class="mt-2.5">
         <% @shared_repos.each do |repo, builders| %>
-          <div class="flex items-center justify-between px-4 py-2.5" data-shared-repo="<%= repo %>" data-builders="<%= builders %>">
-            <span class="text-sm text-gray-700 font-mono truncate"><%= repo %></span>
-            <span class="text-sm font-medium text-gray-900 shrink-0 ml-3"><%= pluralize(builders, "builder") %></span>
+          <div class="os-row os-between py-2" data-shared-repo="<%= repo %>" data-builders="<%= builders %>">
+            <span class="os-sm truncate font-mono"><%= repo %></span>
+            <span class="os-sm ml-3 shrink-0 font-bold"><%= pluralize(builders, "builder") %></span>
           </div>
         <% end %>
       </div>
     <% else %>
-      <p class="text-sm text-gray-400 rounded-xl border border-gray-200 px-4 py-3">None yet.</p>
+      <p class="os-sm os-muted mt-2.5">None yet.</p>
     <% end %>
-    <p class="text-xs text-gray-400 mt-1.5">A second builder on a repo was recruited by a teammate, not by you. This is the earliest audience signal there is.</p>
+    <p class="os-xs os-muted mt-2">A second builder on a repo was recruited by a teammate, not by you. This is the earliest audience signal there is.</p>
   </section>
 
   <!-- All time -->
-  <section>
-    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">All time</h2>
-    <div class="rounded-xl border border-gray-200 divide-y divide-gray-100 text-sm">
-      <div class="flex items-center justify-between px-4 py-2.5">
-        <span class="text-gray-700">Builders</span><span class="font-medium text-gray-900"><%= @total_users %></span>
+  <section class="os-panel">
+    <h2 class="os-h3">All time</h2>
+    <div class="mt-2.5">
+      <div class="os-row os-between py-2">
+        <span class="os-sm">Builders</span><span class="os-sm os-num font-bold"><%= @total_users %></span>
       </div>
-      <div class="flex items-center justify-between px-4 py-2.5">
-        <span class="text-gray-700">Public entries</span><span class="font-medium text-gray-900"><%= @total_entries %></span>
+      <div class="os-row os-between py-2">
+        <span class="os-sm">Public entries</span><span class="os-sm os-num font-bold"><%= @total_entries %></span>
       </div>
-      <div class="flex items-center justify-between px-4 py-2.5">
-        <span class="text-gray-700">Pro</span><span class="font-medium text-gray-900"><%= @pro_users %></span>
+      <div class="os-row os-between py-2">
+        <span class="os-sm">Pro</span><span class="os-sm os-num font-bold"><%= @pro_users %></span>
       </div>
     </div>
   </section>
+
+  </div>
 
   <!-- Email smoke test -->
-  <section class="pt-6 border-t border-gray-100">
-    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Email</h2>
-    <div class="flex flex-wrap gap-2">
+  <section class="os-panel">
+    <h2 class="os-h3">Email</h2>
+    <div class="mt-3 flex flex-wrap gap-2.5">
       <%= button_to "Send myself a test email", admin_test_email_path,
-            class: "px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer" %>
+            class: "os-btn2 sm" %>
       <%= button_to "Send myself both weekly emails", admin_test_weekly_email_path,
-            class: "px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer" %>
+            class: "os-btn2 sm" %>
     </div>
-    <p class="text-xs text-gray-400 mt-1.5">Delivery stays off until <code>RESEND_API_KEY</code> is set in Render.</p>
-    <p class="text-xs text-gray-400 mt-1">The weekly emails show my own week as it stands, the builder's and a subscriber's, marked [Test]. Friday still sends.</p>
+    <p class="os-xs os-muted mt-2">Delivery stays off until <code>RESEND_API_KEY</code> is set in Render.</p>
+    <p class="os-xs os-muted mt-1">The weekly emails show my own week as it stands, the builder's and a subscriber's, marked [Test]. Friday still sends.</p>
   </section>
 
-  <p class="text-xs text-gray-400">
+  <p class="os-xs os-muted">
     Gate 0 is Sep 21 &middot; Gate 1 Oct 12 &middot; Gate 2 Oct 26 &middot; Gate 3 Nov 15.
     See <code>control-tower/projects/openstage/REBIRTH_PLAN.md</code>.
   </p>
-</div>

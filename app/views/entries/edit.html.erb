@@ -1,3 +1,4 @@
+<% content_for :dark_mode, true %>
 <%= turbo_frame_tag dom_id(@entry) do %>
   <div class="os-card my-2">
     <%= form_with model: @entry, url: entry_path(@entry), method: :patch, class: "os-stack gap-2.5" do |f| %>

@@ -1,3 +1,4 @@
+<% content_for :dark_mode, true %>
 <%# Opens in the project's row on the dashboard. Each field shows what GitHub
     says now; leaving it blank keeps GitHub's. %>
 <%= turbo_frame_tag dom_id(@repo, :project) do %>

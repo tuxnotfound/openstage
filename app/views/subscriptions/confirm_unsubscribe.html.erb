@@ -1,9 +1,11 @@
-<div class="max-w-md mx-auto py-16">
-  <h1 class="text-2xl font-bold mb-2">Unsubscribe?</h1>
-  <p class="text-gray-500 text-sm mb-8">
-    No more email about <%= @subscription.user.display_name %>'s work to <span class="font-mono text-gray-700"><%= @subscription.email %></span>.
-  </p>
+<% content_for :dark_mode, true %>
+<% content_for :main_class, "os-wrap pt-7.5" %>
 
+<section class="os-panel mx-auto max-w-[560px] p-9 text-center">
+  <h1 class="os-h2 text-[30px]">Unsubscribe?</h1>
+  <p class="os-p mt-2.5">
+    No more email about <%= @subscription.user.display_name %>'s work to <b class="text-ink [overflow-wrap:anywhere]"><%= @subscription.email %></b>.
+  </p>
   <%= button_to "Unsubscribe", unsubscribe_subscription_path(@subscription.token), method: :post,
-      class: "w-full bg-gray-900 text-white py-2 rounded-md text-sm font-medium hover:bg-gray-700 cursor-pointer" %>
-</div>
+      form: { class: "mt-5" }, class: "os-btn" %>
+</section>
