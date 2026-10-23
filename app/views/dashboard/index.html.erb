@@ -109,12 +109,9 @@
         <p class="text-sm font-semibold text-white">Keep the audience you build</p>
         <p class="text-xs text-gray-400 mt-1">Pro gives you your subscriber list, analytics, private entries and pins.</p>
         <div class="flex items-center gap-2 mt-3">
-          <%= button_to "$49 once", checkout_path(plan: "lifetime"), method: :post,
+          <%= button_to "Go Pro for $7 a month", checkout_path, method: :post,
               form: { data: { turbo: false } },
               class: "text-xs bg-amber-400 text-gray-900 px-3 py-2 rounded-lg font-medium hover:bg-amber-300 transition-colors cursor-pointer" %>
-          <%= button_to "or $7/mo", checkout_path(plan: "monthly"), method: :post,
-              form: { data: { turbo: false } },
-              class: "text-xs bg-white/10 text-white px-3 py-2 rounded-lg font-medium hover:bg-white/20 transition-colors cursor-pointer" %>
         </div>
       </section>
     <% end %>

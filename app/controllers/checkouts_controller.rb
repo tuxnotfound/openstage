@@ -1,28 +1,18 @@
 class CheckoutsController < ApplicationController
   before_action :require_authentication
 
+  # Pro is $7 a month, nothing else. The $49 lifetime deal ended on 2026-10-23:
+  # one payment stops covering Pro once its features cost money to run. A page
+  # cached from before still posts plan=lifetime; it gets the monthly plan,
+  # with the price on Stripe's own page.
   def create
-    price_id = if params[:plan] == "lifetime"
-      ENV["STRIPE_LIFETIME_PRICE_ID"]
-    else
-      ENV["STRIPE_MONTHLY_PRICE_ID"]
-    end
-
-    session_params = {
+    checkout_session = Stripe::Checkout::Session.create(
+      mode: "subscription",
+      line_items: [ { price: ENV["STRIPE_MONTHLY_PRICE_ID"], quantity: 1 } ],
       metadata: { user_id: current_user.id },
       success_url: dashboard_url + "?pro=activated",
       cancel_url: dashboard_url
-    }
-
-    if params[:plan] == "lifetime"
-      session_params[:mode] = "payment"
-      session_params[:line_items] = [{ price: price_id, quantity: 1 }]
-    else
-      session_params[:mode] = "subscription"
-      session_params[:line_items] = [{ price: price_id, quantity: 1 }]
-    end
-
-    checkout_session = Stripe::Checkout::Session.create(session_params)
+    )
     redirect_to checkout_session.url, allow_other_host: true
   end
 

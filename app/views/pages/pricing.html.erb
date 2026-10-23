@@ -1,5 +1,5 @@
 <% content_for :title, "Pricing — Openstage" %>
-<% content_for :meta_description, "Openstage is free forever: your proof-of-work page, the recap picker, and a subscribe box on your page. Pro is $49 once, or $7 a month, and adds your subscriber list, analytics, private entries and pins." %>
+<% content_for :meta_description, "Openstage is free forever: your proof-of-work page, the recap picker, and a subscribe box on your page. Pro is $7 a month and adds your subscriber list, analytics, private entries and pins." %>
 
 <%
   billing_faqs = [
@@ -7,10 +7,8 @@
       a: "Yes. Your public page, automatic GitHub sync, the recap picker, the subscribe box on your page, the social preview card and the badge are free forever. Nothing that helps your page spread is behind the paywall." },
     { q: "What does Pro actually add?",
       a: "Your subscriber list: every address that confirmed on your page, with dates, yours to keep. Plus profile analytics, private entries, up to three pinned entries, and no Openstage link in your footer." },
-    { q: "What's the difference between Lifetime and Monthly?",
-      a: "Lifetime is a single $49 payment that unlocks Pro permanently. Monthly is $7 per month and can be cancelled any time. Most builders take Lifetime; it pays for itself against Monthly in seven months." },
     { q: "Can I cancel anytime?",
-      a: "Yes. You can manage or cancel a monthly subscription from your Settings at any time, and Pro access continues until the end of the billing period." },
+      a: "Yes. You can manage or cancel your subscription from your Settings at any time, and Pro access continues until the end of the billing period." },
     { q: "How do payments work?",
       a: "Payments are handled securely by Stripe. Openstage never sees or stores your card details." }
   ]
@@ -30,7 +28,7 @@
 
 <div class="max-w-3xl mx-auto px-4 py-10">
   <header class="text-center">
-    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Free forever. Pro is $49, once.</h1>
+    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Free forever. Pro is $7 a month.</h1>
     <p class="text-lg text-gray-500 mt-3">The page, the sync, the recap and the subscribe box are free. Pro is for keeping the audience you build.</p>
   </header>
 
@@ -61,9 +59,8 @@
       <span class="absolute -top-3 left-6 bg-amber-400 text-gray-900 text-xs font-semibold px-2.5 py-0.5 rounded-full">Pro</span>
       <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Pro</h2>
       <div class="mt-2 flex items-baseline gap-1">
-        <span class="text-3xl font-bold text-gray-900">$49</span>
-        <span class="text-sm text-gray-400">once, forever</span>
-        <span class="text-sm text-gray-400 ml-2">or $7/month</span>
+        <span class="text-3xl font-bold text-gray-900">$7</span>
+        <span class="text-sm text-gray-400">a month, cancel any time</span>
       </div>
       <ul class="mt-5 space-y-2 text-sm text-gray-600 flex-1">
         <li class="flex gap-2"><span class="text-green-500">✓</span> <span><strong class="font-medium text-gray-900">Your subscriber list.</strong> Every confirmed address, with dates. Yours to keep.</span></li>
@@ -81,8 +78,7 @@
             <%= link_to "Manage billing", billing_portal_path, data: { turbo: false }, class: "block text-center text-sm text-gray-500 hover:text-gray-900" %>
           <% end %>
         <% elsif user_signed_in? %>
-          <%= button_to "Lifetime — $49 once", checkout_path(plan: "lifetime"), method: :post, form: { data: { turbo: false } }, class: "bg-gray-900 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer w-full" %>
-          <%= button_to "Monthly — $7/mo", checkout_path(plan: "monthly"), method: :post, form: { data: { turbo: false } }, class: "bg-white text-gray-700 border border-gray-200 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 cursor-pointer w-full" %>
+          <%= button_to "Go Pro for $7 a month", checkout_path, method: :post, form: { data: { turbo: false } }, class: "bg-gray-900 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer w-full" %>
         <% else %>
           <%= button_to "Sign in to go Pro", "/auth/github", method: :post, data: { turbo: false }, class: "bg-gray-900 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer w-full" %>
           <p class="text-center text-xs text-gray-400">Sign in free first, then upgrade anytime.</p>

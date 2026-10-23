@@ -10,7 +10,8 @@ RSpec.describe "llms.txt", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.media_type).to eq("text/plain")
       expect(response.body).to include("# Openstage")
-      expect(response.body).to include("$7/month or $49")
+      expect(response.body).to include("Openstage Pro is $7/month")
+      expect(response.body).not_to include("$49")
       expect(response.body).to include("/pricing")
       expect(response.body).to include("@builder")
     end

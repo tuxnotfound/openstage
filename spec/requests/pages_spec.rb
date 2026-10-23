@@ -16,8 +16,8 @@ RSpec.describe "Marketing pages", type: :request do
       get "/pricing"
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("$7")
-      expect(response.body).to include("$49")
+      expect(response.body).to include("Pro is $7 a month")
+      expect(response.body).not_to include("$49")
       expect(response.body).to include("application/ld+json")
     end
 

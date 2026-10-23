@@ -12,7 +12,7 @@
     { q: "Does it post for me?",
       a: "No. It lists the commits in the window you pick; you tick the lines worth saying, edit the text and post it yourself on X or Bluesky. Openstage never writes, ranks or posts anything for you." },
     { q: "What does it cost?",
-      a: "The page, the sync, the recap picker and a subscribe box on your page are free for good. Pro is $49 once, or $7 a month, and adds your subscriber list, profile analytics, private entries and pins." }
+      a: "The page, the sync, the recap picker and a subscribe box on your page are free for good. Pro is $7 a month and adds your subscriber list, profile analytics, private entries and pins." }
   ]
 %>
 
@@ -28,8 +28,7 @@
       "description" => SeoHelper::DEFAULT_DESCRIPTION,
       "offers" => [
         { "@type" => "Offer", "name" => "Free", "price" => "0", "priceCurrency" => "USD" },
-        { "@type" => "Offer", "name" => "Pro Monthly", "price" => "7", "priceCurrency" => "USD" },
-        { "@type" => "Offer", "name" => "Pro Lifetime", "price" => "49", "priceCurrency" => "USD" }
+        { "@type" => "Offer", "name" => "Pro Monthly", "price" => "7", "priceCurrency" => "USD" }
       ]
     }.to_json.html_safe %>
   </script>
@@ -183,6 +182,6 @@
     <% else %>
       <%= button_to "Start free with GitHub", "/auth/github", method: :post, data: { turbo: false }, class: "inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-700 border-0 cursor-pointer" %>
     <% end %>
-    <%= link_to "Pro is $49 once. See pricing", pricing_path, class: "text-sm text-gray-500 hover:text-gray-900" %>
+    <%= link_to "Pro is $7 a month. See pricing", pricing_path, class: "text-sm text-gray-500 hover:text-gray-900" %>
   </div>
 </section>

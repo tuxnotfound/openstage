@@ -259,12 +259,9 @@
               </div>
             </div>
             <div class="flex items-center gap-2 mt-4">
-              <%= button_to "Monthly — $7/mo", checkout_path(plan: "monthly"), method: :post,
+              <%= button_to "Go Pro for $7 a month", checkout_path, method: :post,
                   form: { data: { turbo: false } },
                   class: "text-xs bg-gray-900 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors cursor-pointer" %>
-              <%= button_to "Lifetime — $49", checkout_path(plan: "lifetime"), method: :post,
-                  form: { data: { turbo: false } },
-                  class: "text-xs bg-amber-400 text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-amber-300 transition-colors cursor-pointer" %>
             </div>
           <% end %>
         </div>
