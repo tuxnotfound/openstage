@@ -2,6 +2,21 @@
 # and timeouts. Its errors come out as ApplicationGateway's, so callers rescue
 # one family whatever the API.
 class StripeGateway < ApplicationGateway
+  # The address of Stripe's page that starts a Pro subscription.
+  def self.checkout_url(price:, user_id:, success_url:, cancel_url:)
+    Stripe::Checkout::Session.create(mode: "subscription", line_items: [ { price: price, quantity: 1 } ],
+                                     metadata: { user_id: user_id }, success_url: success_url, cancel_url: cancel_url).url
+  rescue Stripe::StripeError => error
+    raise translate(error)
+  end
+
+  # The address of Stripe's page where a customer manages their billing.
+  def self.billing_portal_url(customer:, return_url:)
+    Stripe::BillingPortal::Session.create(customer: customer, return_url: return_url).url
+  rescue Stripe::StripeError => error
+    raise translate(error)
+  end
+
   # Whether a monthly plan renews at the end of the period already paid for.
   def self.set_renewal(subscription_id, renew:)
     Stripe::Subscription.update(subscription_id, { cancel_at_period_end: !renew })
