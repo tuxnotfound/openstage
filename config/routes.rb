@@ -21,6 +21,9 @@ Rails.application.routes.draw do
   # Owner-only deploy/migration diagnostics
   get "/_deploy_check", to: "diagnostics#show"
 
+  # The revamp's components in light and dark, to build screens against.
+  get "/_kit", to: "kit#show", as: :kit unless Rails.env.production?
+
   # Owner-only funnel metrics; the gates are scored off this
   get "/admin", to: "admin#show", as: :admin
   post "/admin/test_email", to: "admin#test_email", as: :admin_test_email
