@@ -44,6 +44,30 @@ RSpec.describe "Project pages", type: :request do
     expect(response).to have_http_status(:not_found)
   end
 
+  describe "visits" do
+    let(:browser) { { "HTTP_USER_AGENT" => "Mozilla/5.0 (Macintosh) Safari/605.1.15", "HTTP_REFERER" => "https://news.ycombinator.com/item?id=1" } }
+
+    it "counts a visitor's, by the project's repo, with where they came from" do
+      expect { get "/builder/side.app", headers: browser }.to change(user.project_views, :count).by(1)
+
+      expect(user.project_views.last).to have_attributes(repo_name: "builder/side.app", referrer: "news.ycombinator.com")
+      expect(user.profile_views.count).to eq(0)
+    end
+
+    it "never counts the builder's own visit" do
+      sign_in_as(user)
+      get "/builder/side.app", headers: browser
+
+      expect(user.project_views.count).to eq(0)
+    end
+
+    it "never counts a bot's visit" do
+      get "/builder/side.app", headers: { "HTTP_USER_AGENT" => "Googlebot/2.1 (+http://www.google.com/bot.html)" }
+
+      expect(user.project_views.count).to eq(0)
+    end
+  end
+
   it "is linked from the builder's page and listed in the sitemap" do
     get "/builder"
     expect(response.body).to include(%(href="/builder/side.app"))

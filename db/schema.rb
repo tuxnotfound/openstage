@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_23_100005) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_23_100006) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -148,6 +148,18 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_23_100005) do
     t.index ["user_id", "country"], name: "index_profile_views_on_user_id_and_country"
     t.index ["user_id", "viewed_at"], name: "index_profile_views_on_user_id_and_viewed_at"
     t.index ["user_id"], name: "index_profile_views_on_user_id"
+  end
+
+  create_table "project_views", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "repo_name", null: false
+    t.datetime "viewed_at", null: false
+    t.string "referrer"
+    t.string "ip_hash"
+    t.string "country"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "repo_name", "viewed_at"], name: "index_project_views_on_user_id_and_repo_name_and_viewed_at"
   end
 
   create_table "solid_queue_blocked_executions", force: :cascade do |t|
@@ -360,6 +372,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_23_100005) do
   add_foreign_key "github_repo_star_counts", "github_repos", on_delete: :cascade
   add_foreign_key "github_repos", "users"
   add_foreign_key "profile_views", "users"
+  add_foreign_key "project_views", "users", on_delete: :cascade
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_claimed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_failed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
