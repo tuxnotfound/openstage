@@ -26,8 +26,9 @@ module Progress
       end
     end
 
-    # repos: the projects in view; none for all of them.
-    attr_accessor :user, :range, :offset, :repos, :cap, :swapped_ids
+    # repos: the projects in view; none for all of them. rolling: a Window
+    # that ends today, as the public page shows; else a calendar Period.
+    attr_accessor :user, :range, :offset, :repos, :cap, :swapped_ids, :rolling
     attr_reader :section
 
     validates :user, presence: true
@@ -35,14 +36,14 @@ module Progress
     private
 
     def execute
-      tally = TallyService.new(user: user, range: range, offset: offset, repos: Array(repos))
+      tally = TallyService.new(user: user, range: range, offset: offset, repos: Array(repos), rolling: rolling)
       return unless run(tally)
 
       pick = PickService.new(items: tally.items, first_day: tally.first_active_day, last_day: tally.period.last_day,
                              cap: cap || PAGE_CAP, swapped_ids: swapped_ids)
       return unless run(pick)
 
-      @section = Section.new(tally: tally, labels: PeriodLabels.new(tally.period), pick: pick,
+      @section = Section.new(tally: tally, labels: tally.period.labels, pick: pick,
                              selected: tally.projects.all.select { |project| Array(repos).include?(project.repo) })
     end
 

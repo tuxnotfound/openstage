@@ -4,7 +4,8 @@ module Progress
   # published, and the same counts over the same span of the period before.
   # With repos, only those projects' commits and the entries tagged with them
   # count; nothing is inferred from text. Days are in the zone of the
-  # builder's last saved week card, else UTC.
+  # builder's last saved week card, else UTC. Rolling, the period is a Window
+  # that ends today (the public page); otherwise a calendar Period (the cards).
   class TallyService < ApplicationService
     # A shipped or published entry on its day in the builder's zone.
     Item = Data.define(:entry, :date, :kind) do
@@ -28,8 +29,10 @@ module Progress
     end
 
     # repos: the projects in view; none for all of them.
-    attr_accessor :user, :range, :offset, :repos
+    attr_accessor :user, :range, :offset, :repos, :rolling
     attr_reader :zone, :period, :projects, :items, :buckets, :totals, :previous_totals, :first_active_day
+    # The period's first day with a commit in view; nil without one.
+    attr_reader :first_commit_day
     # The period's entries with no project that the builder has not marked as
     # having none, newest first; whatever the filter, so they can be tagged.
     attr_reader :untagged
@@ -43,14 +46,21 @@ module Progress
     def execute
       @zone = ActiveSupport::TimeZone[WeekCard.last_time_zone_for(user).to_s] || ActiveSupport::TimeZone["UTC"]
       @projects = Projects.new(public_entries)
-      @period = Period.new(range: range, offset: offset, today: Time.current.in_time_zone(zone).to_date, first_activity: first_day_of(public_entries))
+      @period = period_for(Time.current.in_time_zone(zone).to_date, first_day_of(public_entries))
       @items = items_on(period.first..period.last_day)
       @buckets = period.buckets.map { |bucket| tally_bucket(bucket) }
       @totals = totals_on(period.first..period.last_day)
       @previous_totals = totals_on(period.comparison) if period.comparison
-      @first_active_day = (selected_commits_on(period.first..period.last_day).map(&:first) + items.map(&:date)).min
+      @first_commit_day = selected_commits_on(period.first..period.last_day).map(&:first).min
+      @first_active_day = [ first_commit_day, *items.map(&:date) ].compact.min
       @untagged = untagged_on(period.first..period.last_day)
       @day_counts = window_commits.group_by(&:first).transform_values { |commits| tally(commits) }
+    end
+
+    def period_for(today, first_activity)
+      return Window.new(range: range, today: today, first_activity: first_activity) if rolling
+
+      Period.new(range: range, offset: offset, today: today, first_activity: first_activity)
     end
 
     def selected?

@@ -56,6 +56,10 @@ module Progress
       previous.first..finish
     end
 
+    def labels
+      PeriodLabels.new(self)
+    end
+
     def buckets
       @buckets ||= spans.each_with_index.map do |(from, to, monday), index|
         Bucket.new(index: index, first: from, last: to, monday: monday, current: (from..to).cover?(today))
