@@ -9,7 +9,8 @@
       <% line, area = progress_sparkline(card.weeks) %>
       <div class="os-card <%= project_class(card.rank) %>">
         <% if (picture = safe_external_url(card.picture)) %>
-          <img src="<%= picture %>" alt="" loading="lazy" class="mb-3 aspect-[2/1] w-full rounded-[12px] bg-fill object-cover">
+          <img src="<%= picture %>" alt="" loading="lazy" data-controller="hide-broken" data-action="error->hide-broken#hide"
+               class="mb-3 aspect-[2/1] w-full rounded-[12px] bg-fill object-cover">
         <% end %>
         <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <span class="inline-flex flex-wrap items-center gap-2">
