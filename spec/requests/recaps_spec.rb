@@ -182,7 +182,7 @@ RSpec.describe "Recaps", type: :request do
 
       get "/dashboard"
       expect(response.body).to include("data-recap-prompt")
-      expect(response.body).to include("You shipped 3 commits")
+      expect(Nokogiri::HTML(response.body).text.squish).to include("You shipped 3 commits")
     end
 
     it "stays silent on a quiet week" do

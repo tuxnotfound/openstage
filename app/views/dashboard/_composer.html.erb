@@ -1,0 +1,22 @@
+<%# Logging by hand: what commits can't say. %>
+<section class="os-panel">
+  <h2 class="os-h3">Add a milestone or note</h2>
+  <%= form_with url: entries_path, method: :post, scope: :entry, class: "os-stack mt-3 gap-2.5" do |f| %>
+    <%= render "entries/type_picker", f: f, current: "milestone", id_prefix: "entry_type" %>
+    <%= f.text_field :title, placeholder: "What did you do?", aria: { label: "What did you do?" }, class: "os-field" %>
+    <%= f.text_area :body, placeholder: "More detail (optional)", rows: 3, aria: { label: "More detail (optional)" }, class: "os-area" %>
+    <div class="flex flex-col gap-2.5 sm:flex-row">
+      <%= f.url_field :url, placeholder: "Link (optional)", aria: { label: "Link (optional)" }, class: "os-field" %>
+      <%= f.datetime_local_field :occurred_at, value: Time.current.strftime("%Y-%m-%dT%H:%M"), aria: { label: "When" }, class: "os-field sm:w-auto" %>
+    </div>
+    <%= f.text_field :repo_name, list: "project-suggestions", placeholder: "Project / repo (optional)",
+          aria: { label: "Project / repo (optional)" }, class: "os-field" %>
+    <datalist id="project-suggestions">
+      <% current_user.project_names.each do |name| %><option value="<%= name %>"></option><% end %>
+    </datalist>
+    <div class="os-between">
+      <span class="os-xs os-muted">Shows on your page and in your recaps. Posting is up to you.</span>
+      <%= f.submit "Post entry", class: "os-btn" %>
+    </div>
+  <% end %>
+</section>

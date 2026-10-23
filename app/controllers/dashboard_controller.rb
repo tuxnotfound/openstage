@@ -2,54 +2,18 @@ class DashboardController < ApplicationController
   before_action :require_authentication
 
   PER_PAGE = 25
+  # The activity chart opens on the last 90 days, as the drafts drew it.
+  ACTIVITY_RANGE = "90d".freeze
 
   def index
     # Paginated and searchable. This used to load every entry (178 for the
     # owner), so acting on an old one meant scrolling the whole history.
     scope = filtered_entries
-
     @entries        = scope.page(params[:page]).per(PER_PAGE)
     @filtered_count = scope.count
-    @timeline_count = current_user.entries.visible.count
-    @hidden_entries   = current_user.entries.where(hidden: true).chronological
-    @private_entries  = current_user.entries.visible.where(visibility: :private_entry).chronological
-    @last_github_sync = current_user.last_synced_at(source: :github)
-
-    # The subscriber list is the builder's. Free sees how many; Pro sees who.
-    @subscribers_count = current_user.subscriptions.confirmed.count
-    @subscribers = current_user.pro? ? current_user.subscriptions.confirmed.order(confirmed_at: :desc) : nil
-
-    # Onboarding step 3. Shown until a badge has been rendered from anywhere,
-    # which is the only honest evidence that it was actually added somewhere.
-    @badge_nudge = current_user.badge_impressions.none?
-    @badge_markdown = "[![openstage](#{profile_badge_url(current_user.username)})](#{profile_url(current_user.username)}?ref=badge)"
-
-    # Points at /recap only when the week has something to say. A quiet week
-    # gets no prompt, so the card never nags an empty page.
-    recap = RecapDraft.for_user(current_user)
-    @recap_prompt = recap unless recap.quiet?
-
-    @sync_logs = current_user.sync_logs.order(ran_at: :desc).limit(5)
-
-    # Audience card: free sees 7 days of views, Pro sees 30. The breakdown by
-    # entry, country and referrer lives on /analytics, not on the dashboard.
-    views = current_user.profile_views
-    @analytics = {
-      total_views:  views.count,
-      unique_7d:    views.unique_visitor_count(since: 7.days.ago),
-      sparkline_7d: views.daily_counts(days: 7)
-    }
-    @analytics[:sparkline_30d] = views.daily_counts(days: 30) if current_user.pro?
-
-    @show_pro_activated = params[:pro] == "activated"
-
-    @streak      = current_user.current_streak
-    @logged_today = current_user.entries.visible
-                                .where(occurred_at: Date.current.all_day)
-                                .exists?
 
     respond_to do |format|
-      format.html
+      format.html { load_page }
       # Only "Load more" (which always carries page) wants the append stream.
       # Every Turbo form that redirects here (Sync now, entry create/edit/delete)
       # also arrives accepting turbo_stream, because fetch keeps the Accept header
@@ -75,5 +39,59 @@ class DashboardController < ApplicationController
     scope = scope.where(repo_name: @repo_filter) if @repo_filter
     scope = scope.search(@query) if @query.present?
     scope
+  end
+
+  def load_page
+    load_entry_tabs
+    load_sync
+    load_audience
+    load_week
+    @activity = activity
+    # Every repo with synced work, shown or hidden, so a hidden one can come back.
+    @repos = current_user.github_repos.with_entries.order(:full_name)
+    @show_pro_activated = params[:pro] == "activated"
+  end
+
+  def load_entry_tabs
+    @timeline_count  = current_user.entries.visible.count
+    @hidden_entries  = current_user.entries.where(hidden: true).chronological
+    @private_entries = current_user.entries.visible.where(visibility: :private_entry).chronological
+  end
+
+  def load_sync
+    @last_github_sync = current_user.last_synced_at(source: :github)
+    @sync_logs = current_user.sync_logs.order(ran_at: :desc).limit(5)
+  end
+
+  # Free sees how many subscribers and 7 days of views; Pro sees who, and 30.
+  # The breakdown by entry, country and referrer lives on /analytics.
+  def load_audience
+    @subscribers_count = current_user.subscriptions.confirmed.count
+    @subscribers = current_user.pro? ? current_user.subscriptions.confirmed.order(confirmed_at: :desc) : nil
+    views = current_user.profile_views
+    @analytics = { total_views: views.count, unique_7d: views.unique_visitor_count(since: 7.days.ago),
+                   sparkline_7d: views.daily_counts(days: 7) }
+    @analytics[:sparkline_30d] = views.daily_counts(days: 30) if current_user.pro?
+
+    # Onboarding step 3. Shown until a badge has been rendered from anywhere,
+    # which is the only honest evidence that it was actually added somewhere.
+    @badge_nudge = current_user.badge_impressions.none?
+    @badge_markdown = "[![openstage](#{profile_badge_url(current_user.username)})](#{profile_url(current_user.username)}?ref=badge)"
+  end
+
+  # Points at /recap only when the week has something to say. A quiet week
+  # gets no prompt, so the card never nags an empty page.
+  def load_week
+    recap = RecapDraft.for_user(current_user)
+    @recap_prompt = recap unless recap.quiet?
+    @streak       = current_user.current_streak
+    @logged_today = current_user.entries.visible.where(occurred_at: Date.current.all_day).exists?
+  end
+
+  # The public page's chart of the builder's own work, every project in view.
+  def activity
+    service = Progress::ComposeService.new(user: current_user, rolling: true,
+                                           range: params[:range].presence_in(Progress::Window::RANGES) || ACTIVITY_RANGE)
+    service.section if service.call
   end
 end

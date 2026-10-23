@@ -1,0 +1,80 @@
+<%# Every entry, findable without scrolling the whole history, then what was
+    hidden and what only the builder sees. %>
+<section class="os-panel" data-controller="tabs" aria-label="Entries">
+  <div class="os-pills" role="tablist" aria-label="Entries">
+    <% tabs = [ [ "timeline", "Entries (#{@timeline_count})" ] ]
+       tabs << [ "hidden", "Hidden (#{@hidden_entries.size})" ] if @hidden_entries.any?
+       tabs << [ "private", "Private (#{@private_entries.size})" ] if @private_entries.any? %>
+    <% tabs.each do |key, label| %>
+      <button type="button" role="tab" data-tabs-target="tab" data-tabs-tab="<%= key %>" data-action="click->tabs#show"
+              class="os-pill data-[active=true]:bg-accent data-[active=true]:text-on-accent"><%= label %></button>
+    <% end %>
+  </div>
+
+  <div data-tabs-target="panel" data-tabs-panel="timeline" class="mt-3.5">
+    <%= form_with url: dashboard_path, method: :get, data: { controller: "autosubmit" }, class: "flex flex-wrap items-center gap-2" do %>
+      <%= search_field_tag :q, @query, placeholder: "Search your entries…", enterkeyhint: "search", autocomplete: "off",
+            aria: { label: "Search your entries" }, class: "os-field h-9 min-w-48 flex-1 text-sm" %>
+      <%= select_tag :type, options_for_select([ [ "All types", "" ] ] + Entry.entry_types.keys.map { |t| [ t.humanize, t ] }, @type_filter),
+            data: { action: "change->autosubmit#submit" }, aria: { label: "Type" }, class: "os-field h-9 w-auto cursor-pointer text-sm" %>
+      <% if @repo_options.many? %>
+        <%= select_tag :repo, options_for_select([ [ "All repos", "" ] ] + @repo_options.map { |name| [ name.split("/").last, name ] }, @repo_filter),
+              data: { action: "change->autosubmit#submit" }, aria: { label: "Repo" }, class: "os-field h-9 w-auto cursor-pointer text-sm" %>
+      <% end %>
+      <%= submit_tag "Search", class: "os-btn2 sm max-sm:hidden" %>
+      <% if @filtering %><%= link_to "Clear", dashboard_path, class: "os-link text-sm" %><% end %>
+    <% end %>
+
+    <% if @filtering %>
+      <p class="os-xs os-muted mt-3"><%= pluralize(@filtered_count, "entry") %> of <%= @timeline_count %></p>
+    <% end %>
+
+    <% if @entries.empty? %>
+      <p class="os-sm os-muted mt-4 rounded-card border border-dashed border-line py-10 text-center">
+        <% if @filtering %>
+          No entries match that. <%= link_to "Clear the filters", dashboard_path, class: "underline hover:text-ink" %>.
+        <% else %>
+          Nothing here yet. Commits appear after the first sync, or add a milestone above.
+        <% end %>
+      </p>
+    <% else %>
+      <div id="dashboard-entries" class="mt-2.5">
+        <% @entries.each do |entry| %>
+          <%= render "dashboard/entry_row", entry: entry %>
+        <% end %>
+      </div>
+      <%= render "dashboard/load_more" if @entries.next_page %>
+    <% end %>
+    <p class="os-note mt-1 border-t border-line pt-2.5"><%= pluralize(@timeline_count, "entry") %> in all, commits included.</p>
+  </div>
+
+  <% if @hidden_entries.any? %>
+    <div data-tabs-target="panel" data-tabs-panel="hidden" class="mt-2.5 hidden">
+      <% @hidden_entries.each do |entry| %>
+        <div class="os-row flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+          <span class="os-tag flex-none"><%= entry_kind(entry) %></span>
+          <span class="min-w-0 flex-[1_1_300px] font-semibold"><%= entry.title %></span>
+          <span class="os-xs os-muted"><%= [ entry.repo_name&.split("/")&.last, entry.occurred_at.strftime("%b %-d, %Y") ].compact.join(" · ") %></span>
+          <%= button_to "Restore", entry_path(entry), method: :patch, params: { hidden: false }, class: "os-btn2 sm h-8" %>
+          <%= button_to entry_path(entry), method: :delete, data: { turbo_confirm: "Permanently delete this entry?" },
+                aria: { label: "Delete" }, title: "Delete", class: "cursor-pointer text-ink-3 hover:text-down" do %>
+            <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12M9 7V5h6v2m-8 0 1 12h8l1-12"/></svg>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if @private_entries.any? %>
+    <div data-tabs-target="panel" data-tabs-panel="private" class="mt-2.5 hidden">
+      <% @private_entries.each do |entry| %>
+        <div class="os-row flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+          <span class="os-tag flex-none"><%= entry_kind(entry) %></span>
+          <span class="min-w-0 flex-[1_1_300px] font-semibold"><%= entry.title %></span>
+          <span class="os-xs os-muted"><%= [ entry.repo_name&.split("/")&.last, entry.occurred_at.strftime("%b %-d, %Y") ].compact.join(" · ") %></span>
+          <%= button_to "Make public", entry_path(entry), method: :patch, params: { visibility: "public" }, class: "os-btn2 sm h-8" %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</section>

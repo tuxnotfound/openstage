@@ -1,0 +1,4 @@
+<div id="dashboard-load-more" class="mt-3 text-center">
+  <%= link_to "Load more", dashboard_path(page: @entries.next_page, q: @query.presence, type: @type_filter, repo: @repo_filter),
+        class: "os-btn2 sm", data: { turbo_stream: true } %>
+</div>

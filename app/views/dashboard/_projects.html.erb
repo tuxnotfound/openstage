@@ -1,0 +1,28 @@
+<%# Each repo with work on Openstage: a switch for whether visitors see it,
+    and what its page is missing. Hiding a repo hides its synced entries. %>
+<section class="os-panel" aria-labelledby="your-projects">
+  <h2 id="your-projects" class="os-h3">Your projects</h2>
+  <p class="os-xs os-muted mt-0.5 mb-1.5">Choose what visitors see on your page.</p>
+  <% projects = section&.tally&.projects %>
+  <%# Busiest of all time first, as their colours go; hidden ones last. %>
+  <% repos.sort_by { |repo| [ projects&.find(repo.full_name)&.rank || Float::INFINITY, repo.name ] }.each do |repo| %>
+    <% project = projects&.find(repo.full_name) %>
+    <% commits = section&.tally&.totals&.counts&.fetch(repo.full_name, 0).to_i %>
+    <div class="os-row py-2.5" data-project-row="<%= repo.full_name %>">
+      <div class="flex items-center gap-2.5">
+        <span class="os-dot <%= project_class(project&.rank) %> bg-(--project) <%= 'opacity-40' unless repo.included? %>"></span>
+        <span class="min-w-0 flex-1 truncate font-bold"><%= repo.name %></span>
+        <%= form_with url: github_repo_path(repo), method: :patch, data: { turbo: false } do %>
+          <%= hidden_field_tag :included, (!repo.included?).to_s, id: nil %>
+          <button type="submit" role="switch" aria-checked="<%= repo.included? %>" aria-label="Show <%= repo.name %> on your page" class="os-switch"></button>
+        <% end %>
+      </div>
+      <p class="os-xs os-muted ml-5 mt-0.5">
+        <%= repo.included? ? "Shown on your page · #{pluralize(commits, 'commit')} #{section&.labels&.word}" : "Hidden from your page" %>
+      </p>
+      <% if repo.description.blank? && (url = safe_external_url(repo.url)) %>
+        <%= link_to "Add a description to the repo on GitHub", url, target: "_blank", rel: "noopener", class: "os-xs ml-5 mt-0.5 block font-bold text-warn underline" %>
+      <% end %>
+    </div>
+  <% end %>
+</section>
