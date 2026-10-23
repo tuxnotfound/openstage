@@ -5,8 +5,9 @@ class GithubAppGateway < ApplicationGateway
   PER_PAGE = 100
 
   # A repo as GitHub lists it, with the fields Openstage keeps.
-  Repo = Data.define(:id, :name, :full_name, :description, :html_url, :default_branch, :private, :stargazers_count) do
-    def initialize(stargazers_count: nil, **fields)
+  Repo = Data.define(:id, :name, :full_name, :description, :html_url, :default_branch, :private, :stargazers_count,
+                     :homepage, :archived) do
+    def initialize(stargazers_count: nil, homepage: nil, archived: false, **fields)
       super
     end
   end
@@ -73,7 +74,7 @@ class GithubAppGateway < ApplicationGateway
   end
 
   def self.to_repo(repo)
-    Repo.new(**Repo.members.to_h { |field| [ field, repo[field] ] })
+    Repo.new(**Repo.members.select { |field| repo.key?(field) }.to_h { |field| [ field, repo[field] ] })
   end
 
   # A 404 for an installation can also mean these credentials sign as another

@@ -5,8 +5,8 @@ module GithubRepos
   # what a newly seen repo starts as.
   class RecordService < ApplicationService
     # listing: anything with id, name, full_name, description, html_url,
-    # default_branch, private and stargazers_count, as Octokit and
-    # GithubAppGateway::Repo both have.
+    # default_branch, private, stargazers_count, homepage and archived, as
+    # Octokit and GithubAppGateway::Repo both have.
     attr_accessor :user, :listing
     attr_reader :repo
 
@@ -25,7 +25,9 @@ module GithubRepos
         url: listing.html_url,
         default_branch: default_branch,
         private_repo: !!listing.private,
-        stars_count: listing.stargazers_count || repo.stars_count
+        stars_count: listing.stargazers_count || repo.stars_count,
+        homepage: listing.homepage.presence,
+        archived: !!listing.archived
       )
       apply_consent_defaults
       save_with_commits

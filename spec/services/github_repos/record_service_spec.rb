@@ -26,6 +26,16 @@ RSpec.describe GithubRepos::RecordService do
     expect(record(name: "app", private: false, id: 77).stars_count).to eq(12)
   end
 
+  it "keeps the repo's website and archive flag, as GitHub lists them" do
+    live = GithubAppGateway::Repo.new(id: 78, name: "site", full_name: "tuxnotfound/site", description: nil,
+                                      html_url: "https://github.com/tuxnotfound/site", default_branch: "main", private: false,
+                                      homepage: "https://site.example", archived: true)
+
+    expect(described_class.new(user: user, listing: live).tap(&:call!).repo)
+      .to have_attributes(homepage: "https://site.example", archived: true)
+    expect(record(name: "plain", private: false)).to have_attributes(homepage: nil, archived: false)
+  end
+
   it "excludes a newly discovered private repo and includes a public one" do
     expect(record(name: "secret", private: true)).to have_attributes(private_repo: true, included: false)
     expect(record(name: "open", private: false)).to have_attributes(private_repo: false, included: true)

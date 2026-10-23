@@ -12,7 +12,9 @@ RSpec.describe GithubSyncJob, type: :job do
       html_url: "https://github.com/tuxnotfound/myapp",
       default_branch: "main",
       private: false,
-      stargazers_count: 7
+      stargazers_count: 7,
+      homepage: "",
+      archived: false
     )
   end
 
