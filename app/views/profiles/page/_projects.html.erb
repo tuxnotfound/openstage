@@ -1,6 +1,6 @@
-<%# One card per project: what GitHub says it is, and how it moved over the
-    last 52 weeks, each on its own scale. Status words wait for the repo's
-    website and archive flag to be stored. %>
+<%# One card per project: its picture, what it is, its status as GitHub
+    says it (Live with a website there, Archived), and how it moved over the
+    last 52 weeks, each on its own scale. %>
 <section class="os-panel" aria-labelledby="projects">
   <h2 id="projects" class="os-h2">Projects</h2>
   <p class="os-xs os-muted mt-1">Commits per week over the last 12 months, each project on its own scale.</p>
@@ -8,10 +8,17 @@
     <% cards.each do |card| %>
       <% line, area = progress_sparkline(card.weeks) %>
       <div class="os-card <%= project_class(card.rank) %>">
+        <% if (picture = safe_external_url(card.picture)) %>
+          <img src="<%= picture %>" alt="" loading="lazy" class="mb-3 aspect-[2/1] w-full rounded-[12px] bg-fill object-cover">
+        <% end %>
         <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <%= link_to progress_view_path(user, repo: [ card.repo ]), class: "os-h3 inline-flex items-center gap-2 text-xl hover:underline" do %>
-            <span class="os-dot size-[11px] bg-(--project)"></span><%= card.name %>
-          <% end %>
+          <span class="inline-flex flex-wrap items-center gap-2">
+            <%= link_to progress_view_path(user, repo: [ card.repo ]), class: "os-h3 inline-flex items-center gap-2 text-xl hover:underline" do %>
+              <span class="os-dot size-[11px] bg-(--project)"></span><%= card.name %>
+            <% end %>
+            <% if card.live? %><span class="os-tag soft">Live</span><% end %>
+            <% if card.archived? %><span class="os-tag">Archived</span><% end %>
+          </span>
           <% unless card.private_repo.nil? %>
             <span class="os-xs os-muted"><%= card.private_repo ? "private repo, commit messages only" : "public repo" %></span>
           <% end %>
@@ -26,6 +33,9 @@
         <p class="os-sm os-ink2 mt-2.5">
           <span class="os-num font-bold text-ink"><%= card.commits %></span> <%= card.commits == 1 ? "commit" : "commits" %> in 12 months<% if card.last_commit %> · last commit <%= progress_ago(card.last_commit) %><% end %>
         </p>
+        <% if (website = safe_external_url(card.website)) %>
+          <a href="<%= website %>" target="_blank" rel="noopener" class="os-link mt-1.5 inline-block text-sm"><%= URI(website).host %> <span aria-hidden="true">↗</span></a>
+        <% end %>
       </div>
     <% end %>
   </div>

@@ -34,9 +34,9 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     get "/dashboard"
 
     expect(project_rows.keys).to eq(%w[builder/app builder/bare])
-    expect(project_rows["builder/app"]).to include("Shown on your page · 3 commits in the last 90 days")
-    expect(project_rows["builder/app"]).not_to include("Add a description")
-    expect(page.at_css("[data-project-row='builder/bare'] a")["href"]).to eq("https://github.com/builder/bare")
+    expect(project_rows["builder/app"]).to include("Shown on your page · 3 commits in the last 90 days", "Add website and picture · Edit")
+    expect(project_rows["builder/bare"]).to include("Add description, website, and picture · Edit")
+    expect(page.at_css("[data-project-row='builder/bare'] a")["href"]).to eq("/projects/#{bare.id}/edit")
     expect(idle).to be_persisted
   end
 

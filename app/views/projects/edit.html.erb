@@ -1,0 +1,29 @@
+<%# Opens in the project's row on the dashboard. Each field shows what GitHub
+    says now; leaving it blank keeps GitHub's. %>
+<%= turbo_frame_tag dom_id(@repo, :project) do %>
+  <div class="os-card my-2">
+    <%= form_with model: @repo, url: project_path(@repo), method: :patch, class: "os-stack gap-2.5" do |f| %>
+      <% if @repo.errors.any? %>
+        <p role="alert" class="os-xs font-bold text-down"><%= @repo.errors.full_messages.to_sentence %></p>
+      <% end %>
+      <label class="os-fieldset">
+        <span class="os-label">What it is</span>
+        <%= f.text_area :description_edit, rows: 2, maxlength: 280, class: "os-area min-h-16 text-sm",
+              placeholder: @repo.description.presence || @repo.readme_line.presence || "One sentence on what it does" %>
+      </label>
+      <label class="os-fieldset">
+        <span class="os-label">Website</span>
+        <%= f.url_field :website_edit, class: "os-field h-10 text-sm", placeholder: @repo.homepage.presence || "https://" %>
+      </label>
+      <label class="os-fieldset">
+        <span class="os-label">Picture</span>
+        <%= f.url_field :image_edit, class: "os-field h-10 text-sm", placeholder: @repo.preview_image_url.presence || "https:// an image, 2:1 suits it best" %>
+      </label>
+      <p class="os-note">Blank keeps what GitHub says. Your words win once you write them.</p>
+      <div class="flex items-center gap-2">
+        <%= f.submit "Save", class: "os-btn sm" %>
+        <%= link_to "Cancel", dashboard_path, class: "os-btn2 sm", data: { turbo_frame: dom_id(@repo, :project) } %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

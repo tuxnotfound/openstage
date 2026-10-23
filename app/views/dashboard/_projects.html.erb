@@ -1,5 +1,6 @@
 <%# Each repo with work on Openstage: a switch for whether visitors see it,
-    and what its page is missing. Hiding a repo hides its synced entries. %>
+    what its page is missing, and its words, website and picture to edit in
+    place. Hiding a repo hides its synced entries. %>
 <section class="os-panel" aria-labelledby="your-projects">
   <h2 id="your-projects" class="os-h3">Your projects</h2>
   <p class="os-xs os-muted mt-0.5 mb-1.5">Choose what visitors see on your page.</p>
@@ -20,8 +21,13 @@
       <p class="os-xs os-muted ml-5 mt-0.5">
         <%= repo.included? ? "Shown on your page · #{pluralize(commits, 'commit')} #{section&.labels&.word}" : "Hidden from your page" %>
       </p>
-      <% if repo.description.blank? && (url = safe_external_url(repo.url)) %>
-        <%= link_to "Add a description to the repo on GitHub", url, target: "_blank", rel: "noopener", class: "os-xs ml-5 mt-0.5 block font-bold text-warn underline" %>
+      <%= turbo_frame_tag dom_id(repo, :project), class: "ml-5 mt-0.5" do %>
+        <p class="os-xs">
+          <% if (missing = repo.missing).any? %>
+            <span class="font-bold text-warn">Add <%= missing.to_sentence %></span> ·
+          <% end %>
+          <%= link_to "Edit", edit_project_path(repo), class: "font-bold underline hover:text-accent-ink" %>
+        </p>
       <% end %>
     </div>
   <% end %>

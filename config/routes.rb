@@ -49,6 +49,9 @@ Rails.application.routes.draw do
   # Sync triggers
   post "/sync/github", to: "syncs#github", as: :sync_github
 
+  # A project's words, website and picture, edited in its dashboard row.
+  resources :projects, only: [ :edit, :update ]
+
   # Repo management. index is the Settings frame that checks GitHub first.
   resources :github_repos, only: [ :index, :update ]
 

@@ -161,6 +161,19 @@ RSpec.describe "Profiles", type: :request do
         expect(cards.first).to include("app", "public repo", "A tool for builders.", "2 commits in 12 months · last commit yesterday")
         expect(cards.last).to include("secret", "private repo, commit messages only", "1 commit in 12 months · last commit 3 days ago")
       end
+
+      it "shows a project's own words, picture and status, as the builder and GitHub set them" do
+        user.github_repos.find_by(full_name: "builder/app")
+            .update!(description_edit: "My words.", homepage: "https://app.example", archived: true,
+                     preview_image_url: "https://repository-images.githubusercontent.com/1/x")
+
+        get "/builder"
+
+        card = Nokogiri::HTML(response.body).at_css("section[aria-labelledby='projects'] .os-card")
+        expect(card.text.squish).to include("app Live Archived", "My words.", "app.example")
+        expect(card.at_css("img")["src"]).to eq("https://repository-images.githubusercontent.com/1/x")
+        expect(card.at_css("a[href='https://app.example']")["target"]).to eq("_blank")
+      end
     end
 
     context "filtering by project (the whole story)" do
