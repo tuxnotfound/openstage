@@ -68,20 +68,24 @@
   --color-ink-3: #666A73;
   --color-line: #E2E4E8;
   --color-strong: #0E0F12;
-  /* "Up" wears the accent; arrows always carry the direction too. Down on a
-     panel is 4.33:1 in light, so it colours arrows and marks, never words. */
+  /* "Up" wears the accent; arrows always carry the direction too. Down holds
+     4.5:1 on a panel in both modes, so it may colour words. Danger is one red
+     in both modes, under white text (4.76:1). */
   --color-up: #006B72;
-  --color-down: #D33A2C;
-  --color-on-down: #FFFFFF;
+  --color-down: #C53628;
   --color-down-soft: #FBEAE8;
+  --color-danger: #D33A2C;
+  --color-on-danger: #FFFFFF;
   --color-warn: #8A5A00;
   --color-accent: #006B72;
   --color-on-accent: #FFFFFF;
   --color-accent-soft: #E0EDEE;
   --color-accent-ink: #006B72;
 
-  /* By all-time commit order (ProgressChart::Palette); the 7th on is grey. */
-  --color-project-1: #2a78d6;
+  /* By all-time commit order (ProgressChart::Palette); the 7th on is grey.
+     Project 1 was #2a78d6, darkened on 2026-10-23 so white text on it holds
+     4.5:1; the validator passes it and it sits further from the accent. */
+  --color-project-1: #2f6ee0;
   --color-project-2: #eb6834;
   --color-project-3: #1baf7a;
   --color-project-4: #eda100;
@@ -115,8 +119,7 @@
       --color-line: #2A2E35;
       --color-strong: #F3F4F6;
       --color-up: #45C9D1;
-      --color-down: #FF7B6B;
-      --color-on-down: #0E0F12;
+      --color-down: #FF6457;
       --color-down-soft: #3A2220;
       --color-warn: #E8B640;
       --color-accent: #45C9D1;
@@ -191,8 +194,8 @@
   .os-btn2 { border: 1.5px solid var(--color-line); background: transparent; color: var(--color-ink); }
   .os-btn2:hover { border-color: var(--color-ink-3); }
   .os-btn.sm, .os-btn2.sm { height: 36px; padding: 0 14px; font-size: 14px; border-radius: 10px; }
-  .os-btn.danger { background: var(--color-down); color: var(--color-on-down); }
-  .os-btn.danger:hover { background: color-mix(in oklab, var(--color-down) 86%, var(--color-ink)); }
+  .os-btn.danger { background: var(--color-danger); color: var(--color-on-danger); }
+  .os-btn.danger:hover { background: color-mix(in oklab, var(--color-danger) 86%, #000000); }
   .os-btn:disabled, .os-btn2:disabled { opacity: .5; cursor: not-allowed; }
   .os-link { font-size: 15px; font-weight: 700; color: var(--color-accent-ink); text-decoration: underline; text-underline-offset: 3px; }
 
