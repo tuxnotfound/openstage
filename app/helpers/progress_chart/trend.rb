@@ -23,8 +23,10 @@ module ProgressChart
 
     attr_reader :section
 
-    def initialize(section)
+    # discs: false when the builder hides the shipped and published list.
+    def initialize(section, discs: true)
       @section = section
+      @show_discs = discs
     end
 
     # Only the page's 30-day window averages; a calendar week counts each day.
@@ -55,7 +57,7 @@ module ProgressChart
     end
 
     def discs
-      @discs ||= Placement.new(self).discs
+      @discs ||= @show_discs ? Placement.new(self).discs : []
     end
 
     # The first point, the middle one and today, under the chart.

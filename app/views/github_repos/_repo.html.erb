@@ -1,32 +1,23 @@
 <%# Single source of truth for a repo row: rendered both in Settings and by the
     turbo_stream response, which previously had its own drifting copy. %>
 <%= turbo_frame_tag dom_id(repo) do %>
-  <div class="flex items-center justify-between px-5 py-3">
-    <div class="min-w-0 flex-1">
-      <p class="text-sm font-medium text-gray-800 truncate">
-        <% unless repo.owned_by_user? %><span class="font-normal text-gray-400"><%= repo.owner_login %> /</span><% end %>
-        <%= repo.name %>
-        <% if repo.private_repo? %>
-          <span class="ml-1 text-xs font-normal px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">private</span>
-        <% end %>
+  <div class="os-row flex items-center gap-3 py-[11px]">
+    <div class="min-w-0 flex-auto">
+      <p class="truncate">
+        <% unless repo.owned_by_user? %><span class="os-muted"><%= repo.owner_login %> /</span><% end %>
+        <span class="font-bold"><%= repo.name %></span>
+        <% if repo.private_repo? %><span class="os-tag ml-1 h-5 px-2 text-[11px]">private</span><% end %>
       </p>
       <% if repo.private_repo? %>
-        <p class="text-xs <%= repo.included? ? "text-amber-700" : "text-gray-400" %>">
-          <% if repo.included? %>
-            Commit messages and releases from this private repo are public on your profile. Code and links are not.
-          <% else %>
-            Excluded. Include it to publish its commit messages and releases (your code stays private).
-          <% end %>
+        <p class="os-xs <%= repo.included? ? 'font-semibold text-warn' : 'os-muted' %>">
+          <%= repo.included? ? "Commit messages and releases from this private repo are public on your profile. Code and links are not." : "Excluded. Include it to publish its commit messages and releases (your code stays private)." %>
         </p>
-      <% elsif repo.description.present? %>
-        <p class="text-xs text-gray-400 truncate"><%= repo.description %></p>
+      <% elsif repo.project_description.present? %>
+        <p class="os-xs os-muted truncate"><%= repo.project_description %></p>
       <% end %>
     </div>
-
-    <%= button_to github_repo_path(repo), method: :patch,
-        params: { included: (!repo.included?).to_s },
-        class: "ml-4 shrink-0 text-xs px-3 py-1 rounded-full border transition-colors #{repo.included? ? 'border-green-300 text-green-700 bg-green-50 hover:bg-green-100' : 'border-gray-200 text-gray-400 bg-white hover:border-gray-400'}" do %>
-      <%= repo.included? ? "Included" : "Excluded" %>
-    <% end %>
+    <span class="os-xs os-muted shrink-0"><%= repo.included? ? "Included" : "Excluded" %></span>
+    <%= button_to "", github_repo_path(repo), method: :patch, params: { included: (!repo.included?).to_s },
+          role: "switch", aria: { checked: repo.included?, label: "Include #{repo.name}" }, class: "os-switch" %>
   </div>
 <% end %>

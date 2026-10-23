@@ -54,7 +54,7 @@
       <% elsif (section = @page&.section) %>
         <%= render "profiles/page/headline", user: @user, section: section %>
         <%= render "profiles/page/filters", user: @user, section: section %>
-        <%= render "profiles/page/trend", user: @user, section: section, chart: ProgressChart::Trend.new(section) %>
+        <%= render "profiles/page/trend", user: @user, section: section, chart: ProgressChart::Trend.new(section, discs: @user.shipped_list?) %>
         <% if current_user == @user %>
           <%= render "profiles/page/untagged", user: @user, section: section %>
         <% end %>

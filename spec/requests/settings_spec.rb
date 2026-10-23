@@ -132,6 +132,23 @@ RSpec.describe "Settings", type: :request do
         expect(user.reload.branch_commits).to be(true)
       end
 
+      it "hides the shipped and published list beside the chart, and its discs, on the builder's page" do
+        create(:entry, user: user, repo_name: "#{user.github_username}/app", occurred_at: 2.days.ago)
+        create(:entry, user: user, entry_type: "milestone", source: "manual", title: "Launched", occurred_at: 1.day.ago)
+
+        get "/settings"
+        expect(response.body).to include(%(<input class="os-switch mt-1" type="checkbox" value="1" checked="checked" name="user[shipped_list]"))
+
+        patch settings_path, params: { user: { shipped_list: "0" } }
+        expect(user.reload.shipped_list).to be(false)
+
+        get "/#{user.username}"
+        panel = Nokogiri::HTML(response.body).at_css("section[aria-label='Profile']")
+        expect(panel.text).not_to include("Shipped and published, last 12 months")
+        expect(panel.css(".os-disc")).to be_empty
+        expect(response.body).to include("Launched")
+      end
+
       # The re-render used to read instance variables only show set, and 500ed.
       it "re-renders Settings with the reason when a value is rejected" do
         patch settings_path, params: { user: { website_url: "javascript:alert(1)" } }
