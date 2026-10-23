@@ -1,8 +1,8 @@
 module SeoHelper
   SITE_NAME = "Openstage".freeze
-  DEFAULT_TITLE = "Openstage — Your automatic proof-of-work page".freeze
-  DEFAULT_DESCRIPTION = "Openstage turns your GitHub commits into a public proof-of-work page that stays " \
-    "current on its own, and pre-fills your build-in-public posts. You pick the lines. Free for indie builders.".freeze
+  DEFAULT_TITLE = "Openstage: what you're building, project by project".freeze
+  DEFAULT_DESCRIPTION = "Openstage keeps a public page of what you're building, project by project, " \
+    "current from your GitHub commits. Free for indie builders.".freeze
 
   # Title shown in <title> and og:title. Pages set it with `content_for :title`.
   # Dynamic pages (e.g. profiles) should use the block form so user data is escaped.

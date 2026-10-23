@@ -1,26 +1,24 @@
 class HomeController < ApplicationController
+  # The demo page opens on its last 12 months, as every page does.
+  DEMO_RANGE = "12m".freeze
+
   def index
-    # A real profile above the fold. The page used to describe a visual product
-    # in prose and link the demo in a footnote nobody clicked.
+    # A real page above the fold: its headline number, its chart and what it
+    # shipped, drawn by the same code as the page itself.
     @demo_user = User.active.find_by(username: ENV.fetch("DEMO_USERNAME", "tuxnotfound"))
-    @demo_entries = []
-
-    # Both halves of a page: one entry the builder wrote next to what the sync
-    # wrote. A pinned one wins, because the builder chose it. With nothing
-    # written by hand, the card falls back to three commits.
-    if @demo_user
-      shown = @demo_user.entries.publicly_visible.without_tooling_noise
-      @demo_highlight = shown.where(entry_type: %w[milestone note released])
-                             .order(pinned: :desc, occurred_at: :desc).first
-      @demo_entries = shown.where(entry_type: RecapDraft::COMMIT_TYPES).chronological
-                           .limit(@demo_highlight ? 2 : 3).to_a
-    end
-
-    # No recap example either. The founder's posts are rewritten by hand, so a
-    # "ticked commits next to the post" panel could only ever show nothing
-    # ticked. The four steps describe the recap; the picker shows it.
+    @demo = demo_section if @demo_user
 
     # No global feed here. It sold a network of a handful of people, which is
     # the framing the rebirth dropped; /feed is still one click from a profile.
+  end
+
+  private
+
+  # Nothing to show without a commit in the window.
+  def demo_section
+    service = Progress::ComposeService.new(user: @demo_user, range: DEMO_RANGE, rolling: true)
+    return unless service.call
+
+    service.section if service.section.tally.totals.commits.positive?
   end
 end

@@ -26,7 +26,7 @@ RSpec.describe "Home layout", type: :request do
     expect(response.body).not_to include("Everything on one page")
   end
 
-  it "shows a real profile above the fold, with a way to see all of it" do
+  it "shows a real page above the fold, with a way to see all of it" do
     get "/"
 
     expect(response.body).to include("A real Openstage page")
@@ -34,62 +34,44 @@ RSpec.describe "Home layout", type: :request do
     expect(response.body).to include("See a live page")
   end
 
-  it "says what commits can't, and where the page goes" do
+  it "sells projects: a line each, and what each one is" do
     get "/"
 
-    expect(response.body).to include("Add what commits can't say")
-    expect(response.body).to include("Share one link")
+    expect(response.body).to include("Every project gets its line")
+    expect(response.body).to include("What each project is")
   end
 
-  # The recap picker is gone; the week card is what a builder posts.
-  it "sells the week card, not the recap picker" do
+  # The recap picker is gone; Make a card is what a builder posts.
+  it "sells Make a card, not the recap picker" do
     get "/"
 
-    expect(response.body).to include("Post your week")
+    expect(response.body).to include("Make a card")
     expect(response.body).not_to match(/recap/i)
   end
 
-  it "links the live page once in text; the card itself is the other way in" do
-    get "/"
-
-    expect(response.body).not_to include("see the whole thing")
-    expect(response.body).to include(%(aria-label="Open Tux&#39;s live Openstage page"))
-  end
-
   describe "demo card" do
-    it "shows an entry written by hand next to two commits, preferring a pinned one" do
-      create(:entry, user: demo, entry_type: "milestone", source: "manual", title: "Newer milestone", occurred_at: 1.hour.ago)
-      create(:entry, user: demo, entry_type: "milestone", source: "manual", title: "Rebirth begins", pinned: true, occurred_at: 3.weeks.ago)
+    it "draws the page's last 12 months: the number, the chart and the latest shipped" do
+      create(:entry, user: demo, entry_type: "milestone", source: "manual", title: "Rebirth begins", occurred_at: 3.weeks.ago)
 
       get "/"
 
-      highlight = response.body[/<div[^>]*data-demo-highlight.*?<\/div>/m]
-      expect(highlight).to include("Pinned milestone, written by hand")
-      expect(highlight).to include("Rebirth begins")
-      expect(response.body).not_to include("Newer milestone")
-      expect(response.body.scan("Commit message").size).to eq(2)
+      card = response.body[/<div class="os-card min-w-0 p-5">.*A real Openstage page/m]
+      expect(card).to include("commits, last 12 months")
+      expect(card).to include("os-chart")
+      expect(card).to include("Rebirth begins")
+      expect(card).to include(%(href="/tuxnotfound"))
     end
 
-    # The profile already drops them; the card showed "Merge pull request #5"
+    # The page already leaves them out; the card showed "Merge pull request #5"
     # to Product Hunt visitors on 2026-10-20.
-    it "leaves merge and dependency-bump commits off the card, as the profile does" do
-      demo.entries.update_all(occurred_at: 1.hour.ago)
-      create(:entry, user: demo, title: "Merge pull request #5 from tuxnotfound/fix/weekly-email-body", occurred_at: 1.minute.ago)
-      create(:entry, user: demo, title: "Bump rack from 2.2.8 to 2.2.9", occurred_at: 2.minutes.ago)
+    it "counts merge and dependency-bump commits no more than the page does" do
+      create(:entry, user: demo, title: "Merge pull request #5 from tuxnotfound/fix/weekly-email-body")
+      create(:entry, user: demo, title: "Bump rack from 2.2.8 to 2.2.9")
 
       get "/"
 
+      expect(response.body).to match(%r{<span class="os-num[^"]*">3</span>\s*<span[^>]*>commits, last 12 months})
       expect(response.body).not_to include("Merge pull request #5")
-      expect(response.body).not_to include("Bump rack")
-      expect(response.body.scan("Commit message").size).to eq(3)
-    end
-
-    it "falls back to three commits when nothing was written by hand" do
-      get "/"
-
-      expect(response.body).not_to include("data-demo-highlight")
-      expect(response.body.scan("Commit message").size).to eq(3)
-      expect(response.body).to include("kept current by its commits")
     end
   end
 

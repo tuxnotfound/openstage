@@ -30,6 +30,7 @@ RSpec.describe "Home", type: :request do
 
     it "shows only public entries of the demo page" do
       demo = create(:user, username: "tuxnotfound")
+      create(:entry, user: demo)
       create(:entry, user: demo, title: "Public entry", entry_type: "note", source: "manual", occurred_at: 1.hour.ago)
       create(:entry, user: demo, title: "Hidden entry", hidden: true, entry_type: "note", source: "manual", occurred_at: 2.hours.ago)
       create(:entry, user: demo, title: "Private entry", visibility: "private", entry_type: "note", source: "manual", occurred_at: 3.hours.ago)
