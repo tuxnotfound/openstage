@@ -123,6 +123,10 @@ Rails.application.routes.draw do
   # GEO — structured summary for LLMs / AI search engines (llmstxt.org)
   get "/llms.txt", to: "llms#show", as: :llms, defaults: { format: :text }
 
+  # A project page's Visit and View on GitHub buttons, counted on the way out.
+  get "/:username/:project/:to", to: "project_clicks#show", as: :project_click_out, format: false,
+      constraints: { username: /[a-zA-Z0-9_-]+/, project: /[a-zA-Z0-9._-]+/, to: /visit|github/ }
+
   # A project's page: the repo's name without its owner. format: false, as
   # repo names may hold a dot.
   get "/:username/:project", to: "project_pages#show", as: :project_page, format: false,

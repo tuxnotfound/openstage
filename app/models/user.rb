@@ -18,6 +18,7 @@ class User < ApplicationRecord
   has_many :sync_logs, dependent: :destroy
   has_many :profile_views, dependent: :destroy
   has_many :project_views, dependent: :delete_all
+  has_many :project_clicks, dependent: :delete_all
   has_many :entry_clicks, dependent: :destroy
   has_many :badge_impressions, dependent: :destroy
 

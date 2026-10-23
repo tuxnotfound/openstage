@@ -43,6 +43,16 @@ class GithubRepo < ApplicationRecord
     image_edit.presence || preview_image_url.presence
   end
 
+  # Where a project page's button sends a visitor: "visit", its website;
+  # "github", the repo, for public repos only. nil without one, or for a
+  # website that is not http(s), so no button ever opens another scheme.
+  def outbound_url(kind)
+    case kind
+    when "visit" then website if website.to_s.match?(%r{\Ahttps?://\S+\z}i)
+    when "github" then "https://github.com/#{full_name}" unless private_repo?
+    end
+  end
+
   # "Live" reads from GitHub only: the repo has a website there.
   def live?
     homepage.present?

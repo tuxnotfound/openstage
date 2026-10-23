@@ -34,11 +34,12 @@
         <p class="os-p mt-3 max-w-[62ch] text-[19px]/[1.5] text-ink"><%= card.description %></p>
       <% end %>
       <div class="mt-5 flex flex-wrap gap-2.5">
-        <% if website %>
-          <a href="<%= website %>" target="_blank" rel="noopener" class="os-btn">Visit <%= URI(website).host %> <span aria-hidden="true">↗</span></a>
+        <% slug = project.repo.split("/").last %>
+        <% if website && card.github_repo.outbound_url("visit") %>
+          <a href="<%= project_click_out_path(@user.username, slug, "visit") %>" target="_blank" rel="noopener" data-turbo="false" class="os-btn">Visit <%= URI(website).host %> <span aria-hidden="true">↗</span></a>
         <% end %>
-        <% if card&.private_repo == false %>
-          <a href="https://github.com/<%= project.repo %>" target="_blank" rel="noopener" class="os-btn2">View on GitHub <span aria-hidden="true">↗</span></a>
+        <% if card&.github_repo&.outbound_url("github") %>
+          <a href="<%= project_click_out_path(@user.username, slug, "github") %>" target="_blank" rel="noopener" data-turbo="false" class="os-btn2">View on GitHub <span aria-hidden="true">↗</span></a>
         <% end %>
       </div>
     </div>
