@@ -44,6 +44,12 @@ RSpec.describe "Weekly email", type: :request do
     expect(user.reload.weekly_email).to be(true)
   end
 
+  it "sends a link to the old recap picker, from an email already sent, to the week card" do
+    get "/recap", params: { from: "weekly" }
+
+    expect(response).to redirect_to("/week?from=weekly")
+  end
+
   it "counts the week card opened from the email" do
     sign_in_as(user)
 

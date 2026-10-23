@@ -36,6 +36,10 @@ Rails.application.routes.draw do
   patch "/week/:week", to: "week_cards#update", constraints: { week: /\d{4}-W\d{2}/ }
   get "/week/:week/preview", to: "week_cards#preview", as: :week_card_preview, constraints: { week: /\d{4}-W\d{2}/ }
 
+  # The recap picker is gone; links in weekly emails already sent open the
+  # week card instead, still counted as opened from the email.
+  get "/recap", to: redirect { |_params, request| [ "/week", request.query_string.presence ].compact.join("?") }
+
   # What the cards report from the browser: downloads, copies, compose boxes.
   post "/events", to: "events#create", as: :events
 
