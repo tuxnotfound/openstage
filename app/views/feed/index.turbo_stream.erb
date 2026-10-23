@@ -1,5 +1,5 @@
-<%= turbo_stream.append "feed-entries" do %>
-  <%= render partial: "home/feed_entry", collection: @entries, as: :entry %>
+<%= turbo_stream.append "feed-groups" do %>
+  <%= render partial: "feed/group", collection: feed_groups(@entries), as: :group %>
 <% end %>
 
 <% if @entries.next_page %>

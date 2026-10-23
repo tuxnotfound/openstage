@@ -21,6 +21,14 @@ class User < ApplicationRecord
   has_many :badge_impressions, dependent: :destroy
 
   scope :active, -> { where(deleted_at: nil) }
+  # Everyone but the owner, by owner?'s rule, so the feed shows the others.
+  scope :not_owner, -> {
+    if (uid = ENV["OWNER_GITHUB_UID"].presence)
+      where.not(github_uid: uid)
+    else
+      where("users.github_username IS NULL OR LOWER(users.github_username) <> ?", ENV.fetch("OWNER_GITHUB_USERNAME", "tuxnotfound").downcase)
+    end
+  }
   # Everyone the numbers count: test accounts (internal) stay out of /admin,
   # the owner digest and the gates.
   scope :counted, -> { active.where(internal: false) }
