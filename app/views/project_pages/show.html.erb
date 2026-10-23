@@ -1,0 +1,128 @@
+<% project = @focus.project %>
+<% card = @focus.card %>
+<% section = @focus.page.section %>
+<% website = safe_external_url(card&.website) %>
+<% content_for :title, "#{project.name} by #{@user.display_name} — Openstage" %>
+<% content_for :meta_description, card&.description.presence || "#{project.name}, a project #{@user.display_name} is building in public on Openstage." %>
+<% content_for :canonical, project_page_url(@user.username, project.repo.split("/").last) %>
+<% content_for :og_image, "#{og_image_url(@user.username)}?v=3" %>
+<% content_for :dark_mode, true %>
+<% content_for :main_class, "os-wrap os-stack pt-1.5" %>
+
+<nav aria-label="Breadcrumb" class="os-sm flex items-center gap-2 px-1">
+  <img src="<%= @user.avatar_url %>" alt="" class="os-avatar size-6">
+  <%= link_to @user.display_name, profile_path(@user.username), class: "os-link text-sm" %>
+  <span class="os-muted" aria-hidden="true">/</span>
+  <span class="font-bold" aria-current="page"><%= project.name %></span>
+</nav>
+
+<section class="os-panel <%= project_class(project.rank) %>" aria-label="<%= project.name %>">
+  <div class="flex flex-wrap items-start gap-x-9 gap-y-6">
+    <div class="min-w-0 flex-[999_1_520px]">
+      <div class="flex flex-wrap gap-2">
+        <% if card&.live? %><span class="os-tag soft">Live</span><% end %>
+        <% if card&.archived? %><span class="os-tag">Archived</span><% end %>
+        <% unless card.nil? || card.private_repo.nil? %>
+          <span class="os-tag"><%= card.private_repo ? "Private repo, commit messages only" : "Public repo" %></span>
+        <% end %>
+        <% if card&.last_commit %><span class="os-tag">Last commit <%= progress_ago(card.last_commit) %></span><% end %>
+      </div>
+      <h1 class="os-h1 mt-3.5 flex items-center gap-4 text-[clamp(36px,5vw,56px)] [overflow-wrap:anywhere]">
+        <span class="os-dot size-4 shrink-0 bg-(--project)" aria-hidden="true"></span><%= project.name %>
+      </h1>
+      <% if card&.description %>
+        <p class="os-p mt-3 max-w-[62ch] text-[19px]/[1.5] text-ink"><%= card.description %></p>
+      <% end %>
+      <div class="mt-5 flex flex-wrap gap-2.5">
+        <% if website %>
+          <a href="<%= website %>" target="_blank" rel="noopener" class="os-btn">Visit <%= URI(website).host %> <span aria-hidden="true">↗</span></a>
+        <% end %>
+        <% if card&.private_repo == false %>
+          <a href="https://github.com/<%= project.repo %>" target="_blank" rel="noopener" class="os-btn2">View on GitHub <span aria-hidden="true">↗</span></a>
+        <% end %>
+      </div>
+    </div>
+    <%= render "project_pages/follow", user: @user, card: card %>
+  </div>
+
+  <% arrow, change, up = progress_change(section) %>
+  <div class="os-between mt-7.5 items-end">
+    <div>
+      <p class="os-label">Commits · <%= section.labels.words %></p>
+      <div class="mt-0.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-1.5">
+        <span class="os-num os-big"><%= section.tally.totals.commits %></span>
+        <% if change.present? %>
+          <span class="text-lg font-semibold text-ink-2">
+            <% if arrow %><span class="<%= up ? 'text-up' : 'text-down' %>" aria-label="<%= up ? 'Up' : 'Down' %>"><%= arrow %></span><% end %>
+            <%= change %>
+          </span>
+        <% end %>
+      </div>
+    </div>
+    <nav class="os-pills" aria-label="Time range">
+      <% ProgressHelper::RANGES.each do |range, label| %>
+        <%= link_to label, project_page_for(@user, project, range: range == Progress::Window::DEFAULT ? nil : range),
+              class: "os-pill max-sm:px-2", aria: { current: (section.labels.range == range ? "page" : nil) } %>
+      <% end %>
+    </nav>
+  </div>
+  <%= render "profiles/page/trend", user: @user, section: section, chart: ProgressChart::Trend.new(section, discs: @user.shipped_list?) %>
+</section>
+
+<div class="flex flex-wrap items-start gap-4.5">
+  <div class="os-stack min-w-0 flex-[999_1_560px]">
+    <% if (news = @focus.news) %>
+      <section class="os-panel" aria-labelledby="whats-new">
+        <div class="os-between">
+          <h2 id="whats-new" class="os-h2">What's new</h2>
+          <span class="os-xs os-muted"><%= news.occurred_at.strftime("%b %-d") %> · <%= Entry::SHIPPED_TYPES.include?(news.entry_type) ? "Shipped" : "Published" %></span>
+        </div>
+        <h3 class="os-h3 mt-3 text-[22px]">
+          <% if (url = safe_external_url(news.url)) %>
+            <%= link_to news.title, entry_click_out_path(news.id), target: "_blank", rel: "noopener", data: { turbo: false }, class: "hover:underline", title: url %>
+          <% else %>
+            <%= news.title %>
+          <% end %>
+        </h3>
+        <% if news.body.present? %>
+          <p class="os-p mt-2 whitespace-pre-line"><%= news.body %></p>
+        <% end %>
+      </section>
+    <% end %>
+    <%= render "profiles/page/recent", user: @user, groups: @focus.page.recent, by_project: false if @focus.page.recent.any? %>
+    <%= render "profiles/page/shipped", section: section %>
+  </div>
+
+  <aside class="os-panel min-w-0 flex-[1_1_300px]" aria-labelledby="details">
+    <h2 id="details" class="os-h3">Details</h2>
+    <dl class="mt-2.5">
+      <% facts = [ [ "Commits, all time", project.commits ] ] %>
+      <% facts << [ "First commit", @focus.first_commit.to_date.strftime("%b %-d, %Y") ] if @focus.first_commit %>
+      <% facts << [ "Shipped and published", @focus.highlights ] if @focus.highlights.positive? %>
+      <% facts << [ "Stars on GitHub", card.github_repo.stars_count ] if card&.github_repo&.stars_count.to_i.positive? %>
+      <% facts << [ "Website", URI(website).host ] if website %>
+      <% facts.each do |label, value| %>
+        <div class="os-row flex justify-between gap-4 py-2.5">
+          <dt class="os-sm os-muted"><%= label %></dt>
+          <dd class="os-sm m-0 min-w-0 text-right font-semibold [overflow-wrap:anywhere]"><%= value %></dd>
+        </div>
+      <% end %>
+    </dl>
+
+    <% if @focus.others.any? %>
+      <h2 class="os-h3 mt-6.5">More from <%= @user.display_name %></h2>
+      <ul class="mt-1.5">
+        <% @focus.others.each do |other| %>
+          <li class="os-row py-0">
+            <%= link_to project_page_for(@user, other), class: "flex items-center justify-between gap-3 py-2.5 hover:underline" do %>
+              <span class="inline-flex min-w-0 items-center gap-2.5 font-bold">
+                <span class="os-dot <%= project_class(other.rank) %> bg-(--project)" aria-hidden="true"></span><span class="truncate"><%= other.name %></span>
+              </span>
+              <% if other.last_commit %><span class="os-xs os-muted shrink-0"><%= progress_ago(other.last_commit) %></span><% end %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </aside>
+</div>

@@ -1,0 +1,15 @@
+<%# Following by email, never a count of followers. %>
+<% unless current_user == user %>
+  <div class="min-w-0 flex-[1_1_300px]" data-subscribe-box>
+    <%= form_with url: profile_subscribe_path(user.username), method: :post do |f| %>
+      <label for="subscribe-email" class="mb-2 block text-[15px] font-semibold">Get <%= user.display_name %>'s updates by email</label>
+      <div class="flex gap-2">
+        <%= f.email_field :email, id: "subscribe-email", placeholder: "you@example.com", required: true, autocomplete: "email", class: "os-field" %>
+        <%# Honeypot: hidden from people, filled by scripts. %>
+        <div class="hidden" aria-hidden="true"><%= f.text_field :website, tabindex: -1, autocomplete: "off" %></div>
+        <%= f.submit "Subscribe", class: "os-btn" %>
+      </div>
+    <% end %>
+    <p class="os-note mt-2">Double opt-in, one-click unsubscribe. Your address goes to <%= user.display_name %>, not to a list of ours.</p>
+  </div>
+<% end %>

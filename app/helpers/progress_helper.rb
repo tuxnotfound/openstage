@@ -9,6 +9,12 @@ module ProgressHelper
     profile_path(user.username, **kept.merge(changes).compact_blank)
   end
 
+  # A project's own page, by the repo's name without its owner. project: a
+  # Progress::Projects::Project or a card.
+  def project_page_for(user, project, **params)
+    project_page_path(user.username, project.repo.split("/").last, **params)
+  end
+
   # A project chip's link: the selection with that project switched. With
   # every project in view, switching one leaves the others.
   def progress_chip_path(user, section, project)

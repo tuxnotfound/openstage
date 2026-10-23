@@ -34,9 +34,12 @@
         <p class="os-sm os-ink2 mt-2.5">
           <span class="os-num font-bold text-ink"><%= card.commits %></span> <%= card.commits == 1 ? "commit" : "commits" %> in 12 months<% if card.last_commit %> · last commit <%= progress_ago(card.last_commit) %><% end %>
         </p>
-        <% if (website = safe_external_url(card.website)) %>
-          <a href="<%= website %>" target="_blank" rel="noopener" class="os-link mt-1.5 inline-block text-sm"><%= URI(website).host %> <span aria-hidden="true">↗</span></a>
-        <% end %>
+        <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
+          <%= link_to project_page_for(user, card), class: "os-link text-sm", data: { turbo_frame: "_top" } do %>Project page <span aria-hidden="true">→</span><% end %>
+          <% if (website = safe_external_url(card.website)) %>
+            <a href="<%= website %>" target="_blank" rel="noopener" class="os-link text-sm"><%= URI(website).host %> <span aria-hidden="true">↗</span></a>
+          <% end %>
+        </div>
       </div>
     <% end %>
   </div>

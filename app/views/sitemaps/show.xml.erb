@@ -28,4 +28,13 @@
     <priority>0.8</priority>
   </url>
   <% end %>
+  <% usernames = @users.index_by(&:id) %>
+  <% @projects.each do |(user_id, repo), last_commit| %>
+  <url>
+    <loc><%= project_page_url(usernames.fetch(user_id).username, repo.split("/").last) %></loc>
+    <lastmod><%= last_commit.utc.iso8601 %></lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <% end %>
 </urlset>
