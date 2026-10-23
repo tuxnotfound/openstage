@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_23_100001) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_23_100002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -127,6 +127,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_23_100001) do
     t.jsonb "branch_heads", default: {}, null: false
     t.string "homepage"
     t.boolean "archived", default: false, null: false
+    t.string "readme_line"
+    t.string "preview_image_url"
+    t.datetime "described_at"
     t.index ["user_id", "github_repo_id"], name: "index_github_repos_on_user_id_and_github_repo_id", unique: true
     t.index ["user_id"], name: "index_github_repos_on_user_id"
   end

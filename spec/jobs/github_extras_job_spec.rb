@@ -3,10 +3,14 @@ require "rails_helper"
 RSpec.describe GithubExtrasJob do
   let(:user) { create(:user, github_username: "tux") }
 
-  it "refreshes stars, releases, pull requests, deploys and commit stats for the builder" do
+  it "refreshes stars, each repo's words, releases, pull requests, deploys and commit stats for the builder" do
     json = { "Content-Type" => "application/json" }
     repo = create(:github_repo, user: user, full_name: "tux/app", stars_count: 4)
     create(:entry, user: user, source: "github", entry_type: "shipped", repo_name: repo.full_name, external_id: "abc", occurred_at: 1.day.ago)
+    stub_request(:get, "https://api.github.com/repos/tux/app/readme")
+      .to_return(status: 200, headers: json, body: { content: Base64.encode64("# App\n\nShips things."), encoding: "base64" }.to_json)
+    stub_request(:post, "https://api.github.com/graphql")
+      .to_return(status: 200, headers: json, body: { data: { repository: { usesCustomOpenGraphImage: false } } }.to_json)
     stub_request(:get, "https://api.github.com/repos/tux/app/releases?per_page=30").to_return(status: 200, headers: json, body: "[]")
     stub_request(:get, "https://api.github.com/repos/tux/app/pulls?state=closed&sort=updated&direction=desc&per_page=50")
       .to_return(status: 200, headers: json, body: [ { id: 1, number: 1, title: "Ship", merged_at: 1.day.ago.iso8601, user: { login: "tux" } } ].to_json)
@@ -18,6 +22,7 @@ RSpec.describe GithubExtrasJob do
     described_class.perform_now(user.id)
 
     expect(GithubRepoStarCount.pluck(:stars)).to eq([ 4 ])
+    expect(repo.reload.readme_line).to eq("Ships things.")
     expect(GithubActivity.pluck(:kind)).to contain_exactly("pull_request", "deployment")
     expect(user.entries.first.additions).to eq(2)
   end

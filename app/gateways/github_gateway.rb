@@ -13,6 +13,29 @@ class GithubGateway < ApplicationGateway
   Branch = Data.define(:name, :sha)
   Commit = Data.define(:sha, :message, :authored_at, :html_url, :author_login, :author_email)
 
+  PREVIEW_QUERY = <<~GRAPHQL.freeze
+    query($owner: String!, $name: String!) {
+      repository(owner: $owner, name: $name) { openGraphImageUrl usesCustomOpenGraphImage }
+    }
+  GRAPHQL
+
+  # A repo's README as text; nil when it has none.
+  def self.readme(full_name, token:)
+    body = get("/repos/#{repo_path(full_name)}/readme", headers: auth(token))
+    Base64.decode64(body[:content].to_s).force_encoding(Encoding::UTF_8).scrub
+  rescue NotFound
+    nil
+  end
+
+  # The picture a repo shows when it is shared, when its owner set one; nil
+  # for the card GitHub draws itself. REST does not have it, GraphQL does.
+  def self.preview_image(full_name, token:)
+    owner, name = full_name.to_s.split("/", 2)
+    body = post("/graphql", body: { query: PREVIEW_QUERY, variables: { owner: owner, name: name } }, headers: auth(token))
+    repository = body.dig(:data, :repository)
+    repository[:openGraphImageUrl] if repository&.dig(:usesCustomOpenGraphImage)
+  end
+
   # The files one commit changed, with lines added and removed in each. GitHub
   # lists at most 300 files per commit, which is plenty for a week card.
   def self.commit_files(full_name, sha, token:)

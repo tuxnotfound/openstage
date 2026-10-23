@@ -8,6 +8,36 @@ RSpec.describe GithubGateway do
     { status: 200, headers: json, body: body.to_json }
   end
 
+  describe ".readme" do
+    it "decodes the README GitHub sends, and says nil when there is none" do
+      stub_request(:get, "#{api}/readme").with(headers: { "Authorization" => "Bearer t" })
+        .to_return(answer(content: Base64.encode64("# App\n\nIt does things. ✓"), encoding: "base64"))
+      stub_request(:get, "https://api.github.com/repos/me/none/readme").to_return(status: 404, headers: json, body: "{}")
+
+      expect(described_class.readme("me/app", token: "t")).to eq("# App\n\nIt does things. ✓")
+      expect(described_class.readme("me/none", token: "t")).to be_nil
+    end
+  end
+
+  describe ".preview_image" do
+    def preview(repository)
+      stub_request(:post, "https://api.github.com/graphql")
+        .with(headers: { "Authorization" => "Bearer t" }, body: hash_including("variables" => { "owner" => "me", "name" => "app" }))
+        .to_return(answer(data: { repository: repository }))
+    end
+
+    it "gives the picture the owner set, and nothing for GitHub's own card or a missing repo" do
+      preview(openGraphImageUrl: "https://repository-images.githubusercontent.com/1/x", usesCustomOpenGraphImage: true)
+      expect(described_class.preview_image("me/app", token: "t")).to eq("https://repository-images.githubusercontent.com/1/x")
+
+      preview(openGraphImageUrl: "https://opengraph.githubassets.com/1/me/app", usesCustomOpenGraphImage: false)
+      expect(described_class.preview_image("me/app", token: "t")).to be_nil
+
+      preview(nil)
+      expect(described_class.preview_image("me/app", token: "t")).to be_nil
+    end
+  end
+
   describe ".commit_files" do
     it "reads each changed file's lines with the given token" do
       stub_request(:get, "https://api.github.com/repos/tux/app/commits/abc123")
