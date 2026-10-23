@@ -19,6 +19,21 @@ module ProgressData
     "tuxnotfound/#{DATA['projects'].fetch(index)}"
   end
 
+  # The file's commits from one day to another, of some projects or all, so a
+  # spec's expectation comes from the data and not from the page.
+  def progress_commits(days, indexes = nil)
+    DATA["days"].sum do |day, counts|
+      next 0 unless days.cover?(Date.parse(day))
+
+      counts.sum { |index, n| indexes.nil? || indexes.include?(index) ? n : 0 }
+    end
+  end
+
+  # The file's entries with no project from one day to another.
+  def progress_untagged(days)
+    DATA["entries"].count { |entry| entry["r"].nil? && days.cover?(Date.parse(entry["d"])) }
+  end
+
   private
 
   def progress_commit_rows(user)

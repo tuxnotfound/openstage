@@ -207,7 +207,7 @@
   .os-pill.on, .os-pill[aria-selected="true"], .os-pill[aria-current="page"], .os-pill[aria-pressed="true"] { background: var(--color-accent); color: var(--color-on-accent); }
   .os-chip { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 700; border: 1.5px solid var(--color-line); background: transparent; color: var(--color-ink-3); cursor: pointer; }
   .os-chip:hover { border-color: var(--color-ink-3); }
-  .os-chip.on, .os-chip[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-on-accent); }
+  .os-chip.on, .os-chip[aria-pressed="true"], .os-chip[aria-current="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-on-accent); }
   /* A button or a checkbox. The knob is a gradient, which a checkbox can draw. */
   .os-switch { appearance: none; position: relative; width: 40px; height: 22px; flex: none; margin: 0; padding: 0; border: 0; border-radius: 999px; cursor: pointer;
     background: radial-gradient(circle at 11px 50%, #FFFFFF 7.5px, transparent 8px), var(--color-line); }
@@ -229,6 +229,17 @@
   .os-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; display: inline-block; }
   .os-disc { width: 24px; height: 24px; flex: none; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 12px; font-weight: 700; }
   .os-avatar { width: 56px; height: 56px; flex: none; border-radius: 50%; object-fit: cover; background: var(--color-strong); color: var(--color-ground); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+
+  /* A project's colour by rank (project_class), for the marks that wear it:
+     bg-(--project), stroke-(--project), text-(--on-project). No project: ink. */
+  .os-project-1 { --project: var(--color-project-1); --on-project: var(--color-on-project-1); }
+  .os-project-2 { --project: var(--color-project-2); --on-project: var(--color-on-project-2); }
+  .os-project-3 { --project: var(--color-project-3); --on-project: var(--color-on-project-3); }
+  .os-project-4 { --project: var(--color-project-4); --on-project: var(--color-on-project-4); }
+  .os-project-5 { --project: var(--color-project-5); --on-project: var(--color-on-project-5); }
+  .os-project-6 { --project: var(--color-project-6); --on-project: var(--color-on-project-6); }
+  .os-project-other { --project: var(--color-project-other); --on-project: var(--color-on-project-other); }
+  .os-project-none { --project: var(--color-strong); --on-project: var(--color-ground); }
 
   /* Charts: one line per project, the share bar under the headline number */
   .os-sharebar { display: flex; gap: 3px; height: 14px; border-radius: 999px; overflow: hidden; }

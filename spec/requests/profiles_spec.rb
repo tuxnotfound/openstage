@@ -39,19 +39,6 @@ RSpec.describe "Profiles", type: :request do
           get "/testuser", headers: { "HTTP_USER_AGENT" => "Mozilla/5.0 (compatible; ClaudeBot/1.0; +claudebot@anthropic.com)" }
         }.not_to change { user.profile_views.count }
       end
-
-      it "hides the Posted filter tab when the user has no posted entries" do
-        create(:entry, user: user, entry_type: "shipped")
-        get "/testuser"
-        expect(response.body).to include(">Shipped</a>")
-        expect(response.body).not_to include(">Posted</a>")
-      end
-
-      it "shows the Posted filter tab once the user has a posted entry" do
-        create(:entry, user: user, entry_type: "posted", source: "manual")
-        get "/testuser"
-        expect(response.body).to include(">Posted</a>")
-      end
     end
 
     context "when user is pro" do
@@ -72,47 +59,72 @@ RSpec.describe "Profiles", type: :request do
       end
     end
 
-    context "timeline filtering" do
+    context "what shipped" do
       let!(:user) { create(:user, username: "builder") }
-      let!(:shipped_entry)   { create(:entry, user: user, entry_type: "shipped",   source: "github", occurred_at: 3.days.ago) }
-      let!(:milestone_entry) { create(:entry, user: user, entry_type: "milestone", source: "manual", occurred_at: 2.days.ago) }
-      let!(:note_entry)      { create(:entry, user: user, entry_type: "note",      source: "manual", occurred_at: 1.day.ago) }
+      let!(:commit)    { create(:entry, user: user, repo_name: "builder/app", occurred_at: 3.days.ago) }
+      let!(:milestone) { create(:entry, user: user, entry_type: "milestone", source: "manual", occurred_at: 2.days.ago) }
+      let!(:note)      { create(:entry, user: user, entry_type: "note", source: "manual", occurred_at: 1.day.ago) }
 
-      it "shows all entries with no filter" do
+      def shipped
+        Nokogiri::HTML(response.body).at_css("section[aria-labelledby='what-shipped']")
+      end
+
+      it "lists what shipped and was published in the window, newest first, and no commit" do
         get "/builder"
-        expect(response.body).to include(shipped_entry.title)
-        expect(response.body).to include(milestone_entry.title)
-        expect(response.body).to include(note_entry.title)
-      end
 
-      # The progress section above lists entries too, whatever the timeline shows.
-      def timeline
-        Nokogiri::HTML(response.body).at_css("turbo-frame#timeline").text
-      end
-
-      it "shows only shipped entries when filter=shipped" do
-        get "/builder", params: { filter: "shipped" }
-        expect(timeline).to include(shipped_entry.title)
-        expect(timeline).not_to include(milestone_entry.title)
-        expect(timeline).not_to include(note_entry.title)
-      end
-
-      it "shows only milestone entries when filter=milestone" do
-        get "/builder", params: { filter: "milestone" }
-        expect(timeline).to include(milestone_entry.title)
-        expect(timeline).not_to include(shipped_entry.title)
-      end
-
-      it "falls back to all entries for an invalid filter" do
-        get "/builder", params: { filter: "invalid_type" }
-        expect(response.body).to include(shipped_entry.title)
-        expect(response.body).to include(milestone_entry.title)
+        rows = shipped.css(".os-row").map { |row| row.text.squish }
+        expect(rows.size).to eq(2)
+        expect(rows.first).to include("Published", note.title)
+        expect(rows.last).to include("Shipped", milestone.title)
+        expect(shipped.text).not_to include(commit.title)
+        expect(shipped.text.squish).to include("2 in the last 12 months")
       end
 
       it "does not show hidden entries" do
         hidden = create(:entry, user: user, entry_type: "note", source: "manual", hidden: true, occurred_at: Time.current)
         get "/builder"
         expect(response.body).not_to include(hidden.title)
+      end
+
+      it "sends a link through the click counter, in a new tab" do
+        linked = create(:entry, user: user, entry_type: "link", source: "manual", url: "https://example.com/post", occurred_at: 1.hour.ago)
+
+        get "/builder"
+
+        link = shipped.at_css("a[href='/e/#{linked.id}/out']")
+        expect(link["target"]).to eq("_blank")
+        expect(link["data-turbo"]).to eq("false")
+      end
+
+      it "folds everything after the eighth behind Show all" do
+        8.times { |i| create(:entry, user: user, entry_type: "note", source: "manual", occurred_at: (i + 3).days.ago) }
+
+        get "/builder"
+
+        expect(shipped.at_css("details summary").text).to eq("Show all 10")
+        expect(shipped.css("details .os-row").size).to eq(2)
+      end
+    end
+
+    context "projects" do
+      let!(:user) { create(:user, username: "builder") }
+
+      before do
+        create(:github_repo, user: user, full_name: "builder/app", description: "A tool for builders.")
+        create(:github_repo, user: user, full_name: "builder/secret", private_repo: true)
+        2.times { |i| create(:entry, user: user, repo_name: "builder/app", occurred_at: (i + 1).days.ago) }
+        create(:entry, user: user, repo_name: "builder/secret", occurred_at: 3.days.ago)
+      end
+
+      def cards
+        Nokogiri::HTML(response.body).css("section[aria-labelledby='projects'] .os-card").map { |card| card.text.squish }
+      end
+
+      it "gives each project a card with GitHub's description and its last 12 months" do
+        get "/builder"
+
+        expect(cards.first).to include("app", "public repo", "A tool for builders.", "2 commits in 12 months · last commit yesterday")
+        expect(cards.last).to include("secret", "private repo, commit messages only", "1 commit in 12 months · last commit 3 days ago")
       end
     end
 
@@ -127,22 +139,6 @@ RSpec.describe "Profiles", type: :request do
         expect(response.body).to include(shipped.title)
         expect(response.body).to include(note.title)
         expect(response.body).not_to include(other.title)
-      end
-    end
-
-    context "pagination" do
-      let!(:user) { create(:user, username: "prolific") }
-
-      it "shows a load more button when there are more than 25 entries" do
-        create_list(:entry, 26, user: user, entry_type: "shipped", source: "github", occurred_at: Time.current)
-        get "/prolific"
-        expect(response.body).to include("Load more")
-      end
-
-      it "does not show a load more button when there are 25 or fewer entries" do
-        create_list(:entry, 5, user: user, entry_type: "shipped", source: "github", occurred_at: Time.current)
-        get "/prolific"
-        expect(response.body).not_to include("Load more")
       end
     end
   end

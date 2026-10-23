@@ -1,105 +1,127 @@
 require "rails_helper"
 require "support/progress_data"
 
-RSpec.describe "The progress section of the public page" do
+RSpec.describe "The public page's chart and its list" do
   include ProgressData
 
   let(:user) { create(:user, username: "tux") }
+  let(:today) { ProgressData::TODAY.to_date }
 
   before do
     seed_progress_data(user)
     travel_to ProgressData::TODAY
   end
 
-  def section
-    Nokogiri::HTML(response.body).at_css("turbo-frame#progress section")
+  def panel
+    Nokogiri::HTML(response.body).at_css("section[aria-label='Profile']")
   end
 
-  it "opens on this year, with the counts and the six entries that get words" do
+  def listed
+    panel.css("ol li").map { |row| row.at_css("a").text.squish }
+  end
+
+  it "opens on the last 12 months, with the counts and the six entries that get words" do
     get "/tux"
 
-    expect(section.at_css("h2").text).to eq("2026")
-    expect(section.text.squish).to include("10 Shipped", "10 Published", "380 Commits", "64 Active days", "7 Projects")
-    expect(section.css("ol li").map { |row| row.at_css("a").text.squish }.first).to eq("live on Hacker News")
-    expect(section.css("ol li").size).to eq(6)
-    expect(section.text).to include("14 more in 2026")
+    expect(panel.at_css(".os-label").text.squish).to eq("Commits · all 7 projects, last 12 months")
+    expect(panel.at_css(".os-big").text).to eq(progress_commits(Date.new(2025, 11, 1)..today).to_s)
+    expect(panel.text.squish).to include("since the first commit, March 26",
+                                         "10 shipped · 10 published · 7 projects with commits · 64 active days")
+    expect(listed.size).to eq(6)
+    expect(listed.first).to eq("live on Hacker News")
+    expect(panel.text.squish).to include("14 more in the last 12 months, all listed under What shipped.")
   end
 
-  it "steps through calendar periods by range and offset, with the change against the period before" do
-    get "/tux", params: { range: "month" }
-    expect(section.at_css("h2").text).to eq("October 2026")
-    expect(section.text).to include("+127")
-    expect(section.css("[title='vs Sep 1–15']").map(&:text)).to include("+127")
+  it "measures 30 and 90 days against the same stretch just before" do
+    get "/tux", params: { range: "30d" }
+    now = progress_commits((today - 29)..today)
+    before = progress_commits((today - 59)..(today - 30))
+    expect(panel.at_css(".os-big").text).to eq(now.to_s)
+    expect(panel.text.squish).to include("#{((100.0 * now / before) - 100).round.abs}% vs the previous 30 days")
 
-    get "/tux", params: { range: "month", offset: -1 }
-    expect(section.at_css("h2").text).to eq("September 2026")
-    expect(section.css("ol li").size).to eq(5)
+    get "/tux", params: { range: "90d" }
+    monday = today - (today.cwday - 1) - 84
+    now = progress_commits(monday..today)
+    before = progress_commits((monday - 91)..(today - 91))
+    expect(panel.at_css(".os-big").text).to eq(now.to_s)
+    expect(panel.text.squish).to include("#{((100.0 * now / before) - 100).round.abs}% vs the previous 90 days")
   end
 
-  it "says so when a period has nothing logged" do
-    get "/tux", params: { range: "week" }
+  it "draws 30 days as a 7-day average and the other windows as counts per point" do
+    { "30d" => [ "7-day average of commits per day by project, last 30 days", 30 ],
+      "90d" => [ "Commits per week by project, last 90 days", 13 ],
+      "12m" => [ "Commits per month by project, last 12 months", 12 ] }.each do |range, (label, points)|
+      get "/tux", params: { range: range }
 
-    expect(section.text).to include("Nothing shipped or published this week yet.")
-    expect(section.text.squish).to include("79 +46 Commits")
+      expect(panel.at_css("svg[role='img']")["aria-label"]).to eq(label)
+      expect(panel.css("[data-chart-tooltip-template-param]").size).to eq(points)
+    end
   end
 
-  it "scopes the section with the timeline's repo filter, counting only tagged entries" do
+  it "says so when the window holds nothing" do
+    travel_to ProgressData::TODAY + 60.days
+    get "/tux", params: { range: "30d" }
+
+    expect(panel.text).to include("No commits in the last 30 days.", "Nothing shipped or published in the last 30 days.")
+    expect(panel.css("svg[role='img'] path")).to be_empty
+  end
+
+  it "scopes the page to the projects picked, counting only tagged entries" do
     get "/tux", params: { repo: progress_repo(4) }
 
-    expect(section.text.squish).to include("1 Shipped", "Share of commits")
-    expect(section.css("ol li").map { |row| row.at_css("a").text.squish }).to eq([ "Trained on me is live!!" ])
+    expect(panel.at_css(".os-label").text.squish).to eq("Commits · trained-on, last 12 months")
+    expect(panel.at_css(".os-big").text).to eq(progress_commits(Date.new(2025, 11, 1)..today, [ 4 ]).to_s)
+    expect(listed).to eq([ "Trained on me is live!!" ])
 
     get "/tux", params: { repo: progress_repo(0) }
-    expect(section.text).to include("No entries tagged openstage in 2026.")
+    expect(panel.text).to include("No entries tagged openstage in the last 12 months.")
   end
 
-  it "keeps the other params on its links and drops the offset when the range changes" do
-    get "/tux", params: { range: "month", offset: -1, repo: progress_repo(0) }
+  it "switches a project in or out with its chip, keeping the window on every link" do
+    get "/tux", params: { range: "90d" }
+    chip = panel.css("[aria-label='Projects'] a").find { |a| a.text.squish == "openstage" }
+    query = Rack::Utils.parse_nested_query(URI(chip["href"]).query)
 
-    month_link = section.css("nav[aria-label='Time range'] a").find { |a| a.text == "Week" }
-    expect(month_link["href"]).to eq("/tux?range=week&repo=#{CGI.escape(progress_repo(0))}")
-    expect(section.at_css("a[aria-label='Next period']")["href"]).to eq("/tux?range=month&repo=#{CGI.escape(progress_repo(0))}")
+    expect(chip["aria-current"]).to eq("true")
+    expect(query["range"]).to eq("90d")
+    expect(query["repo"]).to match_array((1..6).map { |i| progress_repo(i) })
+
+    get chip["href"]
+    chip = panel.css("[aria-label='Projects'] a").find { |a| a.text.squish == "openstage" }
+    expect(chip["aria-current"]).to be_nil
+    expect(chip["href"]).to eq("/tux?range=90d")
+    windows = panel.css("nav[aria-label='Time range'] a").to_h { |a| [ a.text, a["href"] ] }
+    expect(windows["12 months"]).to start_with("/tux?repo%5B%5D=")
+    expect(windows["30 days"]).to include("range=30d")
   end
 
-  it "numbers a disc per listed entry's bucket, linked to its row" do
+  it "numbers a disc per listed entry, linked to its row" do
     get "/tux"
 
-    discs = section.css("a[href^='#progress-note-']")
-    expect(discs.map(&:text)).to eq(%w[1 2–3 4 5 6])
-    expect(discs.first["aria-label"]).to eq("Note 1, shipped Mar 31: live on Hacker News")
+    discs = panel.css("a[href^='#progress-note-']")
+    expect(discs.map(&:text)).to eq(%w[1 2 3 4 5 6])
+    expect(discs.first["aria-label"]).to eq("Number 1: live on Hacker News")
+    expect(panel.at_css("li#progress-note-1")).to be_present
   end
 
-  it "shows a visitor the owner's section, without Make a card and the tag line" do
+  it "shows a visitor the owner's page without Make a card and the tag line" do
     get "/tux"
-    visitor = section.text.squish
+    expect(panel.at_css("[data-controller='dialog']")).to be_nil
+    expect(panel.text).not_to include("have no project")
 
     sign_in_as(user)
     get "/tux"
-    owner = section
-    owner.at_css("[data-controller='dialog']").remove
-    expect(owner.text.squish).to eq("#{visitor} 19 entries in 2026 have no project. Tag them")
+    expect(panel.at_css("turbo-frame#progress_card")["src"]).to eq("/progress/card?range=year")
+    expect(panel.text.squish).to include("#{progress_untagged(Date.new(2025, 11, 1)..today)} entries in the last 12 months have no project. Tag them")
   end
 
-  it "switches to the Lines chart, keeping the period" do
-    get "/tux", params: { range: "month", chart: "lines" }
-
-    expect(section.at_css("svg[role='img']")["aria-label"]).to eq("Commits added up per project, October 2026")
-    expect(section.at_css("nav[aria-label='Chart'] a[aria-current='page']").text.squish).to eq("Lines")
-    bars = section.css("nav[aria-label='Chart'] a").find { |a| a.text.squish == "Bars" }
-    expect(bars["href"]).to eq("/tux?range=month")
-  end
-
-  it "shows several projects at once, and the timeline follows them" do
+  it "shows several projects at once, and the rest of the page follows them" do
     create(:entry, user: user, repo_name: progress_repo(1), title: "A wheels-off commit", occurred_at: 1.hour.ago)
     create(:entry, user: user, repo_name: progress_repo(2), title: "A goal_atlas commit", occurred_at: 1.hour.ago)
     get "/tux", params: { repo: [ progress_repo(0), progress_repo(1) ] }
 
-    expect(section.at_css("h2").parent.text.squish).to include("2026 openstage + wheels-off")
-    expect(section.text.squish).to include("239 Commits", "Share of commits")
-    expect(section.css("input[name='repo[]'][checked]").map { |box| box["value"] }).to eq([ progress_repo(0), progress_repo(1) ])
-    timeline = Nokogiri::HTML(response.body).at_css("turbo-frame#timeline").text
-    expect(timeline).to include("A wheels-off commit")
-    expect(timeline).not_to include("A goal_atlas commit")
-    expect(Nokogiri::HTML(response.body).at_css("turbo-frame#progress_card")).to be_nil
+    expect(panel.at_css(".os-label").text.squish).to eq("Commits · openstage + wheels-off, last 12 months")
+    expect(response.body).to include("A wheels-off commit")
+    expect(response.body).not_to include("A goal_atlas commit")
   end
 end

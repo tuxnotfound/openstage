@@ -15,13 +15,13 @@ RSpec.describe "Making a card from the progress section" do
     Nokogiri::HTML(response.body)
   end
 
-  it "offers the owner a card of the period in view, and never a visitor" do
-    get "/tux", params: { range: "month" }
+  it "offers the owner a card of the nearest calendar period, and never a visitor" do
+    get "/tux", params: { range: "30d" }
     expect(page.at_css("turbo-frame#progress_card")).to be_nil
 
     sign_in_as(user)
-    get "/tux", params: { range: "month" }
-    expect(page.at_css("turbo-frame#progress_card")["src"]).to eq("/progress/card?range=month")
+    get "/tux", params: { range: "30d", repo: progress_repo(1) }
+    expect(page.at_css("turbo-frame#progress_card")["src"]).to eq("/progress/card?range=month&repo%5B%5D=#{CGI.escape(progress_repo(1))}")
   end
 
   it "draws the owner's card with the post to go with it" do
@@ -74,9 +74,6 @@ RSpec.describe "Making a card from the progress section" do
 
   it "draws the card with lines for the Lines chart, with the same notes" do
     sign_in_as(user)
-    get "/tux", params: { chart: "lines" }
-    expect(page.at_css("turbo-frame#progress_card")["src"]).to eq("/progress/card?chart=lines")
-
     get "/progress/card", params: { chart: "lines" }
     expect(page.css("svg[data-week-card='footnotes'] path[stroke-width='2.5']").size).to eq(7)
     expect(page.at_css("[data-clipboard-target='source']").text.lines.size).to eq(8)

@@ -1,0 +1,34 @@
+<%# The latest commits as the GitHub sync wrote them, one row per project and
+    day. Never ranked, never rewritten. %>
+<section class="os-panel" aria-labelledby="recent-commits">
+  <div class="os-between">
+    <h2 id="recent-commits" class="os-h2">Recent commits</h2>
+    <span class="os-xs os-muted">From the GitHub sync, as written</span>
+  </div>
+  <div class="mt-2.5">
+    <% groups.each do |group| %>
+      <div class="os-row flex flex-wrap gap-x-[18px] gap-y-1 py-3.5">
+        <div class="min-w-0 flex-[0_0_190px]">
+          <div class="flex items-center gap-2 font-bold">
+            <span class="os-dot <%= project_class(group.project.rank) %> bg-(--project)"></span><%= group.project.name %>
+          </div>
+          <div class="os-xs os-muted"><%= group.date.strftime("%b %-d") %> · <%= pluralize(group.commits.size, "commit") %></div>
+        </div>
+        <div class="min-w-0 flex-[1_1_320px]">
+          <% group.commits.first(3).each do |commit| %>
+            <div id="entry-<%= commit.id %>" class="text-[15px]/[1.6]">
+              <%= commit.title %><% if commit.branch.present? %> <span class="os-xs os-muted">on <%= commit.branch %></span><% end %>
+            </div>
+          <% end %>
+          <% if group.commits.size > 3 %>
+            <div class="os-xs os-muted">and <%= group.commits.size - 3 %> more</div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+  <p class="os-note border-t border-line pt-3">
+    Merges and dependency updates stay hidden.
+    <a href="https://github.com/<%= user.github_username %>" target="_blank" rel="noopener" class="underline hover:text-ink">All commits on GitHub</a>
+  </p>
+</section>

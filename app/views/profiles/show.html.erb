@@ -3,6 +3,8 @@
 <% content_for :canonical, profile_url(@user.username) %>
 <% content_for :og_type, "profile" %>
 <% content_for :og_image, "#{og_image_url(@user.username)}?v=3" %>
+<% content_for :dark_mode, true %>
+<% content_for :main_class, "os-wrap pt-1.5" %>
 
 <% content_for :head do %>
   <link rel="alternate" type="application/rss+xml" title="<%= @user.display_name %> on Openstage" href="<%= profile_url(@user.username, format: :rss) %>">
@@ -22,142 +24,51 @@
   </script>
 <% end %>
 
-<!-- Profile header -->
-<%# Who, across the top: the progress section and the timeline below get the
-    full width. Subscribe sits with the identity, for visitors only. %>
-<section aria-label="Profile" class="flex flex-wrap items-start gap-6 pb-6 border-b border-gray-200">
-  <img src="<%= @user.avatar_url %>" alt="<%= @user.display_name %>"
-       class="size-[88px] rounded-full ring-2 ring-gray-100 shrink-0">
-  <div class="flex-[1_1_360px] min-w-0">
-    <div class="flex flex-wrap items-center gap-2">
-      <h1 class="text-2xl font-bold text-gray-900"><%= @user.display_name %></h1>
-      <% if @user.pro? %>
-        <span class="inline-flex items-center gap-1 text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">✦ Pro</span>
-      <% end %>
-      <span class="text-sm text-gray-400 font-mono">@<%= @user.username %></span>
-    </div>
-
-    <% if @user.bio.present? %>
-      <p class="mt-2 text-sm/relaxed text-gray-600"><%= @user.bio %></p>
-    <% end %>
-
-    <div class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[13px] text-gray-500">
-      <a href="https://github.com/<%= @user.github_username %>" target="_blank" rel="noopener"
-         class="inline-flex items-center gap-1.5 hover:text-gray-900 transition-colors">
-        <svg class="size-[15px]" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
-          <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/>
-        </svg>
-        <%= @user.github_username %>
-      </a>
-      <% if (website = safe_external_url(@user.website_url)) %>
-        <a href="<%= website %>" target="_blank" rel="noopener" class="min-w-0 truncate hover:text-gray-900 transition-colors"><%= website.gsub(%r{\Ahttps?://}, "") %></a>
-      <% end %>
-      <% if @user.building_since.present? %>
-        <span>Building since <%= @user.building_since.strftime("%B %Y") %></span>
-      <% end %>
-      <span><strong class="font-semibold text-gray-900"><%= @total_entries %></strong> entries</span>
-      <span><strong class="font-semibold text-gray-900"><%= @repos_synced %></strong> repos</span>
-      <span><strong class="font-semibold text-gray-900"><%= @milestones %></strong> milestones</span>
-      <% if @streak > 0 %>
-        <span><%= streak_emoji(@streak) %> <strong class="font-semibold text-gray-900"><%= @streak %></strong> day streak</span>
-      <% end %>
-      <span class="inline-flex items-center gap-5" data-controller="share"
-            data-share-url-value="<%= profile_url(@user.username) %>"
-            data-share-title-value="<%= @user.display_name %>'s proof-of-work page">
-        <button type="button" data-action="share#share" data-share-target="button"
-                class="hover:text-gray-900 transition-colors cursor-pointer" data-share-button>Share</button>
-        <a href="<%= profile_url(@user.username, format: :rss) %>" class="hover:text-gray-900 transition-colors" title="RSS feed" data-rss-link>RSS</a>
-      </span>
+<% if @syncing %>
+  <meta http-equiv="refresh" content="10">
+  <div class="os-card mb-4 flex items-center gap-3" data-syncing>
+    <svg class="size-4 shrink-0 animate-spin text-ink-3" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+    </svg>
+    <div>
+      <p class="os-sm font-semibold">Still syncing your history.</p>
+      <p class="os-xs os-muted">Your last year of commits is on its way. This page refreshes on its own.</p>
     </div>
   </div>
+<% end %>
 
-  <!-- Subscribe box: visitors only, never a count -->
-  <% unless current_user == @user %>
-    <div class="flex-[0_1_320px] min-w-0" data-subscribe-box>
-      <%= form_with url: profile_subscribe_path(@user.username), method: :post do |f| %>
-        <label for="subscribe-email" class="block text-sm font-medium text-gray-900 mb-2">Get <%= @user.display_name %>'s updates by email</label>
-        <div class="flex gap-2">
-          <%= f.email_field :email, id: "subscribe-email", placeholder: "you@example.com", required: true, autocomplete: "email",
-                class: "flex-1 min-w-0 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" %>
-          <%# Honeypot: hidden from people, filled by scripts. %>
-          <div class="hidden" aria-hidden="true"><%= f.text_field :website, tabindex: -1, autocomplete: "off" %></div>
-          <%= f.submit "Subscribe", class: "px-3 py-2 text-sm rounded-lg bg-gray-900 text-white hover:bg-gray-800 cursor-pointer shrink-0" %>
-        </div>
+<%# The filters and the window change everything below the builder's name, so
+    the whole page is one frame and the URL follows. %>
+<%= turbo_frame_tag "profile", data: { turbo_action: "advance" } do %>
+  <div class="os-stack">
+    <section class="os-panel" aria-label="Profile">
+      <%= render "profiles/page/identity", user: @user %>
+      <% if @total_entries.zero? %>
+        <%= render "profiles/page/empty", user: @user %>
+      <% elsif (section = @page&.section) %>
+        <%= render "profiles/page/headline", user: @user, section: section %>
+        <%= render "profiles/page/filters", user: @user, section: section %>
+        <%= render "profiles/page/trend", user: @user, section: section, chart: ProgressChart::Trend.new(section) %>
+        <% if current_user == @user %>
+          <%= render "profiles/page/untagged", user: @user, section: section %>
+        <% end %>
       <% end %>
-      <p class="text-xs text-gray-400 mt-1.5">Double opt-in, one-click unsubscribe. Your address goes to <%= @user.display_name %>, not to a list of ours.</p>
-    </div>
-  <% end %>
-</section>
+    </section>
 
-<div class="min-w-0">
-    <% if @syncing %>
-      <meta http-equiv="refresh" content="10">
-      <div class="mt-6 rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 flex items-center gap-3" data-syncing>
-        <svg class="w-4 h-4 text-gray-400 animate-spin shrink-0" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
-        </svg>
-        <div>
-          <p class="text-sm font-medium text-gray-900">Still syncing your history.</p>
-          <p class="text-xs text-gray-500 mt-0.5">Your last year of commits is on its way. This page refreshes on its own.</p>
-        </div>
-      </div>
+    <% if @page %>
+      <%= render "profiles/page/recent", user: @user, groups: @page.recent if @page.recent.any? %>
+      <%= render "profiles/page/projects", user: @user, cards: @page.cards if @page.cards.any? %>
+      <%= render "profiles/page/shipped", section: @page.section unless @total_entries.zero? %>
     <% end %>
 
-    <% if @progress %>
-      <%= render "profiles/progress/section", user: @user, section: @progress %>
-    <% end %>
-
-    <!-- Filter row: type tabs and the project they are scoped to -->
-    <div class="flex items-center justify-between mt-6 border-b border-gray-100 gap-4">
-      <div class="flex gap-1 overflow-x-auto">
-        <% type_tabs = [["all", "All"], ["shipped", "Shipped"], ["milestone", "Milestones"], ["note", "Notes"]] %>
-        <% type_tabs.insert(2, ["posted", "Posted"]) if @has_posted_entries %>
-        <% type_tabs.each do |value, label| %>
-          <%= link_to label,
-              profile_path(@user.username, filter: value == "all" ? nil : value, repo: @repo_filter),
-              class: "px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors #{@filter == value ? 'text-gray-900 border-b-2 border-gray-900 -mb-px' : 'text-gray-500 hover:text-gray-900'}",
-              data: { turbo_frame: "timeline" } %>
-        <% end %>
-      </div>
-
-      <%# The project filter above scopes the timeline too; this says which. %>
-      <span class="shrink-0 mb-1 text-xs text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1.5"><%= if @progress&.filtered? then @progress.selection_name elsif @repo_filter then @repo_filter.map { |repo| repo.split("/").last }.join(" + ") else "All repos" end %></span>
-    </div>
-
-    <!-- Timeline -->
-    <%= turbo_frame_tag "timeline" do %>
-      <div class="mt-6">
-        <% if @entries.empty? %>
-          <%= render "profiles/empty_state" %>
-        <% else %>
-          <div id="timeline-entries" class="space-y-1">
-            <%= render "profiles/timeline_items", items: @timeline %>
-          </div>
-          <% if @entries.next_page %>
-            <div id="load-more" class="mt-6 text-center">
-              <%= link_to "Load more",
-                  profile_path(@user.username, page: @entries.next_page, filter: @filter == "all" ? nil : @filter, repo: @repo_filter),
-                  class: "text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg px-5 py-2.5 inline-block transition-colors",
-                  data: { turbo_stream: true } %>
-            </div>
-          <% end %>
-        <% end %>
-      </div>
-    <% end %>
-
-    <footer class="mt-12 pt-6 border-t border-gray-100 text-center space-y-2">
-      <div>
-        <%= link_to "Explore other builders", feed_path, class: "text-sm text-gray-500 hover:text-gray-900" %>
-      </div>
+    <footer class="flex flex-wrap justify-center gap-x-6 gap-y-2 pt-2 os-sm">
+      <%= link_to "Explore other builders", feed_path, class: "os-muted hover:text-ink", data: { turbo_frame: "_top" } %>
       <% unless @user.pro? || current_user == @user %>
         <%# Every circulating profile link is an ad. The visitor's next action is
             their own page, not our homepage. Pro removes this; it never paywalls it. %>
-        <div>
-          <a href="<%= root_url %>?ref=footer" class="text-sm text-gray-500 hover:text-gray-900" data-claim-cta>
-            Get your own proof-of-work page &rarr;
-          </a>
-        </div>
+        <a href="<%= root_url %>?ref=footer" class="os-muted hover:text-ink" data-claim-cta data-turbo-frame="_top">Get your own proof-of-work page &rarr;</a>
       <% end %>
     </footer>
   </div>
+<% end %>

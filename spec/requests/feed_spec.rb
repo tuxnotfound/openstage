@@ -21,11 +21,11 @@ RSpec.describe "Feed", type: :request do
   end
 
   describe "the free-tier footer" do
-    it "sits after the timeline, not above the profile header" do
+    it "sits at the end of the page, not above the profile header" do
       create(:user, username: "freebie")
 
       get "/freebie"
-      expect(response.body.index("data-claim-cta")).to be > response.body.index("Profile header")
+      expect(response.body.index("data-claim-cta")).to be > response.body.index('aria-label="Profile"')
     end
 
     it "carries a ref tag so footer-driven signups are attributable" do

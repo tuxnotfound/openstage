@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe "Public timeline de-noising", type: :request do
+RSpec.describe "Public page de-noising", type: :request do
   let(:user) { create(:user, username: "builder") }
 
   def commit(title, at:, repo: "builder/app", **attrs)
@@ -50,23 +50,12 @@ RSpec.describe "Public timeline de-noising", type: :request do
   end
 
   describe "branch commits" do
-    it "shows a commit not yet on the default branch with its branch, not as shipped" do
+    it "shows a commit not yet on the default branch with its branch" do
       commit("Try a new layout", at: 1.day.ago, branch: "redesign/layout")
 
       get "/builder"
 
-      expect(response.body).to include("redesign/layout")
-      expect(response.body).to include("On redesign/layout, not yet on the default branch")
-    end
-
-    it "never folds branch commits and default-branch commits into one session" do
-      day = 2.days.ago.beginning_of_day + 10.hours
-      3.times { |i| commit("Main #{i}", at: day + i.minutes) }
-      3.times { |i| commit("Branch #{i}", at: day + 10.minutes + i.minutes, branch: "layout") }
-
-      get "/builder"
-
-      expect(response.body.scan('data-session-size="3"').size).to eq(2)
+      expect(recent.text.squish).to include("Try a new layout on redesign/layout")
     end
 
     it "hides them once the builder turns branch commits off" do
@@ -79,45 +68,48 @@ RSpec.describe "Public timeline de-noising", type: :request do
     end
   end
 
-  describe "work sessions" do
-    it "folds a day of commits to one repo into one card that still lists every commit" do
+  describe "recent commits" do
+    it "puts a day of commits to one project in one row, the three newest and how many more" do
       day = 2.days.ago.beginning_of_day + 10.hours
       5.times { |i| commit("Step #{i}", at: day + i.minutes) }
 
       get "/builder"
 
-      expect(response.body).to include('data-session-size="5"')
-      expect(response.body).to include("5 commits")
-      5.times { |i| expect(response.body).to include("Step #{i}") }
-      expect(response.body).to include("2 more commits that day")
+      expect(recent.css(".os-row").size).to eq(1)
+      expect(recent.text.squish).to include("app #{day.strftime('%b %-d')} · 5 commits Step 4 Step 3 Step 2 and 2 more")
+      expect(recent.text).not_to include("Step 1")
     end
 
-    it "leaves one or two commits as ordinary entries" do
-      commit("Lonely one", at: 2.days.ago)
-      commit("Lonely two", at: 2.days.ago)
-
-      get "/builder"
-      expect(response.body).not_to include("data-session-size")
-    end
-
-    it "does not fold across repos, days, or a milestone in between" do
+    it "keeps projects and days apart, newest first" do
       day = 3.days.ago.beginning_of_day + 10.hours
       commit("A1", at: day, repo: "builder/a")
-      commit("A2", at: day + 1.minute, repo: "builder/a")
       commit("B1", at: day + 2.minutes, repo: "builder/b")
-      commit("A3", at: day + 3.minutes, repo: "builder/a")
+      commit("A2", at: day + 1.day, repo: "builder/a")
 
       get "/builder"
-      expect(response.body).not_to include("data-session-size")
+
+      expect(recent.css(".os-row").map { |row| row.at_css(".font-bold").text.squish }).to eq(%w[a b a])
     end
 
-    it "keeps each commit's anchor so old deep links still land" do
-      day = 2.days.ago.beginning_of_day + 10.hours
-      entries = 3.times.map { |i| commit("Anchored #{i}", at: day + i.minutes) }
+    it "shows at most eight rows" do
+      9.times { |i| commit("Day #{i}", at: (i + 1).days.ago) }
+
+      get "/builder"
+
+      expect(recent.css(".os-row").size).to eq(8)
+      expect(recent.text).not_to include("Day 8")
+    end
+
+    it "keeps each shown commit's anchor so deep links still land" do
+      entries = 3.times.map { |i| commit("Anchored #{i}", at: 2.days.ago + i.minutes) }
 
       get "/builder"
       entries.each { |e| expect(response.body).to include(%(id="entry-#{e.id}")) }
     end
+  end
+
+  def recent
+    Nokogiri::HTML(response.body).at_css("section[aria-labelledby='recent-commits']")
   end
 end
 

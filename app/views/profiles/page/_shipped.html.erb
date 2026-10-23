@@ -1,0 +1,34 @@
+<%# Every shipped and published entry in the window, newest first, in the
+    builder's own words. %>
+<% items = section.tally.items.reverse %>
+<% shown = 8 %>
+<section class="os-panel" aria-labelledby="what-shipped">
+  <div class="os-between">
+    <h2 id="what-shipped" class="os-h2">What shipped</h2>
+    <span class="os-xs os-muted"><%= items.size %> <%= section.labels.word %></span>
+  </div>
+  <% if items.empty? %>
+    <p class="os-note mt-3"><%= section.filtered? ? section.labels.empty_tagged(section.selection_name(alternatives: true)) : section.labels.empty %></p>
+  <% else %>
+    <div class="mt-2.5">
+      <% items.each_with_index do |item, i| %>
+        <% if i == shown %><details class="group"><summary class="os-btn2 sm mt-3 list-none group-open:hidden [&::-webkit-details-marker]:hidden">Show all <%= items.size %></summary><% end %>
+        <% project = item.repo_name && section.tally.projects.find(item.repo_name) %>
+        <div id="entry-<%= item.id %>" class="os-row os-rowflex scroll-mt-6 py-3">
+          <span class="os-sm os-muted flex-[0_0_64px]"><%= item.date.strftime("%b %-d") %></span>
+          <span class="os-xs flex-[0_0_84px] font-bold text-ink-3"><%= item.shipped? ? "Shipped" : "Published" %></span>
+          <span class="min-w-0 flex-[1_1_300px] text-[15px] font-semibold">
+            <% if (url = safe_external_url(item.entry.url)) %>
+              <%= link_to item.title, entry_click_out_path(item.id), target: "_blank", rel: "noopener", data: { turbo: false }, class: "hover:underline", title: url %>
+            <% else %>
+              <%= item.title %>
+            <% end %>
+            <% if (run_in = progress_run_in(item, section)).present? %><span class="font-normal text-ink-3"><%= run_in %></span><% end %>
+          </span>
+          <% if project %><span class="os-xs os-muted"><%= project.name %></span><% end %>
+        </div>
+      <% end %>
+      <% if items.size > shown %></details><% end %>
+    </div>
+  <% end %>
+</section>
