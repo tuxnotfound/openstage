@@ -38,6 +38,11 @@ module Progress
       "vs the previous #{SPANS.fetch(range)}" unless range == "all"
     end
 
+    # "12m-2026-10-23", "all-time-2026-10-23": a card's file name.
+    def file_name
+      "#{range == 'all' ? 'all-time' : range}-#{today.iso8601}"
+    end
+
     # "day", "week", "month": what one point on the chart counts.
     def unit_word
       unit.to_s

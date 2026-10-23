@@ -1,21 +1,15 @@
-<%# The owner's card of this view. The card still draws calendar periods
-    (the nearest to the window) and keeps its own look until it is redrawn;
-    its dialog stays light so that look reads in dark mode too. %>
+<%# The owner's card of this view: the window and the projects in view. %>
 <div data-controller="dialog">
   <button type="button" data-action="dialog#open" class="os-btn2 sm">Make a card</button>
   <dialog data-dialog-target="dialog" data-action="click->dialog#backdrop" aria-label="Make a card"
-          class="m-auto mt-10 w-[calc(100%-2rem)] max-w-[648px] rounded-card bg-white p-6 text-gray-900 shadow-2xl backdrop:bg-gray-900/55">
-    <div class="flex items-start justify-between gap-3">
-      <h2 class="os-h2">Your card</h2>
-      <button type="button" data-action="dialog#close" aria-label="Close"
-              class="inline-flex size-10 cursor-pointer items-center justify-center rounded-control bg-gray-100 text-gray-700 hover:bg-gray-200">
-        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
+          class="m-auto mt-10 w-[calc(100%-2rem)] max-w-[1060px] rounded-panel bg-fill p-[clamp(18px,2.4vw,28px)] text-ink shadow-2xl backdrop:bg-black/55">
+    <div class="os-between">
+      <h2 class="os-h2">Make a card</h2>
+      <button type="button" data-action="dialog#close" class="os-btn2 sm">Close</button>
     </div>
-    <%= turbo_frame_tag "progress_card", src: progress_card_path(range: ProgressHelper::CARD_RANGES[section.labels.range],
-                                                                 repo: section.selected.map(&:repo).presence),
-          loading: :lazy do %>
-      <p class="mt-4 text-sm text-gray-400">Drawing your card…</p>
+    <%= turbo_frame_tag "progress_card", src: progress_card_path(range: section.labels.range, repo: section.selected.map(&:repo).presence),
+          loading: :lazy, class: "mt-4 block" do %>
+      <p class="os-sm os-muted">Drawing your card…</p>
     <% end %>
   </dialog>
 </div>

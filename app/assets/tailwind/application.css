@@ -204,7 +204,7 @@
   .os-pills { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: var(--color-surface); border-radius: 22px; }
   .os-pill { display: inline-flex; align-items: center; height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--color-ink-3); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
   .os-pill:hover { color: var(--color-ink); }
-  .os-pill.on, .os-pill[aria-selected="true"], .os-pill[aria-current="page"], .os-pill[aria-pressed="true"] { background: var(--color-accent); color: var(--color-on-accent); }
+  .os-pill.on, .os-pill[aria-selected="true"], .os-pill[aria-current="page"], .os-pill[aria-current="true"], .os-pill[aria-pressed="true"] { background: var(--color-accent); color: var(--color-on-accent); }
   .os-chip { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 700; border: 1.5px solid var(--color-line); background: transparent; color: var(--color-ink-3); cursor: pointer; }
   .os-chip:hover { border-color: var(--color-ink-3); }
   .os-chip.on, .os-chip[aria-pressed="true"], .os-chip[aria-current="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-on-accent); }

@@ -111,7 +111,7 @@ RSpec.describe "The public page's chart and its list" do
 
     sign_in_as(user)
     get "/tux"
-    expect(panel.at_css("turbo-frame#progress_card")["src"]).to eq("/progress/card?range=year")
+    expect(panel.at_css("turbo-frame#progress_card")["src"]).to eq("/progress/card?range=12m")
     expect(panel.text.squish).to include("#{progress_untagged(Date.new(2025, 11, 1)..today)} entries in the last 12 months have no project. Tag them")
   end
 

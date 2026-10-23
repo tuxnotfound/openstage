@@ -1,0 +1,36 @@
+<%# The progress card, 1200x630. CardLayout::Progress measures and places
+    every line, since SVG cannot flow text; this writes what it drew. Text
+    stays on one line inside each <text>: a line break there would print as a
+    space. %>
+<% t = layout.palette %>
+<% num = CardLayout::Shapes.method(:num) %>
+<% plot = CardLayout::Progress::PLOT %>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img"
+     aria-label="Progress card for <%= layout.user.display_name %>, <%= layout.section.labels.words %>" data-week-card="progress">
+  <defs>
+    <style><%= card_face_css(CardLayout::Progress) %></style>
+    <% if layout.avatar_url %><clipPath id="progress-avatar"><circle cx="84" cy="96" r="28"/></clipPath><% end %>
+  </defs>
+  <rect width="1200" height="630" fill="<%= t[:bg] %>"/>
+  <% if layout.avatar_url %>
+    <circle cx="84" cy="96" r="30" fill="<%= t[:line] %>"/>
+    <image href="<%= layout.avatar_url %>" x="56" y="68" width="56" height="56" preserveAspectRatio="xMidYMid slice" clip-path="url(#progress-avatar)"/>
+  <% end %>
+  <% layout.segments.each do |segment| %>
+    <rect x="<%= num.call(segment.x) %>" y="148" width="<%= num.call(segment.width) %>" height="12" rx="6" fill="<%= segment.color %>"/>
+  <% end %>
+  <% layout.gridlines.each do |y| %>
+    <line x1="<%= plot[:left] %>" x2="<%= plot[:right] %>" y1="<%= num.call(y) %>" y2="<%= num.call(y) %>" stroke="<%= t[:line] %>" stroke-width="1.5" stroke-dasharray="5 5"/>
+  <% end %>
+  <line x1="<%= plot[:left] %>" x2="<%= plot[:right] %>" y1="<%= plot[:bottom] %>" y2="<%= plot[:bottom] %>" stroke="<%= t[:ink] %>" stroke-width="2.5"/>
+  <line x1="<%= plot[:right] %>" x2="<%= plot[:right] %>" y1="<%= plot[:top] - 10 %>" y2="<%= plot[:bottom] %>" stroke="<%= t[:ink] %>" stroke-width="2.5"/>
+  <% layout.polylines.each do |line| %>
+    <polyline points="<%= line.points %>" fill="none" stroke="<%= line.color %>" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+  <% end %>
+  <% (layout.discs + layout.notes.map { |note| layout.note_disc(note) }).each do |disc| %>
+    <circle cx="<%= num.call(disc.cx) %>" cy="<%= num.call(disc.cy) %>" r="<%= disc.r %>" fill="<%= disc.fill %>" stroke="<%= t[:bg] %>" stroke-width="3"/>
+  <% end %>
+  <% layout.canvas.runs.each do |run| %>
+    <%= card_run(run) %>
+  <% end %>
+</svg>

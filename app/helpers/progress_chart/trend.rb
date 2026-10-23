@@ -24,9 +24,16 @@ module ProgressChart
     attr_reader :section
 
     # discs: false when the builder hides the shipped and published list.
-    def initialize(section, discs: true)
+    # items: the entries that get discs, in date order; the section's picks
+    # unless a card fits fewer.
+    def initialize(section, discs: true, items: nil)
       @section = section
       @show_discs = discs
+      @items = items
+    end
+
+    def items
+      @items || section.pick.kept
     end
 
     # Only the page's 30-day window averages; a calendar week counts each day.
@@ -170,7 +177,7 @@ module ProgressChart
       end
 
       def discs
-        @chart.section.pick.kept.each_with_index.map do |item, k|
+        @chart.items.each_with_index.map do |item, k|
           index = @chart.point_of(item)
           project = item.repo_name && @chart.tally.projects.find(item.repo_name)
           line = project ? @chart.lines.find { |own| own.repo == project.repo } : @chart.lines.max_by { |any| any.values[index] }

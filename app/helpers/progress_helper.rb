@@ -2,8 +2,6 @@ module ProgressHelper
   # The public page's own params: the window, and one project or several.
   PROGRESS_PARAMS = [ :range, :repo, { repo: [] } ].freeze
   RANGES = { "30d" => "30 days", "90d" => "90 days", "12m" => "12 months", "all" => "All time" }.freeze
-  # Make a card still draws calendar periods; the nearest one to each window.
-  CARD_RANGES = { "30d" => "month", "90d" => "month", "12m" => "year", "all" => "all" }.freeze
 
   # This page with some of its params changed; nil drops one.
   def progress_view_path(user, **changes)
@@ -107,15 +105,13 @@ module ProgressHelper
     end
   end
 
-  # The post that goes with a card: the period, the card's entries word for
+  # The post that goes with a card: the window, the card's entries word for
   # word, then the commits.
   def progress_card_draft(section, items)
-    labels = section.labels
-    period = labels.range == "all" ? labels.subtitle : "#{labels.short}#{' so far' if labels.running?}"
     totals = section.tally.totals
     name = section.selection_name if section.filtered?
     commits = name ? "#{totals.commits} #{name} commits" : pluralize(totals.commits, "commit")
-    [ "#{"#{name}, " if name}#{period}:", *items.map(&:title),
+    [ "#{name ? "#{name}, #{section.labels.words}" : section.labels.words.upcase_first}:", *items.map(&:title),
       "#{commits} on #{pluralize(totals.active_days, 'day')}." ].join("\n")
   end
 
