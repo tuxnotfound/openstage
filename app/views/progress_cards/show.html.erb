@@ -15,9 +15,9 @@
   <div data-controller="card-export clipboard"
        data-card-export-fonts-value="<%= { "footnotes" => card_fonts(CardLayout::Footnotes.fonts) }.to_json %>"
        data-card-export-filename-value="openstage-<%= labels.file_name %>.png"
-       data-card-export-track-url-value="<%= recap_track_path %>" data-card-export-event-value="progress_card_downloaded"
+       data-card-export-track-url-value="<%= events_path %>" data-card-export-event-value="progress_card_downloaded"
        data-card-export-detail-value="<%= @layout.kind %>"
-       data-clipboard-track-url-value="<%= recap_track_path %>" data-clipboard-event-value="progress_post_copied"
+       data-clipboard-track-url-value="<%= events_path %>" data-clipboard-event-value="progress_post_copied"
        data-clipboard-detail-value="<%= @layout.kind %>">
     <p class="text-sm text-gray-500"><%= [ (section.selection_name if section.filtered?), labels.title, labels.subtitle ].compact.join(" · ") %></p>
 

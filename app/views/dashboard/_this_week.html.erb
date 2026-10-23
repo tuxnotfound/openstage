@@ -1,5 +1,5 @@
-<%# The one thing to do this week. A week with something to say points at the
-    picker; a quiet week points at the composer right below instead of nagging. %>
+<%# The one thing to do this week. A week with something to say points at its
+    card; a quiet week points at the composer right below instead of nagging. %>
 <section class="os-panel" <%= "data-recap-prompt" if @recap_prompt %>>
   <div class="os-between">
     <h2 class="os-h2">This week</h2>
@@ -28,8 +28,8 @@
       </div>
     <% end %>
     <div class="os-between mt-[18px]">
-      <p class="os-sm os-ink2">Turn it into a post. You pick the lines and write the words; nothing is posted for you.</p>
-      <%= link_to "Pick what to share", recap_path, class: "os-btn sm" %>
+      <p class="os-sm os-ink2">Turn it into a card to post. You choose what it shows and edit the words; nothing is posted for you.</p>
+      <%= link_to "Make your week's card", current_week_card_path, class: "os-btn sm" %>
     </div>
   <% else %>
     <p class="os-p mt-2 text-lg font-semibold text-ink">Quiet week so far.</p>

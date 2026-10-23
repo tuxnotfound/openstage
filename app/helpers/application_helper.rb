@@ -27,7 +27,7 @@ module ApplicationHelper
   NAV_TABS = {
     "dashboard" => :dashboard, "entries" => :dashboard,
     "progress_cards" => :page,
-    "recaps" => :recap, "week_cards" => :recap,
+    "week_cards" => :week,
     "analytics" => :analytics,
     "settings" => :settings, "github_repos" => :settings
   }.freeze

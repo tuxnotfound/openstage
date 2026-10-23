@@ -222,7 +222,7 @@ RSpec.describe "Week cards", type: :request do
     end
 
     it "accepts the download report from the browser" do
-      expect { post "/recap/track", params: { name: "card_downloaded" }, as: :json }
+      expect { post "/events", params: { name: "card_downloaded" }, as: :json }
         .to change { Event.named("card_downloaded").count }.by(1)
     end
   end

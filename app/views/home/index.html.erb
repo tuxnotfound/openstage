@@ -1,18 +1,18 @@
 <% content_for :title, "Openstage — Build in public without the second job" %>
-<% content_for :meta_description, "Openstage turns the commits you already push into a public page that keeps itself current, and pre-fills your \"what I shipped\" posts. You pick the lines. Free for indie builders." %>
+<% content_for :meta_description, "Openstage turns the commits you already push into a public page that keeps itself current, and draws a card of your week for you to post. Free for indie builders." %>
 
 <%
   # Four questions, each one an objection a builder has before signing in.
   # The FAQPage JSON-LD below mirrors these, so the markup matches visible text.
   faqs = [
     { q: "What is Openstage?",
-      a: "A public page that builds itself from your GitHub commits and the milestones and notes you add, plus a recap picker that pre-fills your \"here's what I shipped\" post for the last week, month or 90 days. It is for indie and side-project builders who want to build in public without it becoming a second job." },
+      a: "A public page that builds itself from your GitHub commits and the milestones and notes you add, plus a card of your week, with a post drafted from it, for you to share. It is for indie and side-project builders who want to build in public without it becoming a second job." },
     { q: "What does it read from GitHub?",
       a: "Sign-in asks only for your email address. Public repos you push to sync every 2 hours. Private repos stay out unless you connect them in Settings and include each one, and even then only commit messages and release names appear, never links to the code." },
     { q: "Does it post for me?",
-      a: "No. It lists the commits in the window you pick; you tick the lines worth saying, edit the text and post it yourself on X or Bluesky. Openstage never writes, ranks or posts anything for you." },
+      a: "No. Your week card comes with a post drafted from it; you edit the words, download the card and post it yourself on X or Bluesky. Openstage never ranks or posts anything for you." },
     { q: "What does it cost?",
-      a: "The page, the sync, the recap picker and a subscribe box on your page are free for good. Pro is $7 a month and adds your subscriber list, profile analytics, private entries and pins." }
+      a: "The page, the sync, the week card and a subscribe box on your page are free for good. Pro is $7 a month and adds your subscriber list, profile analytics, private entries and pins." }
   ]
 %>
 
@@ -48,14 +48,14 @@
 <% end %>
 
 <%# The friction, stated once: showing your work is a second job. The page and
-    the recap are two outputs of the same commits, not two products. %>
+    the week card are two outputs of the same commits, not two products. %>
 
 <!-- Hero -->
 <section class="grid gap-10 lg:grid-cols-2 lg:items-center pt-6 sm:pt-10 pb-12">
   <div>
     <p class="text-sm font-medium text-gray-500 mb-3">For indie and side-project builders</p>
     <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight leading-[1.1]">Keep shipping.<br>Openstage does the showing.</h1>
-    <p class="text-lg text-gray-600 mt-5 max-w-lg">The commits you already push become a public page that keeps itself current, and a &ldquo;here's what I shipped&rdquo; post you only pick lines for.</p>
+    <p class="text-lg text-gray-600 mt-5 max-w-lg">The commits you already push become a public page that keeps itself current, and a card of your week to post.</p>
 
     <div class="flex flex-wrap items-center gap-x-5 gap-y-3 mt-8">
       <% if user_signed_in? %>
@@ -135,17 +135,17 @@
     <li>
       <div class="text-xs font-mono text-gray-400 mb-1">02</div>
       <h3 class="font-semibold text-gray-900">Add what commits can't say</h3>
-      <p class="text-sm text-gray-500 mt-1">A launch, a decision, a lesson. Milestones and notes take one line, sit next to your commits, and land in your recaps.</p>
+      <p class="text-sm text-gray-500 mt-1">A launch, a decision, a lesson. Milestones and notes take one line, sit next to your commits, and land on your week card.</p>
     </li>
     <li>
       <div class="text-xs font-mono text-gray-400 mb-1">03</div>
-      <h3 class="font-semibold text-gray-900">Recap a week or a month</h3>
-      <p class="text-sm text-gray-500 mt-1">Openstage lists your commits from the last 7, 30 or 90 days. Tick the lines worth saying or write it in your own words, then post it yourself on X or Bluesky.</p>
+      <h3 class="font-semibold text-gray-900">Post your week</h3>
+      <p class="text-sm text-gray-500 mt-1">Openstage draws your week as a card: what you shipped and published, your commits per day, your own words. Edit the post that comes with it, then share it yourself on X or Bluesky.</p>
     </li>
     <li>
       <div class="text-xs font-mono text-gray-400 mb-1">04</div>
       <h3 class="font-semibold text-gray-900">Share one link</h3>
-      <p class="text-sm text-gray-500 mt-1">Put your page in your bio and a live badge in your README; every recap you post brings people back to it. Visitors can subscribe to your page.</p>
+      <p class="text-sm text-gray-500 mt-1">Put your page in your bio and a live badge in your README; every card you post brings people back to it. Visitors can subscribe to your page.</p>
     </li>
   </ol>
 </section>

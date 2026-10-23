@@ -1,6 +1,6 @@
 module WeeklyEmails
   # One builder's two weekly emails (F2). The builder gets their week, ready to
-  # review, with one link to the recap picker; their confirmed subscribers get
+  # review, with one link to its week card; their confirmed subscribers get
   # the week itself. A quiet week (fewer than three things) sends neither, and
   # nothing is ever posted for anyone.
   class SendService < ApplicationService

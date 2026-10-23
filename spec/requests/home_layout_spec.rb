@@ -41,12 +41,12 @@ RSpec.describe "Home layout", type: :request do
     expect(response.body).to include("Share one link")
   end
 
-  # The picker offers 7, 30 and 90 days. "Once a week" read as the only window.
-  it "does not sell the recap as weekly-only" do
+  # The recap picker is gone; the week card is what a builder posts.
+  it "sells the week card, not the recap picker" do
     get "/"
 
-    expect(response.body).to include("Recap a week or a month")
-    expect(response.body).not_to match(/once a week|weekly/i)
+    expect(response.body).to include("Post your week")
+    expect(response.body).not_to match(/recap/i)
   end
 
   it "links the live page once in text; the card itself is the other way in" do

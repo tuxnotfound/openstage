@@ -99,10 +99,10 @@ RSpec.describe "Making a card from the progress section" do
                           "data-clipboard-detail-value", "data-clipboard-track-url-value"))
       .to eq("data-card-export-event-value" => "progress_card_downloaded", "data-card-export-detail-value" => "lines",
              "data-clipboard-event-value" => "progress_post_copied", "data-clipboard-detail-value" => "lines",
-             "data-clipboard-track-url-value" => "/recap/track")
+             "data-clipboard-track-url-value" => "/events")
 
-    post "/recap/track", params: { name: "progress_card_downloaded", detail: "lines" }, as: :json
-    post "/recap/track", params: { name: "progress_post_copied", detail: "elsewhere" }, as: :json
+    post "/events", params: { name: "progress_card_downloaded", detail: "lines" }, as: :json
+    post "/events", params: { name: "progress_post_copied", detail: "elsewhere" }, as: :json
     expect(Event.where(user: user).where.not(name: "seen").pluck(:name, :detail))
       .to contain_exactly([ "progress_card_downloaded", "lines" ], [ "progress_post_copied", "" ])
   end

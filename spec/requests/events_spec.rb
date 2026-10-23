@@ -20,6 +20,32 @@ RSpec.describe "Event tracking", type: :request do
     end
   end
 
+  describe "from the cards in the browser" do
+    before { sign_in_as(builder) }
+
+    it "records a name a browser may claim, with a detail from its list" do
+      post "/events", params: { name: "progress_card_downloaded", detail: "lines" }, as: :json
+
+      expect(response).to have_http_status(:no_content)
+      expect(Event.named("progress_card_downloaded").last).to have_attributes(user_id: builder.id, detail: "lines")
+    end
+
+    it "drops a detail off the list and refuses any other name" do
+      post "/events", params: { name: "recap_intent", detail: "myspace" }, as: :json
+      expect(Event.named("recap_intent").last.detail).to eq("")
+
+      expect { post "/events", params: { name: "seen" }, as: :json }.not_to change(Event, :count)
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "sends a signed-out report home" do
+      reset!
+      post "/events", params: { name: "recap_copied" }, as: :json
+
+      expect(response).to redirect_to(root_path)
+    end
+  end
+
   describe "ref_visit" do
     it "records a signed-out human arriving on a tagged link, once per session" do
       expect {
@@ -41,59 +67,6 @@ RSpec.describe "Event tracking", type: :request do
       expect {
         get "/", params: { ref: "bio" }, headers: browser
       }.not_to change { Event.named("ref_visit").count }
-    end
-  end
-
-  describe "recap events" do
-    before do
-      sign_in_as(builder)
-      3.times do |i|
-        create(:entry, user: builder, entry_type: "shipped", source: "github", title: "Commit #{i}",
-                       repo_name: "someone/app", external_id: "sha#{i}", occurred_at: 1.day.ago)
-      end
-    end
-
-    it "separates opening the picker from ticking a commit" do
-      get "/recap"
-      expect(Event.where(user: builder).pluck(:name)).to include("recap_opened")
-      expect(Event.where(user: builder).pluck(:name)).not_to include("recap_picked")
-
-      get "/recap", params: { picks: [ 1 ] }
-      expect(Event.where(user: builder).pluck(:name)).to include("recap_picked")
-    end
-
-    it "records the quiet-week state as its own thing, not as an open" do
-      builder.entries.destroy_all
-      get "/recap"
-
-      names = Event.where(user: builder).pluck(:name)
-      expect(names).to include("recap_quiet")
-      expect(names).not_to include("recap_opened")
-    end
-
-    it "accepts copy and compose reports from the page" do
-      post "/recap/track", params: { name: "recap_copied" }, as: :json
-      post "/recap/track", params: { name: "recap_intent", detail: "bluesky" }, as: :json
-
-      expect(response).to have_http_status(:no_content)
-      expect(Event.find_by(user: builder, name: "recap_intent").detail).to eq("bluesky")
-      expect(Event.where(user: builder, name: "recap_copied")).to exist
-    end
-
-    it "refuses any name a browser has no business claiming" do
-      get "/recap" # the day's legitimate "seen" row lands here
-
-      expect {
-        post "/recap/track", params: { name: "seen" }, as: :json
-        post "/recap/track", params: { name: "made_up" }, as: :json
-      }.not_to change { Event.count }
-      expect(response).to have_http_status(:unprocessable_entity)
-    end
-
-    it "sends a signed-out report home" do
-      reset!
-      post "/recap/track", params: { name: "recap_copied" }, as: :json
-      expect(response).to redirect_to(root_path)
     end
   end
 

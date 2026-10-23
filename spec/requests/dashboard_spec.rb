@@ -41,12 +41,25 @@ RSpec.describe "Dashboard", type: :request do
         expect(card).not_to include("Sync now")
       end
 
-      it "points a quiet week at the composer instead of the recap" do
+      it "points a quiet week at the composer instead of its card" do
         get "/dashboard"
 
         expect(response.body).to include("Quiet week so far.")
         expect(response.body).to include("Add a milestone or note")
         expect(response.body).not_to include("data-recap-prompt")
+      end
+
+      it "points a week with something to say at its card" do
+        3.times do |i|
+          create(:entry, user: user, repo_name: "#{user.github_username}/app", title: "Step #{i}",
+                         external_id: "sha-step-#{i}", occurred_at: 1.day.ago)
+        end
+
+        get "/dashboard"
+
+        week = Nokogiri::HTML(response.body).at_css("[data-recap-prompt]")
+        expect(week.text.squish).to include("You shipped 3 commits in app")
+        expect(week.at_css("a[href='/week']").text).to eq("Make your week's card")
       end
 
       it "drops the stat tiles that had no action attached" do
@@ -69,7 +82,7 @@ RSpec.describe "Dashboard", type: :request do
       get "/dashboard"
 
       nav = response.body[/<nav class="os-nav.*?<\/nav>/m]
-      expect(nav).to include(">Dashboard<", "Your page ", ">Recap<", ">Settings<")
+      expect(nav).to include(">Dashboard<", "Your page ", ">Week card<", ">Settings<")
       expect(nav).to include(%(<a aria-current="page" href="/dashboard">Dashboard</a>))
 
       menu = response.body[/<details.*?<\/details>/m]

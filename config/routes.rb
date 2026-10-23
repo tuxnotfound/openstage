@@ -36,10 +36,8 @@ Rails.application.routes.draw do
   patch "/week/:week", to: "week_cards#update", constraints: { week: /\d{4}-W\d{2}/ }
   get "/week/:week/preview", to: "week_cards#preview", as: :week_card_preview, constraints: { week: /\d{4}-W\d{2}/ }
 
-  # Recap picker, open to every signed-in builder
-  get "/recap", to: "recaps#show", as: :recap
-  post "/recap/posted", to: "recaps#log_post", as: :recap_log_post
-  post "/recap/track", to: "recaps#track", as: :recap_track
+  # What the cards report from the browser: downloads, copies, compose boxes.
+  post "/events", to: "events#create", as: :events
 
   # Analytics (Pro)
   get "/analytics", to: "analytics#index", as: :analytics

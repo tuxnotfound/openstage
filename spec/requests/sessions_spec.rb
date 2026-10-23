@@ -15,11 +15,11 @@ RSpec.describe "Sessions", type: :request do
       let!(:user) { create(:user) }
 
       it "lands there after sign-in, once" do
-        get "/recap", params: { from: "weekly" }
+        get "/week", params: { from: "weekly" }
         expect(response).to redirect_to(root_path)
 
         sign_in_as(user)
-        expect(response).to redirect_to("/recap?from=weekly")
+        expect(response).to redirect_to("/week?from=weekly")
 
         sign_in_as(user)
         expect(response).to redirect_to(dashboard_path)

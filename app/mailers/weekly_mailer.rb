@@ -4,10 +4,10 @@
 class WeeklyMailer < ApplicationMailer
   helper :progress
 
-  # The builder's own week, and one link: the picker. It never posts.
+  # The builder's own week, and one link: its card. It never posts.
   def week_ready(user)
     @section    = week_of(user)
-    @picker_url = recap_url(from: "weekly")
+    @card_url   = current_week_card_url(from: "weekly")
     @log_url    = dashboard_url
     @stop_url   = weekly_email_unsubscribe_url(token: user.signed_id(purpose: :weekly_email))
     one_click_unsubscribe(@stop_url)

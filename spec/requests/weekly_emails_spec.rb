@@ -44,9 +44,9 @@ RSpec.describe "Weekly email", type: :request do
     expect(user.reload.weekly_email).to be(true)
   end
 
-  it "counts the picker opened from the email" do
+  it "counts the week card opened from the email" do
     sign_in_as(user)
 
-    expect { get recap_path(from: "weekly") }.to change { Event.named("recap_from_email").count }.by(1)
+    expect { get current_week_card_path(from: "weekly") }.to change { Event.named("recap_from_email").count }.by(1)
   end
 end

@@ -48,9 +48,9 @@ RSpec.describe WeeklyMailer do
 
     it "puts the one link to the picker before the list" do
       html = mail.html_part.body.to_s
-      expect(html).to include("https://openstage.dev/recap?from=weekly")
-      expect(html.index("https://openstage.dev/recap?from=weekly")).to be < html.index("Opened the beta")
-      expect(mail.text_part.body.to_s).to include("Pick what to share: https://openstage.dev/recap?from=weekly")
+      expect(html).to include("https://openstage.dev/week?from=weekly")
+      expect(html.index("https://openstage.dev/week?from=weekly")).to be < html.index("Opened the beta")
+      expect(mail.text_part.body.to_s).to include("Make your week's card: https://openstage.dev/week?from=weekly")
     end
 
     it "carries a stop link that works in one click" do

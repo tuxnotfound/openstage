@@ -15,7 +15,7 @@
       <% current_user.project_names.each do |name| %><option value="<%= name %>"></option><% end %>
     </datalist>
     <div class="os-between">
-      <span class="os-xs os-muted">Shows on your page and in your recaps. Posting is up to you.</span>
+      <span class="os-xs os-muted">Shows on your page and on your week card. Posting is up to you.</span>
       <%= f.submit "Post entry", class: "os-btn" %>
     </div>
   <% end %>
