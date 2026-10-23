@@ -1,5 +1,241 @@
 @import "tailwindcss";
 
+/* Spectrum, the look of the projects revamp (2026-10-23). Every colour is a
+   token, so a page drawn with them follows light or dark by itself. The os-*
+   components further down are the drafts' kit, class for class, so a draft's
+   markup ports to a view as it stands. */
+
+/* Dark when the visitor picked it, or when they have not picked and the system
+   is dark. A page not yet in the new look is pinned to light (color_theme). */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(body:not([data-theme]), body:not([data-theme]) *) {
+      @slot;
+    }
+  }
+}
+
+@font-face {
+  font-family: "Funnel Sans";
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url("funnel-sans-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Funnel Sans";
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url("funnel-sans-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Funnel Display";
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url("funnel-display-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Funnel Display";
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url("funnel-display-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Static, so a token only the components below read is still emitted. */
+@theme static {
+  --font-sans: "Funnel Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-display: "Funnel Display", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  --radius-panel: 26px;
+  --radius-card: 18px;
+  --radius-control: 12px;
+
+  --color-ground: #FFFFFF;
+  --color-surface: #FFFFFF;
+  --color-fill: #F3F4F6;
+  --color-ink: #0E0F12;
+  --color-ink-2: #43464D;
+  --color-ink-3: #666A73;
+  --color-line: #E2E4E8;
+  --color-strong: #0E0F12;
+  /* "Up" wears the accent; arrows always carry the direction too. Down on a
+     panel is 4.33:1 in light, so it colours arrows and marks, never words. */
+  --color-up: #006B72;
+  --color-down: #D33A2C;
+  --color-on-down: #FFFFFF;
+  --color-down-soft: #FBEAE8;
+  --color-warn: #8A5A00;
+  --color-accent: #006B72;
+  --color-on-accent: #FFFFFF;
+  --color-accent-soft: #E0EDEE;
+  --color-accent-ink: #006B72;
+
+  /* By all-time commit order (ProgressChart::Palette); the 7th on is grey. */
+  --color-project-1: #2a78d6;
+  --color-project-2: #eb6834;
+  --color-project-3: #1baf7a;
+  --color-project-4: #eda100;
+  --color-project-5: #e87ba4;
+  --color-project-6: #008300;
+  --color-project-other: #8A8F98;
+  /* Text on a project colour (a disc's number, a picked chip), by the kit's
+     rule: dark text when the colour's luminance is over 0.2. */
+  --color-on-project-1: #FFFFFF;
+  --color-on-project-2: #111111;
+  --color-on-project-3: #111111;
+  --color-on-project-4: #111111;
+  --color-on-project-5: #111111;
+  --color-on-project-6: #FFFFFF;
+  --color-on-project-other: #111111;
+}
+
+@layer base {
+  body {
+    background: var(--color-ground);
+    color: var(--color-ink);
+
+    @variant dark {
+      color-scheme: dark;
+      --color-ground: #0E0F12;
+      --color-surface: #16181D;
+      --color-fill: #1C1F25;
+      --color-ink: #F3F4F6;
+      --color-ink-2: #C5C8CE;
+      --color-ink-3: #9499A2;
+      --color-line: #2A2E35;
+      --color-strong: #F3F4F6;
+      --color-up: #45C9D1;
+      --color-down: #FF7B6B;
+      --color-on-down: #0E0F12;
+      --color-down-soft: #3A2220;
+      --color-warn: #E8B640;
+      --color-accent: #45C9D1;
+      --color-on-accent: #0E0F12;
+      --color-accent-soft: #1E383D;
+      --color-accent-ink: #45C9D1;
+      --color-project-1: #3987e5;
+      --color-project-2: #d95926;
+      --color-project-3: #199e70;
+      --color-project-4: #c98500;
+      --color-project-5: #d55181;
+      --color-project-6: #008300;
+      --color-project-other: #6F757F;
+      --color-on-project-1: #111111;
+      --color-on-project-other: #FFFFFF;
+    }
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Layout */
+  .os-wrap { max-width: 1160px; margin: 0 auto; padding: 0 clamp(16px, 3.2vw, 40px); }
+  .os-narrow { max-width: 760px; margin: 0 auto; padding: 0 clamp(16px, 3.2vw, 40px); }
+  .os-stack { display: flex; flex-direction: column; gap: 16px; }
+  .os-between { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
+  .os-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 16px; }
+  .os-grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+  .os-row { border-top: 1px solid var(--color-line); padding: 12px 0; }
+  .os-rowflex { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; }
+
+  /* Header and footer */
+  .os-top { height: 68px; display: flex; align-items: center; gap: 20px; }
+  .os-logo { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -.02em; color: var(--color-ink); }
+  .os-nav { display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 15px; font-weight: 600; }
+  .os-nav a { color: var(--color-ink-2); white-space: nowrap; }
+  .os-nav a:hover { color: var(--color-ink); }
+  .os-nav a[aria-current="page"] { color: var(--color-accent-ink); box-shadow: inset 0 -2px 0 var(--color-accent); }
+  .os-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; font-size: 13px; color: var(--color-ink-3); padding-top: 28px; }
+  .os-foot a { color: var(--color-ink); text-decoration: underline; text-underline-offset: 2px; }
+
+  /* Surfaces */
+  .os-panel { background: var(--color-fill); border-radius: var(--radius-panel); padding: clamp(18px, 2.4vw, 28px); }
+  .os-card { background: var(--color-surface); border-radius: var(--radius-card); padding: 18px; border: 1px solid var(--color-line); }
+
+  /* Type: titles and numbers in Funnel Display, body in Funnel Sans */
+  .os-h1 { font-family: var(--font-display); font-weight: 700; letter-spacing: -.035em; font-size: clamp(36px, 5vw, 62px); line-height: 1.02; margin: 0; }
+  .os-h2 { font-family: var(--font-display); font-weight: 700; letter-spacing: -.02em; font-size: 24px; line-height: 1.15; margin: 0; }
+  .os-h3 { font-family: var(--font-display); font-weight: 700; letter-spacing: -.01em; font-size: 18px; line-height: 1.25; margin: 0; }
+  .os-num { font-family: var(--font-display); font-weight: 600; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+  .os-big { font-size: clamp(64px, 9vw, 108px); line-height: .95; }
+  .os-label { font-size: 13px; font-weight: 600; color: var(--color-ink-3); }
+  .os-muted { color: var(--color-ink-3); }
+  .os-ink2 { color: var(--color-ink-2); }
+  .os-sm { font-size: 14px; }
+  .os-xs { font-size: 13px; }
+  .os-p { margin: 0; font-size: 16px; color: var(--color-ink-2); }
+  .os-note { font-size: 13px; color: var(--color-ink-3); margin: 0; }
+  .os-prose p { margin: 0 0 16px; font-size: 17px; line-height: 1.65; color: var(--color-ink-2); }
+  .os-prose h2 { font-family: var(--font-display); font-size: 24px; letter-spacing: -.02em; margin: 28px 0 10px; }
+  .os-prose a { color: var(--color-accent-ink); text-decoration: underline; text-underline-offset: 3px; }
+  .os-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-control); padding: 12px 14px; overflow-x: auto; white-space: pre; }
+
+  /* Buttons and links. Pills are for toggles, tabs and filters, never buttons. */
+  .os-btn, .os-btn2 { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 20px; border-radius: var(--radius-control); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .os-btn { border: 0; background: var(--color-accent); color: var(--color-on-accent); }
+  .os-btn:hover { background: color-mix(in oklab, var(--color-accent) 86%, var(--color-ink)); }
+  .os-btn2 { border: 1.5px solid var(--color-line); background: transparent; color: var(--color-ink); }
+  .os-btn2:hover { border-color: var(--color-ink-3); }
+  .os-btn.sm, .os-btn2.sm { height: 36px; padding: 0 14px; font-size: 14px; border-radius: 10px; }
+  .os-btn.danger { background: var(--color-down); color: var(--color-on-down); }
+  .os-btn.danger:hover { background: color-mix(in oklab, var(--color-down) 86%, var(--color-ink)); }
+  .os-btn:disabled, .os-btn2:disabled { opacity: .5; cursor: not-allowed; }
+  .os-link { font-size: 15px; font-weight: 700; color: var(--color-accent-ink); text-decoration: underline; text-underline-offset: 3px; }
+
+  /* Toggles, tabs and filters */
+  .os-pills { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: var(--color-surface); border-radius: 999px; }
+  .os-pill { display: inline-flex; align-items: center; height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--color-ink-3); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .os-pill:hover { color: var(--color-ink); }
+  .os-pill.on, .os-pill[aria-selected="true"], .os-pill[aria-current="page"], .os-pill[aria-pressed="true"] { background: var(--color-accent); color: var(--color-on-accent); }
+  .os-chip { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 700; border: 1.5px solid var(--color-line); background: transparent; color: var(--color-ink-3); cursor: pointer; }
+  .os-chip:hover { border-color: var(--color-ink-3); }
+  .os-chip.on, .os-chip[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-on-accent); }
+  /* A button or a checkbox. The knob is a gradient, which a checkbox can draw. */
+  .os-switch { appearance: none; position: relative; width: 40px; height: 22px; flex: none; margin: 0; padding: 0; border: 0; border-radius: 999px; cursor: pointer;
+    background: radial-gradient(circle at 11px 50%, #FFFFFF 7.5px, transparent 8px), var(--color-line); }
+  .os-switch.on, .os-switch:checked, .os-switch[aria-checked="true"] {
+    background: radial-gradient(circle at 29px 50%, var(--color-on-accent) 7.5px, transparent 8px), var(--color-accent); }
+
+  /* Fields */
+  .os-fieldset { display: flex; flex-direction: column; gap: 6px; }
+  .os-field, .os-area { box-sizing: border-box; width: 100%; border: 1px solid var(--color-line); border-radius: var(--radius-control); background: var(--color-surface); color: var(--color-ink); font: inherit; font-size: 15px; }
+  .os-field { height: 44px; padding: 0 14px; }
+  .os-area { min-height: 110px; padding: 12px 14px; line-height: 1.5; resize: vertical; }
+  .os-field::placeholder, .os-area::placeholder { color: var(--color-ink-3); }
+
+  /* Marks */
+  .os-tag { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px; background: var(--color-surface); border: 1px solid var(--color-line); font-size: 12px; font-weight: 700; color: var(--color-ink-2); }
+  .os-tag.pro { background: var(--color-accent); color: var(--color-on-accent); border-color: var(--color-accent); }
+  .os-tag.soft { background: var(--color-accent-soft); color: var(--color-accent-ink); border-color: transparent; }
+  .os-missing { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; border: 1px dashed var(--color-line); font-size: 12px; font-weight: 600; color: var(--color-ink-3); }
+  .os-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; display: inline-block; }
+  .os-disc { width: 24px; height: 24px; flex: none; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 12px; font-weight: 700; }
+  .os-avatar { width: 56px; height: 56px; flex: none; border-radius: 50%; object-fit: cover; background: var(--color-strong); color: var(--color-ground); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+
+  /* Charts: one line per project, the share bar under the headline number */
+  .os-sharebar { display: flex; gap: 3px; height: 14px; border-radius: 999px; overflow: hidden; }
+  .os-chart { position: relative; height: 280px; }
+  .os-chart svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .os-gridline { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--color-line); }
+  .os-axis { position: absolute; left: 0; right: 0; bottom: 0; border-top: 2px solid var(--color-strong); }
+  .os-ylab { position: absolute; left: 0; padding-right: 6px; background: var(--color-fill); font-size: 12px; color: var(--color-ink-3); }
+  .os-xlabs { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; font-size: 12px; color: var(--color-ink-3); }
+}
+
 @keyframes entry-highlight {
   0%   { background-color: theme(colors.yellow.100); }
   100% { background-color: transparent; }
