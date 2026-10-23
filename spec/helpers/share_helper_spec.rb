@@ -17,7 +17,7 @@ RSpec.describe ApplicationHelper, "#share_on_x_url", type: :helper do
     entry = create(:entry, user: user)
 
     expect(CGI.unescape(helper.share_on_x_url(entry, user)))
-      .to include("/tuxnotfound#entry-#{entry.id}")
+      .to include("/tuxnotfound?entry=#{entry.id}#entry-#{entry.id}")
   end
 
   it "includes a truncated body when there is one" do

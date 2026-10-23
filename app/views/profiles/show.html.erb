@@ -39,9 +39,14 @@
 <% end %>
 
 <%# The filters and the window change everything below the builder's name, so
-    the whole page is one frame and the URL follows. %>
+    the whole page is one frame and the URL follows. entry-link: an old link to
+    an entry the page does not show asks for it again with ?entry=. %>
+<div data-controller="entry-link">
 <%= turbo_frame_tag "profile", data: { turbo_action: "advance" } do %>
   <div class="os-stack">
+    <% if @linked %>
+      <%= render "profiles/page/linked", user: @user, entry: @linked %>
+    <% end %>
     <section class="os-panel" aria-label="Profile">
       <%= render "profiles/page/identity", user: @user %>
       <% if @total_entries.zero? %>
@@ -57,9 +62,9 @@
     </section>
 
     <% if @page %>
-      <%= render "profiles/page/recent", user: @user, groups: @page.recent if @page.recent.any? %>
+      <%= render "profiles/page/recent", user: @user, groups: @page.recent, linked: @linked if @page.recent.any? %>
       <%= render "profiles/page/projects", user: @user, cards: @page.cards if @page.cards.any? %>
-      <%= render "profiles/page/shipped", section: @page.section unless @total_entries.zero? %>
+      <%= render "profiles/page/shipped", section: @page.section, linked: @linked unless @total_entries.zero? %>
     <% end %>
 
     <footer class="flex flex-wrap justify-center gap-x-6 gap-y-2 pt-2 os-sm">
@@ -72,3 +77,4 @@
     </footer>
   </div>
 <% end %>
+</div>

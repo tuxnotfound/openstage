@@ -3,7 +3,7 @@
   <div class="flex items-center justify-between gap-3 mb-1">
     <div class="min-w-0">
       <%= link_to entry.title,
-          profile_path(username: current_user.username, anchor: "entry-#{entry.id}"),
+          profile_path(current_user.username, entry: entry.id, anchor: "entry-#{entry.id}"),
           class: "text-sm text-gray-800 hover:text-gray-900 truncate block",
           title: entry.title %>
       <div class="flex items-center gap-2 mt-0.5 flex-wrap">

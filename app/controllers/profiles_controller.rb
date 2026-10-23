@@ -12,12 +12,10 @@ class ProfilesController < ApplicationController
 
     track_profile_view
 
-    # Only the owner, only until the first sync has written its log. The page
-    # polls itself (see the view) so the history appears without a reload.
-    @syncing = current_user == @user && @user.sync_logs.where(source: :github).none? &&
-               @user.github_access_token.present?
+    @syncing = syncing?
 
     @repo_filter = selected_repos.presence
+    @linked = linked_entry
 
     @total_entries = @user.entries.publicly_visible.count
     # Public repos only: counting private ones would disclose that they exist.
@@ -39,6 +37,17 @@ class ProfilesController < ApplicationController
   # ?repo= names one project or several (repo[]=); none means all of them.
   def selected_repos
     Array(params[:repo]).map(&:to_s).compact_blank.uniq
+  end
+
+  # Only the owner, only until the first sync has written its log. The page
+  # polls itself (see the view) so the history appears without a reload.
+  def syncing?
+    current_user == @user && @user.sync_logs.where(source: :github).none? && @user.github_access_token.present?
+  end
+
+  # A link to one entry shows it at the top, wherever the page would put it.
+  def linked_entry
+    @user.entries.publicly_visible.find_by(id: params[:entry]) if params[:entry].present?
   end
 
   # The page opens on the last 12 months; ?range= picks another window and

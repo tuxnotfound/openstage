@@ -106,6 +106,41 @@ RSpec.describe "Profiles", type: :request do
       end
     end
 
+    context "a link to one entry" do
+      let!(:user) { create(:user, username: "builder") }
+      let!(:old) { create(:entry, user: user, repo_name: "builder/app", title: "An old commit", occurred_at: 40.days.ago) }
+
+      before { 9.times { |i| create(:entry, user: user, repo_name: "builder/app", occurred_at: (i + 1).days.ago) } }
+
+      def linked
+        Nokogiri::HTML(response.body).at_css("[data-linked-entry]")
+      end
+
+      it "shows the entry at the top, holding its anchor once, wherever the page would put it" do
+        get "/builder", params: { entry: old.id }
+
+        expect(linked["id"]).to eq("entry-#{old.id}")
+        expect(linked.text.squish).to include("The entry you followed", "An old commit", "Commit")
+        expect(response.body.scan(%(id="entry-#{old.id}")).size).to eq(1)
+
+        recent = user.entries.order(occurred_at: :desc).first
+        get "/builder", params: { entry: recent.id }
+        expect(response.body.scan(%(id="entry-#{recent.id}")).size).to eq(1)
+        expect(linked["id"]).to eq("entry-#{recent.id}")
+      end
+
+      it "shows nothing for an entry that is hidden, private or someone else's" do
+        hidden = create(:entry, user: user, hidden: true)
+        private_note = create(:entry, user: user, entry_type: "note", source: "manual", visibility: :private_entry)
+        theirs = create(:entry, user: create(:user))
+
+        [ hidden, private_note, theirs ].each do |entry|
+          get "/builder", params: { entry: entry.id }
+          expect(linked).to be_nil
+        end
+      end
+    end
+
     context "projects" do
       let!(:user) { create(:user, username: "builder") }
 

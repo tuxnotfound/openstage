@@ -16,7 +16,7 @@
         </div>
         <div class="min-w-0 flex-[1_1_320px]">
           <% group.commits.first(3).each do |commit| %>
-            <div id="entry-<%= commit.id %>" class="text-[15px]/[1.6]">
+            <div id="<%= "entry-#{commit.id}" unless commit == local_assigns[:linked] %>" class="text-[15px]/[1.6]">
               <%= commit.title %><% if commit.branch.present? %> <span class="os-xs os-muted">on <%= commit.branch %></span><% end %>
             </div>
           <% end %>

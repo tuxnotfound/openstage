@@ -14,7 +14,7 @@
       <% items.each_with_index do |item, i| %>
         <% if i == shown %><details class="group"><summary class="os-btn2 sm mt-3 list-none group-open:hidden [&::-webkit-details-marker]:hidden">Show all <%= items.size %></summary><% end %>
         <% project = item.repo_name && section.tally.projects.find(item.repo_name) %>
-        <div id="entry-<%= item.id %>" class="os-row os-rowflex scroll-mt-6 py-3">
+        <div id="<%= "entry-#{item.id}" unless item.entry == local_assigns[:linked] %>" class="os-row os-rowflex scroll-mt-6 py-3">
           <span class="os-sm os-muted flex-[0_0_64px]"><%= item.date.strftime("%b %-d") %></span>
           <span class="os-xs flex-[0_0_84px] font-bold text-ink-3"><%= item.shipped? ? "Shipped" : "Published" %></span>
           <span class="min-w-0 flex-[1_1_300px] text-[15px] font-semibold">

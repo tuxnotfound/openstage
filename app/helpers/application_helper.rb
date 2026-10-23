@@ -17,9 +17,15 @@ module ApplicationHelper
   def share_on_x_url(entry, user)
     parts = [ entry.title ]
     parts << entry.body.truncate(100) if entry.body.present?
-    parts << "#{profile_url(username: user.username)}#entry-#{entry.id}"
+    parts << public_entry_url(entry, user)
 
     "https://twitter.com/intent/tweet?text=#{CGI.escape(parts.join("\n\n"))}"
+  end
+
+  # An entry on the builder's public page. ?entry= makes the page show it
+  # wherever it falls; the anchor scrolls to it.
+  def public_entry_url(entry, user)
+    profile_url(user.username, entry: entry.id, anchor: "entry-#{entry.id}")
   end
 
   # The tab each controller's pages sit under in the app header. A page reached

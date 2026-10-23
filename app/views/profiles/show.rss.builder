@@ -11,7 +11,7 @@ xml.rss version: "2.0", "xmlns:atom" => "http://www.w3.org/2005/Atom" do
       xml.item do
         xml.title entry.title
         xml.description entry.body.presence || entry.title
-        xml.link(safe_external_url(entry.url) || profile_url(@user.username, anchor: "entry-#{entry.id}"))
+        xml.link(safe_external_url(entry.url) || public_entry_url(entry, @user))
         xml.guid profile_url(@user.username, anchor: "entry-#{entry.id}"), isPermaLink: false
         xml.pubDate entry.occurred_at.rfc2822
         xml.category entry.repo_name if entry.repo_name.present?
