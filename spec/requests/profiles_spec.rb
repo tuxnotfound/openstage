@@ -29,6 +29,18 @@ RSpec.describe "Profiles", type: :request do
         expect(github.text.squish).to eq("GitHub #{user.github_username}")
       end
 
+      it "shows the builder's X account and email only once each is turned on" do
+        user.update!(email: "me@example.com", x_username: "tux404")
+        get "/testuser"
+        expect(response.body).not_to include("x.com/tux404", "me@example.com")
+
+        user.update!(show_email: true, show_x_username: true)
+        get "/testuser"
+        page = Nokogiri::HTML(response.body)
+        expect(page.at_css("a[href='https://x.com/tux404']").text.squish).to eq("X @tux404")
+        expect(page.at_css("a[href='mailto:me@example.com']").text.squish).to eq("Email me@example.com")
+      end
+
       it "never renders a javascript: website URL into the page" do
         user.update_column(:website_url, "javascript:alert(document.cookie)")
 

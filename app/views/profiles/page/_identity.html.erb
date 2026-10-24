@@ -16,6 +16,13 @@
         <% facts = [] %>
         <% facts << link_to(safe_join([ brand_icon(:github), tag.span("GitHub ", class: "sr-only"), user.github_username ]), "https://github.com/#{user.github_username}",
                             target: "_blank", rel: "noopener", class: "inline-flex items-center gap-1 underline hover:text-ink") %>
+        <% if (handle = user.public_x_username) %>
+          <% facts << link_to(safe_join([ brand_icon(:x), tag.span("X ", class: "sr-only"), "@#{handle}" ]), "https://x.com/#{handle}",
+                              target: "_blank", rel: "noopener", class: "inline-flex items-center gap-1 underline hover:text-ink") %>
+        <% end %>
+        <% if (email = user.public_email) %>
+          <% facts << mail_to(email, safe_join([ email_icon, tag.span("Email ", class: "sr-only"), email ]), class: "inline-flex items-center gap-1 underline hover:text-ink") %>
+        <% end %>
         <% if (website = safe_external_url(user.website_url)) %>
           <% facts << link_to(website.gsub(%r{\Ahttps?://}, ""), website, target: "_blank", rel: "noopener", class: "underline hover:text-ink") %>
         <% end %>

@@ -1,4 +1,6 @@
 class User < ApplicationRecord
+  include Contacts
+
   USERNAME_CHANGE_COOLDOWN = 30.days
 
   # Paths the app routes itself — must never be claimable as a profile username,

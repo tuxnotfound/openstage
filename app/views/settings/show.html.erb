@@ -35,6 +35,24 @@
               <%= f.date_field :building_since, class: "os-field" %>
             </div>
           </div>
+          <%# Hidden from the page until the builder turns each on. %>
+          <div class="os-grid2 gap-3.5">
+            <div class="os-fieldset">
+              <div class="os-between">
+                <%= f.label :email, "Email", class: "os-label" %>
+                <label class="os-xs os-muted inline-flex items-center gap-2">Show on your page <%= f.check_box :show_email, class: "os-switch" %></label>
+              </div>
+              <%= f.email_field :email, autocomplete: "email", class: "os-field" %>
+              <span class="os-xs os-muted">Your own mail from Openstage goes here too.</span>
+            </div>
+            <div class="os-fieldset">
+              <div class="os-between">
+                <%= f.label :x_username, "X username", class: "os-label" %>
+                <label class="os-xs os-muted inline-flex items-center gap-2">Show on your page <%= f.check_box :show_x_username, class: "os-switch" %></label>
+              </div>
+              <%= f.text_field :x_username, placeholder: "@", autocapitalize: "off", spellcheck: false, class: "os-field" %>
+            </div>
+          </div>
         </div>
       </section>
 

@@ -17,6 +17,7 @@
       "description" => @user.bio.presence,
       "sameAs"   => [
         "https://github.com/#{@user.github_username}",
+        ("https://x.com/#{@user.public_x_username}" if @user.public_x_username),
         safe_external_url(@user.website_url)
       ].compact
     }.compact.to_json.html_safe %>

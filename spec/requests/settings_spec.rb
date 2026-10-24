@@ -132,6 +132,20 @@ RSpec.describe "Settings", type: :request do
         expect(user.reload.branch_commits).to be(true)
       end
 
+      it "keeps an email and an X account, hidden from the page until each is turned on" do
+        patch settings_path, params: { user: { email: " me@example.com ", x_username: "https://x.com/tux404" } }
+        expect(user.reload).to have_attributes(email: "me@example.com", x_username: "tux404", public_email: nil, public_x_username: nil)
+
+        patch settings_path, params: { user: { show_email: "1", show_x_username: "1" } }
+        expect(user.reload).to have_attributes(public_email: "me@example.com", public_x_username: "tux404")
+      end
+
+      it "refuses an X account that is not one, and says why" do
+        patch settings_path, params: { user: { x_username: "not a handle" } }
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.body).to include("X username takes letters, numbers and underscores, up to 15")
+      end
+
       it "no longer offers the list beside the chart, which the page dropped" do
         get "/settings"
         expect(response.body).not_to include("user[shipped_list]")
