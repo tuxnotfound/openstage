@@ -76,8 +76,10 @@ RSpec.describe "Analytics", type: :request do
       expect(page.css("[data-page-row]").map { |each| each["data-page-row"] }).to eq([ "builder/app" ])
       expect(page.at_css("p.os-label").text.squish).to eq("Page views · app, last 7 days")
       expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Page views per day by page, last 7 days")
-      chip = page.css("[aria-label='Pages'] a").find { |a| a.text.squish == "Your page" }
-      expect(Rack::Utils.parse_nested_query(URI(chip["href"]).query)["pages"]).to be_nil
+      switch = page.at_css("[aria-label='Pages'] [role='switch'][aria-label='Show Your page in the chart']")
+      expect(switch["aria-checked"]).to eq("false")
+      expect(Rack::Utils.parse_nested_query(URI(switch["href"]).query)["pages"]).to be_nil
+      expect(page.at_css("[aria-label='Show app in the chart']")["aria-disabled"]).to eq("true")
     end
 
     it "draws 90 days a week a point, and falls back to 30 days for a range it does not know" do

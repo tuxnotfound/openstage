@@ -17,7 +17,7 @@ class AnalyticsViewSerializer < ApplicationSerializer
     {
       range: window.range, metric: @report.metric, selected: everything? ? [] : @report.selected.map(&:key),
       everything: everything?, window_label: window.label, words: window.words,
-      pages: @report.pages.map { |page| { key: page.key, name: page.name, rank: page.rank, on: @report.selected.include?(page) } },
+      pages: @report.pages.map { |page| page_switch(page) },
       tabs: METRICS.map { |metric| tab(metric) }, label: chart.name, scope: scope,
       total: number(@report.total(@report.metric)), change: change(@report.change(@report.metric)),
       chart: ChartSerializer.new(chart).attributes, sources: sources, countries: countries, rows: rows, links: links, badges: badges
@@ -36,6 +36,12 @@ class AnalyticsViewSerializer < ApplicationSerializer
 
   def scope
     everything? ? "all pages" : @report.selected.map(&:name).to_sentence
+  end
+
+  # value: the number charted, on that page, while it is in view.
+  def page_switch(page)
+    on = @report.selected.include?(page)
+    { key: page.key, name: page.name, rank: page.rank, on: on, value: (number(@report.total(@report.metric, page: page)) if on) }
   end
 
   def tab(metric)

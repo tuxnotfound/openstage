@@ -59,7 +59,8 @@ export type AnalyticsView = {
   everything: boolean
   windowLabel: string
   words: string
-  pages: { key: string; name: string; rank: Rank; on: boolean }[]
+  // value: the number charted, on that page, while it is in view.
+  pages: { key: string; name: string; rank: Rank; on: boolean; value: string | null }[]
   tabs: { metric: Metric; label: string; value: string; change: AnalyticsChange }[]
   label: string
   scope: string

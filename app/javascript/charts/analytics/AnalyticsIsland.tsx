@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import LineChart, { projectClass } from "../LineChart"
+import Switches, { type Target } from "../Switches"
 import { useView } from "../useView"
 import type { AnalyticsChange, AnalyticsRange, AnalyticsView, Metric } from "../types"
 
@@ -17,8 +18,6 @@ const RANGES: [AnalyticsRange, string][] = [["7d", "7 days"], ["30d", "30 days"]
 const DEFAULT_RANGE: AnalyticsRange = "30d"
 const DEFAULT_METRIC: Metric = "visitors"
 
-type Target = { go: () => void; warm: () => void }
-
 export default function AnalyticsIsland({ initial, endpoint }: AnalyticsProps) {
   const { view, busy, failed, show, retry, prefetch } = useView(initial, apiUrl(endpoint, initial.range, initial.metric, initial.selected))
 
@@ -35,8 +34,8 @@ export default function AnalyticsIsland({ initial, endpoint }: AnalyticsProps) {
     return { go: () => show(api, `${window.location.pathname}${query ? `?${query}` : ""}`), warm: () => prefetch(api) }
   }
 
-  // With every page in view, switching one leaves the others; none left, or
-  // every one, means all of them.
+  // With every page in view, switching one leaves the others; every one on
+  // again means all of them.
   function toggled(key: string): string[] {
     const keys = view.pages.filter((page) => page.on).map((page) => page.key)
     const next = keys.includes(key) ? keys.filter((each) => each !== key) : [...keys, key]
@@ -56,17 +55,7 @@ export default function AnalyticsIsland({ initial, endpoint }: AnalyticsProps) {
       </div>
 
       <section className={`os-panel transition-opacity ${busy ? "opacity-60" : ""}`} aria-label="Numbers" aria-busy={busy}>
-        <div role="group" aria-label="Pages" className="flex flex-wrap gap-2">
-          <Control target={to({ selected: [] })} className={`os-chip ${view.everything ? "" : "text-ink"}`} pressed={view.everything}>All pages</Control>
-          {view.pages.map((page) => (
-            <Control key={page.key} target={to({ selected: toggled(page.key) })} pressed={page.on}
-                     className={`os-chip ${projectClass(page.rank)} ${page.on ? "border-(--project) bg-(--project) text-(--on-project)" : "border-dashed"}`}>
-              <span className={`os-dot ${page.on ? "bg-current opacity-60" : "bg-line"}`} />{page.name}
-            </Control>
-          ))}
-        </div>
-
-        <div className="os-pills mt-5.5 flex-wrap" role="group" aria-label="Numbers">
+        <div className="os-pills flex-wrap" role="group" aria-label="Numbers">
           {view.tabs.map((tab) => (
             <Control key={tab.metric} target={to({ metric: tab.metric })} pressed={tab.metric === view.metric} className="os-pill h-auto flex-col items-start px-[18px] py-2">
               <span className="block text-xs">{tab.label}</span>
@@ -75,8 +64,8 @@ export default function AnalyticsIsland({ initial, endpoint }: AnalyticsProps) {
           ))}
         </div>
 
-        <div className="mt-5.5 flex flex-wrap items-start gap-x-9 gap-y-6">
-          <div className="min-w-0 flex-[999_1_520px]">
+        <div className={`mt-5.5 grid items-start gap-x-8 gap-y-6 ${view.pages.length > 1 ? "lg:grid-cols-[minmax(0,1fr)_280px]" : ""}`}>
+          <div className="min-w-0">
             <p className="os-label">{view.label} · {view.scope}, {view.words}</p>
             <div className="mt-0.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-1.5">
               <span className="os-num os-big">{view.total}</span>
@@ -88,7 +77,10 @@ export default function AnalyticsIsland({ initial, endpoint }: AnalyticsProps) {
             </div>
             <div className="mt-5"><LineChart chart={view.chart} height="h-[260px]" /></div>
           </div>
-          <Visits view={view} />
+          {view.pages.length > 1 && (
+            <Switches label="Pages" target={(key) => to({ selected: toggled(key) })} all={view.everything ? null : to({ selected: [] })}
+                      items={view.pages.map((page) => ({ key: page.key, name: page.name, rank: page.rank, on: page.on, value: page.value }))} />
+          )}
         </div>
         {failed && (
           <p role="status" className="os-note mt-3">
@@ -99,7 +91,9 @@ export default function AnalyticsIsland({ initial, endpoint }: AnalyticsProps) {
 
       <ByPage view={view} />
 
-      <div className="os-grid2 items-start">
+      <div className="grid items-start gap-4 lg:grid-cols-3">
+        <Visits view={view} />
+
         <section className="os-panel" aria-labelledby="links-followed">
           <h2 id="links-followed" className="os-h3">Links they followed</h2>
           <p className="os-xs os-muted mt-1 mb-2">Clicks from your pages, {view.words}.</p>
@@ -153,9 +147,10 @@ function tone(up: boolean | null): string {
 
 function Visits({ view }: { view: AnalyticsView }) {
   return (
-    <div className="min-w-0 flex-[1_1_280px]">
-      <h2 className="os-label">Where visitors came from</h2>
-      {view.sources.length === 0 && <p className="os-note mt-1">No visits in the {view.words}.</p>}
+    <section className="os-panel" aria-labelledby="visitors-from">
+      <h2 id="visitors-from" className="os-h3">Where visitors came from</h2>
+      <p className="os-xs os-muted mt-1 mb-2">Page views by the site they came from, {view.words}.</p>
+      {view.sources.length === 0 && <p className="os-note">No visits in the {view.words}.</p>}
       {view.sources.map((source) => (
         <div key={source.label} className="os-row py-2">
           <div className="os-between"><span className="os-sm font-semibold">{source.label}</span><span className="os-sm os-num font-bold">{source.count}</span></div>
@@ -164,13 +159,13 @@ function Visits({ view }: { view: AnalyticsView }) {
       ))}
       {view.countries.length > 0 && (
         <>
-          <h2 className="os-label mt-4.5">Countries</h2>
+          <h3 className="os-label mt-4.5">Countries</h3>
           {view.countries.map((country) => (
             <div key={country.label} className="os-row os-between py-2"><span className="os-sm">{country.label}</span><span className="os-sm os-num font-bold">{country.count}</span></div>
           ))}
         </>
       )}
-    </div>
+    </section>
   )
 }
 

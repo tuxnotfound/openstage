@@ -5,8 +5,8 @@ module AnalyticsHelper
     analytics_path(**kept.merge(changes).compact_blank)
   end
 
-  # A page chip's link: the selection with that page switched. With every page
-  # in view, switching one leaves the others; none left means all of them.
+  # A page switch's link: the selection with that page switched. With every
+  # page in view, switching one leaves the others; none left means all of them.
   def analytics_chip_path(report, page)
     keys = report.selected.map(&:key)
     keys = keys.include?(page.key) ? keys - [ page.key ] : keys + [ page.key ]

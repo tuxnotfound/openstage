@@ -1,0 +1,26 @@
+<%# Beside the chart, a switch per page, in its colour: the chart's legend
+    and its filter. The switches are links, so the URL follows; the last page
+    in view keeps its switch on. %>
+<% everything = report.selected.size == report.pages.size %>
+<div role="group" aria-label="Pages" class="min-w-0">
+  <div class="os-between">
+    <h2 class="os-label">Pages</h2>
+    <% unless everything %><%= link_to "Show all", analytics_view_path(pages: nil), class: "os-link text-[13px]" %><% end %>
+  </div>
+  <ul class="mt-1.5">
+    <% report.pages.each do |page| %>
+      <% on = report.selected.include?(page) %>
+      <li class="os-row flex items-center gap-2.5 py-2">
+        <span class="os-dot <%= project_class(page.rank) %> bg-(--project) <%= 'opacity-40' unless on %>" aria-hidden="true"></span>
+        <span class="min-w-0 flex-1 truncate font-bold <%= 'text-ink-3' unless on %>"><%= page.name %></span>
+        <% if on %><span class="os-xs os-muted shrink-0"><%= number_with_delimiter(report.total(report.metric, page: page)) %></span><% end %>
+        <% label = "Show #{page.name} in the chart" %>
+        <% if on && report.selected.one? %>
+          <span role="switch" aria-checked="true" aria-disabled="true" aria-label="<%= label %>" class="os-switch inline-block cursor-not-allowed opacity-50"></span>
+        <% else %>
+          <%= link_to "", analytics_chip_path(report, page), role: "switch", aria: { checked: on.to_s, label: label }, class: "os-switch inline-block" %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+</div>
