@@ -8,8 +8,10 @@ class HomeController < ApplicationController
     @demo_user = User.active.find_by(username: ENV.fetch("DEMO_USERNAME", "tuxnotfound"))
     @demo = demo_section if @demo_user
 
-    # No global feed here. It sold a network of a handful of people, which is
-    # the framing the rebirth dropped; /feed is still one click from a profile.
+    # One recent entry at a time, a sign the product is in use. The whole feed
+    # left the landing on 2026-09-29, when it sold a network of a handful of
+    # people; one entry at a time shows activity without counting heads.
+    @lately = Entry.lately
   end
 
   private

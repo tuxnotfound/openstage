@@ -76,6 +76,8 @@
   </div>
 </section>
 
+<%= render "home/lately", entries: @lately if @lately.any? %>
+
 <section class="os-panel" aria-labelledby="how">
   <h2 id="how" class="os-h2">How it works</h2>
   <p class="os-p mt-1.5">One sign-in and the page fills itself. The rest is optional.</p>
