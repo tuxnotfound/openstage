@@ -26,6 +26,18 @@ RSpec.describe GithubCommits::RecordService do
                                                  occurred_at: authored_at, url: "https://github.com/me/app/commit/c1")
   end
 
+  # The race behind "Validation failed: External has already been taken"
+  # (2026-10-24): another sync records the commit after this one looked.
+  it "leaves a commit another sync recorded a moment before, without failing" do
+    allow(DismissedCommit).to receive(:exists?) do
+      branch_entry("c1", branch: nil)
+      false
+    end
+
+    expect(record(commit("c1")).added).to be(false)
+    expect(user.entries.where(external_id: "c1").count).to eq(1)
+  end
+
   it "tags a commit read on another branch with that branch" do
     record(commit("c1"), branch: "feature/search")
 

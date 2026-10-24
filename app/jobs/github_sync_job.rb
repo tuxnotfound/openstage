@@ -1,6 +1,12 @@
 class GithubSyncJob < ApplicationJob
   queue_as :default
 
+  # One sync per builder at a time, across workers: two at once each find a
+  # commit missing and both record it, and the second fails. A sync asked for
+  # while one runs waits for it. The limit lapses after the duration, should
+  # a sync die holding it.
+  limits_concurrency to: 1, key: ->(user_id) { user_id }, duration: 30.minutes
+
   # How far back to fetch on the very first sync for a repo: the span of
   # GitHub's own contribution graph. Three months left builders between
   # projects with an empty page.

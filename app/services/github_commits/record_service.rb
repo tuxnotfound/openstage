@@ -88,6 +88,11 @@ module GithubCommits
     rescue ActiveRecord::RecordNotUnique
       # Another sync of the same builder recorded it first.
       false
+    rescue ActiveRecord::RecordInvalid => e
+      # The same, caught by the uniqueness check before the index.
+      raise unless e.record.errors.of_kind?(:external_id, :taken)
+
+      false
     end
 
     def title

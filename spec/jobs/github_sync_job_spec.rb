@@ -45,6 +45,12 @@ RSpec.describe GithubSyncJob, type: :job do
     allow(GithubGateway).to receive(:branches).and_return([])
   end
 
+  it "runs one sync per builder at a time, the next waiting for it" do
+    expect(described_class.concurrency_limit).to eq(1)
+    expect(described_class.new(user.id).concurrency_key).to end_with("/#{user.id}")
+    expect(described_class.new(user.id + 1).concurrency_key).not_to eq(described_class.new(user.id).concurrency_key)
+  end
+
   describe "#perform" do
     it "creates a GithubRepo record" do
       expect { described_class.new.perform(user.id) }.to change(GithubRepo, :count).by(1)
