@@ -50,8 +50,14 @@ class Entry < ApplicationRecord
   BRANCH_SWITCH_SQL = "entries.branch IS NULL OR EXISTS " \
                       "(SELECT 1 FROM users WHERE users.id = entries.user_id AND users.branch_commits)".freeze
 
+  # A repo the builder hid takes everything tagged with it off their pages,
+  # what they logged by hand too. The dashboard's switch marks only its synced
+  # entries hidden.
+  HIDDEN_REPO_SQL = "NOT EXISTS (SELECT 1 FROM github_repos WHERE github_repos.user_id = entries.user_id " \
+                    "AND github_repos.full_name = entries.repo_name AND NOT github_repos.included)".freeze
+
   scope :visible, -> { where(hidden: false).where(BRANCH_SWITCH_SQL) }
-  scope :publicly_visible, -> { visible.where(visibility: :public_entry) }
+  scope :publicly_visible, -> { visible.where(visibility: :public_entry).where(HIDDEN_REPO_SQL) }
   scope :chronological, -> { order(occurred_at: :desc) }
   scope :pinned_entries, -> { where(pinned: true) }
   scope :commits, -> { where(source: :github, entry_type: :shipped) }
@@ -77,6 +83,19 @@ class Entry < ApplicationRecord
     pattern = "%#{sanitize_sql_like(term.to_s.strip)}%"
     where("title ILIKE :q OR body ILIKE :q OR repo_name ILIKE :q", q: pattern)
   }
+
+  # What a builder's pages read: their public entries, tooling noise left
+  # out. reveal: one repo they hid, shown anyway as its project page would
+  # show it, for the builder's own look at that page; its synced entries
+  # count though the switch marked them hidden.
+  def self.on_page(reveal: nil)
+    shown = publicly_visible
+    if reveal
+      shown = shown.or(where(repo_name: reveal, visibility: :public_entry).where(BRANCH_SWITCH_SQL)
+                         .where("entries.hidden = false OR entries.source = ?", sources[:github]))
+    end
+    shown.without_tooling_noise
+  end
 
   # The repos these entries came from, for a repo filter.
   def self.repo_names

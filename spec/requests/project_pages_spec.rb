@@ -32,6 +32,43 @@ RSpec.describe "Project pages", type: :request do
     expect(response.body).to include("Commits · last 30 days")
   end
 
+  describe "a project the builder hid" do
+    # As the dashboard's switch hides it: the repo, and its synced entries.
+    before do
+      user.github_repos.find_by(full_name: "builder/side.app").update!(included: false)
+      user.entries.where(repo_name: "builder/side.app", source: "github").update_all(hidden: true)
+    end
+
+    it "is gone for visitors, with what was logged on it, from its page and the builder's" do
+      get "/builder/side.app"
+      expect(response).to redirect_to("/builder")
+
+      get "/builder"
+      expect(response.body).not_to include("side.app", "Launched it")
+    end
+
+    it "opens for the builder alone, as it would show, saying only they see it" do
+      sign_in_as(user)
+      get "/builder/side.app"
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Only you can see this page", "Ship the form", "Launched it")
+      expect(user.project_views.count).to eq(0)
+    end
+
+    it "answers the chart's other windows for the builder alone, and never into a shared cache" do
+      params = { range: "30d", repo: [ "builder/side.app" ], reveal: "builder/side.app" }
+      get "/api/progress/builder", params: params
+      expect(response.parsed_body["commits"]).to eq(0)
+      expect(response.headers["Cache-Control"]).to include("public")
+
+      sign_in_as(user)
+      get "/api/progress/builder", params: params
+      expect(response.parsed_body["commits"]).to eq(1)
+      expect(response.headers["Cache-Control"]).to include("private")
+    end
+  end
+
   it "sends a name that is no project back to the builder's page" do
     get "/builder/nope"
 

@@ -1,11 +1,13 @@
 # One project's page, /:username/:repo: what it is, how its commits move,
-# and what shipped. Public, like the builder's page it belongs to.
+# and what shipped. Public, like the builder's page it belongs to, unless the
+# builder hid the project: then it opens for them alone, as it would show.
 class ProjectPagesController < ApplicationController
   def show
     @user = User.active.find_by(username: params[:username])
     return head(:not_found) unless @user
 
-    service = Progress::FocusService.new(user: @user, slug: params[:project], range: params[:range])
+    @revealed = hidden_repo&.full_name
+    service = Progress::FocusService.new(user: @user, slug: params[:project], range: params[:range], reveal: @revealed)
     return redirect_to(profile_path(@user.username), alert: "That project is not on #{@user.display_name}'s page.") unless service.call
 
     @focus = service
@@ -13,6 +15,13 @@ class ProjectPagesController < ApplicationController
   end
 
   private
+
+  # The builder's own look at a project they hid; nil for anyone else.
+  def hidden_repo
+    return unless current_user == @user
+
+    @user.github_repos.where(included: false).find { |repo| repo.name.casecmp?(params[:project]) }
+  end
 
   # Counted for later, shown nowhere yet: never the builder's own visit, never
   # a bot's. The IP is hashed with the day, as on the builder's page.

@@ -6,7 +6,8 @@ module Progress
   # regard to case, as GitHub matches it.
   class FocusService < ApplicationService
     # slug: the repo's name without its owner; range: a Window range.
-    attr_accessor :user, :slug, :range
+    # reveal: a repo the builder hid, shown anyway (Entry.on_page).
+    attr_accessor :user, :slug, :range, :reveal
     # page: the GatherService run for this project; others: the rest of the
     # builder's cards; news: the latest highlight; highlights: how many there
     # are, ever; first_commit: a time.
@@ -23,7 +24,7 @@ module Progress
         return
       end
 
-      gather = GatherService.new(user: user, range: range, repos: [ project.repo ])
+      gather = GatherService.new(user: user, range: range, repos: [ project.repo ], reveal: reveal)
       gather.call
       return unless absorb_errors(gather)
 
@@ -40,7 +41,7 @@ module Progress
     end
 
     def entries
-      user.entries.publicly_visible.without_tooling_noise
+      user.entries.on_page(reveal: reveal)
     end
 
     def split_cards(cards)

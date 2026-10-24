@@ -8,6 +8,13 @@
 <% content_for :og_image, "#{og_image_url(@user.username)}?v=3" %>
 <% content_for :main_class, "os-wrap os-stack pt-1.5" %>
 
+<% if @revealed %>
+  <p role="status" class="rounded-control bg-accent-soft px-4 py-3 os-sm">
+    <b>Only you can see this page.</b> You hid <%= project.name %>, so visitors who open it land on your page.
+    <%= link_to "Show it again on the dashboard", dashboard_path(anchor: "your-projects"), class: "os-link text-sm" %>
+  </p>
+<% end %>
+
 <nav aria-label="Breadcrumb" class="os-sm flex items-center gap-2 px-1">
   <img src="<%= @user.avatar_url %>" alt="" class="os-avatar size-6">
   <%= link_to @user.display_name, profile_path(@user.username), class: "os-link text-sm" %>
@@ -45,7 +52,7 @@
     <%= render "project_pages/follow", user: @user, card: card %>
   </div>
 
-  <%= react_island("progress", { initial: ProgressViewSerializer.new(section).as_json, endpoint: api_progress_path(@user.username),
+  <%= react_island("progress", { initial: ProgressViewSerializer.new(section).as_json, endpoint: api_progress_path(@user.username, reveal: @revealed),
                                  mode: "project", defaultRange: Progress::Window::DEFAULT, shippedTarget: "what-shipped-panel" }, id: "progress") do %>
     <% arrow, change, up = progress_change(section) %>
     <div class="os-between mt-7.5 items-end">

@@ -11,7 +11,8 @@ module Progress
     Group = Data.define(:project, :date, :commits)
 
     # range: a Window range; repos: the projects in view, none for all.
-    attr_accessor :user, :range, :repos
+    # reveal: a repo the builder hid, shown anyway (Entry.on_page).
+    attr_accessor :user, :range, :repos, :reveal
     attr_reader :section, :cards, :recent
 
     validates :user, presence: true
@@ -19,11 +20,11 @@ module Progress
     private
 
     def execute
-      compose = ComposeService.new(user: user, range: range, repos: Array(repos), rolling: true)
+      compose = ComposeService.new(user: user, range: range, repos: Array(repos), rolling: true, reveal: reveal)
       return unless run(compose)
 
       @section = compose.section
-      summarize = SummarizeService.new(user: user, projects: section.tally.projects.all, zone: section.tally.zone)
+      summarize = SummarizeService.new(user: user, projects: section.tally.projects.all, zone: section.tally.zone, reveal: reveal)
       return unless run(summarize)
 
       @cards = summarize.cards
@@ -50,7 +51,7 @@ module Progress
     end
 
     def recent_commits
-      scope = user.entries.publicly_visible.without_tooling_noise.commits.chronological
+      scope = user.entries.on_page(reveal: reveal).commits.chronological
       scope = scope.where(repo_name: repos) if Array(repos).any?
       scope.limit(RECENT_LIMIT)
     end

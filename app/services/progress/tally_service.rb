@@ -28,8 +28,8 @@ module Progress
       end
     end
 
-    # repos: the projects in view; none for all of them.
-    attr_accessor :user, :range, :offset, :repos, :rolling
+    # repos: the projects in view; none for all of them. reveal: a repo the builder hid, shown anyway (Entry.on_page).
+    attr_accessor :user, :range, :offset, :repos, :rolling, :reveal
     attr_reader :zone, :period, :projects, :items, :buckets, :totals, :previous_totals, :first_active_day
     # The period's first day with a commit in view; nil without one.
     attr_reader :first_commit_day
@@ -72,7 +72,7 @@ module Progress
     end
 
     def public_entries
-      @public_entries ||= user.entries.publicly_visible.without_tooling_noise
+      @public_entries ||= user.entries.on_page(reveal: reveal)
     end
 
     # The first commit or entry in view: of the projects picked, when picked.

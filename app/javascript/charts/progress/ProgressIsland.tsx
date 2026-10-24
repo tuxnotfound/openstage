@@ -11,7 +11,8 @@ import type { ProgressRange, ProgressView, ShippedItem } from "../types"
 
 export type ProgressProps = {
   initial: ProgressView
-  // Api::ProgressController's path for this builder.
+  // Api::ProgressController's path for this builder, with any params of its
+  // own (a hidden project's, for its builder).
   endpoint: string
   mode: "page" | "project" | "dashboard"
   defaultRange: ProgressRange
@@ -109,9 +110,11 @@ export default function ProgressIsland({ initial, endpoint, mode, defaultRange, 
 }
 
 function apiUrl(endpoint: string, range: ProgressRange, selected: string[]): string {
-  const query = new URLSearchParams({ range })
+  const [path, own = ""] = endpoint.split("?")
+  const query = new URLSearchParams(own)
+  query.set("range", range)
   selected.forEach((repo) => query.append("repo[]", repo))
-  return `${endpoint}?${query.toString()}`
+  return `${path}?${query.toString()}`
 }
 
 function Arrow({ view }: { view: ProgressView }) {

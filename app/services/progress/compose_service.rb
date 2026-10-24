@@ -28,7 +28,8 @@ module Progress
 
     # repos: the projects in view; none for all of them. rolling: a Window
     # that ends today, as the public page shows; else a calendar Period.
-    attr_accessor :user, :range, :offset, :repos, :cap, :swapped_ids, :rolling
+    # reveal: a repo the builder hid, shown anyway (Entry.on_page).
+    attr_accessor :user, :range, :offset, :repos, :cap, :swapped_ids, :rolling, :reveal
     attr_reader :section
 
     validates :user, presence: true
@@ -36,7 +37,7 @@ module Progress
     private
 
     def execute
-      tally = TallyService.new(user: user, range: range, offset: offset, repos: Array(repos), rolling: rolling)
+      tally = TallyService.new(user: user, range: range, offset: offset, repos: Array(repos), rolling: rolling, reveal: reveal)
       return unless run(tally)
 
       pick = PickService.new(items: tally.items, first_day: tally.first_active_day, last_day: tally.period.last_day,
