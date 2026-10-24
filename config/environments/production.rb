@@ -110,4 +110,12 @@ Rails.application.configure do
     /.*\.onrender\.com/
   ]
   config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+
+  # Active Record encryption keys, from the environment of both services, web
+  # and worker. Booting without them fails, so a deploy missing them never
+  # replaces the running one. Losing them loses every stored GitHub token:
+  # builders would have to sign in again.
+  config.active_record.encryption.primary_key = ENV.fetch("ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY")
+  config.active_record.encryption.deterministic_key = ENV.fetch("ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY")
+  config.active_record.encryption.key_derivation_salt = ENV.fetch("ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT")
 end

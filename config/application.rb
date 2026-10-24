@@ -35,5 +35,10 @@ module Openstage
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    # Columns encrypted at rest (User#github_access_token). Each environment
+    # sets its keys. Rows written before encryption still read as they are,
+    # until a later release turns this off, once every row is encrypted.
+    config.active_record.encryption.support_unencrypted_data = true
   end
 end

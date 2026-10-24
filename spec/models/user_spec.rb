@@ -156,4 +156,28 @@ RSpec.describe User, type: :model do
       end
     end
   end
+
+  describe "the GitHub token" do
+    let(:user) { create(:user, github_access_token: "gho_secret") }
+
+    def stored(user)
+      User.connection.select_value("SELECT github_access_token FROM users WHERE id = #{user.id}")
+    end
+
+    it "is stored encrypted, so the database holds no usable token, and reads back as it was" do
+      expect(stored(user)).not_to include("gho_secret")
+      expect(user.reload.github_access_token).to eq("gho_secret")
+    end
+
+    it "still reads a token stored before encryption, until the migration encrypts it in place" do
+      User.connection.execute("UPDATE users SET github_access_token = 'gho_plain' WHERE id = #{user.id}")
+      expect(user.reload.github_access_token).to eq("gho_plain")
+
+      require Rails.root.join("db/migrate/20261024200657_encrypt_github_tokens").to_s
+      ActiveRecord::Migration.suppress_messages { EncryptGithubTokens.new.up }
+
+      expect(stored(user)).not_to include("gho_plain")
+      expect(user.reload.github_access_token).to eq("gho_plain")
+    end
+  end
 end

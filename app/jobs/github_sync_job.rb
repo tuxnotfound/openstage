@@ -104,13 +104,17 @@ class GithubSyncJob < ApplicationJob
     log.update!(status: :failed, error_message: SyncLog::TOKEN_REJECTED)
     Rails.logger.warn "[GithubSyncJob] user=#{user.username} token rejected by GitHub"
 
-    # Only the token this run read: a sign-in meanwhile may have stored a new one.
-    same_token = User.where(id: user.id, github_access_token: user.github_access_token)
-    # The scopes go at once, or a sign-in would keep a dead repo-scoped token over its new one.
-    same_token.update_all(github_token_scopes: nil)
-    return if (user.last_synced_at(source: :github) || user.created_at) > TOKEN_GRACE.ago
+    # Only the token this run read: a sign-in meanwhile may have stored a new
+    # one. Tokens are encrypted, so the stored one is read back and compared
+    # under a lock, not looked up by value.
+    token = user.github_access_token
+    user.with_lock do
+      next unless user.github_access_token == token
 
-    same_token.update_all(github_access_token: nil)
+      # The scopes go at once, or a sign-in would keep a dead repo-scoped token over its new one.
+      user.update_columns(github_token_scopes: nil)
+      user.update_columns(github_access_token: nil) unless (user.last_synced_at(source: :github) || user.created_at) > TOKEN_GRACE.ago
+    end
   end
 
   # fetch receives a page number and returns that page of repos.

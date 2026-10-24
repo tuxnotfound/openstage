@@ -74,4 +74,10 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # Active Record encryption keys for development's own database: fixed and not
+  # secret, as that data never leaves this machine.
+  config.active_record.encryption.primary_key = "openstage-development-primary-key"
+  config.active_record.encryption.deterministic_key = "openstage-development-deterministic-key"
+  config.active_record.encryption.key_derivation_salt = "openstage-development-key-derivation-salt"
 end

@@ -1,8 +1,13 @@
 class User
   # The builder's GitHub token: which one to keep at sign-in, and what it lets
-  # Openstage read.
+  # Openstage read. Encrypted at rest, so a copied database or backup holds
+  # no usable token.
   module GithubToken
     extend ActiveSupport::Concern
+
+    included do
+      encrypts :github_access_token
+    end
 
     class_methods do
       def scopes_include_repo?(scopes)
