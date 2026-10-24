@@ -1,9 +1,9 @@
 <%# Logging by hand: what commits can't say. %>
 <section class="os-panel" aria-labelledby="log-update">
-  <h2 id="log-update" class="os-h3">What did you ship?</h2>
+  <h2 id="log-update" class="os-h3">What did you build?</h2>
   <%= form_with url: entries_path, method: :post, scope: :entry, class: "os-stack mt-3 gap-2.5" do |f| %>
     <%= render "entries/type_picker", f: f, current: "milestone", id_prefix: "entry_type" %>
-    <%= f.text_field :title, placeholder: "In one line", aria: { label: "What you shipped, in one line" }, class: "os-field" %>
+    <%= f.text_field :title, placeholder: "In one line", aria: { label: "What you built, in one line" }, class: "os-field" %>
     <%= f.text_area :body, placeholder: "More detail (optional)", rows: 2, aria: { label: "More detail (optional)" }, class: "os-area" %>
     <div class="grid gap-2.5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
       <%= f.url_field :url, placeholder: "Link (optional)", aria: { label: "Link (optional)" }, class: "os-field" %>
