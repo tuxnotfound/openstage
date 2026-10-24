@@ -1,7 +1,9 @@
 module Analytics
   # The days a Pro builder's numbers cover: the last 7, 30 or 90 days ending
-  # today in their zone, against as many days just before. 7 and 30 days are
-  # drawn a point per day; 90 days a point per week, the last one ending today.
+  # today in their zone, against as many days just before; from the first day
+  # with anything to count when that came later, so the chart never draws the
+  # time before. 7 and 30 days are drawn a point per day; 90 days a point per
+  # week, the last one ending today.
   class Window
     RANGES = { "7d" => 7, "30d" => 30, "90d" => 91 }.freeze
     DEFAULT = "30d".freeze
@@ -11,9 +13,11 @@ module Analytics
 
     attr_reader :range, :today
 
-    def initialize(range:, today:)
+    # first_day: the first day the pages picked had anything; nil for none.
+    def initialize(range:, today:, first_day: nil)
       @range = RANGES.key?(range) ? range : DEFAULT
       @today = today
+      @first_day = first_day
     end
 
     def length
@@ -21,7 +25,8 @@ module Analytics
     end
 
     def days
-      (today - (length - 1))..today
+      earliest = today - (length - 1)
+      (@first_day && @first_day > earliest && @first_day <= today ? @first_day : earliest)..today
     end
 
     def previous_days

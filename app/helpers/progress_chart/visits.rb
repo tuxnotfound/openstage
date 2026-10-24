@@ -38,6 +38,8 @@ module ProgressChart
 
     def axis
       buckets = window.buckets
+      return [ label(buckets.first.first), "Today" ] if buckets.size < 3
+
       [ label(buckets.first.first), label(buckets[buckets.size / 2].first), "Today" ]
     end
 

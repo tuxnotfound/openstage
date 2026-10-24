@@ -75,9 +75,11 @@ module Progress
       @public_entries ||= user.entries.publicly_visible.without_tooling_noise
     end
 
+    # The first commit or entry in view: of the projects picked, when picked.
     def first_day_of(entries)
-      first = entries.commits.or(entries.highlights).minimum(:occurred_at)
-      first&.in_time_zone(zone)&.to_date
+      scope = entries.commits.or(entries.highlights)
+      scope = scope.where(repo_name: repos) if selected?
+      scope.minimum(:occurred_at)&.in_time_zone(zone)&.to_date
     end
 
     def tally_bucket(bucket)

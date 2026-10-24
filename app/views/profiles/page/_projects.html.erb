@@ -3,7 +3,7 @@
     last 52 weeks, each on its own scale. %>
 <section class="os-panel" aria-labelledby="projects">
   <h2 id="projects" class="os-h2">Projects</h2>
-  <p class="os-xs os-muted mt-1">Commits per week over the last 12 months, each project on its own scale.</p>
+  <p class="os-xs os-muted mt-1">Commits per week over the last 12 months, or since a project's first commit, each on its own scale.</p>
   <div class="os-grid2 mt-4">
     <% cards.each do |card| %>
       <% line, area = progress_sparkline(card.weeks) %>

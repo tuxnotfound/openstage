@@ -18,6 +18,7 @@ RSpec.describe ProgressChart::Trend do
   end
 
   it "draws each of 30 days as the average of it and the six days before" do
+    commits("me/old", Time.utc(2026, 8, 1, 10)) # work began before the window, so it is drawn whole
     commits("me/app", Time.utc(2026, 10, 8, 10), 7)
     days = (Date.new(2026, 9, 16)..Date.new(2026, 10, 15)).to_a
     values = chart("30d").lines.first.values
@@ -27,6 +28,7 @@ RSpec.describe ProgressChart::Trend do
   end
 
   it "counts each week over 90 days and each month over 12, under whole-number gridlines" do
+    commits("me/old", Time.utc(2025, 9, 1, 10)) # work began before the windows, so they are drawn whole
     commits("me/app", Time.utc(2026, 10, 13, 10), 3)
     commits("me/app", Time.utc(2026, 6, 2, 10), 9)
 
@@ -35,6 +37,16 @@ RSpec.describe ProgressChart::Trend do
     expect(twelve.lines.first.values.values_at(7, 11)).to eq([ 9, 3 ])
     expect(twelve.ticks.map(&:value)).to eq([ 5, 10 ])
     expect(twelve.axis).to eq([ "Nov 2025", "May", "Today" ])
+  end
+
+  it "starts at the first activity in view, never before it" do
+    commits("me/app", Time.utc(2026, 6, 2, 10), 4)
+    commits("me/late", Time.utc(2026, 9, 10, 10), 2)
+
+    expect(chart("12m").axis).to eq([ "Jun", "Aug", "Today" ])
+    expect(chart("all").axis.first).to eq("Jun")
+    expect(chart("12m", repos: [ "me/late" ]).axis).to eq([ "Sep", "Today" ])
+    expect(chart("90d", repos: [ "me/late" ]).lines.first.values.first).to eq(2)
   end
 
   it "draws the lines alone on a page; discs are the weekly email's" do

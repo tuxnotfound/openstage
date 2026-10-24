@@ -35,10 +35,14 @@ module Analytics
     private
 
     def execute
-      @window = Window.new(range: range, today: Time.current.in_time_zone(user.zone).to_date)
       @metric = CountService::METRICS.include?(metric) ? metric : CountService::METRICS.first
       @pages = [ Page.new(key: CountService::PAGE, name: "Your page", rank: nil) ] + projects
       @selected = pages.select { |page| Array(picked).include?(page.key) }.presence || pages
+      start = FindStartService.new(user: user, pages: selected.map(&:key))
+      start.call
+      return unless absorb_errors(start)
+
+      @window = Window.new(range: range, today: Time.current.in_time_zone(user.zone).to_date, first_day: start.first_day)
       count = CountService.new(user: user, window: window)
       count.call
       return unless absorb_errors(count)

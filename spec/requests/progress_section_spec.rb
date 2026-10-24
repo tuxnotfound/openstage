@@ -45,10 +45,11 @@ RSpec.describe "The public page's chart and what shipped" do
     expect(panel.text.squish).to include("#{((100.0 * now / before) - 100).round.abs}% vs the previous 90 days")
   end
 
-  it "draws 30 days as a 7-day average and the other windows as counts per point" do
+  # The work began in March 2026, so 12 months are drawn from March: 8 points.
+  it "draws 30 days as a 7-day average and the other windows as counts per point, from the first commit" do
     { "30d" => [ "7-day average of commits per day by project, last 30 days", 30 ],
       "90d" => [ "Commits per week by project, last 90 days", 13 ],
-      "12m" => [ "Commits per month by project, last 12 months", 12 ] }.each do |range, (label, points)|
+      "12m" => [ "Commits per month by project, last 12 months", 8 ] }.each do |range, (label, points)|
       get "/tux", params: { range: range }
 
       expect(panel.at_css("svg[role='img']")["aria-label"]).to eq(label)

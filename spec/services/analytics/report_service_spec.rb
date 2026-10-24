@@ -53,6 +53,16 @@ RSpec.describe Analytics::ReportService do
     expect(report(picked: [ "me/app" ]).links.map(&:title)).to eq([ "View on GitHub" ])
   end
 
+  it "starts its window at the first day the pages picked had anything" do
+    user.project_views.create!(repo_name: "me/app", viewed_at: 3.days.ago, ip_hash: "a")
+
+    picked = report(picked: [ "me/app" ], range: "30d")
+
+    expect(picked.window.days.first).to eq(3.days.ago.to_date)
+    expect(picked.window.buckets.size).to eq(4)
+    expect(report(range: "30d").window.days.first).to eq(3.days.ago.to_date)
+  end
+
   it "refuses without a builder" do
     expect(described_class.new.call).to be(false)
   end

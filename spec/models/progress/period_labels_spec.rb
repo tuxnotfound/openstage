@@ -38,7 +38,7 @@ RSpec.describe Progress::PeriodLabels do
     expect(month.period.buckets.map { |bucket| month.axis(bucket) }.reject(&:empty?)).to eq([ "Oct 1", "8", "15" ])
 
     year = labels("year")
-    expect(year.period.buckets.map { |bucket| year.axis(bucket) }.reject(&:empty?)).to eq(%w[Jan Feb Mar Apr May Jun Jul Aug Sep Oct])
+    expect(year.period.buckets.map { |bucket| year.axis(bucket) }.reject(&:empty?)).to eq(%w[Mar Apr May Jun Jul Aug Sep Oct])
 
     all = labels("all")
     expect(all.period.buckets.map { |bucket| all.axis(bucket) }).to eq([ "Mar 2026", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct" ])
@@ -59,7 +59,7 @@ RSpec.describe Progress::PeriodLabels do
 
   it "titles a bucket for its tooltip" do
     expect(labels("month").bucket_title(labels("month").period.buckets.first)).to eq("Thu, Oct 1")
-    expect(labels("year").bucket_title(labels("year").period.buckets[41])).to eq("Week of Oct 12–15")
+    expect(labels("year").bucket_title(labels("year").period.buckets.last)).to eq("Week of Oct 12–15")
     expect(labels("year", -1).bucket_title(labels("year", -1).period.buckets.last)).to eq("Week of Dec 29–31")
     expect(labels("all").bucket_title(labels("all").period.buckets.last)).to eq("October 2026")
   end

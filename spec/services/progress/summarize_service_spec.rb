@@ -33,6 +33,16 @@ RSpec.describe Progress::SummarizeService do
     expect(gone.private_repo).to be_nil
   end
 
+  it "starts a project begun inside the 52 weeks at its first commit's week" do
+    commit("me/new", 3.weeks.ago)
+    commit("me/new", 1.day.ago)
+
+    weeks = described_class.new(user: user, projects: projects, zone: zone).tap(&:call!).cards.first.weeks
+
+    expect(weeks.size).to eq(4)
+    expect([ weeks.first, weeks.last ]).to eq([ 1, 1 ])
+  end
+
   it "refuses without a builder or a zone" do
     expect(described_class.new(projects: [], zone: zone).call).to be(false)
     expect(described_class.new(user: user, projects: []).call).to be(false)

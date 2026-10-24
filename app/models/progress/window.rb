@@ -1,9 +1,10 @@
 module Progress
   # A stretch of the builder's work that ends today, as the public page shows
   # it: the last 30 days by day, the last 90 days by week (13 ISO weeks), the
-  # last 12 months by month, or all time by month. It answers what Period
-  # answers, so the tally and the picks read either; the cards keep calendar
-  # periods.
+  # last 12 months by month, or all time by month. It starts no earlier than
+  # the first activity in view (that day, its week or its month), so a chart
+  # never draws the time before there was anything to count. It answers what
+  # Period answers, so the tally and the picks read either.
   class Window
     RANGES = %w[30d 90d 12m all].freeze
     DEFAULT = "12m".freeze
@@ -64,11 +65,21 @@ module Progress
     private
 
     def start
-      case range
-      when "30d" then today - 29
-      when "90d" then today - (today.cwday - 1) - (12 * 7)
-      when "12m" then today.beginning_of_month << 11
-      else (first_activity || today).beginning_of_month
+      earliest = case range
+                 when "30d" then today - 29
+                 when "90d" then today - (today.cwday - 1) - (12 * 7)
+                 when "12m" then today.beginning_of_month << 11
+                 else (first_activity || today).beginning_of_month
+                 end
+      first_activity ? [ earliest, aligned(first_activity) ].max : earliest
+    end
+
+    # The first activity's own day, week or month: where its bucket begins.
+    def aligned(date)
+      case unit
+      when :day then date
+      when :week then date - (date.cwday - 1)
+      else date.beginning_of_month
       end
     end
 

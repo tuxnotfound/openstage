@@ -43,7 +43,7 @@ RSpec.describe Progress::TallyService do
   end
 
   it "stacks each bucket by repo and holds its entries" do
-    may = tally("year").buckets[18]
+    may = tally("year").buckets.find { |bucket| bucket.span.monday == Date.new(2026, 5, 4) }
 
     expect(may.span.monday).to eq(Date.new(2026, 5, 4))
     expect(may.total).to eq(55)

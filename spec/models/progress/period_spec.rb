@@ -24,13 +24,20 @@ RSpec.describe Progress::Period do
     expect(period("week", 3).first).to eq(Date.new(2026, 10, 12))
   end
 
-  it "cuts a year into ISO weeks clipped to the year, up to today" do
+  # The first activity is Mar 23, so this year's chart starts that week.
+  it "cuts a year into ISO weeks clipped to the year, up to today, from the first activity" do
     year = period("year")
 
-    expect(year.buckets.size).to eq(42)
-    expect(year.buckets.first).to have_attributes(first: Date.new(2026, 1, 1), last: Date.new(2026, 1, 4), monday: Date.new(2025, 12, 29))
+    expect(year.buckets.size).to eq(30)
+    expect(year.buckets.first).to have_attributes(first: Date.new(2026, 3, 23), last: Date.new(2026, 3, 29), monday: Date.new(2026, 3, 23))
     expect(year.buckets.last).to have_attributes(first: Date.new(2026, 10, 12), last: Date.new(2026, 10, 15), current: true)
     expect(period("year", -1).buckets.last).to have_attributes(first: Date.new(2025, 12, 29), last: Date.new(2025, 12, 31))
+  end
+
+  it "starts the week's chart at the first activity when that came mid-week, its dates unchanged" do
+    week = described_class.new(range: "week", offset: 0, today: today, first_activity: Date.new(2026, 10, 14))
+
+    expect([ week.first, week.buckets.first.first, week.buckets.size ]).to eq([ Date.new(2026, 10, 12), Date.new(2026, 10, 14), 2 ])
   end
 
   it "runs all time by month from the month of the first activity" do

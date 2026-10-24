@@ -42,6 +42,15 @@ RSpec.describe Progress::Window do
     expect(window("30d", first_activity: nil).comparison).to be_nil
   end
 
+  it "starts at the first activity's day, week or month when that came inside the window" do
+    late = Date.new(2026, 9, 24) # a Thursday
+
+    expect(window("30d", first_activity: late).first).to eq(late)
+    expect(window("90d", first_activity: late).first).to eq(Date.new(2026, 9, 21))
+    expect([ window("12m", first_activity: late).first, window("12m", first_activity: late).buckets.size ]).to eq([ Date.new(2026, 9, 1), 2 ])
+    expect(window("30d", first_activity: late).comparison).to be_nil
+  end
+
   it "opens on the last 12 months for a range it does not know" do
     expect(window("year").range).to eq("12m")
   end

@@ -96,16 +96,23 @@ module Progress
       [ Date.new(year, 1, 1), Date.new(year, 12, 31) ]
     end
 
+    # The chart's points: from the period's start, or from the first activity
+    # when it came later, so no point stands for days before anything began.
     def spans
       case unit
-      when :day then (first..last_day).map { |day| [ day, day, day ] }
+      when :day then (chart_start..last_day).map { |day| [ day, day, day ] }
       when :week then week_spans
       else month_spans
       end
     end
 
     def week_spans
-      (first - (first.cwday - 1)).step(last_day, 7).map { |monday| [ [ monday, first ].max, [ monday + 6, last_day ].min, monday ] }
+      start = chart_start
+      (start - (start.cwday - 1)).step(last_day, 7).map { |monday| [ [ monday, start ].max, [ monday + 6, last_day ].min, monday ] }
+    end
+
+    def chart_start
+      first_activity && first_activity > first && first_activity <= last_day ? first_activity : first
     end
 
     def month_spans
