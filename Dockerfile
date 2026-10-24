@@ -21,8 +21,9 @@ ENV RAILS_ENV="production" \
 FROM base as build
 
 # Install packages needed to build gems
+# libyaml-dev: psych builds against it, and Ruby 3.4's image no longer keeps it.
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential git libpq-dev libvips pkg-config imagemagick fonts-liberation
+    apt-get install --no-install-recommends -y build-essential git libpq-dev libvips libyaml-dev pkg-config imagemagick fonts-liberation
 
 # Node and npm, to build the charts' bundle in assets:precompile
 COPY --from=node /usr/local/bin/node /usr/local/bin/node
