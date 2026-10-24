@@ -2,10 +2,10 @@ import { Controller } from "@hotwired/stimulus"
 
 // Shows its items one at a time, the first as the server drew it and the rest
 // in a random order, the next fading in every few seconds. It holds while the
-// pointer or focus is on it, and its button stops and starts it. With reduced
-// motion, or a single item, it shows one and stays.
+// pointer or focus is on it. With reduced motion, or a single item, it shows
+// one and stays.
 export default class extends Controller {
-  static targets = ["item", "button"]
+  static targets = ["item"]
   static values = { interval: { type: Number, default: 4500 } }
 
   connect() {
@@ -13,7 +13,6 @@ export default class extends Controller {
     this.at = 0
     this.held = false
     this.stopped = matchMedia("(prefers-reduced-motion: reduce)").matches || this.itemTargets.length < 2
-    if (this.stopped && this.hasButtonTarget) this.buttonTarget.hidden = true
     this.timer = setInterval(() => this.next(), this.intervalValue)
   }
 
@@ -37,12 +36,6 @@ export default class extends Controller {
 
   release() {
     this.held = false
-  }
-
-  toggle() {
-    this.stopped = !this.stopped
-    this.buttonTarget.textContent = this.stopped ? "Play" : "Pause"
-    this.buttonTarget.setAttribute("aria-pressed", String(this.stopped))
   }
 }
 
