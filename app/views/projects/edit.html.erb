@@ -44,6 +44,8 @@
           <% if picture %>
             <img src="<%= picture %>" alt="" data-controller="hide-broken" data-action="error->hide-broken#hide"
                  class="aspect-[2/1] w-full rounded-[12px] bg-fill object-cover">
+          <% else %>
+            <span class="os-sm os-muted grid aspect-[2/1] w-full place-items-center rounded-[12px] border-[1.5px] border-dashed border-line">No picture yet</span>
           <% end %>
           <%= f.url_field :image_edit, class: "os-field", placeholder: @repo.preview_image_url.presence || "https:// an image, 2:1 suits it best" %>
         </label>
