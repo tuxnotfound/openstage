@@ -9,7 +9,9 @@ class FeedController < ApplicationController
   def index
     @show = params[:show].presence_in(SHOWS.keys)
     scope = Entry.publicly_visible.without_tooling_noise.joins(:user).merge(User.active.not_owner).includes(:user).chronological
-    scope = scope.where(entry_type: SHOWS[@show]) if @show
+    # Shipped and Posts are what the builder logged or released, never commits,
+    # as What shipped on a builder's page.
+    scope = scope.highlights.where(entry_type: SHOWS[@show]) if @show
     @entries = scope.page(params[:page]).per(PER_PAGE)
   end
 end

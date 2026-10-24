@@ -39,15 +39,15 @@ RSpec.describe "Feed", type: :request do
       expect(response.body).not_to include("Merge pull request", "Bump rack", "The owner's own commit")
     end
 
-    it "shows only what shipped, or only posts" do
+    it "shows only what shipped, or only posts, and never a commit under either" do
       builder = create(:user, username: "builder")
       create(:entry, user: builder, title: "A commit")
       create(:entry, user: builder, entry_type: "milestone", source: "manual", title: "A launch")
       create(:entry, user: builder, entry_type: "posted", source: "manual", title: "A post")
 
       get "/feed", params: { show: "shipped" }
-      expect(response.body).to include("A commit", "A launch")
-      expect(response.body).not_to include("A post")
+      expect(response.body).to include("A launch")
+      expect(response.body).not_to include("A post", "A commit")
 
       get "/feed", params: { show: "posts" }
       expect(response.body).to include("A post")
