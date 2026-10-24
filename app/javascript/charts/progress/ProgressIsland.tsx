@@ -57,7 +57,7 @@ export default function ProgressIsland({ initial, endpoint, mode, defaultRange, 
       })}
     </div>
   )
-  const chart = <LineChart chart={view.chart} height={mode === "dashboard" ? "h-[260px]" : ""} />
+  const chart = <LineChart chart={view.chart} height={mode === "dashboard" ? "h-[260px]" : ""} legend={mode === "dashboard"} />
   const shipped = shippedTarget ? document.getElementById(shippedTarget) : null
 
   return (

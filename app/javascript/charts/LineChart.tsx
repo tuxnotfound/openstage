@@ -14,7 +14,8 @@ export function projectClass(rank: Rank): string {
   return rank < 6 ? `os-project-${rank + 1}` : "os-project-other"
 }
 
-export default function LineChart({ chart, height = "" }: { chart: ChartView; height?: string }) {
+// legend: names each line under the chart, where nothing beside it does.
+export default function LineChart({ chart, height = "", legend = false }: { chart: ChartView; height?: string; legend?: boolean }) {
   const box = useRef<HTMLDivElement>(null)
   const tip = useRef<HTMLDivElement>(null)
   const [hover, setHover] = useState<{ index: number; left: number; top: number } | null>(null)
@@ -70,6 +71,15 @@ export default function LineChart({ chart, height = "" }: { chart: ChartView; he
       <div className="os-xlabs">
         {chart.axis.map((label, i) => <span key={`axis-${i}`} className={i === chart.axis.length - 1 ? "font-bold text-ink" : ""}>{label}</span>)}
       </div>
+      {legend && chart.legend.length > 1 && (
+        <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] text-ink-2" aria-label="Lines">
+          {chart.legend.map((line) => (
+            <li key={line.name} className="inline-flex items-center gap-2">
+              <span className={`${projectClass(line.rank)} h-1 w-3.5 rounded-sm bg-(--project)`} aria-hidden="true" />{line.name}
+            </li>
+          ))}
+        </ul>
+      )}
       <p className="os-note mt-2">{chart.empty ? chart.emptyNote : chart.note}</p>
     </div>
   )

@@ -61,6 +61,17 @@ RSpec.describe "Dashboard", type: :request do
         expect(week.at_css("a")).to be_nil
       end
 
+      it "names each line of the chart under it" do
+        %w[app tool].each_with_index do |repo, i|
+          create(:entry, user: user, repo_name: "#{user.github_username}/#{repo}", external_id: "sha-#{repo}", occurred_at: (i + 1).days.ago)
+        end
+
+        get "/dashboard"
+
+        legend = Nokogiri::HTML(response.body).at_css("ul[aria-label=Lines]")
+        expect(legend.css("li").map { |line| line.text.squish }).to contain_exactly("app", "tool")
+      end
+
       it "drops the stat tiles that had no action attached" do
         get "/dashboard"
 

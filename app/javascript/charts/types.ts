@@ -14,6 +14,8 @@ export type ChartView = {
   none: string
   empty: boolean
   average: boolean
+  // Each line's project, in drawing order's reverse: the busiest first.
+  legend: { name: string; rank: Rank }[]
 }
 
 export type ProgressRange = "30d" | "90d" | "12m" | "all"

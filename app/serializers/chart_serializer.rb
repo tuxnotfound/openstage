@@ -13,7 +13,7 @@ class ChartSerializer < ApplicationSerializer
       ticks: @chart.ticks.map { |tick| { value: tick.value, top: tick.top } },
       columns: @chart.columns.map { |column| column_of(column) },
       axis: @chart.axis, aria_label: @chart.aria_label, note: @chart.note, empty_note: @chart.empty_note, none: @chart.none,
-      empty: @chart.lines.empty?, average: @chart.average?
+      empty: @chart.lines.empty?, average: @chart.average?, legend: @chart.lines.map { |line| { name: line.name, rank: line.rank } }
     }
   end
 

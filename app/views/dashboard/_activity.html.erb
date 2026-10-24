@@ -23,7 +23,7 @@
       </span>
     </div>
     <div class="mt-3.5">
-      <%= render "profiles/page/chart", section: section, chart: ProgressChart::Trend.new(section), height: "h-[260px]" %>
+      <%= render "profiles/page/chart", section: section, chart: ProgressChart::Trend.new(section), height: "h-[260px]", legend: true %>
     </div>
   <% end %>
 </section>
