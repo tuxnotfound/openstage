@@ -51,10 +51,10 @@ module Progress
       @buckets = period.buckets.map { |bucket| tally_bucket(bucket) }
       @totals = totals_on(period.first..period.last_day)
       @previous_totals = totals_on(period.comparison) if period.comparison
-      @first_commit_day = selected_commits_on(period.first..period.last_day).map(&:first).min
+      @first_commit_day = selected_commits_on(period.first..period.last_day).keys.map(&:first).min
       @first_active_day = [ first_commit_day, *items.map(&:date) ].compact.min
       @untagged = untagged_on(period.first..period.last_day)
-      @day_counts = window_commits.group_by(&:first).transform_values { |commits| tally(commits) }
+      @day_counts = window_commits.group_by { |(date, _repo), _count| date }.transform_values { |commits| tally(commits) }
     end
 
     def period_for(today, first_activity)
@@ -90,20 +90,21 @@ module Progress
       selected = selected_commits_on(days)
       shown = items_on(days)
       Totals.new(shipped: shown.count(&:shipped?), published: shown.count { |item| !item.shipped? },
-                 commits: selected.size, all_commits: commits_on(days).size,
-                 active_days: (selected.map(&:first) + shown.map(&:date)).uniq.size, counts: tally(selected))
+                 commits: selected.values.sum, all_commits: commits_on(days).values.sum,
+                 active_days: (selected.keys.map(&:first) + shown.map(&:date)).uniq.size, counts: tally(selected))
     end
 
+    # Commits by repo, from {[date, repo] => count} pairs.
     def tally(commits)
-      commits.group_by(&:last).transform_values(&:size)
+      commits.each_with_object({}) { |((_date, repo), count), counts| counts[repo] = counts.fetch(repo, 0) + count }
     end
 
     def selected_commits_on(days)
-      commits_on(days).select { |_date, commit_repo| shows?(commit_repo) }
+      commits_on(days).select { |(_date, commit_repo), _count| shows?(commit_repo) }
     end
 
     def commits_on(days)
-      window_commits.select { |date, _repo| days.cover?(date) }
+      window_commits.select { |(date, _repo), _count| days.cover?(date) }
     end
 
     def items_on(days)
@@ -115,10 +116,13 @@ module Progress
                   .sort_by { |item| [ -item.date.jd, -item.id ] }
     end
 
-    # [date, repo] for every public commit from the comparison's start to today.
+    # {[date, repo] => count} for every public commit from the comparison's
+    # start to today, counted by day in SQL: a row per day and project, however
+    # many commits there are.
     def window_commits
-      @window_commits ||= public_entries.commits.where(occurred_at: window).pluck(:occurred_at, :repo_name)
-                                        .map { |at, commit_repo| [ at.in_time_zone(zone).to_date, commit_repo ] }
+      @window_commits ||= public_entries.commits.where(occurred_at: window)
+                                        .group(Arel.sql(LocalDay.of("entries.occurred_at", zone)), :repo_name).count
+                                        .transform_keys { |(date, commit_repo)| [ date.to_date, commit_repo ] }
     end
 
     def window_items
