@@ -92,13 +92,13 @@ RSpec.describe "Dashboard", type: :request do
       get "/dashboard"
 
       nav = response.body[/<nav class="os-nav.*?<\/nav>/m]
-      expect(nav).to include(">Dashboard<", "Your page ", ">Settings<")
+      expect(nav).to include(">Dashboard<", "Your page ", ">Feed<", ">Settings<")
       expect(nav).not_to include("Week card")
       expect(nav).to include(%(<a aria-current="page" href="/dashboard">Dashboard</a>))
 
       menu = response.body[/<details.*?<\/details>/m]
-      expect(menu).to include(">Explore builders<", ">Upgrade to Pro<", "Sign out")
-      expect(menu).not_to include(">Admin<")
+      expect(menu).to include(">Upgrade to Pro<", "Sign out")
+      expect(menu).not_to include(">Admin<", "Explore builders")
     end
 
     it "shows Analytics as a tab to Pro builders only" do

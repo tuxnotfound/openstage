@@ -54,6 +54,15 @@ RSpec.describe "Feed", type: :request do
       expect(response.body).not_to include("A launch")
     end
 
+    it "is in the header for everyone, lit while it is shown" do
+      get "/pricing"
+      expect(response.body[/<nav class="os-nav.*?<\/nav>/m]).to include(%(<a href="/feed">Feed</a>))
+
+      sign_in_as(create(:user, username: "builder"))
+      get "/feed"
+      expect(response.body[/<nav class="os-nav.*?<\/nav>/m]).to include(%(<a aria-current="page" href="/feed">Feed</a>))
+    end
+
     it "is linked from every public profile" do
       create(:user, username: "someone")
 

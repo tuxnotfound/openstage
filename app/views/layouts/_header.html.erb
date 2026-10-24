@@ -6,6 +6,7 @@
       <nav class="os-nav md:ml-3 max-md:order-last max-md:w-full max-md:flex-nowrap max-md:overflow-x-auto max-md:py-3" aria-label="Main">
         <%= nav_link "Dashboard", dashboard_path, :dashboard %>
         <%= nav_link safe_join([ "Your page ", tag.span("↗", aria: { hidden: true }) ]), profile_path(current_user.username), :page %>
+        <%= nav_link "Feed", feed_path, :feed %>
         <% if current_user.pro? %>
           <%= nav_link "Analytics", analytics_path, :analytics %>
         <% end %>
@@ -20,7 +21,6 @@
         </summary>
         <div class="os-card absolute right-0 top-full z-20 mt-2 w-56 p-1.5 text-sm shadow-lg">
           <p class="px-3 py-2 os-xs os-muted truncate">@<%= current_user.username %></p>
-          <%= link_to "Explore builders", feed_path, class: "block rounded-[10px] px-3 py-2 hover:bg-fill" %>
           <% unless current_user.pro? %>
             <%= link_to "Upgrade to Pro", pricing_path, class: "block rounded-[10px] px-3 py-2 hover:bg-fill" %>
           <% end %>
@@ -38,6 +38,7 @@
     <div class="os-top max-sm:gap-3">
       <%= link_to "openstage", root_path, class: "os-logo" %>
       <nav class="os-nav ml-auto" aria-label="Main">
+        <%= link_to "Feed", feed_path, aria: { current: (controller_name == "feed" ? "page" : nil) } %>
         <%= link_to "Pricing", pricing_path %>
         <%= link_to "Blog", blog_path, class: "max-sm:hidden" %>
       </nav>
