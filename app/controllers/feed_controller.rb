@@ -12,6 +12,8 @@ class FeedController < ApplicationController
     # Shipped and Posts are what the builder logged or released, never commits,
     # as What shipped on a builder's page.
     scope = scope.highlights.where(entry_type: SHOWS[@show]) if @show
-    @entries = scope.page(params[:page]).per(PER_PAGE)
+    # without_count: Load more needs only to know a next page exists, and a
+    # count of every public entry grows with the whole table.
+    @entries = scope.page(params[:page]).per(PER_PAGE).without_count
   end
 end
