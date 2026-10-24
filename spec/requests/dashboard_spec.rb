@@ -57,7 +57,7 @@ RSpec.describe "Dashboard", type: :request do
         get "/dashboard"
 
         week = Nokogiri::HTML(response.body).at_css("[data-recap-prompt]")
-        expect(week.text.squish).to include("You shipped 3 commits in app")
+        expect(week.text.squish).to include("You shipped 3 commits in app", "100% app")
         expect(week.at_css("a")).to be_nil
       end
 

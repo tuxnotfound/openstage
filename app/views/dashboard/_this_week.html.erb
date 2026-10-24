@@ -20,10 +20,7 @@
   </div>
   <% if @recap_prompt && commits.positive? %>
     <% projects = section&.tally&.projects&.all || [] %>
-    <div class="os-sharebar mt-3 h-2" role="img" aria-label="Commits this week by repo">
-      <% by_repo.each do |repo, n| %>
-        <div class="<%= project_class(projects.find { |project| project.name == repo }&.rank) %> min-w-1.5 bg-(--project)" style="flex: <%= n %> 1 0" title="<%= repo %>: <%= pluralize(n, 'commit') %>"></div>
-      <% end %>
-    </div>
+    <% shares = by_repo.map { |repo, n| [ repo, projects.find { |project| project.name == repo }&.rank, n ] } %>
+    <%= render "profiles/page/sharebar", shares: shares, label: "Commits this week by repo", css: "mt-3" %>
   <% end %>
 </section>

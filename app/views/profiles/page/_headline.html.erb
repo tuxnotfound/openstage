@@ -1,7 +1,7 @@
 <%# Commits, the one number GitHub gives every project today. %>
 <% totals = section.tally.totals %>
 <% arrow, change, up = progress_change(section) %>
-<% shares = section.tally.projects.all.filter_map { |project| [ project, totals.counts[project.repo] ] if totals.counts[project.repo].to_i.positive? } %>
+<% shares = section.tally.projects.all.filter_map { |project| [ project.name, project.rank, totals.counts[project.repo] ] if totals.counts[project.repo].to_i.positive? } %>
 <div class="mt-[26px]">
   <p class="os-label">Commits · <%= progress_scope(section) %>, <%= section.labels.words %></p>
   <div class="mt-0.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-1.5">
@@ -15,16 +15,7 @@
   </div>
 
   <% if shares.any? %>
-    <div class="os-sharebar mt-5" role="img" aria-label="Share of commits by project">
-      <% shares.each do |project, n| %>
-        <div class="<%= project_class(project.rank) %> min-w-1.5 bg-(--project)" style="flex: <%= n %> 1 0" title="<%= project.name %>: <%= pluralize(n, 'commit') %>"></div>
-      <% end %>
-    </div>
-    <div class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-ink-2">
-      <% shares.each do |project, n| %>
-        <span><span class="os-num font-bold text-ink"><%= (100.0 * n / totals.commits).round %>%</span> <%= project.name %></span>
-      <% end %>
-    </div>
+    <%= render "profiles/page/sharebar", shares: shares, label: "Share of commits by project", css: "mt-5" %>
   <% end %>
 
   <p class="os-xs os-muted mt-3">
