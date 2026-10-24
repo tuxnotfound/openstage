@@ -44,7 +44,7 @@ RSpec.describe "Dashboard", type: :request do
         get "/dashboard"
 
         expect(response.body).to include("Quiet week so far.")
-        expect(response.body).to include("Log an update")
+        expect(response.body).to include("What did you ship?")
         expect(response.body).not_to include("data-recap-prompt")
       end
 
