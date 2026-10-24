@@ -1,3 +1,6 @@
+# Ruby 3.4 raises when bootsnap caches code compiled for coverage, and the
+# specs always measure it, so they boot without that cache.
+ENV["DISABLE_BOOTSNAP_COMPILE_CACHE"] = "1"
 require 'simplecov'
 SimpleCov.start 'rails'
 

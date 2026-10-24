@@ -2,7 +2,7 @@
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version and Gemfile,
 # and NODE_VERSION the one in .nvmrc. Node only builds the charts' bundle.
-ARG RUBY_VERSION=3.2.2
+ARG RUBY_VERSION=3.4.12
 ARG NODE_VERSION=22.23.0
 FROM registry.docker.com/library/node:$NODE_VERSION-slim as node
 FROM registry.docker.com/library/ruby:$RUBY_VERSION-slim as base
