@@ -96,6 +96,11 @@ module ProgressChart
       average? ? "A 7-day average of commits per day, one line per project." : "Commits per #{labels.unit_word}, one line per project."
     end
 
+    # A tooltip's words for a point where every line is at zero.
+    def none
+      "No commits"
+    end
+
     def empty_note
       "No commits #{labels.word}#{" for #{section.selection_name}" if section.filtered?}."
     end

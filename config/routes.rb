@@ -37,6 +37,13 @@ Rails.application.routes.draw do
   # Analytics (Pro)
   get "/analytics", to: "analytics#index", as: :analytics
 
+  # What the pages' chart scripts ask for when a view changes, as JSON. "api"
+  # is a reserved username, so no builder or project collides with these.
+  namespace :api, defaults: { format: :json } do
+    get "progress/:username", to: "progress#show", as: :progress, constraints: { username: /[a-zA-Z0-9_-]+/ }
+    get "analytics", to: "analytics#show", as: :analytics
+  end
+
   # Sync triggers
   post "/sync/github", to: "syncs#github", as: :sync_github
 

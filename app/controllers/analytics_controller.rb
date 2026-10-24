@@ -5,13 +5,13 @@ class AnalyticsController < ApplicationController
   before_action :require_authentication
   before_action :require_pro
 
-  # The view asked for renders first; the page's script switches the rest.
+  # The view asked for renders first; the page's script asks
+  # Api::AnalyticsController for the others.
   def index
-    export = Analytics::ExportService.new(user: current_user, range: params[:range], picked: Array(params[:pages]), metric: params[:metric])
-    return redirect_to(dashboard_path, alert: export.errors.full_messages.to_sentence) unless export.call
+    @report = Analytics::ReportService.new(user: current_user, range: params[:range], picked: Array(params[:pages]), metric: params[:metric])
+    return if @report.call
 
-    @report = export.report
-    @analytics_data = export.payload
+    redirect_to dashboard_path, alert: @report.errors.full_messages.to_sentence
   end
 
   private

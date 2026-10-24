@@ -5,7 +5,7 @@
 <% chart = ProgressChart::Visits.new(report) %>
 <% everything = report.selected.size == report.pages.size %>
 
-<%= react_island("analytics", { data: @analytics_data }, id: "analytics", class: "os-stack") do %>
+<%= react_island("analytics", { initial: AnalyticsViewSerializer.new(report).as_json, endpoint: api_analytics_path }, id: "analytics", class: "os-stack") do %>
   <div class="os-between">
     <div class="flex items-center gap-2.5">
       <h1 class="os-h2 text-[30px]">Analytics</h1>

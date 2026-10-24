@@ -60,6 +60,10 @@ module ProgressChart
       "#{name} per #{window.unit_word}, one line per page."
     end
 
+    def none
+      "Nothing"
+    end
+
     def empty_note
       "No #{name.downcase} in the #{window.words}."
     end

@@ -3,7 +3,8 @@
 <% arrow, change, up = progress_change(section) %>
 <% kept = request.query_parameters.except("page", "range") %>
 <section class="os-panel" aria-labelledby="your-activity">
-  <%= react_island("progress", { data: data, mode: "dashboard", defaultRange: DashboardController::ACTIVITY_RANGE }, id: "activity-chart") do %>
+  <%= react_island("progress", { initial: ProgressViewSerializer.new(section).as_json, endpoint: api_progress_path(current_user.username),
+                                 mode: "dashboard", defaultRange: DashboardController::ACTIVITY_RANGE }, id: "activity-chart") do %>
     <div class="os-between">
       <h2 id="your-activity" class="os-h2">Your activity</h2>
       <nav class="os-pills" aria-label="Time range">

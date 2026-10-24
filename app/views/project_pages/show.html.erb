@@ -45,7 +45,8 @@
     <%= render "project_pages/follow", user: @user, card: card %>
   </div>
 
-  <%= react_island("progress", { data: @focus.page.payload, mode: "project", defaultRange: Progress::Window::DEFAULT, shippedTarget: "what-shipped-panel" }, id: "progress") do %>
+  <%= react_island("progress", { initial: ProgressViewSerializer.new(section).as_json, endpoint: api_progress_path(@user.username),
+                                 mode: "project", defaultRange: Progress::Window::DEFAULT, shippedTarget: "what-shipped-panel" }, id: "progress") do %>
     <% arrow, change, up = progress_change(section) %>
     <div class="os-between mt-7.5 items-end">
       <div>
