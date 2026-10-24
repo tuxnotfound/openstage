@@ -118,6 +118,13 @@ RSpec.describe "Settings", type: :request do
     context "when signed in" do
       before { sign_in_as(user) }
 
+      it "saves the profile from its own panel, and the page's settings from theirs" do
+        get "/settings"
+
+        panels = %w[profile your-page-settings].map { |id| Nokogiri::HTML(response.body).at_css("section[aria-labelledby='#{id}']") }
+        expect(panels.map { |panel| panel.at_css("input[type=submit]")&.[]("value") }).to eq([ "Save changes", "Save changes" ])
+      end
+
       it "updates profile and redirects with notice" do
         patch settings_path, params: { user: { display_name: "New Name", bio: "Hello" } }
         expect(response).to redirect_to(settings_path)
