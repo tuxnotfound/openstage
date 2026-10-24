@@ -13,12 +13,18 @@ RSpec.describe GithubRepo do
     expect(repo.project_description).to eq("Mine.")
   end
 
-  it "is live only with a website on GitHub, whatever the builder adds" do
-    repo.website_edit = "https://mine.example"
-    expect([ repo.website, repo.live? ]).to eq([ "https://mine.example", false ])
+  it "is live with a website to visit, the builder's own or GitHub's, as its Visit button is" do
+    expect(repo.live?).to be(false)
 
+    repo.website_edit = "https://mine.example"
+    expect(repo.live?).to be(true)
+
+    repo.website_edit = nil
     repo.homepage = "https://gh.example"
     expect(repo.live?).to be(true)
+
+    repo.homepage = "gh.example"
+    expect([ repo.live?, repo.outbound_url("visit") ]).to eq([ false, nil ])
   end
 
   it "lists what the project's page still lacks" do

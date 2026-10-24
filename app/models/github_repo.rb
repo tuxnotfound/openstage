@@ -53,9 +53,10 @@ class GithubRepo < ApplicationRecord
     end
   end
 
-  # "Live" reads from GitHub only: the repo has a website there.
+  # "Live": the project has a website to visit, the builder's own or GitHub's,
+  # the same one its Visit button opens.
   def live?
-    homepage.present?
+    outbound_url("visit").present?
   end
 
   # What the project's page still lacks, for the dashboard to list.
