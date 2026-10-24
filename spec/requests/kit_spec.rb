@@ -37,15 +37,14 @@ RSpec.describe "Kit", type: :request do
     expect(body_tag).not_to include("data-theme")
   end
 
-  # A page not yet drawn in the new look has fixed colours, so it stays light
-  # whatever the visitor picked elsewhere, and offers no switch.
-  it "pins a page not yet in the new look to light" do
+  # Every page is in the new look, so none is pinned to light any more.
+  it "lets every page follow the visitor's pick" do
     sign_in_as(create(:user, pro: true))
     cookies[:theme] = "dark"
 
     get "/analytics"
 
-    expect(body_tag).to include('data-theme="light"')
-    expect(response.body).not_to include('data-controller="theme"')
+    expect(body_tag).to include('data-theme="dark"')
+    expect(response.body).to include('data-controller="theme"')
   end
 end

@@ -48,13 +48,9 @@ module ApplicationHelper
     NAV_TABS[controller_name]
   end
 
-  # The body's data-theme. A page in the new look says so with
-  # content_for :dark_mode and follows the visitor's pick, or the system's
-  # until they pick (nil). Every other page is pinned to light, because its
-  # colours are fixed and would not survive a dark ground.
+  # The body's data-theme: the visitor's pick, or the system's until they
+  # pick (nil).
   def color_theme
-    return "light" unless content_for?(:dark_mode)
-
     cookies[:theme].presence_in(%w[light dark])
   end
 
