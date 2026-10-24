@@ -14,7 +14,8 @@
       <% end %>
       <p class="os-xs os-muted mt-1.5 flex flex-wrap gap-x-1.5 gap-y-1">
         <% facts = [] %>
-        <% facts << link_to(user.github_username, "https://github.com/#{user.github_username}", target: "_blank", rel: "noopener", class: "underline hover:text-ink") %>
+        <% facts << link_to(safe_join([ brand_icon(:github), tag.span("GitHub ", class: "sr-only"), user.github_username ]), "https://github.com/#{user.github_username}",
+                            target: "_blank", rel: "noopener", class: "inline-flex items-center gap-1 underline hover:text-ink") %>
         <% if (website = safe_external_url(user.website_url)) %>
           <% facts << link_to(website.gsub(%r{\Ahttps?://}, ""), website, target: "_blank", rel: "noopener", class: "underline hover:text-ink") %>
         <% end %>

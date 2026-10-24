@@ -21,6 +21,14 @@ RSpec.describe "Profiles", type: :request do
         expect(response.body).to include("Get your own proof-of-work page")
       end
 
+      it "marks the GitHub account with GitHub's icon and says so to screen readers" do
+        get "/testuser"
+
+        github = Nokogiri::HTML(response.body).at_css("a[href='https://github.com/#{user.github_username}']")
+        expect(github.at_css("svg[aria-hidden='true']")).to be_present
+        expect(github.text.squish).to eq("GitHub #{user.github_username}")
+      end
+
       it "never renders a javascript: website URL into the page" do
         user.update_column(:website_url, "javascript:alert(document.cookie)")
 
