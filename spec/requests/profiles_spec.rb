@@ -162,6 +162,14 @@ RSpec.describe "Profiles", type: :request do
         expect(cards.last).to include("secret", "private repo, commit messages only", "1 commit in 12 months · last commit 3 days ago")
       end
 
+      it "opens a project's page from its name, never filtering the chart above" do
+        get "/builder"
+
+        name = Nokogiri::HTML(response.body).at_css("section[aria-labelledby='projects'] .os-card .os-h3")
+        expect(name["href"]).to eq("/builder/app")
+        expect(name["data-turbo-frame"]).to eq("_top")
+      end
+
       it "shows a project's own words, picture and status, as the builder and GitHub set them" do
         user.github_repos.find_by(full_name: "builder/app")
             .update!(description_edit: "My words.", homepage: "https://app.example", archived: true,
