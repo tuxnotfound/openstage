@@ -6,10 +6,13 @@ RSpec.describe "Editing a project", type: :request do
 
   before { sign_in_as(user) }
 
-  it "opens the form in the project's row, showing what GitHub says" do
+  it "opens the form on a page of its own, laid out like the project's, showing what GitHub says" do
     get "/projects/#{repo.id}/edit"
 
-    form = Nokogiri::HTML(response.body).at_css("turbo-frame#project_github_repo_#{repo.id} form")
+    page = Nokogiri::HTML(response.body)
+    expect(page.at_css("turbo-frame")).to be_nil
+    expect(page.at_css("h1#project-name").text.squish).to eq("app")
+    form = page.at_css("form[action='/projects/#{repo.id}']")
     expect(form.at_css("textarea")["placeholder"]).to eq("From GitHub.")
     expect(form.at_css("input[name='github_repo[website_edit]']")["placeholder"]).to eq("https://gh.example")
   end

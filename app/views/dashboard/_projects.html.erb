@@ -1,6 +1,6 @@
 <%# Each repo with work on Openstage: a switch for whether visitors see it,
-    what its page is missing, and its words, website and picture to edit in
-    place. Hiding a repo hides its synced entries. %>
+    what its page is missing, and a link to edit its words, website and
+    picture on a page of their own. Hiding a repo hides its synced entries. %>
 <section class="os-panel" aria-labelledby="your-projects">
   <h2 id="your-projects" class="os-h3">Your projects</h2>
   <p class="os-xs os-muted mt-0.5 mb-2.5">Choose what visitors see on your page; the chart follows. Commits <%= section&.labels&.word || "in the window" %>.</p>
@@ -24,14 +24,12 @@
           <button type="submit" role="switch" aria-checked="<%= repo.included? %>" aria-label="Show <%= repo.name %> on your page" class="os-switch"></button>
         <% end %>
       </div>
-      <%= turbo_frame_tag dom_id(repo, :project), class: "ml-5 block" do %>
-        <p class="os-xs">
-          <% if (missing = repo.missing).any? %>
-            <span class="font-bold text-warn">Add <%= missing.to_sentence %></span> ·
-          <% end %>
-          <%= link_to "Edit", edit_project_path(repo), class: "font-bold underline hover:text-accent-ink" %>
-        </p>
-      <% end %>
+      <p class="os-xs ml-5">
+        <% if (missing = repo.missing).any? %>
+          <span class="font-bold text-warn">Add <%= missing.to_sentence %></span> ·
+        <% end %>
+        <%= link_to "Edit", edit_project_path(repo), class: "font-bold underline hover:text-accent-ink", aria: { label: "Edit #{repo.name}" } %>
+      </p>
     </div>
   <% end %>
 </section>

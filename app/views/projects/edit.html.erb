@@ -1,29 +1,60 @@
-<%# Opens in the project's row on the dashboard. Each field shows what GitHub
-    says now; leaving it blank keeps GitHub's. %>
-<%= turbo_frame_tag dom_id(@repo, :project) do %>
-  <div class="os-card my-2">
-    <%= form_with model: @repo, url: project_path(@repo), method: :patch, class: "os-stack gap-2.5" do |f| %>
-      <% if @repo.errors.any? %>
-        <p role="alert" class="os-xs font-bold text-down"><%= @repo.errors.full_messages.to_sentence %></p>
-      <% end %>
-      <label class="os-fieldset">
-        <span class="os-label">What it is</span>
-        <%= f.text_area :description_edit, rows: 2, maxlength: 280, class: "os-area min-h-16 text-sm",
-              placeholder: @repo.description.presence || @repo.readme_line.presence || "One sentence on what it does" %>
-      </label>
-      <label class="os-fieldset">
-        <span class="os-label">Website</span>
-        <%= f.url_field :website_edit, class: "os-field h-10 text-sm", placeholder: @repo.homepage.presence || "https://" %>
-      </label>
-      <label class="os-fieldset">
-        <span class="os-label">Picture</span>
-        <%= f.url_field :image_edit, class: "os-field h-10 text-sm", placeholder: @repo.preview_image_url.presence || "https:// an image, 2:1 suits it best" %>
-      </label>
-      <p class="os-note">Blank keeps what GitHub says. Your words win once you write them.</p>
-      <div class="flex items-center gap-2">
-        <%= f.submit "Save", class: "os-btn sm" %>
-        <%= link_to "Cancel", dashboard_path, class: "os-btn2 sm", data: { turbo_frame: dom_id(@repo, :project) } %>
-      </div>
+<%# The project's page as the builder edits it: the same name, colour and
+    places, with fields where its words, website and picture show. Each
+    field shows what GitHub says now; leaving it blank keeps GitHub's. %>
+<% content_for :title, "Edit #{@repo.name} — Openstage" %>
+<% content_for :main_class, "os-wrap os-stack pt-1.5" %>
+<% picture = safe_external_url(@repo.picture) %>
+
+<nav aria-label="Breadcrumb" class="os-sm flex items-center gap-2 px-1">
+  <%= link_to "Dashboard", dashboard_path, class: "os-link text-sm" %>
+  <span class="os-muted" aria-hidden="true">/</span>
+  <span class="font-bold"><%= @repo.name %></span>
+  <span class="os-muted" aria-hidden="true">/</span>
+  <span aria-current="page">Edit</span>
+</nav>
+
+<%= form_with model: @repo, url: project_path(@repo), method: :patch do |f| %>
+  <section class="os-panel <%= project_class(@project&.rank) %>" aria-labelledby="project-name">
+    <% if @repo.errors.any? %>
+      <p role="alert" class="os-sm mb-4 font-bold text-down"><%= @repo.errors.full_messages.to_sentence %></p>
     <% end %>
-  </div>
+    <div class="flex flex-wrap items-start gap-x-9 gap-y-6">
+      <div class="min-w-0 flex-[999_1_520px]">
+        <div class="flex flex-wrap gap-2">
+          <% if @repo.live? %><span class="os-tag soft">Live</span><% end %>
+          <span class="os-tag"><%= @repo.private_repo? ? "Private repo, commit messages only" : "Public repo" %></span>
+        </div>
+        <h1 id="project-name" class="os-h1 mt-3.5 flex items-center gap-4 text-[clamp(36px,5vw,56px)] [overflow-wrap:anywhere]">
+          <span class="os-dot size-4 shrink-0 bg-(--project)" aria-hidden="true"></span><%= @repo.name %>
+        </h1>
+        <label class="os-fieldset mt-4">
+          <span class="os-label">What it is</span>
+          <%= f.text_area :description_edit, rows: 3, maxlength: 280, class: "os-area min-h-24 text-[19px]/[1.5]",
+                placeholder: @repo.description.presence || @repo.readme_line.presence || "One sentence on what it does" %>
+        </label>
+        <label class="os-fieldset mt-4 max-w-[520px]">
+          <span class="os-label">Website</span>
+          <%= f.url_field :website_edit, class: "os-field", placeholder: @repo.homepage.presence || "https://" %>
+        </label>
+      </div>
+
+      <div class="min-w-0 flex-[1_1_320px]">
+        <label class="os-fieldset">
+          <span class="os-label">Picture</span>
+          <% if picture %>
+            <img src="<%= picture %>" alt="" data-controller="hide-broken" data-action="error->hide-broken#hide"
+                 class="aspect-[2/1] w-full rounded-[12px] bg-fill object-cover">
+          <% end %>
+          <%= f.url_field :image_edit, class: "os-field", placeholder: @repo.preview_image_url.presence || "https:// an image, 2:1 suits it best" %>
+        </label>
+        <p class="os-note mt-2">Shown on your project's card.</p>
+      </div>
+    </div>
+
+    <p class="os-note mt-6">The name comes from GitHub. Blank keeps what GitHub says; your words win once you write them.</p>
+    <div class="mt-4 flex flex-wrap items-center gap-2.5">
+      <%= f.submit "Save", class: "os-btn" %>
+      <%= link_to "Cancel", dashboard_path, class: "os-btn2" %>
+    </div>
+  </section>
 <% end %>
