@@ -45,7 +45,7 @@ RSpec.describe ProgressChart::Trend do
 
     expect(chart("12m").axis).to eq([ "Jun", "Aug", "Today" ])
     expect(chart("all").axis.first).to eq("Jun")
-    expect(chart("12m", repos: [ "me/late" ]).axis).to eq([ "Sep", "Today" ])
+    expect(chart("12m", repos: [ "me/late" ]).axis).to eq([ "Sep 7", "Sep 28", "Today" ]) # young work draws by week
     expect(chart("90d", repos: [ "me/late" ]).lines.first.values.first).to eq(2)
   end
 

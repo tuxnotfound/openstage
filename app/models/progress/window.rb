@@ -9,6 +9,10 @@ module Progress
     RANGES = %w[30d 90d 12m all].freeze
     DEFAULT = "12m".freeze
     UNITS = { "30d" => :day, "90d" => :week, "12m" => :month, "all" => :month }.freeze
+    # Work younger than the 90-day view draws by week in the longer views: a
+    # month or two would leave the chart a point or two. A week is the finest
+    # a short history draws.
+    SHORT = 13.weeks
 
     attr_reader :range, :today, :first_activity, :first
 
@@ -20,7 +24,7 @@ module Progress
     end
 
     def unit
-      UNITS.fetch(range)
+      short? ? :week : UNITS.fetch(range)
     end
 
     def last
@@ -64,14 +68,22 @@ module Progress
 
     private
 
+    def short?
+      %w[12m all].include?(range) && first_activity.present? && first_activity > today - SHORT
+    end
+
     def start
-      earliest = case range
-                 when "30d" then today - 29
-                 when "90d" then today - (today.cwday - 1) - (12 * 7)
-                 when "12m" then today.beginning_of_month << 11
-                 else (first_activity || today).beginning_of_month
-                 end
-      first_activity ? [ earliest, aligned(first_activity) ].max : earliest
+      first_activity ? [ range_start, aligned(first_activity) ].max : range_start
+    end
+
+    # Where the range itself begins, before the first activity has a say.
+    def range_start
+      case range
+      when "30d" then today - 29
+      when "90d" then today - (today.cwday - 1) - (12 * 7)
+      when "12m" then today.beginning_of_month << 11
+      else first_activity ? aligned(first_activity) : today.beginning_of_month
+      end
     end
 
     # The first activity's own day, week or month: where its bucket begins.

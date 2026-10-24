@@ -47,8 +47,18 @@ RSpec.describe Progress::Window do
 
     expect(window("30d", first_activity: late).first).to eq(late)
     expect(window("90d", first_activity: late).first).to eq(Date.new(2026, 9, 21))
-    expect([ window("12m", first_activity: late).first, window("12m", first_activity: late).buckets.size ]).to eq([ Date.new(2026, 9, 1), 2 ])
+    older = Date.new(2026, 6, 10)
+    expect([ window("12m", first_activity: older).first, window("12m", first_activity: older).buckets.size ]).to eq([ Date.new(2026, 6, 1), 5 ])
     expect(window("30d", first_activity: late).comparison).to be_nil
+  end
+
+  it "draws a history younger than 13 weeks by week in the longer views, never by day" do
+    young = Date.new(2026, 9, 24) # a Thursday, three weeks back
+
+    expect([ window("12m", first_activity: young).unit, window("12m", first_activity: young).first ]).to eq([ :week, Date.new(2026, 9, 21) ])
+    expect([ window("all", first_activity: young).unit, window("all", first_activity: young).buckets.size ]).to eq([ :week, 4 ])
+    expect(window("30d", first_activity: young).unit).to eq(:day)
+    expect(window("12m", first_activity: Date.new(2026, 6, 2)).unit).to eq(:month)
   end
 
   it "opens on the last 12 months for a range it does not know" do
