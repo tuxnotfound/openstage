@@ -111,7 +111,7 @@ class AdminController < ApplicationController
          .sort_by { |_repo, builders| -builders }
   end
 
-  # Mirrors ProfileView.daily_counts so the two charts read the same way.
+  # One count per day of the window, the empty days included.
   def signups_by_day
     start   = DAYS.days.ago.to_date
     grouped = User.counted

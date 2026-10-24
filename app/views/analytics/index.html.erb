@@ -1,418 +1,141 @@
 <% content_for :title, "Analytics — Openstage" %>
+<% content_for :main_class, "os-wrap os-stack pt-1.5" %>
+<% report = @report %>
+<% window = report.window %>
+<% chart = ProgressChart::Visits.new(report) %>
+<% everything = report.selected.size == report.pages.size %>
 
-<!-- Header -->
-<div class="flex items-center justify-between mb-6">
-  <div class="flex items-center gap-3">
-    <h1 class="text-2xl font-bold">Analytics</h1>
-    <span class="inline-flex items-center gap-1 text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">✦ Pro</span>
+<div class="os-between">
+  <div class="flex items-center gap-2.5">
+    <h1 class="os-h2 text-[30px]">Analytics</h1>
+    <span class="os-tag pro">✦ Pro</span>
   </div>
-  <%= link_to "← Dashboard", dashboard_path, class: "text-sm text-gray-400 hover:text-gray-900 transition-colors" %>
+  <nav class="os-pills" aria-label="Time range">
+    <% Analytics::Window::RANGES.each_key do |range| %>
+      <%= link_to Analytics::Window.new(range: range, today: window.today).label, analytics_view_path(range: range == Analytics::Window::DEFAULT ? nil : range),
+            class: "os-pill", aria: { current: (window.range == range ? "page" : nil) } %>
+    <% end %>
+  </nav>
 </div>
 
-<!-- Range selector -->
-<div class="flex items-center gap-1 mb-6">
-  <% AnalyticsController::RANGES.each do |key, cfg| %>
-    <% active = key == @range_key %>
-    <%= link_to cfg[:label], analytics_path(range: key),
-        class: "px-3 py-1.5 text-xs font-medium rounded-full transition-colors #{active ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400'}" %>
-  <% end %>
-  <% if @deltas %>
-    <span class="ml-2 text-[10px] text-gray-400">vs prior <%= @range_label.downcase %></span>
-  <% end %>
-</div>
-
-<!-- Profile views section -->
-<section class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
-  <div class="flex items-center justify-between mb-4">
-    <h2 class="text-sm font-semibold text-gray-700">Profile views</h2>
-    <% if @views[:last_visited] %>
-      <span class="text-xs text-gray-400">Last visit <%= time_ago_in_words(@views[:last_visited]) %> ago</span>
+<section class="os-panel" aria-label="Numbers">
+  <div role="group" aria-label="Pages" class="flex flex-wrap gap-2">
+    <%= link_to "All pages", analytics_view_path(pages: nil), class: "os-chip #{'text-ink' unless everything}", aria: { current: (everything ? "true" : nil) } %>
+    <% report.pages.each do |page| %>
+      <% on = report.selected.include?(page) %>
+      <%= link_to analytics_chip_path(report, page), aria: { current: (on ? "true" : nil) },
+            class: "os-chip #{project_class(page.rank)} #{on ? 'border-(--project) bg-(--project) text-(--on-project)' : 'border-dashed'}" do %>
+        <span class="os-dot <%= on ? 'bg-current opacity-60' : 'bg-line' %>"></span><%= page.name %>
+      <% end %>
     <% end %>
   </div>
 
-  <!-- Top-line stats -->
-  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
-    <div>
-      <div class="flex items-center">
-        <div class="text-2xl font-bold text-gray-900"><%= @views[:total] %></div>
-        <%= delta_badge(@deltas && @deltas[:views_total]) %>
+  <nav class="os-pills mt-5.5 flex-wrap" aria-label="Numbers">
+    <% Analytics::CountService::METRICS.each do |metric| %>
+      <% arrow, change, up = analytics_change(report.change(metric)) %>
+      <%= link_to analytics_view_path(metric: metric == Analytics::CountService::METRICS.first ? nil : metric),
+            class: "os-pill h-auto flex-col items-start px-[18px] py-2", aria: { current: (report.metric == metric ? "page" : nil) } do %>
+        <span class="block text-xs"><%= ProgressChart::Visits::LABELS.fetch(metric) %></span>
+        <span><span class="os-num text-[22px]"><%= number_with_delimiter(report.total(metric)) %></span><% if arrow %> <span class="text-xs font-bold"><%= arrow %> <%= change %></span><% end %></span>
+      <% end %>
+    <% end %>
+  </nav>
+
+  <div class="mt-5.5 flex flex-wrap items-start gap-x-9 gap-y-6">
+    <div class="min-w-0 flex-[999_1_520px]">
+      <p class="os-label"><%= chart.name %> · <%= everything ? "all pages" : report.selected.map(&:name).to_sentence %>, <%= window.words %></p>
+      <% arrow, change, up = analytics_change(report.change(report.metric)) %>
+      <div class="mt-0.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-1.5">
+        <span class="os-num os-big"><%= number_with_delimiter(report.total(report.metric)) %></span>
+        <span class="text-lg font-semibold text-ink-2">
+          <% if arrow %>
+            <span class="<%= analytics_tone(up) %>" aria-label="<%= { true => 'Up', false => 'Down' }.fetch(up, 'No change') %>"><%= arrow %></span> <%= change %> vs the <%= window.label %> before
+          <% else %>
+            none in the <%= window.label %> before
+          <% end %>
+        </span>
       </div>
-      <div class="text-xs text-gray-400 mt-0.5">Total views · <%= @range_label %></div>
+      <div class="mt-5"><%= render "profiles/page/chart", chart: chart, height: "h-[260px]" %></div>
     </div>
-    <div>
-      <div class="flex items-center">
-        <div class="text-2xl font-bold text-gray-900"><%= @views[:unique] %></div>
-        <%= delta_badge(@deltas && @deltas[:views_unique]) %>
-      </div>
-      <div class="text-xs text-gray-400 mt-0.5">Unique visitors</div>
-    </div>
-    <div>
-      <% avg = @views[:daily].values.sum.to_f / [ @views[:daily].size, 1 ].max %>
-      <div class="text-2xl font-bold text-gray-900"><%= avg.round(1) %></div>
-      <div class="text-xs text-gray-400 mt-0.5">Avg views / day</div>
+
+    <div class="min-w-0 flex-[1_1_280px]">
+      <h2 class="os-label">Where visitors came from</h2>
+      <% if report.sources.any? %>
+        <% most = report.sources.first.last %>
+        <% report.sources.each do |source, count| %>
+          <div class="os-row py-2">
+            <div class="os-between"><span class="os-sm font-semibold"><%= source %></span><span class="os-sm os-num font-bold"><%= number_with_delimiter(count) %></span></div>
+            <div class="mt-1.5 h-1 rounded-sm bg-accent" style="width: <%= (100.0 * count / most).round %>%" aria-hidden="true"></div>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="os-note mt-1">No visits in the <%= window.words %>.</p>
+      <% end %>
+      <% if report.countries.any? %>
+        <h2 class="os-label mt-4.5">Countries</h2>
+        <% report.countries.each do |country, count| %>
+          <div class="os-row os-between py-2"><span class="os-sm"><%= country %></span><span class="os-sm os-num font-bold"><%= number_with_delimiter(count) %></span></div>
+        <% end %>
+      <% end %>
     </div>
   </div>
-
-  <!-- Big daily chart -->
-  <%
-    daily       = @views[:daily]
-    chart_h     = 140
-    chart_count = daily.size
-    max_count   = daily.values.max.to_f
-    max_count   = 1.0 if max_count == 0
-  %>
-  <% if chart_count > 0 %>
-    <div class="border border-gray-100 rounded-lg p-4">
-      <div class="relative" data-controller="chart-tooltip">
-        <svg viewBox="0 0 <%= chart_count %> <%= chart_h %>" preserveAspectRatio="none" class="block w-full" style="height: <%= chart_h %>px" aria-label="Daily profile views">
-          <% daily.each_with_index do |(date, count), i| %>
-            <% h = [ ((count / max_count) * (chart_h - 4)).round, count > 0 ? 2 : 1 ].max %>
-            <% pretty_date = Date.parse(date).strftime("%-d %b %Y") %>
-            <rect
-              x="<%= i + 0.1 %>"
-              y="<%= chart_h - h %>"
-              width="0.8"
-              height="<%= h %>"
-              fill="<%= count > 0 ? '#6366f1' : '#e5e7eb' %>"
-            >
-              <title><%= pretty_date %> — <%= count %> view<%= 's' if count != 1 %></title>
-            </rect>
-            <%# Full-column-width invisible overlay for easier hover targeting %>
-            <rect
-              x="<%= i %>"
-              y="0"
-              width="1"
-              height="<%= chart_h %>"
-              fill="transparent"
-              data-date="<%= pretty_date %>"
-              data-count="<%= count %>"
-              data-action="mouseenter->chart-tooltip#show mousemove->chart-tooltip#move mouseleave->chart-tooltip#hide"
-              style="cursor: pointer;"
-            />
-          <% end %>
-        </svg>
-        <div data-chart-tooltip-target="tooltip"
-             class="hidden absolute pointer-events-none bg-gray-900 text-white text-xs rounded-md px-2 py-1.5 shadow-lg whitespace-nowrap z-10"></div>
-      </div>
-      <div class="flex justify-between text-[10px] text-gray-400 mt-2">
-        <span><%= Date.parse(daily.keys.first).strftime("%-d %b") %></span>
-        <span><%= Date.parse(daily.keys.last).strftime("%-d %b") %></span>
-      </div>
-    </div>
-  <% end %>
 </section>
 
-<!-- Traffic sources + countries -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-  <section class="bg-white border border-gray-200 rounded-xl p-5">
-    <h2 class="text-sm font-semibold text-gray-700 mb-3">Traffic sources</h2>
-    <% if @views[:by_source].any? %>
-      <% src_max = @views[:by_source].values.max.to_f %>
-      <div class="space-y-2">
-        <% @views[:by_source].each do |source, count| %>
-          <div>
-            <div class="flex items-center justify-between text-sm mb-0.5">
-              <span class="text-gray-700"><%= source %></span>
-              <span class="text-gray-400"><%= count %></span>
-            </div>
-            <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-              <div class="h-full bg-indigo-500" style="width: <%= ((count / src_max) * 100).round %>%"></div>
-            </div>
-          </div>
+<section class="os-panel" aria-labelledby="by-page">
+  <div class="os-between">
+    <h2 id="by-page" class="os-h2">By page</h2>
+    <span class="os-xs os-muted"><%= window.words.upcase_first %>, against the <%= window.label %> before</span>
+  </div>
+  <div class="mt-2.5 overflow-x-auto">
+    <table class="w-full min-w-[640px] border-collapse text-sm">
+      <thead>
+        <tr class="text-right text-xs text-ink-3">
+          <th scope="col" class="py-2 text-left font-bold">Page</th>
+          <% Analytics::CountService::METRICS.each do |metric| %><th scope="col" class="py-2 font-bold"><%= ProgressChart::Visits::LABELS.fetch(metric) %></th><% end %>
+          <th scope="col" class="py-2 font-bold">Visitors, change</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% report.selected.sort_by { |page| -report.total("visitors", page: page) }.each do |page| %>
+          <% arrow, change, up = analytics_change(report.change("visitors", page: page)) %>
+          <tr class="border-t border-line text-right" data-page-row="<%= page.key %>">
+            <th scope="row" class="py-2.5 text-left font-bold">
+              <span class="inline-flex items-center gap-2"><span class="os-dot <%= project_class(page.rank) %> bg-(--project)"></span><%= page.name %></span>
+            </th>
+            <% Analytics::CountService::METRICS.each do |metric| %>
+              <% value = report.total(metric, page: page) %>
+              <td class="os-num py-2.5"><%= value.positive? ? number_with_delimiter(value) : "–" %></td>
+            <% end %>
+            <td class="py-2.5 font-bold <%= analytics_tone(up) %>"><%= arrow ? "#{arrow} #{change}" : "–" %></td>
+          </tr>
         <% end %>
+      </tbody>
+    </table>
+  </div>
+  <p class="os-note border-t border-line pt-2.5">A visitor is one browser on one day. New followers confirmed by email, for your page or one project. Clicks out: a project's Visit and View on GitHub buttons, and the links in your entries, counted on the entry's project.</p>
+</section>
+
+<div class="os-grid2 items-start">
+  <section class="os-panel" aria-labelledby="links-followed">
+    <h2 id="links-followed" class="os-h3">Links they followed</h2>
+    <p class="os-xs os-muted mt-1 mb-2">Clicks from your pages, <%= window.words %>.</p>
+    <% report.links.each do |link| %>
+      <div class="os-row os-between gap-3 py-2.5">
+        <span class="min-w-0"><span class="block text-[15px] font-semibold"><%= link.title %></span><span class="os-xs os-muted"><%= link.page.name %></span></span>
+        <span class="os-num font-bold"><%= number_with_delimiter(link.count) %></span>
       </div>
-      <details class="mt-3">
-        <summary class="text-xs text-gray-400 cursor-pointer hover:text-gray-700">Show raw referrers</summary>
-        <div class="mt-2 space-y-1.5">
-          <% @views[:top_referrers].each do |referrer, count| %>
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-gray-500 truncate max-w-[260px]" title="<%= referrer %>"><%= referrer %></span>
-              <span class="text-gray-400 shrink-0 ml-3"><%= count %></span>
-            </div>
-          <% end %>
-        </div>
-      </details>
-    <% else %>
-      <p class="text-xs text-gray-400">No traffic data yet in this range.</p>
     <% end %>
+    <% if report.links.empty? %><p class="os-note">No clicks out in the <%= window.words %>.</p><% end %>
   </section>
 
-  <section class="bg-white border border-gray-200 rounded-xl p-5">
-    <h2 class="text-sm font-semibold text-gray-700 mb-3">Top countries</h2>
-    <% if @views[:top_countries].any? %>
-      <% max = @views[:top_countries].values.max.to_f %>
-      <div class="space-y-2">
-        <% @views[:top_countries].each do |country, count| %>
-          <div>
-            <div class="flex items-center justify-between text-sm mb-0.5">
-              <span class="text-gray-700"><%= country %></span>
-              <span class="text-gray-400"><%= count %></span>
-            </div>
-            <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-              <div class="h-full bg-indigo-500" style="width: <%= ((count / max) * 100).round %>%"></div>
-            </div>
-          </div>
-        <% end %>
+  <section class="os-panel" aria-labelledby="badge-embed">
+    <h2 id="badge-embed" class="os-h3">README badge and embed</h2>
+    <p class="os-xs os-muted mt-1 mb-2">Times they were shown on other sites, <%= window.words %>.</p>
+    <% report.shown.each do |kind, count, sites| %>
+      <div class="os-row os-between py-2.5">
+        <span class="os-sm font-semibold"><%= kind == "badge" ? "README badge" : "Embed widget" %></span>
+        <span class="os-sm"><span class="os-num font-bold"><%= number_with_delimiter(count) %></span> <span class="os-muted">· <%= pluralize(sites, "site") %></span></span>
       </div>
-    <% else %>
-      <p class="text-xs text-gray-400">No country data yet in this range.</p>
     <% end %>
   </section>
 </div>
-
-<!-- Entry clicks leaderboard -->
-<section class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
-  <div class="flex items-center justify-between mb-4">
-    <h2 class="text-sm font-semibold text-gray-700">Entry clicks</h2>
-    <div class="flex items-center">
-      <span class="text-xs text-gray-400"><%= @entry_clicks[:total] %> total · <%= @range_label %></span>
-      <%= delta_badge(@deltas && @deltas[:clicks_total]) %>
-    </div>
-  </div>
-
-  <% if @entry_clicks[:leaderboard].any? %>
-    <%
-      leaderboard_visible_count = 10
-      leaderboard       = @entry_clicks[:leaderboard]
-      visible_rows      = leaderboard.first(leaderboard_visible_count)
-      hidden_rows       = leaderboard.drop(leaderboard_visible_count)
-      max_clicks        = leaderboard.map { |row| row[:clicks] }.max.to_f
-    %>
-    <div data-controller="toggle">
-      <div class="divide-y divide-gray-100">
-        <% visible_rows.each do |row| %>
-          <%= render "analytics/leaderboard_row", row: row, max_clicks: max_clicks %>
-        <% end %>
-
-        <% if hidden_rows.any? %>
-          <div data-toggle-target="content" class="hidden divide-y divide-gray-100">
-            <% hidden_rows.each do |row| %>
-              <%= render "analytics/leaderboard_row", row: row, max_clicks: max_clicks %>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
-
-      <% if hidden_rows.any? %>
-        <button type="button"
-                data-action="click->toggle#toggle"
-                class="mt-3 w-full text-xs font-medium text-gray-500 hover:text-gray-900 border border-gray-200 hover:border-gray-300 rounded-lg py-2 transition-colors cursor-pointer">
-          <span data-toggle-target="openIcon">Show all (<%= hidden_rows.size %> more)</span>
-          <span data-toggle-target="closeIcon" class="hidden">Show less</span>
-        </button>
-      <% end %>
-    </div>
-  <% else %>
-    <p class="text-xs text-gray-400">No entry clicks yet in this range.</p>
-  <% end %>
-</section>
-
-<!-- Badge & embed impressions -->
-<section class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
-  <div class="flex items-center justify-between mb-4">
-    <h2 class="text-sm font-semibold text-gray-700">Badge &amp; embed reach</h2>
-    <span class="text-xs text-gray-400"><%= @range_label %></span>
-  </div>
-
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-    <div class="border border-gray-100 rounded-lg p-4">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-xs font-medium text-gray-500">README badge</span>
-        <% if @badge_stats[:badge_last_seen] %>
-          <span class="text-[10px] text-gray-400">last seen <%= time_ago_in_words(@badge_stats[:badge_last_seen]) %> ago</span>
-        <% end %>
-      </div>
-      <div class="flex items-baseline gap-4">
-        <div>
-          <div class="text-2xl font-bold text-gray-900"><%= @badge_stats[:badge_total] %></div>
-          <div class="text-[10px] text-gray-400 mt-0.5">impressions</div>
-        </div>
-        <div>
-          <div class="text-lg font-semibold text-gray-700"><%= @badge_stats[:badge_unique] %></div>
-          <div class="text-[10px] text-gray-400 mt-0.5">unique viewers</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="border border-gray-100 rounded-lg p-4">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-xs font-medium text-gray-500">Embed widget</span>
-        <% if @badge_stats[:embed_last_seen] %>
-          <span class="text-[10px] text-gray-400">last seen <%= time_ago_in_words(@badge_stats[:embed_last_seen]) %> ago</span>
-        <% end %>
-      </div>
-      <div class="flex items-baseline gap-4">
-        <div>
-          <div class="text-2xl font-bold text-gray-900"><%= @badge_stats[:embed_total] %></div>
-          <div class="text-[10px] text-gray-400 mt-0.5">impressions</div>
-        </div>
-        <div>
-          <div class="text-lg font-semibold text-gray-700"><%= @badge_stats[:embed_unique] %></div>
-          <div class="text-[10px] text-gray-400 mt-0.5">unique viewers</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <p class="text-[10px] text-gray-400 mt-3">
-    Note: GitHub proxies README badges through its image cache (camo), so badge impressions are undercounted — treat as a directional signal of badge reach.
-  </p>
-</section>
-
-<!-- Entries breakdown -->
-<section class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
-  <div class="flex items-center justify-between mb-4">
-    <h2 class="text-sm font-semibold text-gray-700">Entries — <%= @range_label %></h2>
-  </div>
-
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-    <div>
-      <div class="flex items-center">
-        <div class="text-xl font-bold text-gray-900"><%= @entries_breakdown[:in_range] %></div>
-        <%= delta_badge(@deltas && @deltas[:entries_total]) %>
-      </div>
-      <div class="text-xs text-gray-400 mt-0.5">Posted</div>
-    </div>
-    <div>
-      <div class="text-xl font-bold text-gray-900"><%= @entries_breakdown[:visible] %></div>
-      <div class="text-xs text-gray-400 mt-0.5">Visible</div>
-    </div>
-    <div>
-      <div class="text-xl font-bold text-gray-900"><%= @entries_breakdown[:private_ct] %></div>
-      <div class="text-xs text-gray-400 mt-0.5">Private</div>
-    </div>
-    <div>
-      <div class="text-xl font-bold text-gray-900"><%= @entries_breakdown[:current_streak] %></div>
-      <div class="text-xs text-gray-400 mt-0.5">Current streak</div>
-    </div>
-  </div>
-
-  <!-- 12-week activity heatmap -->
-  <%
-    heatmap = @entries_breakdown[:heatmap]
-    heatmap_max = heatmap.values.max.to_i
-    dates = heatmap.keys.map { |k| Date.parse(k) }
-    # Group dates into weeks (columns) — start each week on Monday.
-    columns = dates.group_by { |d| d.beginning_of_week }.sort.to_h
-    cell      = 12
-    cell_gap  = 3
-    heatmap_w = columns.size * (cell + cell_gap)
-    heatmap_h = 7 * (cell + cell_gap)
-  %>
-  <% if heatmap.any? %>
-    <div class="mt-2 pt-4 border-t border-gray-100">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-xs font-medium text-gray-500">Activity · last <%= AnalyticsController::HEATMAP_WEEKS %> weeks</h3>
-        <div class="flex items-center gap-1 text-[10px] text-gray-400">
-          <span>less</span>
-          <% [0, 1, 2, 3, 4].each do |lvl| %>
-            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:<%= heatmap_fill(lvl) %>"></span>
-          <% end %>
-          <span>more</span>
-        </div>
-      </div>
-      <div class="overflow-x-auto">
-        <svg width="<%= heatmap_w %>" height="<%= heatmap_h %>" viewBox="0 0 <%= heatmap_w %> <%= heatmap_h %>" aria-label="Activity heatmap">
-          <% columns.each_with_index do |(week_start, week_dates), col_i| %>
-            <% (0..6).each do |day_offset| %>
-              <% date = week_start + day_offset %>
-              <% count = heatmap[date.to_s] %>
-              <% next if count.nil? %>
-              <% lvl = heatmap_level(count, heatmap_max) %>
-              <rect
-                x="<%= col_i * (cell + cell_gap) %>"
-                y="<%= day_offset * (cell + cell_gap) %>"
-                width="<%= cell %>"
-                height="<%= cell %>"
-                rx="2"
-                fill="<%= heatmap_fill(lvl) %>"
-              >
-                <title><%= date.strftime("%-d %b %Y") %> — <%= count %> entr<%= count == 1 ? 'y' : 'ies' %></title>
-              </rect>
-            <% end %>
-          <% end %>
-        </svg>
-      </div>
-    </div>
-  <% end %>
-
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5 pt-4 border-t border-gray-100">
-    <!-- By type -->
-    <div>
-      <h3 class="text-xs font-medium text-gray-500 mb-2">By type</h3>
-      <% if @entries_breakdown[:by_type].any? %>
-        <% type_max = @entries_breakdown[:by_type].values.max.to_f %>
-        <div class="space-y-2">
-          <% @entries_breakdown[:by_type].sort_by { |_, c| -c }.each do |type, count| %>
-            <div>
-              <div class="flex items-center justify-between text-sm mb-0.5">
-                <span class="text-gray-700 capitalize"><%= type.to_s.humanize %></span>
-                <span class="text-gray-400"><%= count %></span>
-              </div>
-              <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div class="h-full bg-gray-700" style="width: <%= ((count / type_max) * 100).round %>%"></div>
-              </div>
-            </div>
-          <% end %>
-        </div>
-      <% else %>
-        <p class="text-xs text-gray-400">No entries yet in this range.</p>
-      <% end %>
-    </div>
-
-    <!-- By source -->
-    <div>
-      <h3 class="text-xs font-medium text-gray-500 mb-2">By source</h3>
-      <% if @entries_breakdown[:by_source].any? %>
-        <% source_max = @entries_breakdown[:by_source].values.max.to_f %>
-        <div class="space-y-2">
-          <% @entries_breakdown[:by_source].sort_by { |_, c| -c }.each do |source, count| %>
-            <div>
-              <div class="flex items-center justify-between text-sm mb-0.5">
-                <span class="text-gray-700 capitalize"><%= source.to_s.humanize %></span>
-                <span class="text-gray-400"><%= count %></span>
-              </div>
-              <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div class="h-full bg-gray-700" style="width: <%= ((count / source_max) * 100).round %>%"></div>
-              </div>
-            </div>
-          <% end %>
-        </div>
-      <% else %>
-        <p class="text-xs text-gray-400">No entries yet in this range.</p>
-      <% end %>
-    </div>
-  </div>
-
-  <!-- Posting cadence (weekly bars) -->
-  <% weekly = @entries_breakdown[:weekly] %>
-  <% if weekly.any? && weekly.values.sum > 0 %>
-    <div class="mt-5 pt-4 border-t border-gray-100">
-      <h3 class="text-xs font-medium text-gray-500 mb-2">Posting cadence</h3>
-      <%
-        bar_h    = 60
-        bar_w    = 10
-        bar_gap  = 4
-        svg_w    = weekly.size * bar_w + (weekly.size - 1) * bar_gap
-        w_max    = weekly.values.max.to_f
-        w_max    = 1.0 if w_max == 0
-      %>
-      <svg width="<%= svg_w %>" height="<%= bar_h %>" viewBox="0 0 <%= svg_w %> <%= bar_h %>" class="block max-w-full">
-        <% weekly.each_with_index do |(week, count), i| %>
-          <% h = [ ((count / w_max) * bar_h).round, count > 0 ? 2 : 1 ].max %>
-          <rect
-            x="<%= i * (bar_w + bar_gap) %>"
-            y="<%= bar_h - h %>"
-            width="<%= bar_w %>"
-            height="<%= h %>"
-            rx="1"
-            fill="<%= count > 0 ? '#6366f1' : '#e5e7eb' %>"
-          >
-            <title>Week of <%= Date.parse(week).strftime("%-d %b") %> — <%= count %></title>
-          </rect>
-        <% end %>
-      </svg>
-      <p class="text-[10px] text-gray-400 mt-1.5">Entries per week</p>
-    </div>
-  <% end %>
-</section>

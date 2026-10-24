@@ -45,6 +45,6 @@
     <% end %>
   </div>
   <p class="os-note mt-2">
-    <%= chart.lines.any? ? chart.note : "No commits #{section.labels.word}#{" for #{section.selection_name}" if section.filtered?}." %>
+    <%= chart.lines.any? ? chart.note : chart.empty_note %>
   </p>
 </div>

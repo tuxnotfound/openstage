@@ -96,6 +96,10 @@ module ProgressChart
       average? ? "A 7-day average of commits per day, one line per project." : "Commits per #{labels.unit_word}, one line per project."
     end
 
+    def empty_note
+      "No commits #{labels.word}#{" for #{section.selection_name}" if section.filtered?}."
+    end
+
     def labels_for(bucket)
       labels.axis(bucket)
     end

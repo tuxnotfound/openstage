@@ -39,7 +39,6 @@ Lint/SuppressedException:
 # Configuration parameters: CountComments, Max, CountAsOne.
 Metrics/ClassLength:
   Exclude:
-    - 'app/controllers/analytics_controller.rb'
     - 'app/models/user.rb'
     - 'app/services/og_image_generator.rb'
 
@@ -47,7 +46,6 @@ Metrics/ClassLength:
 # Configuration parameters: CountComments, Max, CountAsOne, AllowedMethods, AllowedPatterns.
 Metrics/MethodLength:
   Exclude:
-    - 'app/controllers/analytics_controller.rb'
     - 'app/controllers/entries_controller.rb'
     - 'app/services/og_image_generator.rb'
 
@@ -55,5 +53,4 @@ Metrics/MethodLength:
 # Configuration parameters: AllowedMethods, AllowedPatterns, Max.
 Metrics/PerceivedComplexity:
   Exclude:
-    - 'app/controllers/analytics_controller.rb'
     - 'app/controllers/entries_controller.rb'

@@ -1,37 +1,28 @@
 module AnalyticsHelper
-  def delta_badge(delta)
-    return "" if delta.nil?
-
-    pct = delta[:pct]
-    if pct.nil?
-      content_tag(:span, "new", class: "ml-2 inline-flex items-center text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded")
-    else
-      tone = pct.positive? ? "text-emerald-700 bg-emerald-50" : pct.negative? ? "text-rose-700 bg-rose-50" : "text-gray-500 bg-gray-100"
-      arrow = pct.positive? ? "↑" : pct.negative? ? "↓" : "·"
-      content_tag(:span, "#{arrow} #{pct.abs}%",
-                  class: "ml-2 inline-flex items-center text-[10px] font-medium #{tone} px-1.5 py-0.5 rounded",
-                  title: "Prior period: #{delta[:prior]}")
-    end
+  # The analytics page with some of its params changed; nil drops one.
+  def analytics_view_path(**changes)
+    kept = params.permit(:range, :metric, pages: []).to_h.symbolize_keys
+    analytics_path(**kept.merge(changes).compact_blank)
   end
 
-  # GitHub-style intensity bucket: 0..4 based on share of max.
-  def heatmap_level(count, max)
-    return 0 if count.zero?
-    return 1 if max <= 1
-    share = count.to_f / max
-    return 4 if share >= 0.75
-    return 3 if share >= 0.5
-    return 2 if share >= 0.25
-    1
+  # A page chip's link: the selection with that page switched. With every page
+  # in view, switching one leaves the others; none left means all of them.
+  def analytics_chip_path(report, page)
+    keys = report.selected.map(&:key)
+    keys = keys.include?(page.key) ? keys - [ page.key ] : keys + [ page.key ]
+    analytics_view_path(pages: keys.empty? || keys.size == report.pages.size ? nil : keys)
   end
 
-  def heatmap_fill(level)
-    case level
-    when 4 then "#4338ca"
-    when 3 then "#6366f1"
-    when 2 then "#a5b4fc"
-    when 1 then "#e0e7ff"
-    else "#f3f4f6"
-    end
+  # ["▲", "22%", true], ["±", "0%", nil] for no change, or nils when there is
+  # nothing to compare with. up: nil leaves it uncoloured.
+  def analytics_change(change)
+    return [ nil, nil, nil ] if change.nil?
+    return [ "±", "0%", nil ] if change.zero?
+
+    [ change.negative? ? "▼" : "▲", "#{change.abs}%", change.positive? ]
+  end
+
+  def analytics_tone(up)
+    { true => "text-up", false => "text-down" }[up]
   end
 end
