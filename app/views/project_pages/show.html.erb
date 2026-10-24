@@ -119,6 +119,26 @@
       <% end %>
     </dl>
 
+    <%# The eight busiest; a big team's page says how many more. %>
+    <% if @focus.co_builders.any? %>
+      <h2 class="os-h3 mt-6.5">Also building this</h2>
+      <ul class="mt-1.5">
+        <% @focus.co_builders.first(8).each do |co| %>
+          <li class="os-row py-0">
+            <%= link_to project_page_path(co.user.username, project.repo.split("/").last), class: "flex items-center justify-between gap-3 py-2.5 hover:underline" do %>
+              <span class="inline-flex min-w-0 items-center gap-2.5 font-bold">
+                <img src="<%= co.user.avatar_url %>" alt="" class="os-avatar size-6 shrink-0"><span class="truncate">@<%= co.user.username %></span>
+              </span>
+              <span class="os-xs os-muted shrink-0"><%= pluralize(co.commits, "commit") %></span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+      <% if (more = @focus.co_builders.size - 8).positive? %>
+        <p class="os-note mt-1"><%= "and #{pluralize(more, 'more builder')}" %></p>
+      <% end %>
+    <% end %>
+
     <% if @focus.others.any? %>
       <h2 class="os-h3 mt-6.5">More from <%= @user.display_name %></h2>
       <ul class="mt-1.5">

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_24_162654) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_24_184903) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -58,6 +58,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_24_162654) do
     t.boolean "no_project", default: false, null: false
     t.index ["occurred_at"], name: "index_entries_feed", where: "((hidden = false) AND ((visibility)::text = 'public'::text))"
     t.index ["occurred_at"], name: "index_entries_feed_highlights", where: "((hidden = false) AND ((visibility)::text = 'public'::text) AND (NOT (((source)::text = 'github'::text) AND ((entry_type)::text = 'shipped'::text))))"
+    t.index ["repo_name", "user_id"], name: "index_entries_on_repo_name_and_user_id"
     t.index ["user_id", "external_id"], name: "index_entries_on_user_id_and_external_id", unique: true
     t.index ["user_id", "occurred_at"], name: "index_entries_on_user_id_and_occurred_at"
     t.index ["user_id", "pinned"], name: "index_entries_on_user_id_and_pinned"

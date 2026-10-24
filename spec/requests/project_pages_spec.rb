@@ -19,6 +19,20 @@ RSpec.describe "Project pages", type: :request do
     expect(response.body).not_to include("Other work")
   end
 
+  it "names the other builders whose pages show the same repo, busiest first, each linked to their page for it" do
+    ada = create(:user, username: "ada")
+    2.times { |i| create(:entry, user: ada, repo_name: "builder/side.app", title: "Ada's work #{i}") }
+    cy = create(:user, username: "cy")
+    create(:entry, user: cy, repo_name: "builder/side.app", title: "Cy's work")
+    create(:entry, user: create(:user, username: "gone", deleted_at: 1.day.ago), repo_name: "builder/side.app")
+    create(:entry, user: create(:user, username: "quiet"), repo_name: "builder/side.app", visibility: :private_entry)
+
+    get "/builder/side.app"
+
+    rows = Nokogiri::HTML(response.body).xpath("//h2[text()='Also building this']/following-sibling::ul[1]//a")
+    expect(rows.map { |row| [ row.text.squish, row["href"] ] }).to eq([ [ "@ada 2 commits", "/ada/side.app" ], [ "@cy 1 commit", "/cy/side.app" ] ])
+  end
+
   it "finds the project whatever the case of its name" do
     get "/builder/SIDE.APP"
 
