@@ -30,7 +30,8 @@ export type ProgressView = {
   change: { arrow: string | null; words: string | null; up: boolean | null }
   shares: { repo: string; name: string; rank: number; commits: number; percent: number }[]
   kpis: string
-  projects: { repo: string; name: string; rank: number; on: boolean }[]
+  // value: the project's commits in the window, while it is in view.
+  projects: { repo: string; name: string; rank: number; on: boolean; value: string | null }[]
   chart: ChartView
   shipped: { heading: string; empty: string; items: ShippedItem[] }
 }

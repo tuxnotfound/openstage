@@ -1,5 +1,5 @@
 # The progress section for one window and the projects in view, as the page
-# shows it: the number and its change, the colour bar, the project chips, the
+# shows it: the number and its change, the colour bar, the project switches, the
 # chart and What shipped. The page renders it first and the chart script asks
 # for others (Api::ProgressController); the words come from the helpers the
 # page's own partials use.
@@ -21,7 +21,7 @@ class ProgressViewSerializer < ApplicationSerializer
       range: @section.labels.range, selected: @section.selected.map(&:repo), filtered: @section.filtered?,
       words: @section.labels.words, scope: progress_scope(@section), commits: totals.commits,
       change: { arrow: arrow, words: words.presence, up: up }, shares: shares, kpis: kpis,
-      projects: tally.projects.all.map { |project| chip(project) },
+      projects: tally.projects.all.map { |project| project_switch(project) },
       chart: ChartSerializer.new(ProgressChart::Trend.new(@section)).attributes, shipped: shipped
     }
   end
@@ -48,8 +48,10 @@ class ProgressViewSerializer < ApplicationSerializer
       "#{pluralize(totals.active_days, 'active day')}"
   end
 
-  def chip(project)
-    { repo: project.repo, name: project.name, rank: project.rank, on: !@section.filtered? || @section.selected.include?(project) }
+  def project_switch(project)
+    on = !@section.filtered? || @section.selected.include?(project)
+    { repo: project.repo, name: project.name, rank: project.rank, on: on,
+      value: (pluralize(tally.totals.counts.fetch(project.repo, 0), "commit") if on) }
   end
 
   # Newest first, in the builder's words.

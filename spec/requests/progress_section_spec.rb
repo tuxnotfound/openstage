@@ -77,22 +77,34 @@ RSpec.describe "The public page's chart and what shipped" do
     expect(shipped).to include("No entries tagged openstage in the last 12 months.")
   end
 
-  it "switches a project in or out with its chip, keeping the window on every link" do
-    get "/tux", params: { range: "90d" }
-    chip = panel.css("[aria-label='Projects'] a").find { |a| a.text.squish == "openstage" }
-    query = Rack::Utils.parse_nested_query(URI(chip["href"]).query)
+  def switch_for(name)
+    panel.at_css("[aria-label='Projects'] [role='switch'][aria-label='Show #{name} in the chart']")
+  end
 
-    expect(chip["aria-current"]).to eq("true")
+  it "switches a project in or out beside the chart, keeping the window on every link" do
+    get "/tux", params: { range: "90d" }
+    switch = switch_for("openstage")
+    query = Rack::Utils.parse_nested_query(URI(switch["href"]).query)
+
+    expect(switch["aria-checked"]).to eq("true")
     expect(query["range"]).to eq("90d")
     expect(query["repo"]).to match_array((1..6).map { |i| progress_repo(i) })
 
-    get chip["href"]
-    chip = panel.css("[aria-label='Projects'] a").find { |a| a.text.squish == "openstage" }
-    expect(chip["aria-current"]).to be_nil
-    expect(chip["href"]).to eq("/tux?range=90d")
+    get switch["href"]
+    expect(switch_for("openstage")["aria-checked"]).to eq("false")
+    expect(switch_for("openstage")["href"]).to eq("/tux?range=90d")
+    expect(panel.at_css("[aria-label='Projects'] a", text: "Show all")["href"]).to eq("/tux?range=90d")
     windows = panel.css("nav[aria-label='Time range'] a").to_h { |a| [ a.text, a["href"] ] }
     expect(windows["12 months"]).to start_with("/tux?repo%5B%5D=")
     expect(windows["30 days"]).to include("range=30d")
+  end
+
+  it "keeps the last project in view on: its switch cannot turn it off" do
+    get "/tux", params: { repo: [ progress_repo(0) ] }
+
+    expect(switch_for("openstage")).to have_attributes(name: "span")
+    expect(switch_for("openstage")["aria-disabled"]).to eq("true")
+    expect(switch_for("wheels-off")["aria-checked"]).to eq("false")
   end
 
   it "draws the lines alone, with no numbered discs or list beside the chart" do

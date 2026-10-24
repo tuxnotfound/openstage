@@ -1,27 +1,27 @@
-<%# Project chips switch a project in or out of view; the pills pick the
-    window. Both are links, so the frame redraws and the URL follows. %>
+<%# Beside the chart, a switch per project, in its colour: the chart's
+    legend and its filter. The switches are links, so the frame redraws and
+    the URL follows; the last project in view keeps its switch on. %>
 <% projects = section.tally.projects.all %>
-<div class="os-between mt-6">
-  <% if projects.size > 1 %>
-    <div role="group" aria-label="Projects" class="flex flex-wrap gap-2">
-      <%= link_to "All projects", progress_view_path(user, repo: nil), class: "os-chip #{'text-ink' if section.filtered?}",
-            aria: { current: (section.filtered? ? nil : "true") } %>
-      <% projects.each do |project| %>
-        <% on = !section.filtered? || section.selected.include?(project) %>
-        <%= link_to progress_chip_path(user, section, project), aria: { current: (on ? "true" : nil) },
-              class: "os-chip #{project_class(project.rank)} #{on ? 'border-(--project) bg-(--project) text-(--on-project)' : 'border-dashed'}" do %>
-          <span class="os-dot <%= on ? 'bg-current opacity-60' : 'bg-line' %>"></span><%= project.name %>
-        <% end %>
-      <% end %>
-    </div>
-  <% end %>
-
-  <div class="flex flex-wrap items-center gap-2.5">
-    <nav class="os-pills" aria-label="Time range">
-      <% ProgressHelper::RANGES.each do |range, label| %>
-        <%= link_to label, progress_view_path(user, range: range == Progress::Window::DEFAULT ? nil : range),
-              class: "os-pill max-sm:px-2", aria: { current: (section.labels.range == range ? "page" : nil) } %>
-      <% end %>
-    </nav>
+<% on = projects.select { |project| !section.filtered? || section.selected.include?(project) } %>
+<div role="group" aria-label="Projects" class="min-w-0">
+  <div class="os-between">
+    <h2 class="os-label">Projects</h2>
+    <% if section.filtered? %><%= link_to "Show all", progress_view_path(user, repo: nil), class: "os-link text-[13px]" %><% end %>
   </div>
+  <ul class="mt-1.5">
+    <% projects.each do |project| %>
+      <% shown = on.include?(project) %>
+      <li class="os-row flex items-center gap-2.5 py-2">
+        <span class="os-dot <%= project_class(project.rank) %> bg-(--project) <%= 'opacity-40' unless shown %>" aria-hidden="true"></span>
+        <span class="min-w-0 flex-1 truncate font-bold <%= 'text-ink-3' unless shown %>"><%= project.name %></span>
+        <% if shown %><span class="os-xs os-muted shrink-0"><%= pluralize(section.tally.totals.counts.fetch(project.repo, 0), "commit") %></span><% end %>
+        <% label = "Show #{project.name} in the chart" %>
+        <% if shown && on.one? %>
+          <span role="switch" aria-checked="true" aria-disabled="true" aria-label="<%= label %>" class="os-switch inline-block cursor-not-allowed opacity-50"></span>
+        <% else %>
+          <%= link_to "", progress_chip_path(user, section, project), role: "switch", aria: { checked: shown.to_s, label: label }, class: "os-switch inline-block" %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
 </div>

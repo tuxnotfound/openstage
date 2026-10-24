@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from "react"
+import { useState } from "react"
 import { createPortal } from "react-dom"
 import LineChart, { projectClass } from "../LineChart"
+import Switches, { type Target } from "../Switches"
 import { useView } from "../useView"
 import type { ProgressRange, ProgressView, ShippedItem } from "../types"
 
@@ -20,8 +21,6 @@ export type ProgressProps = {
 
 const RANGES: [ProgressRange, string][] = [["30d", "30 days"], ["90d", "90 days"], ["12m", "12 months"], ["all", "All time"]]
 const SHOWN = 8
-
-type Target = { go: () => void; warm: () => void }
 
 export default function ProgressIsland({ initial, endpoint, mode, defaultRange, shippedTarget }: ProgressProps) {
   const { view, busy, failed, show, retry, prefetch } = useView(initial, apiUrl(endpoint, initial.range, initial.selected))
@@ -65,8 +64,13 @@ export default function ProgressIsland({ initial, endpoint, mode, defaultRange, 
       {mode === "page" && (
         <>
           <PageHeadline view={view} />
-          <Filters view={view} pills={pills} to={to} />
-          <div className="mt-[22px]">{chart}</div>
+          <div className={`mt-6 grid items-start gap-x-8 gap-y-6 ${view.projects.length > 1 ? "lg:grid-cols-[minmax(0,1fr)_280px]" : ""}`}>
+            <div className="min-w-0">
+              <div className="flex justify-end">{pills}</div>
+              <div className="mt-[22px]">{chart}</div>
+            </div>
+            {view.projects.length > 1 && <ProjectSwitches view={view} to={to} />}
+          </div>
         </>
       )}
       {mode === "project" && (
@@ -150,36 +154,19 @@ function PageHeadline({ view }: { view: ProgressView }) {
   )
 }
 
-// Project chips switch a project in or out of view: with every project in
-// view, switching one leaves the others; none left, or all, means all.
-function Filters({ view, pills, to }: { view: ProgressView; pills: ReactNode; to: (range: ProgressRange, selected: string[]) => Target }) {
+// Beside the chart, a switch per project: with every project in view,
+// switching one leaves the others; all of them on again means all.
+function ProjectSwitches({ view, to }: { view: ProgressView; to: (range: ProgressRange, selected: string[]) => Target }) {
   const all = view.projects.map((project) => project.repo)
   const toggled = (repo: string) => {
     const picked = view.filtered ? view.selected : all
     const next = picked.includes(repo) ? picked.filter((each) => each !== repo) : [...picked, repo]
     return next.length === 0 || next.length === all.length ? [] : all.filter((each) => next.includes(each))
   }
-  const everything = to(view.range, [])
 
   return (
-    <div className="os-between mt-6">
-      {view.projects.length > 1 && (
-        <div role="group" aria-label="Projects" className="flex flex-wrap gap-2">
-          <button type="button" className={`os-chip ${view.filtered ? "text-ink" : ""}`} aria-pressed={!view.filtered}
-                  onClick={everything.go} onPointerEnter={everything.warm} onFocus={everything.warm}>All projects</button>
-          {view.projects.map((project) => {
-            const target = to(view.range, toggled(project.repo))
-            return (
-              <button key={project.repo} type="button" aria-pressed={project.on} onClick={target.go} onPointerEnter={target.warm} onFocus={target.warm}
-                      className={`os-chip ${projectClass(project.rank)} ${project.on ? "border-(--project) bg-(--project) text-(--on-project)" : "border-dashed"}`}>
-                <span className={`os-dot ${project.on ? "bg-current opacity-60" : "bg-line"}`} />{project.name}
-              </button>
-            )
-          })}
-        </div>
-      )}
-      <div className="flex flex-wrap items-center gap-2.5">{pills}</div>
-    </div>
+    <Switches label="Projects" target={(repo) => to(view.range, toggled(repo))} all={view.filtered ? to(view.range, []) : null}
+              items={view.projects.map((project) => ({ key: project.repo, name: project.name, rank: project.rank, on: project.on, value: project.value }))} />
   )
 }
 

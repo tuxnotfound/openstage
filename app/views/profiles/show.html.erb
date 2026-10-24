@@ -37,8 +37,8 @@
   </div>
 <% end %>
 
-<%# The chart's filters and window switch in the page's script, with no
-    request (react_island); the frame redraws the page for the owner's tag
+<%# The chart's project switches and window change in the page's script
+    (react_island); the frame redraws the page for the owner's tag
     panel. entry-link: an old link to an entry the page does not show asks
     for it again with ?entry=. %>
 <div data-controller="entry-link">
@@ -55,8 +55,19 @@
         <%= react_island("progress", { initial: ProgressViewSerializer.new(section, linked_id: @linked&.id).as_json, endpoint: api_progress_path(@user.username),
                                  mode: "page", defaultRange: Progress::Window::DEFAULT, shippedTarget: "what-shipped-panel" }, id: "progress") do %>
           <%= render "profiles/page/headline", user: @user, section: section %>
-          <%= render "profiles/page/filters", user: @user, section: section %>
-          <div class="mt-[22px]"><%= render "profiles/page/chart", section: section, chart: ProgressChart::Trend.new(section) %></div>
+          <% several = section.tally.projects.all.size > 1 %>
+          <div class="mt-6 grid items-start gap-x-8 gap-y-6 <%= 'lg:grid-cols-[minmax(0,1fr)_280px]' if several %>">
+            <div class="min-w-0">
+              <nav class="os-pills ml-auto w-fit" aria-label="Time range">
+                <% ProgressHelper::RANGES.each do |range, label| %>
+                  <%= link_to label, progress_view_path(@user, range: range == Progress::Window::DEFAULT ? nil : range),
+                        class: "os-pill max-sm:px-2", aria: { current: (section.labels.range == range ? "page" : nil) } %>
+                <% end %>
+              </nav>
+              <div class="mt-[22px]"><%= render "profiles/page/chart", section: section, chart: ProgressChart::Trend.new(section) %></div>
+            </div>
+            <%= render "profiles/page/filters", user: @user, section: section if several %>
+          </div>
         <% end %>
         <% if current_user == @user %>
           <%= render "profiles/page/untagged", user: @user, section: section %>
