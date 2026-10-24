@@ -49,12 +49,20 @@ RSpec.describe WeeklyMailer do
       expect(html).not_to include("<svg")
     end
 
-    it "puts the one link, to their page, before the list" do
+    it "puts the one link, to their page, after the list, so the chart runs straight into it" do
       html = mail.html_part.body.to_s
-      url = "https://openstage.dev/maker?range=30d&amp;ref=weekly"
-      expect(html).to include(url)
-      expect(html.index(url)).to be < html.index("Opened the beta")
-      expect(mail.text_part.body.to_s).to include("See your page: https://openstage.dev/maker?range=30d&ref=weekly")
+      text = mail.text_part.body.to_s
+      url = "https://openstage.dev/maker?range=30d&ref=weekly"
+      expect(html.index(url.sub("&", "&amp;"))).to be > html.index("Wrote about pricing")
+      expect(text.index(url)).to be > text.index("Wrote about pricing")
+      expect(text).to include("See your page: #{url}")
+    end
+
+    it "draws the app's look: the wordmark, then grey panels with soft corners" do
+      html = mail.html_part.body.to_s
+      expect(html.index(">openstage</td>")).to be < html.index("Week 43")
+      expect(html.scan("background: #{MailHelper::FILL}; border-radius: 22px").size).to eq(2)
+      expect(html).not_to include("fonts.googleapis.com")
     end
 
     it "carries a stop link that works in one click" do

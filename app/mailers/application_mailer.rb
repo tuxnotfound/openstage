@@ -5,4 +5,5 @@ class ApplicationMailer < ActionMailer::Base
           reply_to: ENV.fetch("MAIL_REPLY_TO", "tuxnotfound@cioga.eu")
 
   layout "mailer"
+  helper :mail
 end

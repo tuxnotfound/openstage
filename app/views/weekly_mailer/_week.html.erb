@@ -1,7 +1,9 @@
-<%# The Week view of the progress section, as far as an email can draw it:
-    the counters, the chart, the link, then the shipped and published list.
-    No commit titles: the chart carries the commits. log_url: the builder's
-    own email offers to log an entry when the list is empty. %>
+<%# The Week view of the progress section, as far as an email can draw it,
+    in the app's panels: the counters and the chart, then the shipped and
+    published list and the link, so nothing comes between the chart and the
+    list its discs number. No commit titles: the chart carries the commits.
+    log_url: the builder's own email offers to log an entry when the list is
+    empty. %>
 <% labels = section.labels %>
 <% now = section.tally.totals %>
 <% before = section.tally.previous_totals %>
@@ -13,7 +15,8 @@
      [ "Active days", now.active_days, before&.active_days ],
      [ "Projects", now.projects, nil ]
    ] %>
-<p style="margin: 0 0 14px; font-family: 'Funnel Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: #0E0F12;"><%= labels.nav %><span style="font-weight: 400; color: #666A73;"><%= " · so far" if labels.running? %></span></p>
+<%= mail_panel do %>
+<p style="margin: 0 0 14px; font-family: <%= MailHelper::DISPLAY %>; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: #0E0F12;"><%= labels.nav %><span style="font-weight: 400; color: #666A73;"><%= " · so far" if labels.running? %></span></p>
 
 <div style="padding-bottom: 6px; border-bottom: 1px solid #E2E4E8;">
   <% tiles.each do |label, value, previous| %>
@@ -35,15 +38,13 @@
       <span style="display: inline-block; margin-right: 14px; white-space: nowrap;"><span style="display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; background: <%= ProgressChart::Palette.project_color(line.rank) %>;"></span> <%= line.name %> <strong style="color: #0E0F12;"><%= line.total %></strong></span>
     <% end %>
   </p>
-  <img src="<%= image.url %>" width="600" alt="Commits per day by project <%= labels.word %>: <%= ProgressChart::EmailImage.new(chart).summary %>" style="display: block; width: 100%; max-width: 600px; height: auto; margin-top: 10px; border: 0;">
+  <img src="<%= image.url %>" width="552" alt="Commits per day by project <%= labels.word %>: <%= ProgressChart::EmailImage.new(chart).summary %>" style="display: block; width: 100%; max-width: 552px; height: auto; margin-top: 10px; border: 0; border-radius: 14px;">
 <% else %>
   <p style="margin: 16px 0 0; font-size: 13px; color: #666A73;">No commits <%= labels.word %><%= " yet" if labels.running? %>.</p>
 <% end %>
+<% end %>
 
-<p style="margin: 24px 0;">
-  <a href="<%= link_url %>" style="display: inline-block; padding: 12px 20px; border-radius: 12px; background: #006B72; color: #FFFFFF; font-size: 15px; font-weight: 700; text-decoration: none;"><%= link_label %></a>
-</p>
-
+<%= mail_panel do %>
 <p style="margin: 0; padding-bottom: 8px; border-bottom: 1px solid #E2E4E8; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #666A73;">Shipped and published <%= labels.phrase %></p>
 <% if pick.kept.any? %>
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse: collapse;">
@@ -71,4 +72,7 @@
     <%= labels.empty %>
     <% if local_assigns[:log_url] %><a href="<%= log_url %>" style="color: #43464D;">Log an entry</a><% end %>
   </p>
+<% end %>
+
+<p style="margin: 20px 0 0;"><%= mail_button(link_label, link_url) %></p>
 <% end %>

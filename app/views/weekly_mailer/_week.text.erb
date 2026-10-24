@@ -5,8 +5,6 @@
 
 <%= now.shipped %> shipped · <%= now.published %> published · <%= pluralize(now.commits, "commit") %> · <%= pluralize(now.active_days, "active day") %> · <%= pluralize(now.projects, "project") %>
 
-<%= link_label %>: <%= link_url %>
-
 Shipped and published <%= labels.phrase %>:
 <% if pick.kept.any? %>
 <% pick.kept.each_with_index do |item, i| %>
@@ -21,3 +19,5 @@ Shipped and published <%= labels.phrase %>:
 Log an entry: <%= log_url %>
 <% end %>
 <% end %>
+
+<%= link_label %>: <%= link_url %>
