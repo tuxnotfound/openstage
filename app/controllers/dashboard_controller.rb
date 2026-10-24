@@ -47,6 +47,7 @@ class DashboardController < ApplicationController
     load_badge
     load_week
     @activity = activity
+    @activity_data = activity_data
     # Every repo with synced work, shown or hidden, so a hidden one can come back.
     @repos = current_user.github_repos.with_entries.order(:full_name)
     @show_pro_activated = params[:pro] == "activated"
@@ -81,8 +82,17 @@ class DashboardController < ApplicationController
 
   # The public page's chart of the builder's own work, every project in view.
   def activity
-    service = Progress::ComposeService.new(user: current_user, rolling: true,
-                                           range: params[:range].presence_in(Progress::Window::RANGES) || ACTIVITY_RANGE)
+    service = Progress::ComposeService.new(user: current_user, rolling: true, range: activity_range)
     service.section if service.call
+  end
+
+  # What the chart's script switches windows on, with no request.
+  def activity_data
+    service = Progress::ExportService.new(user: current_user, range: activity_range)
+    service.payload if service.call
+  end
+
+  def activity_range
+    params[:range].presence_in(Progress::Window::RANGES) || ACTIVITY_RANGE
   end
 end

@@ -48,6 +48,16 @@ module ApplicationHelper
     NAV_TABS[controller_name]
   end
 
+  # A React island over the HTML the server renders for it, which shows until
+  # the script mounts and to any visitor without it. The props go in the JSON
+  # beside it (app/javascript/charts/index.tsx).
+  def react_island(name, props, id:, **options, &block)
+    safe_join([
+      tag.div(**options, data: { react: name, react_props: "#{id}-props" }, &block),
+      tag.script(json_escape(props.to_json).html_safe, type: "application/json", id: "#{id}-props")
+    ])
+  end
+
   # The body's data-theme: the visitor's pick, or the system's until they
   # pick (nil).
   def color_theme

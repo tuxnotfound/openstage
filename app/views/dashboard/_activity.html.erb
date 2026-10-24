@@ -1,25 +1,28 @@
-<%# The builder's own chart: the public page's, every project in view. %>
+<%# The builder's own chart: the public page's, every project in view. The
+    window switches in the page's script, with no request. %>
 <% arrow, change, up = progress_change(section) %>
 <% kept = request.query_parameters.except("page", "range") %>
 <section class="os-panel" aria-labelledby="your-activity">
-  <div class="os-between">
-    <h2 id="your-activity" class="os-h2">Your activity</h2>
-    <nav class="os-pills" aria-label="Time range">
-      <% ProgressHelper::RANGES.each do |range, label| %>
-        <%= link_to label, dashboard_path(kept.merge(range: range == DashboardController::ACTIVITY_RANGE ? nil : range).compact),
-              class: "os-pill max-sm:px-2", aria: { current: (section.labels.range == range ? "page" : nil) } %>
-      <% end %>
-    </nav>
-  </div>
-  <div class="mt-3 flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
-    <span class="os-num text-[56px] leading-none"><%= section.tally.totals.commits %></span>
-    <span class="os-ink2">
-      commits, <%= section.labels.words %><% if change.present? %> ·
-        <% if arrow %><span class="<%= up ? 'text-up' : 'text-down' %>" aria-label="<%= up ? 'Up' : 'Down' %>"><%= arrow %></span><% end %>
-        <%= change %><% end %>
-    </span>
-  </div>
-  <div class="mt-3.5">
-    <%= render "profiles/page/chart", section: section, chart: ProgressChart::Trend.new(section), height: "h-[260px]" %>
-  </div>
+  <%= react_island("progress", { data: data, mode: "dashboard", defaultRange: DashboardController::ACTIVITY_RANGE }, id: "activity-chart") do %>
+    <div class="os-between">
+      <h2 id="your-activity" class="os-h2">Your activity</h2>
+      <nav class="os-pills" aria-label="Time range">
+        <% ProgressHelper::RANGES.each do |range, label| %>
+          <%= link_to label, dashboard_path(kept.merge(range: range == DashboardController::ACTIVITY_RANGE ? nil : range).compact),
+                class: "os-pill max-sm:px-2", aria: { current: (section.labels.range == range ? "page" : nil) } %>
+        <% end %>
+      </nav>
+    </div>
+    <div class="mt-3 flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+      <span class="os-num text-[56px] leading-none"><%= section.tally.totals.commits %></span>
+      <span class="os-ink2">
+        commits, <%= section.labels.words %><% if change.present? %> ·
+          <% if arrow %><span class="<%= up ? 'text-up' : 'text-down' %>" aria-label="<%= up ? 'Up' : 'Down' %>"><%= arrow %></span><% end %>
+          <%= change %><% end %>
+      </span>
+    </div>
+    <div class="mt-3.5">
+      <%= render "profiles/page/chart", section: section, chart: ProgressChart::Trend.new(section), height: "h-[260px]" %>
+    </div>
+  <% end %>
 </section>

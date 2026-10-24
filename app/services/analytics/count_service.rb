@@ -53,9 +53,8 @@ module Analytics
       window.span.first.in_time_zone(user.zone)..window.today.in_time_zone(user.zone).end_of_day
     end
 
-    # The local day of a UTC timestamp column.
     def day(at)
-      "DATE((#{at} AT TIME ZONE 'UTC') AT TIME ZONE #{ActiveRecord::Base.connection.quote(user.zone.tzinfo.identifier)})"
+      LocalDay.of(at, user.zone)
     end
   end
 end

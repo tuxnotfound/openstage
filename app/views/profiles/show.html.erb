@@ -37,9 +37,10 @@
   </div>
 <% end %>
 
-<%# The filters and the window change everything below the builder's name, so
-    the whole page is one frame and the URL follows. entry-link: an old link to
-    an entry the page does not show asks for it again with ?entry=. %>
+<%# The chart's filters and window switch in the page's script, with no
+    request (react_island); the frame redraws the page for the owner's tag
+    panel. entry-link: an old link to an entry the page does not show asks
+    for it again with ?entry=. %>
 <div data-controller="entry-link">
 <%= turbo_frame_tag "profile", data: { turbo_action: "advance" } do %>
   <div class="os-stack">
@@ -51,9 +52,11 @@
       <% if @total_entries.zero? %>
         <%= render "profiles/page/empty", user: @user %>
       <% elsif (section = @page&.section) %>
-        <%= render "profiles/page/headline", user: @user, section: section %>
-        <%= render "profiles/page/filters", user: @user, section: section %>
-        <div class="mt-[22px]"><%= render "profiles/page/chart", section: section, chart: ProgressChart::Trend.new(section) %></div>
+        <%= react_island("progress", { data: @page.payload, mode: "page", defaultRange: Progress::Window::DEFAULT, shippedTarget: "what-shipped-panel", linkedId: @linked&.id }, id: "progress") do %>
+          <%= render "profiles/page/headline", user: @user, section: section %>
+          <%= render "profiles/page/filters", user: @user, section: section %>
+          <div class="mt-[22px]"><%= render "profiles/page/chart", section: section, chart: ProgressChart::Trend.new(section) %></div>
+        <% end %>
         <% if current_user == @user %>
           <%= render "profiles/page/untagged", user: @user, section: section %>
         <% end %>

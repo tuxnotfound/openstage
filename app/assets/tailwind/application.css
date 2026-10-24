@@ -6,7 +6,7 @@
    markup ports to a view as it stands. */
 
 /* Dark when the visitor picked it, or when they have not picked and the system
-   is dark. A page not yet in the new look is pinned to light (color_theme). */
+   is dark (color_theme). */
 @custom-variant dark {
   &:where([data-theme="dark"], [data-theme="dark"] *) {
     @slot;

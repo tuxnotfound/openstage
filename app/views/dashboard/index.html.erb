@@ -16,7 +16,7 @@
 <%# The chart beside the switches that change it: hiding a project reloads
     the page here, and its line is gone. %>
 <div id="activity" class="grid scroll-mt-4 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-  <div class="min-w-0"><%= render "dashboard/activity", section: @activity if @activity %></div>
+  <div class="min-w-0"><%= render "dashboard/activity", section: @activity, data: @activity_data if @activity && @activity_data %></div>
   <div class="os-stack min-w-0">
     <%= render "dashboard/projects", repos: @repos, section: @activity %>
     <%= render "dashboard/badge" if @badge_nudge %>

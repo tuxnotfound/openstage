@@ -45,3 +45,5 @@ DAY_*.md
 
 # Coverage reports
 /coverage
+
+/node_modules

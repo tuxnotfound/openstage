@@ -45,28 +45,30 @@
     <%= render "project_pages/follow", user: @user, card: card %>
   </div>
 
-  <% arrow, change, up = progress_change(section) %>
-  <div class="os-between mt-7.5 items-end">
-    <div>
-      <p class="os-label">Commits · <%= section.labels.words %></p>
-      <div class="mt-0.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-1.5">
-        <span class="os-num os-big"><%= section.tally.totals.commits %></span>
-        <% if change.present? %>
-          <span class="text-lg font-semibold text-ink-2">
-            <% if arrow %><span class="<%= up ? 'text-up' : 'text-down' %>" aria-label="<%= up ? 'Up' : 'Down' %>"><%= arrow %></span><% end %>
-            <%= change %>
-          </span>
-        <% end %>
+  <%= react_island("progress", { data: @focus.page.payload, mode: "project", defaultRange: Progress::Window::DEFAULT, shippedTarget: "what-shipped-panel" }, id: "progress") do %>
+    <% arrow, change, up = progress_change(section) %>
+    <div class="os-between mt-7.5 items-end">
+      <div>
+        <p class="os-label">Commits · <%= section.labels.words %></p>
+        <div class="mt-0.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-1.5">
+          <span class="os-num os-big"><%= section.tally.totals.commits %></span>
+          <% if change.present? %>
+            <span class="text-lg font-semibold text-ink-2">
+              <% if arrow %><span class="<%= up ? 'text-up' : 'text-down' %>" aria-label="<%= up ? 'Up' : 'Down' %>"><%= arrow %></span><% end %>
+              <%= change %>
+            </span>
+          <% end %>
+        </div>
       </div>
+      <nav class="os-pills" aria-label="Time range">
+        <% ProgressHelper::RANGES.each do |range, label| %>
+          <%= link_to label, project_page_for(@user, project, range: range == Progress::Window::DEFAULT ? nil : range),
+                class: "os-pill max-sm:px-2", aria: { current: (section.labels.range == range ? "page" : nil) } %>
+        <% end %>
+      </nav>
     </div>
-    <nav class="os-pills" aria-label="Time range">
-      <% ProgressHelper::RANGES.each do |range, label| %>
-        <%= link_to label, project_page_for(@user, project, range: range == Progress::Window::DEFAULT ? nil : range),
-              class: "os-pill max-sm:px-2", aria: { current: (section.labels.range == range ? "page" : nil) } %>
-      <% end %>
-    </nav>
-  </div>
-  <div class="mt-[22px]"><%= render "profiles/page/chart", section: section, chart: ProgressChart::Trend.new(section) %></div>
+    <div class="mt-[22px]"><%= render "profiles/page/chart", section: section, chart: ProgressChart::Trend.new(section) %></div>
+  <% end %>
 </section>
 
 <div class="flex flex-wrap items-start gap-4.5">

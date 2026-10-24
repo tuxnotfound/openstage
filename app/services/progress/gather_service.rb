@@ -1,7 +1,8 @@
 module Progress
   # Everything the public page shows below the builder's name: the window's
-  # section (ComposeService), a card per project (SummarizeService) and the
-  # latest commits, grouped by project and day.
+  # section (ComposeService), a card per project (SummarizeService), the
+  # latest commits, grouped by project and day, and the data its chart script
+  # switches on (ExportService).
   class GatherService < ApplicationService
     # Groups in Recent commits, and the commits read to fill them.
     RECENT_GROUPS = 8
@@ -12,7 +13,8 @@ module Progress
 
     # range: a Window range; repos: the projects in view, none for all.
     attr_accessor :user, :range, :repos
-    attr_reader :section, :cards, :recent
+    # payload: the data the page's chart script switches on (ExportService).
+    attr_reader :section, :cards, :recent, :payload
 
     validates :user, presence: true
 
@@ -28,6 +30,8 @@ module Progress
 
       @cards = summarize.cards
       @recent = recent_groups
+      export = ExportService.new(user: user, range: section.labels.range, repos: repos)
+      @payload = export.payload if run(export)
     end
 
     def run(service)

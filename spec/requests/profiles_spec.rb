@@ -182,11 +182,14 @@ RSpec.describe "Profiles", type: :request do
       let!(:note)    { create(:entry, user: user, entry_type: "note",    source: "manual", repo_name: "builder/openstage", occurred_at: 1.day.ago) }
       let!(:other)   { create(:entry, user: user, entry_type: "note",    source: "manual", repo_name: "builder/other",     occurred_at: 1.day.ago) }
 
+      # The page's JSON carries every project, so its script can switch
+      # without a request; what shows is the project picked.
       it "shows both shipped and manual entries for a project" do
         get "/builder", params: { repo: "builder/openstage" }
-        expect(response.body).to include(shipped.title)
-        expect(response.body).to include(note.title)
-        expect(response.body).not_to include(other.title)
+        shown = Nokogiri::HTML(response.body)
+        shown.css("script").remove
+        expect(shown.text).to include(shipped.title, note.title)
+        expect(shown.text).not_to include(other.title)
       end
     end
   end
