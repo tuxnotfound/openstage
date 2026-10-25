@@ -1,6 +1,8 @@
 # Lightweight, file-based blog. Each post is a registry entry here plus a body
 # partial in app/views/blog/posts/_<slug-with-underscores>.html.erb.
 # No database, no extra gems — version-controlled, fast, and fully indexable.
+# chart: "username/project", a project page whose commits the post's share
+# card draws under its title; leave it out for a post about no one project.
 class BlogPost
   POSTS = [
     {
@@ -8,7 +10,8 @@ class BlogPost
       title: "My build-in-public tool showed I had quit. So I rebuilt it on itself.",
       description: "Openstage's own timeline showed 82 days of nothing from its founder. What the page exposed, what was broken underneath, and what the relaunch changed, with the honest numbers.",
       published_on: Date.new(2026, 10, 6),
-      reading_minutes: 4
+      reading_minutes: 4,
+      chart: "tuxnotfound/openstage"
     },
     {
       slug: "why-one-link-beats-ten",
@@ -26,7 +29,7 @@ class BlogPost
     }
   ].freeze
 
-  attr_reader :slug, :title, :description, :published_on, :reading_minutes
+  attr_reader :slug, :title, :description, :published_on, :reading_minutes, :chart
 
   def self.all
     POSTS.map { |attrs| new(attrs) }.sort_by(&:published_on).reverse
@@ -43,6 +46,7 @@ class BlogPost
     @description      = attrs[:description]
     @published_on     = attrs[:published_on]
     @reading_minutes  = attrs[:reading_minutes]
+    @chart            = attrs[:chart]
   end
 
   def to_param

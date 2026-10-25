@@ -73,14 +73,14 @@ module ProgressHelper
     "#{(days / 30.4).round} months ago"
   end
 
-  # A project card's weekly commits as [line, area] paths in a 400 by 56 box,
-  # on the project's own scale.
-  def progress_sparkline(weeks)
+  # A project card's weekly commits as [line, area] paths in a box 400 by 56
+  # unless told otherwise, on the project's own scale.
+  def progress_sparkline(weeks, width: 400, height: 56)
     weeks *= 2 if weeks.size == 1
     high = [ weeks.max.to_i, 1 ].max * 1.1
-    points = weeks.each_with_index.map { |n, i| [ i * 400.0 / [ weeks.size - 1, 1 ].max, 56 - (n / high * 56) ] }
+    points = weeks.each_with_index.map { |n, i| [ i * width.to_f / [ weeks.size - 1, 1 ].max, height - (n / high * height) ] }
     line = points.each_with_index.map { |(x, y), i| "#{i.zero? ? 'M' : 'L'}#{x.round(1)} #{y.round(1)}" }.join(" ")
-    [ line, "#{line} L400 56 L0 56 Z" ]
+    [ line, "#{line} L#{width} #{height} L0 #{height} Z" ]
   end
 
   # "+3", "−2" or "±0" against the period before, and whether it went up;

@@ -7,8 +7,8 @@
 <% content_for :title, "#{project.name} by #{@user.display_name} — Openstage" %>
 <% content_for :meta_description, card&.description.presence || "#{project.name}, a project #{@user.display_name} is building in public on Openstage." %>
 <% content_for :canonical, project_page_url(@user.username, project.repo.split("/").last) %>
-<%# A shared link shows the project's own picture; without one, the builder's card. %>
-<% content_for :og_image, picture || "#{og_image_url(@user.username)}?v=3" %>
+<%# A shared link shows the project's own picture; without one, its card. %>
+<% content_for :og_image, picture || share_card(og_project_url(@user.username, project.repo.split("/").last)) %>
 <% content_for :main_class, "os-wrap os-stack pt-1.5" %>
 
 <% if @revealed %>

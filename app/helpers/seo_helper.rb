@@ -25,7 +25,15 @@ module SeoHelper
   end
 
   def og_image_for_page
-    content_for?(:og_image) ? content_for(:og_image) : "#{request.base_url}/og-default.png"
+    content_for?(:og_image) ? content_for(:og_image) : share_card(og_site_url)
+  end
+
+  # A share card's address (OgImagesController). X and others keep the image
+  # they fetched for an address; a new version makes them fetch the new look.
+  SHARE_CARD_VERSION = 4
+
+  def share_card(url)
+    "#{url}?v=#{SHARE_CARD_VERSION}"
   end
 
   # Site-wide Organization + WebSite graph, rendered on every page so search

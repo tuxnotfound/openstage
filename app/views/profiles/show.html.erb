@@ -2,7 +2,7 @@
 <% content_for :meta_description do %><%= @user.bio.presence || "#{@user.display_name} is building in public on Openstage — #{@total_entries} entries, #{@repos_synced} repos, #{@milestones} milestones." %><% end %>
 <% content_for :canonical, profile_url(@user.username) %>
 <% content_for :og_type, "profile" %>
-<% content_for :og_image, "#{og_image_url(@user.username)}?v=3" %>
+<% content_for :og_image, share_card(og_builder_url(@user.username)) %>
 <% content_for :main_class, "os-wrap pt-1.5" %>
 
 <% content_for :head do %>

@@ -109,7 +109,13 @@ Rails.application.routes.draw do
 
   # SEO
   get "/sitemap.xml", to: "sitemaps#show", defaults: { format: :xml }
-  get "/og/:username", to: "og_images#show", as: :og_image
+  # The card a shared link shows. "blog" is a reserved username, so a post's
+  # card never meets a builder's.
+  get "/og", to: "og_images#site", as: :og_site
+  get "/og/blog/:slug", to: "og_images#post", as: :og_post
+  get "/og/:username", to: "og_images#builder", as: :og_builder
+  get "/og/:username/:project", to: "og_images#project", as: :og_project, format: false,
+      constraints: { username: /[a-zA-Z0-9_-]+/, project: /[a-zA-Z0-9._-]+/ }
   get "/badge/:username", to: "badges#show", as: :profile_badge, defaults: { format: :svg }
   get "/embed/:username/preview", to: "embeds#preview", as: :profile_embed_preview
   get "/embed/:username.js", to: "embeds#show", as: :profile_embed, defaults: { format: :js }

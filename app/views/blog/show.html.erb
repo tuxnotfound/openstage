@@ -1,6 +1,7 @@
 <% content_for :title, "#{@post.title} — Openstage" %>
 <% content_for :meta_description, @post.description %>
 <% content_for :og_type, "article" %>
+<% content_for :og_image, share_card(og_post_url(@post.slug)) %>
 <% content_for :main_class, "os-wrap pt-1.5" %>
 
 <% content_for :head do %>
@@ -14,7 +15,7 @@
       "dateModified" => @post.published_on.iso8601,
       "url" => blog_post_url(@post),
       "mainEntityOfPage" => blog_post_url(@post),
-      "image" => "#{request.base_url}/og-default.png",
+      "image" => share_card(og_post_url(@post.slug)),
       "author" => { "@id" => "#{request.base_url}/#organization" },
       "publisher" => { "@id" => "#{request.base_url}/#organization" }
     }.to_json.html_safe %>
