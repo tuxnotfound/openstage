@@ -190,7 +190,7 @@ RSpec.describe "Profiles", type: :request do
         expect(name["data-turbo-frame"]).to eq("_top")
       end
 
-      it "shows a project's own words, picture and status, as the builder and GitHub set them" do
+      it "shows a project's own words and status, as the builder and GitHub set them, and leaves its picture to its page" do
         user.github_repos.find_by(full_name: "builder/app")
             .update!(description_edit: "My words.", homepage: "https://app.example", archived: true,
                      preview_image_url: "https://repository-images.githubusercontent.com/1/x")
@@ -199,22 +199,8 @@ RSpec.describe "Profiles", type: :request do
 
         card = Nokogiri::HTML(response.body).at_css("section[aria-labelledby='projects'] .os-card")
         expect(card.text.squish).to include("app Live Archived", "My words.", "app.example")
-        expect(card.at_css("img")["src"]).to eq("https://repository-images.githubusercontent.com/1/x")
+        expect(card.at_css("img")).to be_nil
         expect(card.at_css("a[href='https://app.example']")["target"]).to eq("_blank")
-      end
-
-      it "gives a card beside one with a picture a tile of the same size with its name, in that row only" do
-        user.github_repos.find_by(full_name: "builder/app").update!(preview_image_url: "https://repository-images.githubusercontent.com/1/x")
-        create(:github_repo, user: user, full_name: "builder/zed")
-        create(:entry, user: user, repo_name: "builder/zed", occurred_at: 4.days.ago)
-
-        get "/builder"
-
-        tiles = Nokogiri::HTML(response.body).css("section[aria-labelledby='projects'] .os-card").map do |card|
-          tile = card.at_css("[data-picture]")
-          tile && (tile.at_css("img") ? :picture : tile.text.squish)
-        end
-        expect(tiles).to eq([ :picture, "secret", nil ])
       end
     end
 

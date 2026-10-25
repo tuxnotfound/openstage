@@ -1,61 +1,45 @@
-<%# One card per project: its picture, what it is, its status as GitHub
-    says it (Live with a website there, Archived), and how it moved over the
-    last 52 weeks, each on its own scale.
-    Cards sit two to a row once the grid is 896px wide (two 440px columns and
-    the gap, .os-grid2). A card beside one with a picture gets a tile of the
-    same size in its own colour, so the row lines up; a picture that fails to
-    load leaves that tile too. %>
+<%# One card per project: what it is, its status as GitHub says it (Live
+    with a website there, Archived), and how it moved over the last 52 weeks,
+    each on its own scale. Its picture shows on its own page, never here. %>
 <section class="os-panel" aria-labelledby="projects">
   <h2 id="projects" class="os-h2">Projects</h2>
   <p class="os-xs os-muted mt-1">Commits per week over the last 12 months, or since a project's first commit, each on its own scale.</p>
-  <div class="os-grid2 @container mt-4">
-    <% cards.each_slice(2) do |row| %>
-      <% row_pictured = row.any? { |card| safe_external_url(card.picture) } %>
-      <% row.each do |card| %>
-        <% line, area = progress_sparkline(card.weeks) %>
-        <% picture = safe_external_url(card.picture) %>
-        <div class="os-card flex flex-col <%= project_class(card.rank) %>">
-          <% if row_pictured %>
-            <div class="mb-3 aspect-[2/1] place-items-center overflow-hidden rounded-[12px] bg-(--project)/12 <%= picture ? "grid" : "hidden @min-[896px]:grid" %>" aria-hidden="true" data-picture>
-              <% if picture %>
-                <img src="<%= picture %>" alt="" loading="lazy" data-controller="hide-broken" data-action="error->hide-broken#hide" class="size-full object-cover">
-              <% end %>
-              <span class="os-h3 hidden px-6 text-center text-[28px] text-ink-2 [overflow-wrap:anywhere] only:block"><%= card.name %></span>
-            </div>
+  <div class="os-grid2 mt-4">
+    <% cards.each do |card| %>
+      <% line, area = progress_sparkline(card.weeks) %>
+      <div class="os-card flex flex-col <%= project_class(card.rank) %>">
+        <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <span class="inline-flex flex-wrap items-center gap-2">
+            <%= link_to project_page_for(user, card), class: "os-h3 inline-flex items-center gap-2 text-xl hover:underline", data: { turbo_frame: "_top" } do %>
+              <span class="os-dot size-[11px] bg-(--project)"></span><%= card.name %>
+            <% end %>
+            <% if card.live? %><span class="os-tag soft">Live</span><% end %>
+            <% if card.archived? %><span class="os-tag">Archived</span><% end %>
+          </span>
+          <% unless card.private_repo.nil? %>
+            <span class="os-xs os-muted"><%= card.private_repo ? "private repo, commit messages only" : "public repo" %></span>
           <% end %>
-          <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-            <span class="inline-flex flex-wrap items-center gap-2">
-              <%= link_to project_page_for(user, card), class: "os-h3 inline-flex items-center gap-2 text-xl hover:underline", data: { turbo_frame: "_top" } do %>
-                <span class="os-dot size-[11px] bg-(--project)"></span><%= card.name %>
-              <% end %>
-              <% if card.live? %><span class="os-tag soft">Live</span><% end %>
-              <% if card.archived? %><span class="os-tag">Archived</span><% end %>
-            </span>
-            <% unless card.private_repo.nil? %>
-              <span class="os-xs os-muted"><%= card.private_repo ? "private repo, commit messages only" : "public repo" %></span>
+        </div>
+        <% if card.description %>
+          <p class="os-p mt-1 text-[15px]"><%= card.description %></p>
+        <% end %>
+        <%# At the card's foot, so the charts of a row line up. %>
+        <div class="mt-auto">
+          <svg viewBox="0 0 400 56" preserveAspectRatio="none" aria-hidden="true" class="mt-3 block h-14 w-full overflow-visible">
+            <path d="<%= area %>" class="fill-(--project)" fill-opacity="0.16"/>
+            <path d="<%= line %>" class="stroke-(--project)" fill="none" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
+          </svg>
+          <p class="os-sm os-ink2 mt-2.5">
+            <span class="os-num font-bold text-ink"><%= card.commits %></span> <%= card.commits == 1 ? "commit" : "commits" %> in 12 months<% if card.last_commit %> · last commit <%= progress_ago(card.last_commit) %><% end %>
+          </p>
+          <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
+            <%= link_to project_page_for(user, card), class: "os-link text-sm", data: { turbo_frame: "_top" } do %>Project page <span aria-hidden="true">→</span><% end %>
+            <% if (website = safe_external_url(card.website)) %>
+              <a href="<%= website %>" target="_blank" rel="noopener" class="os-link text-sm"><%= URI(website).host %> <span aria-hidden="true">↗</span></a>
             <% end %>
           </div>
-          <% if card.description %>
-            <p class="os-p mt-1 text-[15px]"><%= card.description %></p>
-          <% end %>
-          <%# At the card's foot, so the charts of a row line up. %>
-          <div class="mt-auto">
-            <svg viewBox="0 0 400 56" preserveAspectRatio="none" aria-hidden="true" class="mt-3 block h-14 w-full overflow-visible">
-              <path d="<%= area %>" class="fill-(--project)" fill-opacity="0.16"/>
-              <path d="<%= line %>" class="stroke-(--project)" fill="none" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
-            </svg>
-            <p class="os-sm os-ink2 mt-2.5">
-              <span class="os-num font-bold text-ink"><%= card.commits %></span> <%= card.commits == 1 ? "commit" : "commits" %> in 12 months<% if card.last_commit %> · last commit <%= progress_ago(card.last_commit) %><% end %>
-            </p>
-            <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
-              <%= link_to project_page_for(user, card), class: "os-link text-sm", data: { turbo_frame: "_top" } do %>Project page <span aria-hidden="true">→</span><% end %>
-              <% if (website = safe_external_url(card.website)) %>
-                <a href="<%= website %>" target="_blank" rel="noopener" class="os-link text-sm"><%= URI(website).host %> <span aria-hidden="true">↗</span></a>
-              <% end %>
-            </div>
-          </div>
         </div>
-      <% end %>
+      </div>
     <% end %>
   </div>
 </section>
