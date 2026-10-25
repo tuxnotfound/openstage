@@ -202,6 +202,20 @@ RSpec.describe "Profiles", type: :request do
         expect(card.at_css("img")["src"]).to eq("https://repository-images.githubusercontent.com/1/x")
         expect(card.at_css("a[href='https://app.example']")["target"]).to eq("_blank")
       end
+
+      it "gives a card beside one with a picture a tile of the same size with its name, in that row only" do
+        user.github_repos.find_by(full_name: "builder/app").update!(preview_image_url: "https://repository-images.githubusercontent.com/1/x")
+        create(:github_repo, user: user, full_name: "builder/zed")
+        create(:entry, user: user, repo_name: "builder/zed", occurred_at: 4.days.ago)
+
+        get "/builder"
+
+        tiles = Nokogiri::HTML(response.body).css("section[aria-labelledby='projects'] .os-card").map do |card|
+          tile = card.at_css("[data-picture]")
+          tile && (tile.at_css("img") ? :picture : tile.text.squish)
+        end
+        expect(tiles).to eq([ :picture, "secret", nil ])
+      end
     end
 
     context "filtering by project (the whole story)" do
