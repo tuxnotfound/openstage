@@ -2,6 +2,8 @@
 <% card = @focus.card %>
 <% section = @focus.page.section %>
 <% website = safe_external_url(card&.website) %>
+<% picture = safe_external_url(card&.picture) %>
+<% can_follow = current_user != @user %>
 <% content_for :title, "#{project.name} by #{@user.display_name} — Openstage" %>
 <% content_for :meta_description, card&.description.presence || "#{project.name}, a project #{@user.display_name} is building in public on Openstage." %>
 <% content_for :canonical, project_page_url(@user.username, project.repo.split("/").last) %>
@@ -49,7 +51,15 @@
         <% end %>
       </div>
     </div>
-    <%= render "project_pages/follow", user: @user, card: card %>
+    <% if picture || can_follow %>
+      <div class="os-stack min-w-0 flex-[1_1_300px]">
+        <% if picture %>
+          <img src="<%= picture %>" alt="" data-controller="hide-broken" data-action="error->hide-broken#hide"
+               class="aspect-[2/1] w-full rounded-[12px] bg-(--project)/12 object-cover">
+        <% end %>
+        <%= render "project_pages/follow", user: @user, card: card if can_follow %>
+      </div>
+    <% end %>
   </div>
 
   <%= react_island("progress", { initial: ProgressViewSerializer.new(section).as_json, endpoint: api_progress_path(@user.username, reveal: @revealed),

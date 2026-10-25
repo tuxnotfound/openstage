@@ -33,6 +33,15 @@ RSpec.describe "Project pages", type: :request do
     expect(rows.map { |row| [ row.text.squish, row["href"] ] }).to eq([ [ "@ada 2 commits", "/ada/side.app" ], [ "@cy 1 commit", "/cy/side.app" ] ])
   end
 
+  it "shows the project's picture beside what it is" do
+    user.github_repos.find_by(full_name: "builder/side.app").update!(image_edit: "https://side.example/cover.png")
+
+    get "/builder/side.app"
+
+    header = Nokogiri::HTML(response.body).at_css("section[aria-label='side.app']")
+    expect(header.at_css("img[src='https://side.example/cover.png']")).to be_present
+  end
+
   it "finds the project whatever the case of its name" do
     get "/builder/SIDE.APP"
 
