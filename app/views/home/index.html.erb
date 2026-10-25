@@ -52,7 +52,7 @@
   <div class="os-grid2 items-center gap-9">
     <div>
       <span class="os-tag">For indie and side-project builders</span>
-      <h1 class="os-h1 mt-4.5">Keep shipping.<br>Openstage does the showing.</h1>
+      <h1 class="os-h1 mt-4.5"><%= safe_join(HomeHelper::TAGLINE, tag.br) %></h1>
       <p class="os-p mt-4 text-lg">Openstage keeps a public page of everything you're building, project by project. It stays current from your GitHub commits while you work.</p>
       <div class="mt-6 flex flex-wrap items-center gap-x-4.5 gap-y-3">
         <% if user_signed_in? %>
