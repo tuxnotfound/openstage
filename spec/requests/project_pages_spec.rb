@@ -42,6 +42,17 @@ RSpec.describe "Project pages", type: :request do
     expect(header.at_css("img[src='https://side.example/cover.png']")).to be_present
   end
 
+  it "shares the project's picture as the link's preview, the builder's card without one" do
+    preview = -> { Nokogiri::HTML(response.body).css("meta[property='og:image'], meta[name='twitter:image']").map { |meta| meta["content"] } }
+
+    get "/builder/side.app"
+    expect(preview.call).to all(start_with("http://www.example.com/og/builder"))
+
+    user.github_repos.find_by(full_name: "builder/side.app").update!(image_edit: "https://side.example/cover.png")
+    get "/builder/side.app"
+    expect(preview.call).to eq([ "https://side.example/cover.png" ] * 2)
+  end
+
   it "finds the project whatever the case of its name" do
     get "/builder/SIDE.APP"
 
