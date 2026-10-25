@@ -61,11 +61,8 @@ gem "after_commit_everywhere", "~> 1.4"
 # Pagination
 gem "kaminari"
 
-# OG image generation
-gem "mini_magick"
-
-# The weekly email's chart: SVG to PNG through libvips, which the Docker image
-# already installs (with librsvg, for SVG)
+# The weekly email's chart and the share cards: SVG to PNG through libvips,
+# which the Docker image already installs (with librsvg, for SVG)
 gem "ruby-vips"
 
 # Payments

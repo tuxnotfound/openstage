@@ -23,7 +23,7 @@ FROM base as build
 # Install packages needed to build gems
 # libyaml-dev: psych builds against it, and Ruby 3.4's image no longer keeps it.
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential git libpq-dev libvips libyaml-dev pkg-config imagemagick fonts-liberation
+    apt-get install --no-install-recommends -y build-essential git libpq-dev libvips libyaml-dev pkg-config fonts-liberation
 
 # Node and npm, to build the charts' bundle in assets:precompile
 COPY --from=node /usr/local/bin/node /usr/local/bin/node
@@ -56,7 +56,7 @@ FROM base
 
 # Install packages needed for deployment
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libvips postgresql-client imagemagick fonts-liberation && \
+    apt-get install --no-install-recommends -y curl libvips postgresql-client fonts-liberation && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Copy built artifacts: gems, application

@@ -198,8 +198,6 @@ GEM
       net-smtp
     marcel (1.1.0)
     matrix (0.4.3)
-    mini_magick (5.3.1)
-      logger
     mini_mime (1.1.5)
     minitest (6.0.2)
       drb (~> 2.0)
@@ -495,7 +493,6 @@ DEPENDENCIES
   jsbundling-rails
   jwt (~> 3.1)
   kaminari
-  mini_magick
   octokit (~> 7.0)
   omniauth-github (~> 2.0)
   omniauth-rails_csrf_protection
