@@ -1,7 +1,8 @@
 # The builder's dashboard chart with the lines they switched off left out,
-# and the table under it: a row per project, a cell per number with the
-# window's value and its switch. A project whose site visits are not counted
-# offers to set them up instead.
+# and the table under it: a row per project, with Edit, whether the
+# builder's page shows it, and a cell per number with the window's value and
+# its switch. A project whose site visits are not counted offers to set them
+# up instead; one hidden from the page comes last, with no line to draw.
 class DashboardLinesSerializer < ApplicationSerializer
   include ActionView::Helpers::NumberHelper
   include Rails.application.routes.url_helpers
@@ -21,17 +22,28 @@ class DashboardLinesSerializer < ApplicationSerializer
                                                                    hidden: @lines.hidden)
   end
 
-  # A project with no synced repo behind it has no switches to save.
+  # A project with no synced repo behind it has nothing to edit or save.
   def rows
-    @section.tally.projects.all.map do |project|
+    shown = @section.tally.projects.all.map do |project|
       repo = @lines.repos[project.repo]
-      { repo: project.repo, name: project.name, rank: project.rank, switch: (project_dashboard_numbers_path(repo) if repo),
+      row(project.repo, project.name, project.rank, repo).merge(
         commits: { value: number(commits.fetch(project.repo, 0)), on: repo.nil? || repo.on_dashboard?("commits"), setup: nil },
-        visits: visits_cell(repo) }
+        visits: visits_cell(repo)
+      )
     end
+    shown + @lines.off_page.map { |repo| row(repo.full_name, repo.name, nil, repo).merge(commits: empty_cell, visits: empty_cell) }
   end
 
   private
+
+  def row(full_name, name, rank, repo)
+    { repo: full_name, name: name, rank: rank, edit: (edit_project_path(repo) if repo), switch: (project_dashboard_numbers_path(repo) if repo),
+      page: ({ on: repo.included?, path: github_repo_path(repo) } if repo) }
+  end
+
+  def empty_cell
+    { value: nil, on: false, setup: nil }
+  end
 
   def site
     @lines.site
@@ -47,7 +59,7 @@ class DashboardLinesSerializer < ApplicationSerializer
   end
 
   def visits_cell(repo)
-    return { value: nil, on: false, setup: nil } unless repo
+    return empty_cell unless repo
     return { value: nil, on: false, setup: edit_project_path(repo, site: "open", anchor: "site-visits") } unless visits.key?(repo.full_name)
 
     { value: number(visits[repo.full_name]), on: repo.on_dashboard?("visits"), setup: nil }

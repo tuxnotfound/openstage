@@ -13,15 +13,16 @@
 <%= render "dashboard/this_week", section: @activity %>
 <%= render "dashboard/composer" %>
 
-<%# The chart beside the switches that change it: hiding a project reloads
-    the page here, and its line is gone. %>
-<div id="activity" class="grid scroll-mt-4 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-  <div class="min-w-0"><%= render "dashboard/activity", section: @activity, lines: @activity_lines if @activity %></div>
-  <div class="os-stack min-w-0">
-    <%= render "dashboard/projects", repos: @repos, section: @activity %>
+<%# The chart over the table of projects that switches it: hiding a project
+    from the page reloads the page here, and its line is gone. %>
+<div id="activity" class="scroll-mt-4">
+  <%= render "dashboard/activity", section: @activity, lines: @activity_lines if @activity %>
+</div>
+<% if @badge_nudge || !current_user.pro? %>
+  <div class="grid items-start gap-4 lg:grid-cols-2">
     <%= render "dashboard/badge" if @badge_nudge %>
     <%= render "dashboard/upgrade" unless current_user.pro? %>
   </div>
-</div>
+<% end %>
 
 <%= render "dashboard/entries" %>

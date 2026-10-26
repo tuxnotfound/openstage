@@ -111,7 +111,7 @@ export default function ProgressIsland({ initial, endpoint, mode, numbers: initi
             </span>
           </div>
           <div className="mt-3.5">{chart}</div>
-          {lines.view && <LinesTable lines={lines} words={view.words} />}
+          {lines.view && <LinesTable lines={lines} words={view.words} range={view.range === defaultRange ? null : view.range} />}
         </>
       )}
       {failed && (
@@ -194,62 +194,97 @@ const emptyChart: ChartView = {
   paths: [], ticks: [], columns: [], axis: [], ariaLabel: "", note: "", emptyNote: "", none: "", empty: true, average: false, legend: [],
 }
 
-// Under the dashboard's chart: a row per project, a cell per number with the
-// window's value and its switch, each column headed by its line.
-function LinesTable({ lines, words }: { lines: LineSwitches; words: string }) {
+// Your projects, under the dashboard's chart: each with Edit, whether the
+// builder's page shows it, and a cell per number with the window's value and
+// its switch. Hiding a project from the page is a form, as the page reloads
+// without its line. On a phone each row stacks, each switch under its label.
+function LinesTable({ lines, words, range }: { lines: LineSwitches; words: string; range: ProgressRange | null }) {
   if (!lines.view) return null
+  if (lines.view.rows.length === 0) {
+    return <div className="mt-5" id="activity-lines"><p className="os-sm os-ink2">No repo has commits here yet. Your public repos appear once the first sync is done.</p></div>
+  }
   return (
     <div className="mt-5" id="activity-lines">
-      <table className="w-full table-fixed border-collapse text-sm">
-        <caption className="sr-only">What the chart draws for each project</caption>
-        <thead>
+      <table className="w-full table-fixed border-collapse text-sm max-sm:block">
+        <caption className="sr-only">Your projects: what your page and this chart show of each</caption>
+        <thead className="max-sm:hidden">
           <tr className="text-xs text-ink-3">
-            <th scope="col" className="py-2 text-left font-bold">On this chart</th>
+            <th scope="col" className="py-2 text-left font-bold">Your projects</th>
+            <th scope="col" className="w-24 py-2 text-right font-bold">Your page</th>
             {NUMBERS.map(([number, label]) => (
-              <th key={number} scope="col" className="w-[100px] py-2 text-right font-bold sm:w-[136px]">
-                <span className="inline-flex items-center gap-1.5">
-                  <span className={`w-3.5 border-t-[3px] border-current ${number === "visits" ? "border-dotted" : ""}`} aria-hidden="true" />{label}
-                </span>
+              <th key={number} scope="col" className="w-34 py-2 text-right font-bold">
+                <span className="inline-flex items-center gap-1.5"><LineSample number={number} />{label}</span>
               </th>
             ))}
           </tr>
         </thead>
-        <tbody>
-          {lines.view.rows.map((row) => (
-            <tr key={row.repo} className="border-t border-line" data-line-row={row.repo}>
-              <th scope="row" className="py-2.5 text-left font-bold">
-                <span className="flex min-w-0 items-center gap-2.5">
-                  <span className={`os-dot ${projectClass(row.rank)} shrink-0 bg-(--project)`} /><span className="truncate">{row.name}</span>
-                </span>
-              </th>
-              {NUMBERS.map(([number, label]) => {
-                const cell = row[number]
-                const on = lines.on(row, number)
-                return (
-                  <td key={number} className="py-2.5 text-right">
-                    {cell.setup ? (
-                      <a href={cell.setup} className="inline-flex h-[22px] items-center rounded-full border border-line px-2.5 text-[11px] font-bold text-ink-2 hover:border-accent hover:text-accent-ink" aria-label={`Set up ${row.name}'s site visits`}>Set up</a>
-                    ) : cell.value === null ? (
-                      <span className="os-xs os-muted">–</span>
-                    ) : row.switch === null ? (
-                      <span className="os-num tabular-nums">{cell.value}</span>
-                    ) : (
-                      <span className="inline-flex items-center justify-end gap-2.5">
-                        <span className={`os-num tabular-nums ${on ? "text-ink" : "text-ink-3"}`}>{cell.value}</span>
-                        <button type="button" role="switch" aria-checked={on} aria-label={`Draw ${row.name}'s ${label.toLowerCase()}`} className="os-switch"
-                                onClick={() => lines.flip(row, number)} />
-                      </span>
-                    )}
+        <tbody className="max-sm:block">
+          {lines.view.rows.map((row) => {
+            const off = row.page !== null && !row.page.on
+            return (
+              <tr key={row.repo} className="border-t border-line max-sm:grid max-sm:grid-cols-3 max-sm:gap-x-3 max-sm:gap-y-2.5 max-sm:py-3" data-line-row={row.repo}>
+                <th scope="row" className="py-2.5 text-left font-bold max-sm:col-span-3 max-sm:py-0">
+                  <span className="flex min-w-0 items-center gap-2.5">
+                    <span className={`os-dot ${projectClass(row.rank)} shrink-0 bg-(--project) ${off ? "opacity-40" : ""}`} />
+                    <span className={`truncate ${off ? "text-ink-3" : ""}`}>{row.name}</span>
+                    {row.edit && <a href={row.edit} className="os-btn2 sm shrink-0" aria-label={`Edit ${row.name}`}>Edit</a>}
+                  </span>
+                </th>
+                <td className="py-2.5 text-right max-sm:py-0 max-sm:text-left">
+                  <span className="os-xs os-muted mb-1 block sm:hidden">Your page</span>
+                  {row.page && <PageSwitch row={row} page={row.page} range={range} />}
+                </td>
+                {NUMBERS.map(([number, label]) => (
+                  <td key={number} className="py-2.5 text-right max-sm:py-0 max-sm:text-left">
+                    <span className="os-xs os-muted mb-1 block sm:hidden">{label}</span>
+                    <LineCellView lines={lines} row={row} number={number} label={label} />
                   </td>
-                )
-              })}
-            </tr>
-          ))}
+                ))}
+              </tr>
+            )
+          })}
         </tbody>
       </table>
       {lines.failed && <p role="status" className="os-note mt-2">That switch did not save. Try it again.</p>}
-      <p className="os-note mt-2">Values are the {words}. These switches change this chart only.</p>
+      <p className="os-note mt-2">Values are the {words}. Your page switches what visitors see; the others, this chart only.</p>
     </div>
+  )
+}
+
+function LineSample({ number }: { number: ChartNumber }) {
+  return <span className={`w-3.5 border-t-[3px] border-current ${number === "visits" ? "border-dotted" : ""}`} aria-hidden="true" />
+}
+
+// GithubReposController switches it and sends the dashboard back.
+function PageSwitch({ row, page, range }: { row: LinesRow; page: { on: boolean; path: string }; range: ProgressRange | null }) {
+  return (
+    <form method="post" action={page.path} className="inline-flex" data-turbo="false">
+      <input type="hidden" name="_method" value="patch" />
+      <input type="hidden" name="authenticity_token" value={csrfToken()} />
+      <input type="hidden" name="included" value={String(!page.on)} />
+      {range && <input type="hidden" name="range" value={range} />}
+      <button type="submit" role="switch" aria-checked={page.on} aria-label={`Show ${row.name} on your page`} className="os-switch" />
+    </form>
+  )
+}
+
+function LineCellView({ lines, row, number, label }: { lines: LineSwitches; row: LinesRow; number: ChartNumber; label: string }) {
+  const cell = row[number]
+  const on = lines.on(row, number)
+  if (cell.setup) {
+    return (
+      <a href={cell.setup} aria-label={`Set up ${row.name}'s site visits`}
+         className="inline-flex h-[22px] items-center rounded-full border border-line px-2.5 text-[11px] font-bold text-ink-2 hover:border-accent hover:text-accent-ink">Set up</a>
+    )
+  }
+  if (cell.value === null) return <span className="os-xs os-muted">–</span>
+  if (row.switch === null) return <span className="os-num tabular-nums">{cell.value}</span>
+  return (
+    <span className="inline-flex items-center gap-2.5">
+      <span className={`os-num tabular-nums ${on ? "text-ink" : "text-ink-3"}`}>{cell.value}</span>
+      <button type="button" role="switch" aria-checked={on} aria-label={`Draw ${row.name}'s ${label.toLowerCase()}`} className="os-switch"
+              onClick={() => lines.flip(row, number)} />
+    </span>
   )
 }
 

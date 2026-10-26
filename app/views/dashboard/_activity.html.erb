@@ -1,6 +1,7 @@
 <%# The builder's own chart: the public page's, every project in view, its
-    commits and site visits, each switched on or off in the table under it.
-    The window switches in the page's script, with no request. %>
+    commits and site visits, each switched on or off in the table of their
+    projects under it, and whether GitHub's sync is up to date. The window
+    switches in the page's script, with no request. %>
 <% arrow, change, up = progress_change(section) %>
 <% kept = request.query_parameters.except("page", "range") %>
 <section class="os-panel" aria-labelledby="your-activity">
@@ -30,4 +31,5 @@
       <%= render "dashboard/lines", lines: lines.attributes, section: section if lines %>
     </div>
   <% end %>
+  <div class="mt-4 border-t border-line pt-3"><%= render "dashboard/sync" %></div>
 </section>

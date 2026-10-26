@@ -48,8 +48,6 @@ class DashboardController < ApplicationController
     load_week
     @activity = activity
     @activity_lines = activity_lines if @activity
-    # Every repo with synced work, shown or hidden, so a hidden one can come back.
-    @repos = current_user.github_repos.with_entries.order(:full_name)
     @show_pro_activated = params[:pro] == "activated"
   end
 

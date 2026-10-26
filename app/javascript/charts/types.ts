@@ -51,6 +51,10 @@ export type LinesRow = {
   repo: string
   name: string
   rank: Rank
+  // The project's own view; null without a synced repo behind it.
+  edit: string | null
+  // Whether the builder's page shows it, and GithubReposController's path to switch it.
+  page: { on: boolean; path: string } | null
   // Projects::DashboardNumbersController's path for this project; null
   // without a synced repo behind it, so nothing to save.
   switch: string | null
