@@ -43,7 +43,7 @@
       <% if repo.site_source == "script" %>
         <div data-controller="clipboard">
           <p class="os-sm mt-3.5 mb-2">Paste this line into the head of every page on <%= host %>:</p>
-          <div class="os-code" data-clipboard-target="source"><%= site_script_tag(repo) %></div>
+          <div class="os-code whitespace-pre-wrap break-all" data-clipboard-target="source"><%= site_script_tag(repo) %></div>
           <div class="os-between mt-2.5">
             <% if repo.site_first_visit_at %>
               <span class="os-sm font-bold text-up">First visit received <%= site_first_visit(repo) %></span>
