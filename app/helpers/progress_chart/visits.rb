@@ -4,8 +4,11 @@ module ProgressChart
   class Visits
     include Plot
 
-    LABELS = { "visitors" => "Visitors", "views" => "Page views", "follows" => "New followers", "clicks" => "Clicks out",
-               "site" => "Site visits" }.freeze
+    LABELS = { "site" => "Site visits", "visitors" => "Visitors", "views" => "Views", "follows" => "New followers",
+               "clicks" => "Clicks out" }.freeze
+    # Where each number happens, as the tabs group them.
+    GROUPS = { "site" => "Your websites", "visitors" => "On Openstage", "views" => "On Openstage", "follows" => "On Openstage",
+               "clicks" => "On Openstage" }.freeze
 
     Line = Data.define(:name, :rank, :values) do
       def dashed?
@@ -34,6 +37,8 @@ module ProgressChart
     end
 
     def empty_note
+      return "No site visits in the #{window.words}. Openstage's script counts them, set up from a project's Edit page." if @report.metric == "site"
+
       "No #{name.downcase} in the #{window.words}."
     end
 

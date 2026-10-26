@@ -26,9 +26,11 @@ RSpec.describe "Api::Analytics", type: :request do
     get "/api/analytics", params: { range: "7d", metric: "views", pages: [ "builder/app" ] }
 
     json = response.parsed_body
-    expect(json).to include("range" => "7d", "metric" => "views", "selected" => [ "builder/app" ], "total" => "2", "scope" => "app", "label" => "Page views")
+    expect(json).to include("range" => "7d", "metric" => "views", "selected" => [ "builder/app" ], "total" => "2", "scope" => "app", "label" => "Views",
+                                "changeLabel" => "Views vs 7 days before")
     expect(json["rows"].map { |row| row["key"] }).to eq([ "builder/app" ])
-    expect(json["chart"]["ariaLabel"]).to eq("Page views per day by page, last 7 days")
-    expect(json["tabs"].map { |tab| tab["metric"] }).to eq(%w[visitors views follows clicks site])
+    expect(json["chart"]["ariaLabel"]).to eq("Views per day by page, last 7 days")
+    expect(json["tabs"].map { |tab| [ tab["metric"], tab["group"] ] }).to eq([ %w[site Your\ websites], %w[visitors On\ Openstage], %w[views On\ Openstage],
+                                                                           %w[follows On\ Openstage], %w[clicks On\ Openstage] ])
   end
 end

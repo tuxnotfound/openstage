@@ -38,7 +38,7 @@ RSpec.describe "Analytics", type: :request do
       get "/analytics"
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("No visits in the last 30 days.", "No visitors in the last 30 days.")
+      expect(response.body).to include("No visits in the last 30 days.", "No site visits in the last 30 days. Openstage&#39;s script counts them")
     end
 
     it "counts each page's visitors, views, new followers and clicks out, with where visitors came from" do
@@ -50,21 +50,25 @@ RSpec.describe "Analytics", type: :request do
 
       get "/analytics"
 
-      expect(row("page")).to eq([ "1", "2", "–", "–", "–", "–" ])
-      expect(row("builder/app")).to eq([ "1", "1", "1", "1", "–", "–" ])
-      expect(page.at_css("nav[aria-label='Numbers']").text.squish).to include("Visitors 2", "Page views 3", "New followers 1", "Clicks out 1")
+      expect(row("page")).to eq([ "–", "1", "2", "–", "–", "–" ])
+      expect(row("builder/app")).to eq([ "–", "1", "1", "1", "1", "–" ])
+      expect(page.at_css("[data-numbers]").text.squish).to eq("Your websites Site visits 0 On Openstage Visitors 2 Views 3 New followers 1 Clicks out 1")
       expect(response.body).to include("Hacker News", "Twitter / X", "PT", "Visit app.example")
     end
 
-    it "counts visits to each project's website, and charts them on their tab" do
+    it "opens on visits to each project's website, the table's last column following the number picked" do
       repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
-      repo.site_visit_days.create!(day: Date.new(2026, 8, 1), visits: 99, visitors: 9)
+      repo.site_visit_days.create!(day: Date.new(2026, 9, 10), visits: 10, visitors: 9)
 
-      get "/analytics", params: { metric: "site" }
+      get "/analytics"
 
-      expect(page.at_css("nav[aria-label='Numbers']").text.squish).to include("Site visits 30")
-      expect(row("builder/app")).to eq([ "–", "–", "–", "–", "30", "–" ])
+      expect(page.at_css("nav[aria-label='Your websites']").text.squish).to include("Site visits 30")
+      expect(page.css("thead th").last.text).to eq("Site visits vs 30 days before")
+      expect(row("builder/app")).to eq([ "30", "–", "–", "–", "–", "▲ 200%" ])
       expect(response.body).to include("Site visits per day by page, last 30 days")
+
+      get "/analytics", params: { metric: "visitors" }
+      expect(page.css("thead th").last.text).to eq("Visitors vs 30 days before")
     end
 
     it "compares with the days just before" do
@@ -72,7 +76,7 @@ RSpec.describe "Analytics", type: :request do
       create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "new1")
       create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "new2")
 
-      get "/analytics"
+      get "/analytics", params: { metric: "visitors" }
 
       expect(page.at_css(".os-big").text).to eq("2")
       expect(response.body).to include("100% vs the 30 days before")
@@ -85,8 +89,8 @@ RSpec.describe "Analytics", type: :request do
       get "/analytics", params: { pages: [ "builder/app" ], metric: "views", range: "7d" }
 
       expect(page.css("[data-page-row]").map { |each| each["data-page-row"] }).to eq([ "builder/app" ])
-      expect(page.at_css("p.os-label").text.squish).to eq("Page views · app, last 7 days")
-      expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Page views per day by page, last 7 days")
+      expect(page.at_css("p.os-label:not(.mb-1\\.5)").text.squish).to eq("Views · app, last 7 days")
+      expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Views per day by page, last 7 days")
       switch = page.at_css("[aria-label='Pages'] [role='switch'][aria-label='Show Your page in the chart']")
       expect(switch["aria-checked"]).to eq("false")
       expect(Rack::Utils.parse_nested_query(URI(switch["href"]).query)["pages"]).to be_nil

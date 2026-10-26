@@ -36,11 +36,11 @@ RSpec.describe Analytics::ReportService do
     expect(picked.series(picked.selected.first).size).to eq(30)
   end
 
-  it "picks every page and the visitors when the params name none it knows" do
+  it "picks every page and the site visits when the params name none it knows" do
     unknown = report(picked: [ "nope" ], metric: "nope", range: "nope")
 
     expect(unknown.selected.size).to eq(3)
-    expect(unknown.metric).to eq("visitors")
+    expect(unknown.metric).to eq("site")
     expect(unknown.window.range).to eq("30d")
   end
 

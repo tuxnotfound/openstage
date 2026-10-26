@@ -5,7 +5,8 @@ module Analytics
   # own, PAGE, or a project's, by its repo's full name. Days are in the
   # builder's zone.
   class CountService < ApplicationService
-    METRICS = %w[visitors views follows clicks site].freeze
+    # Site visits first: after commits, the number that matters most.
+    METRICS = %w[site visitors views follows clicks].freeze
     PAGE = "page".freeze
 
     attr_accessor :user, :window

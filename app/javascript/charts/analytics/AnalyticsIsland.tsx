@@ -16,7 +16,7 @@ export type AnalyticsProps = {
 
 const RANGES: [AnalyticsRange, string][] = [["7d", "7 days"], ["30d", "30 days"], ["90d", "90 days"]]
 const DEFAULT_RANGE: AnalyticsRange = "30d"
-const DEFAULT_METRIC: Metric = "visitors"
+const DEFAULT_METRIC: Metric = "site"
 
 export default function AnalyticsIsland({ initial, endpoint }: AnalyticsProps) {
   const { view, busy, failed, show, retry, prefetch } = useView(initial, apiUrl(endpoint, initial.range, initial.metric, initial.selected))
@@ -55,12 +55,19 @@ export default function AnalyticsIsland({ initial, endpoint }: AnalyticsProps) {
       </div>
 
       <section className={`os-panel transition-opacity ${busy ? "opacity-60" : ""}`} aria-label="Numbers" aria-busy={busy}>
-        <div className="os-pills flex-wrap" role="group" aria-label="Numbers">
-          {view.tabs.map((tab) => (
-            <Control key={tab.metric} target={to({ metric: tab.metric })} pressed={tab.metric === view.metric} className="os-pill h-auto flex-col items-start px-[18px] py-2">
-              <span className="block text-xs">{tab.label}</span>
-              <span><span className="os-num text-[22px]">{tab.value}</span>{tab.change.arrow && <> <span className="text-xs font-bold">{tab.change.arrow} {tab.change.text}</span></>}</span>
-            </Control>
+        <div className="flex flex-wrap items-end gap-x-4 gap-y-3" data-numbers>
+          {groups(view.tabs).map(([group, tabs]) => (
+            <div key={group}>
+              <p className="os-label mb-1.5">{group}</p>
+              <div className="os-pills flex-wrap" role="group" aria-label={group}>
+                {tabs.map((tab) => (
+                  <Control key={tab.metric} target={to({ metric: tab.metric })} pressed={tab.metric === view.metric} className="os-pill h-auto flex-col items-start px-[18px] py-2">
+                    <span className="block text-xs">{tab.label}</span>
+                    <span><span className="os-num text-[22px]">{tab.value}</span>{tab.change.arrow && <> <span className="text-xs font-bold">{tab.change.arrow} {tab.change.text}</span></>}</span>
+                  </Control>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
 
@@ -121,6 +128,13 @@ export default function AnalyticsIsland({ initial, endpoint }: AnalyticsProps) {
   )
 }
 
+// The tabs by where their numbers happen, in the order they come.
+function groups(tabs: AnalyticsView["tabs"]): [string, AnalyticsView["tabs"]][] {
+  const grouped = new Map<string, AnalyticsView["tabs"]>()
+  tabs.forEach((tab) => grouped.set(tab.group, [...(grouped.get(tab.group) ?? []), tab]))
+  return [...grouped.entries()]
+}
+
 function apiUrl(endpoint: string, range: AnalyticsRange, metric: Metric, selected: string[]): string {
   const query = new URLSearchParams({ range, metric })
   selected.forEach((key) => query.append("pages[]", key))
@@ -149,7 +163,7 @@ function Visits({ view }: { view: AnalyticsView }) {
   return (
     <section className="os-panel" aria-labelledby="visitors-from">
       <h2 id="visitors-from" className="os-h3">Where visitors came from</h2>
-      <p className="os-xs os-muted mt-1 mb-2">Page views by the site they came from, {view.words}.</p>
+      <p className="os-xs os-muted mt-1 mb-2">Views of your Openstage pages, by the site they came from, {view.words}.</p>
       {view.sources.length === 0 && <p className="os-note">No visits in the {view.words}.</p>}
       {view.sources.map((source) => (
         <div key={source.label} className="os-row py-2">
@@ -182,7 +196,7 @@ function ByPage({ view }: { view: AnalyticsView }) {
             <tr className="text-right text-xs text-ink-3">
               <th scope="col" className="py-2 text-left font-bold">Page</th>
               {view.tabs.map((tab) => <th key={tab.metric} scope="col" className="py-2 font-bold">{tab.label}</th>)}
-              <th scope="col" className="py-2 font-bold">Visitors, change</th>
+              <th scope="col" className="py-2 font-bold">{view.changeLabel}</th>
             </tr>
           </thead>
           <tbody>
@@ -198,7 +212,7 @@ function ByPage({ view }: { view: AnalyticsView }) {
           </tbody>
         </table>
       </div>
-      <p className="os-note border-t border-line pt-2.5">A visitor is one browser on one day. New followers confirmed by email, for your page or one project. Clicks out: a project's Visit and View on GitHub buttons, and the links in your entries, counted on the entry's project. Site visits: page views on a project's own website, counted by Openstage's script.</p>
+      <p className="os-note border-t border-line pt-2.5">Site visits: page views on a project's own website, counted by Openstage's script. On Openstage, your page and your project pages: a visitor is one browser on one day; views count every page load; new followers confirmed by email, for your page or one project; clicks out are a project's Visit and View on GitHub buttons and the links in your entries. Your own visits and bots are left out.</p>
     </section>
   )
 }

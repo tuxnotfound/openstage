@@ -18,7 +18,7 @@ class AnalyticsViewSerializer < ApplicationSerializer
       range: window.range, metric: @report.metric, selected: everything? ? [] : @report.selected.map(&:key),
       everything: everything?, window_label: window.label, words: window.words,
       pages: @report.pages.map { |page| page_switch(page) },
-      tabs: METRICS.map { |metric| tab(metric) }, label: chart.name, scope: scope,
+      tabs: METRICS.map { |metric| tab(metric) }, label: chart.name, scope: scope, change_label: change_label,
       total: number(@report.total(@report.metric)), change: change(@report.change(@report.metric)),
       chart: ChartSerializer.new(chart).attributes, sources: sources, countries: countries, rows: rows, links: links, badges: badges
     }
@@ -45,7 +45,8 @@ class AnalyticsViewSerializer < ApplicationSerializer
   end
 
   def tab(metric)
-    { metric: metric, label: ProgressChart::Visits::LABELS.fetch(metric), value: number(@report.total(metric)), change: change(@report.change(metric)) }
+    { metric: metric, label: ProgressChart::Visits::LABELS.fetch(metric), group: ProgressChart::Visits::GROUPS.fetch(metric),
+      value: number(@report.total(metric)), change: change(@report.change(metric)) }
   end
 
   # arrow, text and up?, as the page writes a change; nils with nothing to compare.
@@ -63,12 +64,18 @@ class AnalyticsViewSerializer < ApplicationSerializer
     @report.countries.map { |label, count| { label: label, count: number(count) } }
   end
 
-  # The pages picked, busiest first, with each number and the visitors' change.
+  # The table's last column: the picked number against the days before.
+  def change_label
+    "#{ProgressChart::Visits::LABELS.fetch(@report.metric)} vs #{window.label} before"
+  end
+
+  # The pages picked, busiest in the number picked first, with each number
+  # and that number's change.
   def rows
-    @report.selected.sort_by { |page| -@report.total("visitors", page: page) }.map do |page|
+    @report.selected.sort_by { |page| -@report.total(@report.metric, page: page) }.map do |page|
       values = METRICS.map { |metric| @report.total(metric, page: page) }
       { key: page.key, name: page.name, rank: page.rank, values: values.map { |value| value.positive? ? number(value) : "–" },
-        change: change(@report.change("visitors", page: page)) }
+        change: change(@report.change(@report.metric, page: page)) }
     end
   end
 

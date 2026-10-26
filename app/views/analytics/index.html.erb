@@ -20,16 +20,24 @@
   </div>
 
   <section class="os-panel" aria-label="Numbers">
-    <nav class="os-pills flex-wrap" aria-label="Numbers">
-      <% Analytics::CountService::METRICS.each do |metric| %>
-        <% arrow, change, up = analytics_change(report.change(metric)) %>
-        <%= link_to analytics_view_path(metric: metric == Analytics::CountService::METRICS.first ? nil : metric),
-              class: "os-pill h-auto flex-col items-start px-[18px] py-2", aria: { current: (report.metric == metric ? "page" : nil) } do %>
-          <span class="block text-xs"><%= ProgressChart::Visits::LABELS.fetch(metric) %></span>
-          <span><span class="os-num text-[22px]"><%= number_with_delimiter(report.total(metric)) %></span><% if arrow %> <span class="text-xs font-bold"><%= arrow %> <%= change %></span><% end %></span>
-        <% end %>
+    <%# The numbers grouped by where they happen: the builder's websites, then Openstage. %>
+    <div class="flex flex-wrap items-end gap-x-4 gap-y-3" data-numbers>
+      <% Analytics::CountService::METRICS.group_by { |metric| ProgressChart::Visits::GROUPS.fetch(metric) }.each do |group, metrics| %>
+        <div>
+          <p class="os-label mb-1.5"><%= group %></p>
+          <nav class="os-pills flex-wrap" aria-label="<%= group %>">
+            <% metrics.each do |metric| %>
+              <% arrow, change, up = analytics_change(report.change(metric)) %>
+              <%= link_to analytics_view_path(metric: metric == Analytics::CountService::METRICS.first ? nil : metric),
+                    class: "os-pill h-auto flex-col items-start px-[18px] py-2", aria: { current: (report.metric == metric ? "page" : nil) } do %>
+                <span class="block text-xs"><%= ProgressChart::Visits::LABELS.fetch(metric) %></span>
+                <span><span class="os-num text-[22px]"><%= number_with_delimiter(report.total(metric)) %></span><% if arrow %> <span class="text-xs font-bold"><%= arrow %> <%= change %></span><% end %></span>
+              <% end %>
+            <% end %>
+          </nav>
+        </div>
       <% end %>
-    </nav>
+    </div>
 
     <div class="mt-5.5 grid items-start gap-x-8 gap-y-6 <%= 'lg:grid-cols-[minmax(0,1fr)_280px]' if report.pages.size > 1 %>">
       <div class="min-w-0">
@@ -63,12 +71,12 @@
           <tr class="text-right text-xs text-ink-3">
             <th scope="col" class="py-2 text-left font-bold">Page</th>
             <% Analytics::CountService::METRICS.each do |metric| %><th scope="col" class="py-2 font-bold"><%= ProgressChart::Visits::LABELS.fetch(metric) %></th><% end %>
-            <th scope="col" class="py-2 font-bold">Visitors, change</th>
+            <th scope="col" class="py-2 font-bold"><%= ProgressChart::Visits::LABELS.fetch(report.metric) %> vs <%= window.label %> before</th>
           </tr>
         </thead>
         <tbody>
-          <% report.selected.sort_by { |page| -report.total("visitors", page: page) }.each do |page| %>
-            <% arrow, change, up = analytics_change(report.change("visitors", page: page)) %>
+          <% report.selected.sort_by { |page| -report.total(report.metric, page: page) }.each do |page| %>
+            <% arrow, change, up = analytics_change(report.change(report.metric, page: page)) %>
             <tr class="border-t border-line text-right" data-page-row="<%= page.key %>">
               <th scope="row" class="py-2.5 text-left font-bold">
                 <span class="inline-flex items-center gap-2"><span class="os-dot <%= project_class(page.rank) %> bg-(--project)"></span><%= page.name %></span>
@@ -83,13 +91,13 @@
         </tbody>
       </table>
     </div>
-    <p class="os-note border-t border-line pt-2.5">A visitor is one browser on one day. New followers confirmed by email, for your page or one project. Clicks out: a project's Visit and View on GitHub buttons, and the links in your entries, counted on the entry's project. Site visits: page views on a project's own website, counted by Openstage's script.</p>
+    <p class="os-note border-t border-line pt-2.5">Site visits: page views on a project's own website, counted by Openstage's script. On Openstage, your page and your project pages: a visitor is one browser on one day; views count every page load; new followers confirmed by email, for your page or one project; clicks out are a project's Visit and View on GitHub buttons and the links in your entries. Your own visits and bots are left out.</p>
   </section>
 
   <div class="grid items-start gap-4 lg:grid-cols-3">
     <section class="os-panel" aria-labelledby="visitors-from">
       <h2 id="visitors-from" class="os-h3">Where visitors came from</h2>
-      <p class="os-xs os-muted mt-1 mb-2">Page views by the site they came from, <%= window.words %>.</p>
+      <p class="os-xs os-muted mt-1 mb-2">Views of your Openstage pages, by the site they came from, <%= window.words %>.</p>
       <% if report.sources.any? %>
         <% most = report.sources.first.last %>
         <% report.sources.each do |source, count| %>

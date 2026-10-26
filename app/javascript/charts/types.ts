@@ -100,9 +100,12 @@ export type AnalyticsView = {
   words: string
   // value: the number charted, on that page, while it is in view.
   pages: { key: string; name: string; rank: Rank; on: boolean; value: string | null }[]
-  tabs: { metric: Metric; label: string; value: string; change: AnalyticsChange }[]
+  // group: where the number happens, "Your websites" or "On Openstage".
+  tabs: { metric: Metric; label: string; group: string; value: string; change: AnalyticsChange }[]
   label: string
   scope: string
+  // The table's last column: the picked number against the days before.
+  changeLabel: string
   total: string
   change: AnalyticsChange
   chart: ChartView
