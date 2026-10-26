@@ -1,6 +1,8 @@
 class GithubRepo < ApplicationRecord
   # Where a project's site visits can come from; nil counts none.
   SITE_SOURCES = %w[script].freeze
+  # What a project can draw on the dashboard's chart beside its commits.
+  DASHBOARD_NUMBERS = %w[visits].freeze
 
   belongs_to :user
   has_many :subscriptions, dependent: :delete_all
@@ -16,6 +18,7 @@ class GithubRepo < ApplicationRecord
                                         format: { with: %r{\Ahttps?://}i, message: "must start with http:// or https://" }, allow_blank: true
   validates :description_edit, length: { maximum: 280 }
   validates :site_source, inclusion: { in: SITE_SOURCES }, allow_nil: true
+  validate :dashboard_numbers_known
 
   normalizes :description_edit, :website_edit, :image_edit, with: ->(value) { value.strip.presence }
 
@@ -92,5 +95,11 @@ class GithubRepo < ApplicationRecord
   # Shown on its page: switched on, counting, and counted at least once.
   def site_visits_public?
     site_visits_shown? && site_first_visit_at.present? && counts_site_visits?
+  end
+
+  private
+
+  def dashboard_numbers_known
+    errors.add(:dashboard_numbers, "names a number the dashboard cannot draw") unless (Array(dashboard_numbers) - DASHBOARD_NUMBERS).empty?
   end
 end
