@@ -50,8 +50,11 @@ Rails.application.routes.draw do
   # A page view on a project's website, from Openstage's script (public/v.js).
   post "/v", to: "site_visits#create", as: :site_visits
 
-  # A project's words, website and picture, edited in its dashboard row.
-  resources :projects, only: [ :edit, :update ]
+  # A project as its builder sees it: its words, website and picture, and
+  # where its site visits come from.
+  resources :projects, only: [ :edit, :update ] do
+    resource :site_visits, only: :update, module: :projects
+  end
 
   # Repo management. index is the Settings frame that checks GitHub first.
   resources :github_repos, only: [ :index, :update ]
