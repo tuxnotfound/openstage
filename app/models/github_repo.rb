@@ -4,9 +4,10 @@ class GithubRepo < ApplicationRecord
 
   belongs_to :user
   has_many :subscriptions, dependent: :delete_all
-  # Deleted with the repo by the database.
-  has_many :site_visit_days
-  has_many :site_visitors
+  # The database deletes them with the repo too; dependent makes the
+  # association's delete_all delete rather than orphan them.
+  has_many :site_visit_days, dependent: :delete_all
+  has_many :site_visitors, dependent: :delete_all
 
   validates :github_repo_id, presence: true, uniqueness: { scope: :user_id }
   validates :name, presence: true

@@ -55,6 +55,16 @@ RSpec.describe GithubRepo do
       expect(site.site_visits_public?).to be(false)
     end
 
+    it "deletes its days and visitors, never orphans them" do
+      site.site_visit_days.create!(day: Date.current, visits: 1, visitors: 1)
+      site.site_visitors.create!(day: Date.current, visitor_hash: "a")
+
+      site.site_visit_days.delete_all
+      site.site_visitors.delete_all
+
+      expect([ SiteVisitDay.count, SiteVisitor.count ]).to eq([ 0, 0 ])
+    end
+
     it "refuses a source it does not know" do
       site.site_source = "vercel"
 
