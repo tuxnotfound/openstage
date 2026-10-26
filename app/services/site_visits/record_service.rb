@@ -4,7 +4,7 @@ module SiteVisits
   # only from the project's own website, from a person rather than a bot, for a
   # project whose visits count (GithubRepo#counts_site_visits?), and up to
   # DAILY_LIMIT views per visitor and day. A visitor is their IP hashed with a
-  # key that changes every day, kept until the day is over.
+  # key that changes every day, deleted within two days.
   class RecordService < ApplicationService
     # Past this, one address's page views on a site that day are dropped.
     DAILY_LIMIT = 200
