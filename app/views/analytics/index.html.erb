@@ -2,7 +2,6 @@
 <% content_for :main_class, "os-wrap pt-1.5" %>
 <% report = @report %>
 <% window = report.window %>
-<% chart = ProgressChart::Visits.new(report) %>
 <% everything = report.selected.size == report.pages.size %>
 
 <%= react_island("analytics", { initial: AnalyticsViewSerializer.new(report).as_json, endpoint: api_analytics_path }, id: "analytics", class: "os-stack") do %>
@@ -20,43 +19,44 @@
   </div>
 
   <section class="os-panel" aria-label="Numbers">
-    <%# Every number in one bar, grouped by where it happens, each with its
-        value and its change against the days before. One row whatever the
-        count: past the panel's width it scrolls sideways. %>
-    <div class="max-w-full overflow-x-auto rounded-[22px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-    <div class="os-pills w-max flex-nowrap items-center whitespace-nowrap" data-numbers>
+    <%# Every number with its total, grouped by where it happens: the charted
+        ones in ink and underlined, each a switch, the last one on staying on.
+        One text line high, it wraps as numbers are added. %>
+    <p class="os-label"><%= everything ? "All pages" : report.selected.map(&:name).to_sentence %>, <%= window.words %></p>
+    <nav class="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-2" aria-label="Numbers">
       <% Analytics::CountService::METRICS.group_by { |metric| ProgressChart::Visits::GROUPS.fetch(metric) }.each do |group, metrics| %>
-        <span role="group" aria-label="<%= group %>" class="contents">
-          <span class="px-2 text-[10px] font-bold uppercase tracking-[0.08em] text-ink-3" aria-hidden="true"><%= group %></span>
-          <% metrics.each do |metric| %>
-            <% arrow, change, up = analytics_change(report.change(metric)) %>
-            <%= link_to analytics_view_path(metric: metric == Analytics::CountService::METRICS.first ? nil : metric),
-                  class: "os-pill gap-2 px-3.5", aria: { current: (report.metric == metric ? "page" : nil) } do %>
-              <span><%= ProgressChart::Visits::LABELS.fetch(metric) %></span>
-              <span class="os-num text-[15px]"><%= number_with_delimiter(report.total(metric)) %></span>
-              <% if arrow %><span class="text-[11px] opacity-75"><%= arrow %> <%= change %></span><% end %>
-            <% end %>
+        <span class="text-[10px] font-bold uppercase tracking-[0.08em] text-ink-3"><%= group %></span>
+        <% metrics.each do |metric| %>
+          <% on = report.metrics.include?(metric) %>
+          <%= link_to analytics_numbers_path(report, metric), aria: { current: (on ? "true" : nil) },
+                class: "inline-flex items-baseline gap-1.5 border-b-2 pb-0.5 #{on ? 'border-accent text-ink' : 'border-transparent text-ink-3 hover:text-ink'}" do %>
+            <span class="text-sm font-bold"><%= ProgressChart::Visits::LABELS.fetch(metric) %></span>
+            <span class="os-num text-[17px]"><%= number_with_delimiter(report.total(metric)) %></span>
           <% end %>
-        </span>
+        <% end %>
       <% end %>
-    </div>
-    </div>
+    </nav>
 
     <div class="mt-5.5 grid items-start gap-x-8 gap-y-6 <%= 'lg:grid-cols-[minmax(0,1fr)_280px]' if report.pages.size > 1 %>">
-      <div class="min-w-0">
-        <p class="os-label"><%= chart.name %> · <%= everything ? "all pages" : report.selected.map(&:name).to_sentence %>, <%= window.words %></p>
-        <% arrow, change, up = analytics_change(report.change(report.metric)) %>
-        <div class="mt-0.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-1.5">
-          <span class="os-num os-big"><%= number_with_delimiter(report.total(report.metric)) %></span>
-          <span class="text-lg font-semibold text-ink-2">
-            <% if arrow %>
-              <span class="<%= analytics_tone(up) %>" aria-label="<%= { true => 'Up', false => 'Down' }.fetch(up, 'No change') %>"><%= arrow %></span> <%= change %> vs the <%= window.label %> before
-            <% else %>
-              none in the <%= window.label %> before
-            <% end %>
-          </span>
-        </div>
-        <div class="mt-5"><%= render "profiles/page/chart", chart: chart, height: "h-[260px]" %></div>
+      <%# A chart per number charted, stacked on the same days. %>
+      <div class="os-stack min-w-0 gap-6">
+        <% report.metrics.each do |metric| %>
+          <% arrow, change, up = analytics_change(report.change(metric)) %>
+          <section aria-label="<%= ProgressChart::Visits::LABELS.fetch(metric) %>">
+            <p class="os-label flex flex-wrap items-baseline gap-x-2">
+              <span><%= ProgressChart::Visits::LABELS.fetch(metric) %></span>
+              <span class="text-xs">
+                <% if arrow %>
+                  <span class="<%= analytics_tone(up) %>" aria-label="<%= { true => 'Up', false => 'Down' }.fetch(up, 'No change') %>"><%= arrow %></span> <%= change %> vs the <%= window.label %> before
+                <% else %>
+                  none in the <%= window.label %> before
+                <% end %>
+              </span>
+            </p>
+            <div class="mt-2"><%= render "profiles/page/chart", chart: ProgressChart::Visits.new(report, metric), tip: metric,
+                                        height: report.metrics.size > 1 ? "h-[180px]" : "h-[260px]" %></div>
+          </section>
+        <% end %>
       </div>
 
       <%= render "analytics/switches", report: report if report.pages.size > 1 %>
@@ -74,21 +74,22 @@
           <tr class="text-right text-xs text-ink-3">
             <th scope="col" class="py-2 text-left font-bold">Page</th>
             <% Analytics::CountService::METRICS.each do |metric| %><th scope="col" class="py-2 font-bold"><%= ProgressChart::Visits::LABELS.fetch(metric) %></th><% end %>
-            <th scope="col" class="py-2 font-bold">vs <%= window.label %> before</th>
           </tr>
         </thead>
         <tbody>
-          <% report.selected.sort_by { |page| -report.total(report.metric, page: page) }.each do |page| %>
-            <% arrow, change, up = analytics_change(report.change(report.metric, page: page)) %>
+          <% report.selected.sort_by { |page| -report.total(report.metrics.first, page: page) }.each do |page| %>
             <tr class="border-t border-line text-right" data-page-row="<%= page.key %>">
               <th scope="row" class="py-2.5 text-left font-bold">
                 <span class="inline-flex items-center gap-2"><span class="os-dot <%= project_class(page.rank) %> bg-(--project)"></span><%= page.name %></span>
               </th>
               <% Analytics::CountService::METRICS.each do |metric| %>
                 <% value = report.total(metric, page: page) %>
-                <td class="os-num py-2.5"><%= value.positive? ? number_with_delimiter(value) : "–" %></td>
+                <% arrow, change, up = analytics_change(report.change(metric, page: page)) %>
+                <td class="py-2.5 align-top">
+                  <span class="os-num block"><%= value.positive? ? number_with_delimiter(value) : "–" %></span>
+                  <% if arrow %><span class="block text-[11px] font-bold <%= analytics_tone(up) %>"><%= arrow %> <%= change %></span><% end %>
+                </td>
               <% end %>
-              <td class="py-2.5 font-bold <%= analytics_tone(up) %>"><%= arrow ? "#{arrow} #{change}" : "–" %></td>
             </tr>
           <% end %>
         </tbody>

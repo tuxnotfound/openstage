@@ -82,25 +82,21 @@ export type AnalyticsChange = { arrow: string | null; text: string | null; up: b
 
 export type AnalyticsView = {
   range: AnalyticsRange
-  metric: Metric
   selected: string[]
   everything: boolean
   windowLabel: string
   words: string
-  // value: the number charted, on that page, while it is in view.
-  pages: { key: string; name: string; rank: Rank; on: boolean; value: string | null }[]
-  // group: where the number happens: "On GitHub", "On your websites" or "On Openstage".
-  tabs: { metric: Metric; label: string; group: string; value: string; change: AnalyticsChange }[]
-  label: string
   scope: string
-  // The table's last column: the picked number against the days before.
-  changeLabel: string
-  total: string
-  change: AnalyticsChange
-  chart: ChartView
+  // value: the first number charted, on that page, while it is in view.
+  pages: { key: string; name: string; rank: Rank; on: boolean; value: string | null }[]
+  // group: where the number happens: "On GitHub", "On your websites" or
+  // "On Openstage"; chart: the charted ones' (on).
+  numbers: { key: Metric; label: string; group: string; value: string; change: AnalyticsChange; on: boolean; chart: ChartView | null }[]
+  // The table's columns, a number each, in the numbers' order.
+  columns: string[]
   sources: { label: string; count: string; width: number }[]
   countries: { label: string; count: string }[]
-  rows: { key: string; name: string; rank: Rank; values: string[]; change: AnalyticsChange }[]
+  rows: { key: string; name: string; rank: Rank; cells: { value: string; change: AnalyticsChange }[] }[]
   links: { title: string; page: string; count: string }[]
   badges: { label: string; count: string; sites: string }[]
 }

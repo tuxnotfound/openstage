@@ -1,17 +1,19 @@
 module Analytics
-  # Everything the Pro analytics page shows, for a window and the pages picked:
-  # the builder's page and one per project, as the public page orders and
-  # colours them. Totals and the chart come from CountService; where visitors
-  # came from, the links they followed and where the badge and embed showed are
-  # read here.
+  # Everything the Pro analytics page shows, for a window, the pages picked and
+  # the numbers charted: the builder's page and one per project, as the public
+  # page orders and colours them. Totals and the charts come from
+  # CountService; where visitors came from, the links they followed and where
+  # the badge and embed showed are read here.
   class ReportService < ApplicationService
     # key: CountService::PAGE or a repo's full name; rank: its colour, nil for the builder's page.
     Page = Data.define(:key, :name, :rank)
     Link = Data.define(:title, :page, :count)
     TOP = 6
+    # Charted until others are picked: the two that matter most.
+    CHARTED = %w[commits site].freeze
 
-    # picked: page keys; none for all of them.
-    attr_accessor :user, :range, :picked, :metric
+    # picked: page keys, none for all of them; metrics: the numbers to chart.
+    attr_accessor :user, :range, :picked, :metrics
     attr_reader :window, :pages, :selected, :counts, :sources, :countries, :links, :shown
 
     validates :user, presence: true
@@ -27,15 +29,15 @@ module Analytics
       ((100.0 * total(metric, page: page) / before) - 100).round if before.positive?
     end
 
-    # The metric per point of the chart, for one page.
-    def series(page)
+    # A number per point of its chart, for one page.
+    def series(page, metric)
       window.buckets.map { |bucket| (bucket.first..bucket.last).sum { |day| counts.dig(metric, page.key, day).to_i } }
     end
 
     private
 
     def execute
-      @metric = CountService::METRICS.include?(metric) ? metric : CountService::METRICS.first
+      @metrics = CountService::METRICS.select { |each| Array(metrics).include?(each) }.presence || CHARTED
       @pages = [ Page.new(key: CountService::PAGE, name: "Your page", rank: nil) ] + projects
       @selected = pages.select { |page| Array(picked).include?(page.key) }.presence || pages
       start = FindStartService.new(user: user, pages: selected.map(&:key))

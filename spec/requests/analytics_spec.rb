@@ -51,47 +51,51 @@ RSpec.describe "Analytics", type: :request do
 
       get "/analytics"
 
-      expect(row("page")).to eq([ "–", "–", "1", "2", "–", "–", "–" ])
-      expect(row("builder/app")).to eq([ "–", "–", "1", "1", "1", "1", "▼ 100%" ])
-      expect(page.at_css("[data-numbers]").text.squish)
-        .to eq("On GitHub Commits 0 ▼ 100% On your websites Site visits 0 On Openstage Visitors 2 Views 3 New followers 1 Clicks out 1")
+      expect(row("page")).to eq([ "–", "–", "1", "2", "–", "–" ])
+      expect(row("builder/app")).to eq([ "– ▼ 100%", "–", "1", "1", "1", "1" ])
+      expect(page.at_css("nav[aria-label='Numbers']").text.squish)
+        .to eq("On GitHub Commits 0 On your websites Site visits 0 On Openstage Visitors 2 Views 3 New followers 1 Clicks out 1")
       expect(response.body).to include("Hacker News", "Twitter / X", "PT", "Visit app.example")
     end
 
-    it "opens on commits, site visits beside them, the table's last column following the number picked" do
+    def charts
+      page.css("section[aria-label='Numbers'] section[aria-label]").map { |chart| chart["aria-label"] }
+    end
+
+    it "charts commits and site visits until others are picked, each change in its own cell" do
       repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
       repo.site_visit_days.create!(day: Date.new(2026, 9, 10), visits: 10, visitors: 9)
       create(:entry, user: user, repo_name: "builder/app", occurred_at: 2.days.ago)
 
       get "/analytics"
-      expect(page.at_css("[data-numbers] a[aria-current='page']").text.squish).to eq("Commits 1 ± 0%")
-      expect(response.body).to include("Commits per day by page, last 30 days")
+      expect(charts).to eq([ "Commits", "Site visits" ])
+      expect(response.body).to include("Commits per day by page, last 30 days", "Site visits per day by page, last 30 days")
+      expect(row("builder/app")).to eq([ "1 ± 0%", "30 ▲ 200%", "–", "–", "–", "–" ])
 
-      get "/analytics", params: { metric: "site" }
-      expect(page.at_css("[role='group'][aria-label='On your websites']").text.squish).to include("Site visits 30")
-      expect(page.css("thead th").last.text).to eq("vs 30 days before")
-      expect(row("builder/app")).to eq([ "1", "30", "–", "–", "–", "–", "▲ 200%" ])
+      get "/analytics", params: { show: [ "visitors", "site" ] }
+      expect(charts).to eq([ "Site visits", "Visitors" ])
+      link = page.at_css("nav[aria-label='Numbers'] a[aria-current='true']")
+      expect(Rack::Utils.parse_nested_query(URI(link["href"]).query)["show"]).to eq([ "visitors" ])
     end
 
-    it "compares with the days just before" do
+    it "compares each number with the days just before" do
       create(:profile_view, user: user, viewed_at: 40.days.ago, ip_hash: "old")
       create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "new1")
       create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "new2")
 
-      get "/analytics", params: { metric: "visitors" }
+      get "/analytics", params: { show: [ "visitors" ] }
 
-      expect(page.at_css(".os-big").text).to eq("2")
-      expect(response.body).to include("100% vs the 30 days before")
+      expect(page.at_css("section[aria-label='Visitors'] p.os-label").text.squish).to eq("Visitors ▲ 100% vs the 30 days before")
     end
 
-    it "narrows to the pages picked, and charts the number picked" do
+    it "narrows to the pages picked, and charts the numbers picked" do
       create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a")
       user.project_views.create!(repo_name: "builder/app", viewed_at: 1.day.ago, ip_hash: "b")
 
-      get "/analytics", params: { pages: [ "builder/app" ], metric: "views", range: "7d" }
+      get "/analytics", params: { pages: [ "builder/app" ], show: [ "views" ], range: "7d" }
 
       expect(page.css("[data-page-row]").map { |each| each["data-page-row"] }).to eq([ "builder/app" ])
-      expect(page.at_css("p.os-label").text.squish).to eq("Views · app, last 7 days")
+      expect(page.at_css("p.os-label").text.squish).to eq("app, last 7 days")
       expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Views per day by page, last 7 days")
       switch = page.at_css("[aria-label='Pages'] [role='switch'][aria-label='Show Your page in the chart']")
       expect(switch["aria-checked"]).to eq("false")
@@ -101,10 +105,10 @@ RSpec.describe "Analytics", type: :request do
 
     it "draws 90 days a week a point, and falls back to 30 days for a range it does not know" do
       create(:entry, user: user, repo_name: "builder/app", occurred_at: 120.days.ago)
-      get "/analytics", params: { range: "90d" }
+      get "/analytics", params: { range: "90d", show: [ "commits" ] }
       expect(page.css("[data-chart-tooltip-template-param]").size).to eq(13)
 
-      get "/analytics", params: { range: "1y" }
+      get "/analytics", params: { range: "1y", show: [ "commits" ] }
       expect(page.css("[data-chart-tooltip-template-param]").size).to eq(30)
     end
 

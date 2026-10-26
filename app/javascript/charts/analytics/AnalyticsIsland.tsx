@@ -1,12 +1,13 @@
-import type { ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 import LineChart, { projectClass } from "../LineChart"
 import Switches, { type Target } from "../Switches"
 import { useView } from "../useView"
 import type { AnalyticsChange, AnalyticsRange, AnalyticsView, Metric } from "../types"
 
-// The Pro analytics page: the window, the pages and the number charted switch
-// here, each view asked of Api::AnalyticsController and shown in place; the
-// page's URL follows.
+// The Pro analytics page: the window, the pages and the numbers charted
+// switch here, each view asked of Api::AnalyticsController and shown in
+// place; the page's URL follows. Every number has its total; the charted
+// ones have a chart each, stacked on the same days with one hover line.
 
 export type AnalyticsProps = {
   initial: AnalyticsView
@@ -16,21 +17,24 @@ export type AnalyticsProps = {
 
 const RANGES: [AnalyticsRange, string][] = [["7d", "7 days"], ["30d", "30 days"], ["90d", "90 days"]]
 const DEFAULT_RANGE: AnalyticsRange = "30d"
-const DEFAULT_METRIC: Metric = "commits"
+// Charted until others are picked, as Analytics::ReportService::CHARTED.
+const CHARTED: Metric[] = ["commits", "site"]
+
+type Next = { range: AnalyticsRange; metrics: Metric[]; selected: string[] }
 
 export default function AnalyticsIsland({ initial, endpoint }: AnalyticsProps) {
-  const { view, busy, failed, show, retry, prefetch } = useView(initial, apiUrl(endpoint, initial.range, initial.metric, initial.selected))
+  const { view, busy, failed, show, retry, prefetch } = useView(initial, apiUrl(endpoint, current(initial)))
+  const [hover, setHover] = useState<number | null>(null)
+  const charted = view.numbers.filter((number) => number.on)
 
-  function to(next: { range?: AnalyticsRange; metric?: Metric; selected?: string[] }): Target {
-    const range = next.range ?? view.range
-    const metric = next.metric ?? view.metric
-    const selected = next.selected ?? view.selected
+  function to(change: Partial<Next>): Target {
+    const next = { ...current(view), ...change }
     const page = new URLSearchParams()
-    if (range !== DEFAULT_RANGE) page.set("range", range)
-    if (metric !== DEFAULT_METRIC) page.set("metric", metric)
-    selected.forEach((key) => page.append("pages[]", key))
+    if (next.range !== DEFAULT_RANGE) page.set("range", next.range)
+    if (!same(next.metrics, CHARTED)) next.metrics.forEach((metric) => page.append("show[]", metric))
+    next.selected.forEach((key) => page.append("pages[]", key))
     const query = page.toString()
-    const api = apiUrl(endpoint, range, metric, selected)
+    const api = apiUrl(endpoint, next)
     return { go: () => show(api, `${window.location.pathname}${query ? `?${query}` : ""}`), warm: () => prefetch(api) }
   }
 
@@ -40,6 +44,13 @@ export default function AnalyticsIsland({ initial, endpoint }: AnalyticsProps) {
     const keys = view.pages.filter((page) => page.on).map((page) => page.key)
     const next = keys.includes(key) ? keys.filter((each) => each !== key) : [...keys, key]
     return next.length === 0 || next.length === view.pages.length ? [] : view.pages.map((page) => page.key).filter((each) => next.includes(each))
+  }
+
+  // A number switched in or out of the charts; the last one stays.
+  function switched(metric: Metric): Metric[] {
+    const on = charted.map((number) => number.key)
+    const next = on.includes(metric) ? on.filter((each) => each !== metric) : view.numbers.map((number) => number.key).filter((each) => each === metric || on.includes(each))
+    return next.length === 0 ? on : next
   }
 
   return (
@@ -55,35 +66,39 @@ export default function AnalyticsIsland({ initial, endpoint }: AnalyticsProps) {
       </div>
 
       <section className={`os-panel transition-opacity ${busy ? "opacity-60" : ""}`} aria-label="Numbers" aria-busy={busy}>
-        <div className="max-w-full overflow-x-auto rounded-[22px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="os-pills w-max flex-nowrap items-center whitespace-nowrap" data-numbers>
-          {groups(view.tabs).map(([group, tabs]) => (
-            <span key={group} role="group" aria-label={group} className="contents">
-              <span className="px-2 text-[10px] font-bold uppercase tracking-[0.08em] text-ink-3" aria-hidden="true">{group}</span>
-              {tabs.map((tab) => (
-                <Control key={tab.metric} target={to({ metric: tab.metric })} pressed={tab.metric === view.metric} className="os-pill gap-2 px-3.5">
-                  <span>{tab.label}</span>
-                  <span className="os-num text-[15px]">{tab.value}</span>
-                  {tab.change.arrow && <span className="text-[11px] opacity-75">{tab.change.arrow} {tab.change.text}</span>}
+        <p className="os-label">{view.everything ? "All pages" : view.scope}, {view.words}</p>
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-2" role="group" aria-label="Numbers">
+          {groups(view.numbers).map(([group, numbers]) => (
+            <span key={group} className="contents">
+              <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-ink-3">{group}</span>
+              {numbers.map((number) => (
+                <Control key={number.key} target={to({ metrics: switched(number.key) })} pressed={number.on}
+                         className={`inline-flex cursor-pointer items-baseline gap-1.5 border-b-2 bg-transparent pb-0.5 ${number.on ? "border-accent text-ink" : "border-transparent text-ink-3 hover:text-ink"}`}>
+                  <span className="text-sm font-bold">{number.label}</span>
+                  <span className="os-num text-[17px]">{number.value}</span>
                 </Control>
               ))}
             </span>
           ))}
         </div>
-        </div>
 
         <div className={`mt-5.5 grid items-start gap-x-8 gap-y-6 ${view.pages.length > 1 ? "lg:grid-cols-[minmax(0,1fr)_280px]" : ""}`}>
-          <div className="min-w-0">
-            <p className="os-label">{view.label} · {view.scope}, {view.words}</p>
-            <div className="mt-0.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-1.5">
-              <span className="os-num os-big">{view.total}</span>
-              <span className="text-lg font-semibold text-ink-2">
-                {view.change.arrow
-                  ? <><Arrow change={view.change} /> {view.change.text} vs the {view.windowLabel} before</>
-                  : `none in the ${view.windowLabel} before`}
-              </span>
-            </div>
-            <div className="mt-5"><LineChart chart={view.chart} height="h-[260px]" /></div>
+          <div className="os-stack min-w-0 gap-6" onMouseLeave={() => setHover(null)}>
+            {charted.map((number) => (
+              <section key={number.key} aria-label={number.label}>
+                <p className="os-label flex flex-wrap items-baseline gap-x-2">
+                  <span>{number.label}</span>
+                  <span className="text-xs">
+                    {number.change.arrow ? <><Arrow change={number.change} /> {number.change.text} vs the {view.windowLabel} before</> : `none in the ${view.windowLabel} before`}
+                  </span>
+                </p>
+                {number.chart && (
+                  <div className="mt-2">
+                    <LineChart chart={number.chart} height={charted.length > 1 ? "h-[180px]" : "h-[260px]"} shared={charted.length > 1 ? hover : undefined} onHover={setHover} />
+                  </div>
+                )}
+              </section>
+            ))}
           </div>
           {view.pages.length > 1 && (
             <Switches label="Pages" target={(key) => to({ selected: toggled(key) })} all={view.everything ? null : to({ selected: [] })}
@@ -129,16 +144,26 @@ export default function AnalyticsIsland({ initial, endpoint }: AnalyticsProps) {
   )
 }
 
-// The tabs by where their numbers happen, in the order they come.
-function groups(tabs: AnalyticsView["tabs"]): [string, AnalyticsView["tabs"]][] {
-  const grouped = new Map<string, AnalyticsView["tabs"]>()
-  tabs.forEach((tab) => grouped.set(tab.group, [...(grouped.get(tab.group) ?? []), tab]))
+// The view's own window, numbers charted and pages.
+function current(view: AnalyticsView): Next {
+  return { range: view.range, metrics: view.numbers.filter((number) => number.on).map((number) => number.key), selected: view.selected }
+}
+
+function same(one: Metric[], other: Metric[]): boolean {
+  return one.length === other.length && one.every((each, i) => each === other[i])
+}
+
+// The numbers by where they happen, in the order they come.
+function groups(numbers: AnalyticsView["numbers"]): [string, AnalyticsView["numbers"]][] {
+  const grouped = new Map<string, AnalyticsView["numbers"]>()
+  numbers.forEach((number) => grouped.set(number.group, [...(grouped.get(number.group) ?? []), number]))
   return [...grouped.entries()]
 }
 
-function apiUrl(endpoint: string, range: AnalyticsRange, metric: Metric, selected: string[]): string {
-  const query = new URLSearchParams({ range, metric })
-  selected.forEach((key) => query.append("pages[]", key))
+function apiUrl(endpoint: string, next: Next): string {
+  const query = new URLSearchParams({ range: next.range })
+  next.metrics.forEach((metric) => query.append("numbers[]", metric))
+  next.selected.forEach((key) => query.append("pages[]", key))
   return `${endpoint}?${query.toString()}`
 }
 
@@ -196,8 +221,7 @@ function ByPage({ view }: { view: AnalyticsView }) {
           <thead>
             <tr className="text-right text-xs text-ink-3">
               <th scope="col" className="py-2 text-left font-bold">Page</th>
-              {view.tabs.map((tab) => <th key={tab.metric} scope="col" className="py-2 font-bold">{tab.label}</th>)}
-              <th scope="col" className="py-2 font-bold">{view.changeLabel}</th>
+              {view.columns.map((column) => <th key={column} scope="col" className="py-2 font-bold">{column}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -206,8 +230,12 @@ function ByPage({ view }: { view: AnalyticsView }) {
                 <th scope="row" className="py-2.5 text-left font-bold">
                   <span className="inline-flex items-center gap-2"><span className={`os-dot ${projectClass(row.rank)} bg-(--project)`} />{row.name}</span>
                 </th>
-                {row.values.map((value, i) => <td key={view.tabs[i]?.metric ?? i} className="os-num py-2.5">{value}</td>)}
-                <td className={`py-2.5 font-bold ${tone(row.change.up)}`}>{row.change.arrow ? `${row.change.arrow} ${row.change.text}` : "–"}</td>
+                {row.cells.map((cell, i) => (
+                  <td key={view.columns[i] ?? i} className="py-2.5 align-top">
+                    <span className="os-num block">{cell.value}</span>
+                    {cell.change.arrow && <span className={`block text-[11px] font-bold ${tone(cell.change.up)}`}>{cell.change.arrow} {cell.change.text}</span>}
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>
