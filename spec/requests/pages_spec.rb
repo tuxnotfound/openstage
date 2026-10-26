@@ -11,6 +11,16 @@ RSpec.describe "Marketing pages", type: :request do
     end
   end
 
+  describe "GET /privacy" do
+    it "says what the script counts on builders' sites, linked from every page's footer" do
+      get "/privacy"
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("On a builder's website", "deletes it once the day is over")
+      expect(response.body).to include(%(href="/privacy"))
+    end
+  end
+
   describe "GET /pricing" do
     it "renders the pricing page with the real prices" do
       get "/pricing"

@@ -107,6 +107,7 @@ Rails.application.routes.draw do
   # Marketing / content pages
   get "/about", to: "pages#about", as: :about
   get "/pricing", to: "pages#pricing", as: :pricing
+  get "/privacy", to: "pages#privacy", as: :privacy
   get "/blog", to: "blog#index", as: :blog
   get "/blog/:slug", to: "blog#show", as: :blog_post
 

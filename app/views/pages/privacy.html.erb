@@ -1,0 +1,65 @@
+<% content_for :title, "Privacy — Openstage" %>
+<% content_for :main_class, "os-wrap os-stack pt-1.5" %>
+<% content_for :meta_description, "What Openstage counts on builders' websites and its own pages, and what it keeps." %>
+
+<section class="os-panel p-6 sm:p-12">
+  <span class="os-tag">Privacy</span>
+  <h1 class="os-h1 mt-4 max-w-[900px]">What Openstage counts, and what it keeps.</h1>
+  <p class="os-p mt-4.5 max-w-[720px] text-lg">Openstage counts visits so builders can see who reads their work. It counts people in totals, never as profiles.</p>
+  <p class="os-xs os-muted mt-3">Updated October 26, 2026.</p>
+</section>
+
+<section id="builders-sites" class="os-panel scroll-mt-6" aria-labelledby="on-builders-sites">
+  <h2 id="on-builders-sites" class="os-h2">On a builder's website</h2>
+  <div class="mt-3 max-w-[720px] space-y-3.5">
+    <p class="os-p">
+      A builder can add Openstage's script to their project's website to count its visits. On each page you view there, it
+      sends Openstage the page's address and the project's code; the request carries your IP address and browser name,
+      as every request does. It sets no cookie and stores nothing in your browser.
+    </p>
+    <p class="os-p">
+      Openstage adds the view to that day's totals for the project: page views, and visitors, a visitor being one browser
+      on one day. To count you once a day, it keeps a hash of your IP address made with a key that changes every day,
+      and deletes it once the day is over. It does not keep the address, the page, where you came from, or your device.
+    </p>
+    <p class="os-p">
+      Views from bots, and views from any site other than the project's own, are not counted. The builder sees the
+      totals, and the project's page on Openstage can show them.
+    </p>
+  </div>
+</section>
+
+<section class="os-panel" aria-labelledby="on-openstage">
+  <h2 id="on-openstage" class="os-h2">On Openstage's own pages</h2>
+  <div class="mt-3 max-w-[720px] space-y-3.5">
+    <p class="os-p">
+      A visit to a builder's page or a project's page records the time, the site you came from, your country as
+      Cloudflare reports it, and a hash of your IP address with the date, not the address itself. A click on a page's
+      links records the time and the same hash. Bots and the builder's own visits are left out. Builders on Pro see
+      these numbers.
+    </p>
+    <p class="os-p">Openstage's own site analytics run on Umami, which sets no cookie.</p>
+  </div>
+</section>
+
+<section class="os-panel" aria-labelledby="if-you-sign-in">
+  <h2 id="if-you-sign-in" class="os-h2">If you sign in, follow or pay</h2>
+  <div class="mt-3 max-w-[720px] space-y-3.5">
+    <p class="os-p">
+      Signing in with GitHub gives Openstage your GitHub username, name, avatar and email, and a token to read your
+      repositories' commits, which it stores encrypted. Deleting your account in Settings removes it for good after 30 days.
+    </p>
+    <p class="os-p">
+      Following a builder or a project keeps your email. Nothing but the confirmation is sent until you confirm, and
+      every email after it has a one-click unsubscribe.
+    </p>
+    <p class="os-p">Payments go through Stripe; Openstage never sees your card.</p>
+  </div>
+</section>
+
+<section class="os-panel" aria-labelledby="questions">
+  <h2 id="questions" class="os-h2">Questions</h2>
+  <p class="os-p mt-2.5 max-w-[720px]">
+    Write to <a href="mailto:tuxnotfound@cioga.eu" class="os-link">tuxnotfound@cioga.eu</a>.
+  </p>
+</section>

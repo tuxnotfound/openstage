@@ -4,4 +4,7 @@ class PagesController < ApplicationController
 
   def pricing
   end
+
+  def privacy
+  end
 end
