@@ -300,12 +300,10 @@ function NumberToggles({ view, numbers, toggle }: { view: ProgressView; numbers:
   return (
     <div className="os-pills flex-wrap" role="group" aria-label="Numbers">
       {NUMBERS.map(([number, label]) => (
-        <button key={number} type="button" className="os-pill h-auto flex-col items-start px-[18px] py-2" aria-pressed={numbers.includes(number)}
-                onClick={() => toggle(number)}>
-          <span className="flex items-center gap-1.5 text-xs">
-            <span className={`w-3.5 border-t-[3px] border-current ${number === "visits" ? "border-dotted" : ""}`} aria-hidden="true" />{label}
-          </span>
-          <span className="os-num text-[22px]">{values[number]}</span>
+        <button key={number} type="button" className="os-pill gap-2 px-3.5" aria-pressed={numbers.includes(number)} onClick={() => toggle(number)}>
+          <LineSample number={number} />
+          <span>{label}</span>
+          <span className="os-num text-[15px]">{values[number]}</span>
         </button>
       ))}
     </div>
@@ -317,22 +315,29 @@ function ProjectNumbers({ view, numbers, toggles, pills, chart }: {
   view: ProgressView; numbers: ChartNumber[]; toggles: ReactNode; pills: ReactNode; chart: ReactNode
 }) {
   const only = numbers.length === 1 ? numbers[0] : null
+  const headline = (
+    <>
+      <p className="os-label">{only === "visits" ? "Site visits" : only === "commits" ? "Commits" : "Commits and site visits"} · {view.words}</p>
+      {only === "visits" && view.site && (
+        <div className="mt-0.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-1.5">
+          <span className="os-num os-big">{view.site.value}</span>
+          <span className="text-lg font-semibold text-ink-2">{view.site.visitors}</span>
+        </div>
+      )}
+      {only === "commits" && <Headcount view={view} />}
+    </>
+  )
+  // With site visits, the numbers and the window share one row, and what the chart shows sits under them.
   return (
     <>
-      {toggles && <div className="mt-7">{toggles}</div>}
-      <div className={`os-between items-end ${toggles ? "mt-5.5" : "mt-7.5"}`}>
-        <div>
-          <p className="os-label">{only === "visits" ? "Site visits" : only === "commits" ? "Commits" : "Commits and site visits"} · {view.words}</p>
-          {only === "visits" && view.site && (
-            <div className="mt-0.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-1.5">
-              <span className="os-num os-big">{view.site.value}</span>
-              <span className="text-lg font-semibold text-ink-2">{view.site.visitors}</span>
-            </div>
-          )}
-          {only === "commits" && <Headcount view={view} />}
-        </div>
-        {pills}
-      </div>
+      {toggles ? (
+        <>
+          <div className="mt-7 flex flex-wrap items-center justify-between gap-3">{toggles}{pills}</div>
+          <div className="mt-5">{headline}</div>
+        </>
+      ) : (
+        <div className="os-between mt-7.5 items-end"><div>{headline}</div>{pills}</div>
+      )}
       <div className="mt-[22px]">{chart}</div>
     </>
   )

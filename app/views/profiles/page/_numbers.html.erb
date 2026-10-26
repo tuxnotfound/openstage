@@ -3,12 +3,11 @@
     the page's address for a ?show= value, nil for both. %>
 <nav class="os-pills flex-wrap <%= local_assigns[:class] %>" aria-label="Numbers">
   <% SiteVisitsHelper::CHART_NUMBERS.each do |number, label| %>
-    <%= link_to path_for.call(chart_numbers_show(numbers, number)), class: "os-pill h-auto flex-col items-start px-[18px] py-2",
+    <%= link_to path_for.call(chart_numbers_show(numbers, number)), class: "os-pill gap-2 px-3.5",
           aria: { current: (numbers.include?(number) ? "true" : nil) } do %>
-      <span class="flex items-center gap-1.5 text-xs">
-        <span class="w-3.5 border-t-[3px] border-current <%= 'border-dotted' if number == 'visits' %>" aria-hidden="true"></span><%= label %>
-      </span>
-      <span class="os-num text-[22px]"><%= values.fetch(number) %></span>
+      <span class="w-3.5 border-t-[3px] border-current <%= 'border-dotted' if number == 'visits' %>" aria-hidden="true"></span>
+      <span><%= label %></span>
+      <span class="os-num text-[15px]"><%= values.fetch(number) %></span>
     <% end %>
   <% end %>
 </nav>

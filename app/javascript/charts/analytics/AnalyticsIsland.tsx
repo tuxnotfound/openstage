@@ -16,7 +16,7 @@ export type AnalyticsProps = {
 
 const RANGES: [AnalyticsRange, string][] = [["7d", "7 days"], ["30d", "30 days"], ["90d", "90 days"]]
 const DEFAULT_RANGE: AnalyticsRange = "30d"
-const DEFAULT_METRIC: Metric = "site"
+const DEFAULT_METRIC: Metric = "commits"
 
 export default function AnalyticsIsland({ initial, endpoint }: AnalyticsProps) {
   const { view, busy, failed, show, retry, prefetch } = useView(initial, apiUrl(endpoint, initial.range, initial.metric, initial.selected))
@@ -55,20 +55,21 @@ export default function AnalyticsIsland({ initial, endpoint }: AnalyticsProps) {
       </div>
 
       <section className={`os-panel transition-opacity ${busy ? "opacity-60" : ""}`} aria-label="Numbers" aria-busy={busy}>
-        <div className="flex flex-wrap items-end gap-x-4 gap-y-3" data-numbers>
+        <div className="max-w-full overflow-x-auto rounded-[22px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="os-pills w-max flex-nowrap items-center whitespace-nowrap" data-numbers>
           {groups(view.tabs).map(([group, tabs]) => (
-            <div key={group}>
-              <p className="os-label mb-1.5">{group}</p>
-              <div className="os-pills flex-wrap" role="group" aria-label={group}>
-                {tabs.map((tab) => (
-                  <Control key={tab.metric} target={to({ metric: tab.metric })} pressed={tab.metric === view.metric} className="os-pill h-auto flex-col items-start px-[18px] py-2">
-                    <span className="block text-xs">{tab.label}</span>
-                    <span><span className="os-num text-[22px]">{tab.value}</span>{tab.change.arrow && <> <span className="text-xs font-bold">{tab.change.arrow} {tab.change.text}</span></>}</span>
-                  </Control>
-                ))}
-              </div>
-            </div>
+            <span key={group} role="group" aria-label={group} className="contents">
+              <span className="px-2 text-[10px] font-bold uppercase tracking-[0.08em] text-ink-3" aria-hidden="true">{group}</span>
+              {tabs.map((tab) => (
+                <Control key={tab.metric} target={to({ metric: tab.metric })} pressed={tab.metric === view.metric} className="os-pill gap-2 px-3.5">
+                  <span>{tab.label}</span>
+                  <span className="os-num text-[15px]">{tab.value}</span>
+                  {tab.change.arrow && <span className="text-[11px] opacity-75">{tab.change.arrow} {tab.change.text}</span>}
+                </Control>
+              ))}
+            </span>
           ))}
+        </div>
         </div>
 
         <div className={`mt-5.5 grid items-start gap-x-8 gap-y-6 ${view.pages.length > 1 ? "lg:grid-cols-[minmax(0,1fr)_280px]" : ""}`}>
@@ -212,7 +213,7 @@ function ByPage({ view }: { view: AnalyticsView }) {
           </tbody>
         </table>
       </div>
-      <p className="os-note border-t border-line pt-2.5">Site visits: page views on a project's own website, counted by Openstage's script. On Openstage, your page and your project pages: a visitor is one browser on one day; views count every page load; new followers confirmed by email, for your page or one project; clicks out are a project's Visit and View on GitHub buttons and the links in your entries. Your own visits and bots are left out.</p>
+      <p className="os-note border-t border-line pt-2.5">Commits: yours, public, merges and dependency bumps left out. Site visits: page views on a project's own website, counted by Openstage's script. On Openstage, your page and your project pages: a visitor is one browser on one day; views count every page load; new followers confirmed by email, for your page or one project; clicks out are a project's Visit and View on GitHub buttons and the links in your entries. Your own visits and bots are left out.</p>
     </section>
   )
 }
