@@ -1,6 +1,7 @@
 <%# Each repo with work on Openstage: a switch for whether visitors see it,
     and Edit, which opens the project as its builder sees it. Hiding a repo
-    hides its synced entries. %>
+    hides its synced entries. A project whose site visits are counted picks
+    whether Your activity draws them beside its commits. %>
 <section class="os-panel" aria-labelledby="your-projects">
   <h2 id="your-projects" class="os-h3">Your projects</h2>
   <p class="os-xs os-muted mt-0.5 mb-2.5">Choose what visitors see on your page; the chart follows. Commits <%= section&.labels&.word || "in the window" %>.</p>
@@ -25,6 +26,18 @@
           <button type="submit" role="switch" aria-checked="<%= repo.included? %>" aria-label="Show <%= repo.name %> on your page" class="os-switch"></button>
         <% end %>
       </div>
+      <% if repo.site_first_visit_at %>
+        <% picked = repo.dashboard_numbers.include?("visits") %>
+        <div class="mt-1.5 ml-5 flex flex-wrap items-center gap-2">
+          <span class="os-xs os-muted">On the chart:</span>
+          <span class="os-xs inline-flex items-center gap-1.5 font-bold"><span class="w-3.5 border-t-[3px] border-current" aria-hidden="true"></span>Commits</span>
+          <%= button_to project_dashboard_numbers_path(repo), method: :patch, params: { number: "visits", on: (!picked).to_s },
+                class: "os-chip h-7 px-2.5 text-xs", aria: { pressed: picked, label: "Draw #{repo.name}'s site visits on Your activity" },
+                form: { data: { turbo: false } } do %>
+            <span class="w-3.5 border-t-[3px] border-dotted border-current" aria-hidden="true"></span>Site visits
+          <% end %>
+        </div>
+      <% end %>
     </div>
   <% end %>
 </section>

@@ -47,6 +47,7 @@ class DashboardController < ApplicationController
     load_badge
     load_week
     @activity = activity
+    @activity_site = activity_site if @activity
     # Every repo with synced work, shown or hidden, so a hidden one can come back.
     @repos = current_user.github_repos.with_entries.order(:full_name)
     @show_pro_activated = params[:pro] == "activated"
@@ -77,6 +78,12 @@ class DashboardController < ApplicationController
     @recap_prompt = recap unless recap.quiet?
     @streak       = current_user.current_streak
     @logged_today = current_user.entries.visible.where(occurred_at: Date.current.all_day).exists?
+  end
+
+  # The site visits the builder picked for this chart, beside the commits.
+  def activity_site
+    gather = SiteVisits::GatherService.new(user: current_user, section: @activity, dashboard: true)
+    SiteVisitsViewSerializer.new(gather, @activity) if gather.call && gather.any?
   end
 
   # The public page's chart of the builder's own work, every project in view.

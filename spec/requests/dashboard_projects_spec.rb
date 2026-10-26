@@ -53,4 +53,37 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     expect(page.at_css("[data-project-row='builder/app'] button[role='switch']")["aria-checked"]).to eq("false")
     expect(user.entries.where(repo_name: "builder/app").pluck(:hidden).uniq).to eq([ true ])
   end
+
+  describe "site visits on Your activity" do
+    before do
+      tool.update!(homepage: "https://app.example", site_source: "script", site_first_visit_at: 2.days.ago, site_visits_shown: false)
+      tool.site_visit_days.create!(day: 1.day.ago.to_date, visits: 90, visitors: 30)
+    end
+
+    it "draws a project's visits beside its commits, shown on its page or not, with a chip to leave them out" do
+      get "/dashboard"
+
+      expect(page.at_css("section[aria-labelledby='your-activity']").text.squish).to include("90 site visits")
+      expect(response.body).to include("app · site visits", "Solid: commits. Dotted: site visits.")
+      chip = page.at_css("[data-project-row='builder/app'] form[action='/projects/#{tool.id}/dashboard_numbers'] button")
+      expect(chip["aria-pressed"]).to eq("true")
+      expect(page.at_css("[data-project-row='builder/bare'] form[action$='/dashboard_numbers']")).to be_nil
+
+      patch "/projects/#{tool.id}/dashboard_numbers", params: { number: "visits", on: "false" }
+      expect(response).to redirect_to(dashboard_path(anchor: "your-activity"))
+      expect(tool.reload.dashboard_numbers).to eq([])
+
+      get "/dashboard"
+      expect(response.body).not_to include("app · site visits")
+    end
+
+    it "refuses a number the dashboard cannot draw, and someone else's project" do
+      patch "/projects/#{tool.id}/dashboard_numbers", params: { number: "mrr", on: "true" }
+      expect(tool.reload.dashboard_numbers).to eq([ "visits" ])
+
+      theirs = create(:github_repo, user: create(:user))
+      patch "/projects/#{theirs.id}/dashboard_numbers", params: { number: "visits", on: "false" }
+      expect(response).to have_http_status(:not_found)
+    end
+  end
 end
