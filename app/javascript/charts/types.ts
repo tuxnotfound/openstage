@@ -60,7 +60,7 @@ export type ShippedItem = {
 }
 
 export type AnalyticsRange = "7d" | "30d" | "90d"
-export type Metric = "visitors" | "views" | "follows" | "clicks"
+export type Metric = "visitors" | "views" | "follows" | "clicks" | "site"
 export type AnalyticsChange = { arrow: string | null; text: string | null; up: boolean | null }
 
 export type AnalyticsView = {

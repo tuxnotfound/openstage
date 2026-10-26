@@ -29,6 +29,6 @@ RSpec.describe "Api::Analytics", type: :request do
     expect(json).to include("range" => "7d", "metric" => "views", "selected" => [ "builder/app" ], "total" => "2", "scope" => "app", "label" => "Page views")
     expect(json["rows"].map { |row| row["key"] }).to eq([ "builder/app" ])
     expect(json["chart"]["ariaLabel"]).to eq("Page views per day by page, last 7 days")
-    expect(json["tabs"].map { |tab| tab["metric"] }).to eq(%w[visitors views follows clicks])
+    expect(json["tabs"].map { |tab| tab["metric"] }).to eq(%w[visitors views follows clicks site])
   end
 end

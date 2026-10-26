@@ -28,6 +28,15 @@ RSpec.describe Analytics::FindStartService do
     expect(first_day([ "me/app" ])).to be_nil
   end
 
+  it "counts a visit to a project's website from its day" do
+    repo = create(:github_repo, user: user, full_name: "me/app", name: "app")
+    repo.site_visit_days.create!(day: Date.new(2026, 9, 20), visits: 1, visitors: 1)
+    user.project_views.create!(repo_name: "me/app", viewed_at: Time.utc(2026, 10, 10, 8), ip_hash: "a")
+
+    expect(first_day([ "me/app" ])).to eq(Date.new(2026, 9, 20))
+    expect(first_day([ "page" ])).to be_nil
+  end
+
   it "refuses without a builder" do
     expect(described_class.new(pages: [ "page" ]).call).to be(false)
   end

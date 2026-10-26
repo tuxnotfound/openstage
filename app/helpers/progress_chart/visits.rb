@@ -4,7 +4,8 @@ module ProgressChart
   class Visits
     include Plot
 
-    LABELS = { "visitors" => "Visitors", "views" => "Page views", "follows" => "New followers", "clicks" => "Clicks out" }.freeze
+    LABELS = { "visitors" => "Visitors", "views" => "Page views", "follows" => "New followers", "clicks" => "Clicks out",
+               "site" => "Site visits" }.freeze
 
     Line = Data.define(:name, :rank, :values)
 

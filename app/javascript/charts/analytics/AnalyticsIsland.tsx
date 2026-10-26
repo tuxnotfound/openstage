@@ -198,7 +198,7 @@ function ByPage({ view }: { view: AnalyticsView }) {
           </tbody>
         </table>
       </div>
-      <p className="os-note border-t border-line pt-2.5">A visitor is one browser on one day. New followers confirmed by email, for your page or one project. Clicks out: a project's Visit and View on GitHub buttons, and the links in your entries, counted on the entry's project.</p>
+      <p className="os-note border-t border-line pt-2.5">A visitor is one browser on one day. New followers confirmed by email, for your page or one project. Clicks out: a project's Visit and View on GitHub buttons, and the links in your entries, counted on the entry's project. Site visits: page views on a project's own website, counted by Openstage's script.</p>
     </section>
   )
 }

@@ -50,10 +50,21 @@ RSpec.describe "Analytics", type: :request do
 
       get "/analytics"
 
-      expect(row("page")).to eq([ "1", "2", "–", "–", "–" ])
-      expect(row("builder/app")).to eq([ "1", "1", "1", "1", "–" ])
+      expect(row("page")).to eq([ "1", "2", "–", "–", "–", "–" ])
+      expect(row("builder/app")).to eq([ "1", "1", "1", "1", "–", "–" ])
       expect(page.at_css("nav[aria-label='Numbers']").text.squish).to include("Visitors 2", "Page views 3", "New followers 1", "Clicks out 1")
       expect(response.body).to include("Hacker News", "Twitter / X", "PT", "Visit app.example")
+    end
+
+    it "counts visits to each project's website, and charts them on their tab" do
+      repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
+      repo.site_visit_days.create!(day: Date.new(2026, 8, 1), visits: 99, visitors: 9)
+
+      get "/analytics", params: { metric: "site" }
+
+      expect(page.at_css("nav[aria-label='Numbers']").text.squish).to include("Site visits 30")
+      expect(row("builder/app")).to eq([ "–", "–", "–", "–", "30", "–" ])
+      expect(response.body).to include("Site visits per day by page, last 30 days")
     end
 
     it "compares with the days just before" do

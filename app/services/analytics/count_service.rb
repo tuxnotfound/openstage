@@ -1,10 +1,11 @@
 module Analytics
   # Each page's numbers per day, over a window and the one before it: the
   # visitors, page views, new followers and clicks out that the analytics page
-  # shows. A page is the builder's own, PAGE, or a project's, by its repo's
-  # full name. Days are in the builder's zone.
+  # shows, and visits to each project's own website. A page is the builder's
+  # own, PAGE, or a project's, by its repo's full name. Days are in the
+  # builder's zone.
   class CountService < ApplicationService
-    METRICS = %w[visitors views follows clicks].freeze
+    METRICS = %w[visitors views follows clicks site].freeze
     PAGE = "page".freeze
 
     attr_accessor :user, :window
@@ -23,8 +24,15 @@ module Analytics
                          daily(user.project_views, "project_views.viewed_at", "project_views.repo_name")),
         "follows" => follows,
         "clicks" => merge(daily(user.project_clicks, "project_clicks.clicked_at", "project_clicks.repo_name"),
-                          daily(user.entry_clicks.joins(:entry), "entry_clicks.clicked_at", "entries.repo_name"))
+                          daily(user.entry_clicks.joins(:entry), "entry_clicks.clicked_at", "entries.repo_name")),
+        "site" => site_visits
       }
+    end
+
+    # Counted on the builder's day already, so read as they are.
+    def site_visits
+      merge(SiteVisitDay.joins(:github_repo).where(github_repos: { user_id: user.id }, day: window.span)
+                        .group("github_repos.full_name", :day).sum(:visits))
     end
 
     # Confirmed in the window: for the builder's page, or for one project.
