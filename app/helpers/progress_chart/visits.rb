@@ -4,11 +4,11 @@ module ProgressChart
   class Visits
     include Plot
 
-    LABELS = { "site" => "Site visits", "visitors" => "Visitors", "views" => "Views", "follows" => "New followers",
-               "clicks" => "Clicks out" }.freeze
+    LABELS = { "commits" => "Commits", "site" => "Site visits", "visitors" => "Visitors", "views" => "Views",
+               "follows" => "New followers", "clicks" => "Clicks out" }.freeze
     # Where each number happens, as the tabs group them.
-    GROUPS = { "site" => "Your websites", "visitors" => "On Openstage", "views" => "On Openstage", "follows" => "On Openstage",
-               "clicks" => "On Openstage" }.freeze
+    GROUPS = { "commits" => "On GitHub", "site" => "On your websites", "visitors" => "On Openstage", "views" => "On Openstage",
+               "follows" => "On Openstage", "clicks" => "On Openstage" }.freeze
 
     Line = Data.define(:name, :rank, :values) do
       def dashed?

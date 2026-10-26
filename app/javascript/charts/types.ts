@@ -88,7 +88,7 @@ export type ShippedItem = {
 }
 
 export type AnalyticsRange = "7d" | "30d" | "90d"
-export type Metric = "visitors" | "views" | "follows" | "clicks" | "site"
+export type Metric = "commits" | "site" | "visitors" | "views" | "follows" | "clicks"
 export type AnalyticsChange = { arrow: string | null; text: string | null; up: boolean | null }
 
 export type AnalyticsView = {
@@ -100,7 +100,7 @@ export type AnalyticsView = {
   words: string
   // value: the number charted, on that page, while it is in view.
   pages: { key: string; name: string; rank: Rank; on: boolean; value: string | null }[]
-  // group: where the number happens, "Your websites" or "On Openstage".
+  // group: where the number happens: "On GitHub", "On your websites" or "On Openstage".
   tabs: { metric: Metric; label: string; group: string; value: string; change: AnalyticsChange }[]
   label: string
   scope: string

@@ -66,7 +66,7 @@ class AnalyticsViewSerializer < ApplicationSerializer
 
   # The table's last column: the picked number against the days before.
   def change_label
-    "#{ProgressChart::Visits::LABELS.fetch(@report.metric)} vs #{window.label} before"
+    "vs #{window.label} before"
   end
 
   # The pages picked, busiest in the number picked first, with each number

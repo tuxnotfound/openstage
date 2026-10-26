@@ -1,7 +1,7 @@
 module Analytics
-  # The first day any of the pages picked had something to count: a visit, a
-  # follower, a click or a visit to a project's website, in the builder's
-  # zone; nil before anything happened.
+  # The first day any of the pages picked had something to count: a commit, a
+  # visit, a follower, a click or a visit to a project's website, in the
+  # builder's zone; nil before anything happened.
   # The analytics chart starts there when it falls inside the window.
   class FindStartService < ApplicationService
     # pages: page keys, CountService::PAGE or repos' full names.
@@ -13,7 +13,7 @@ module Analytics
     private
 
     def execute
-      firsts = [ *visits, *follows, *clicks, site_visits ].compact
+      firsts = [ first_commit, *visits, *follows, *clicks, site_visits ].compact
       @first_day = firsts.min&.in_time_zone(user.zone)&.to_date
     end
 
@@ -34,6 +34,10 @@ module Analytics
       confirmed = user.subscriptions.confirmed
       [ (confirmed.whole_page.minimum(:confirmed_at) if own?),
         (confirmed.projects.joins(:github_repo).where(github_repos: { full_name: repos }).minimum(:confirmed_at) if repos.any?) ]
+    end
+
+    def first_commit
+      user.entries.publicly_visible.without_tooling_noise.commits.where(repo_name: repos).minimum(:occurred_at) if repos.any?
     end
 
     # Its start in the builder's zone, to compare with the times above.

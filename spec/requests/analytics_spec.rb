@@ -30,7 +30,8 @@ RSpec.describe "Analytics", type: :request do
 
     before do
       travel_to Time.utc(2026, 10, 24, 12)
-      create(:entry, user: user, repo_name: "builder/app")
+      # Before the window, so it starts where the window does.
+      create(:entry, user: user, repo_name: "builder/app", occurred_at: 40.days.ago)
       sign_in_as(user)
     end
 
@@ -38,7 +39,7 @@ RSpec.describe "Analytics", type: :request do
       get "/analytics"
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("No visits in the last 30 days.", "No site visits in the last 30 days. Openstage&#39;s script counts them")
+      expect(response.body).to include("No visits in the last 30 days.", "No clicks out in the last 30 days.")
     end
 
     it "counts each page's visitors, views, new followers and clicks out, with where visitors came from" do
@@ -50,25 +51,26 @@ RSpec.describe "Analytics", type: :request do
 
       get "/analytics"
 
-      expect(row("page")).to eq([ "–", "1", "2", "–", "–", "–" ])
-      expect(row("builder/app")).to eq([ "–", "1", "1", "1", "1", "–" ])
-      expect(page.at_css("[data-numbers]").text.squish).to eq("Your websites Site visits 0 On Openstage Visitors 2 Views 3 New followers 1 Clicks out 1")
+      expect(row("page")).to eq([ "–", "–", "1", "2", "–", "–", "–" ])
+      expect(row("builder/app")).to eq([ "–", "–", "1", "1", "1", "1", "▼ 100%" ])
+      expect(page.at_css("[data-numbers]").text.squish)
+        .to eq("On GitHub Commits 0 ▼ 100% On your websites Site visits 0 On Openstage Visitors 2 Views 3 New followers 1 Clicks out 1")
       expect(response.body).to include("Hacker News", "Twitter / X", "PT", "Visit app.example")
     end
 
-    it "opens on visits to each project's website, the table's last column following the number picked" do
+    it "opens on commits, site visits beside them, the table's last column following the number picked" do
       repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
       repo.site_visit_days.create!(day: Date.new(2026, 9, 10), visits: 10, visitors: 9)
+      create(:entry, user: user, repo_name: "builder/app", occurred_at: 2.days.ago)
 
       get "/analytics"
+      expect(page.at_css("[data-numbers] a[aria-current='page']").text.squish).to eq("Commits 1 ± 0%")
+      expect(response.body).to include("Commits per day by page, last 30 days")
 
-      expect(page.at_css("nav[aria-label='Your websites']").text.squish).to include("Site visits 30")
-      expect(page.css("thead th").last.text).to eq("Site visits vs 30 days before")
-      expect(row("builder/app")).to eq([ "30", "–", "–", "–", "–", "▲ 200%" ])
-      expect(response.body).to include("Site visits per day by page, last 30 days")
-
-      get "/analytics", params: { metric: "visitors" }
-      expect(page.css("thead th").last.text).to eq("Visitors vs 30 days before")
+      get "/analytics", params: { metric: "site" }
+      expect(page.at_css("[role='group'][aria-label='On your websites']").text.squish).to include("Site visits 30")
+      expect(page.css("thead th").last.text).to eq("vs 30 days before")
+      expect(row("builder/app")).to eq([ "1", "30", "–", "–", "–", "–", "▲ 200%" ])
     end
 
     it "compares with the days just before" do
@@ -89,7 +91,7 @@ RSpec.describe "Analytics", type: :request do
       get "/analytics", params: { pages: [ "builder/app" ], metric: "views", range: "7d" }
 
       expect(page.css("[data-page-row]").map { |each| each["data-page-row"] }).to eq([ "builder/app" ])
-      expect(page.at_css("p.os-label:not(.mb-1\\.5)").text.squish).to eq("Views · app, last 7 days")
+      expect(page.at_css("p.os-label").text.squish).to eq("Views · app, last 7 days")
       expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Views per day by page, last 7 days")
       switch = page.at_css("[aria-label='Pages'] [role='switch'][aria-label='Show Your page in the chart']")
       expect(switch["aria-checked"]).to eq("false")
@@ -98,6 +100,7 @@ RSpec.describe "Analytics", type: :request do
     end
 
     it "draws 90 days a week a point, and falls back to 30 days for a range it does not know" do
+      create(:entry, user: user, repo_name: "builder/app", occurred_at: 120.days.ago)
       get "/analytics", params: { range: "90d" }
       expect(page.css("[data-chart-tooltip-template-param]").size).to eq(13)
 

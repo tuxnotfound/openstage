@@ -1,12 +1,12 @@
 module Analytics
-  # Each page's numbers per day, over a window and the one before it: the
-  # visitors, page views, new followers and clicks out that the analytics page
-  # shows, and visits to each project's own website. A page is the builder's
+  # Each page's numbers per day, over a window and the one before it: each
+  # project's commits and the visits to its own website, then the visitors,
+  # views, new followers and clicks out on Openstage. A page is the builder's
   # own, PAGE, or a project's, by its repo's full name. Days are in the
   # builder's zone.
   class CountService < ApplicationService
-    # Site visits first: after commits, the number that matters most.
-    METRICS = %w[site visitors views follows clicks].freeze
+    # In the order they matter: commits, then site visits.
+    METRICS = %w[commits site visitors views follows clicks].freeze
     PAGE = "page".freeze
 
     attr_accessor :user, :window
@@ -19,6 +19,7 @@ module Analytics
 
     def execute
       @counts = {
+        "commits" => commits,
         "visitors" => merge(daily(user.profile_views, "profile_views.viewed_at", distinct: "profile_views.ip_hash"),
                             daily(user.project_views, "project_views.viewed_at", "project_views.repo_name", distinct: "project_views.ip_hash")),
         "views" => merge(daily(user.profile_views, "profile_views.viewed_at"),
@@ -28,6 +29,11 @@ module Analytics
                           daily(user.entry_clicks.joins(:entry), "entry_clicks.clicked_at", "entries.repo_name")),
         "site" => site_visits
       }
+    end
+
+    # As the public page counts them: public, merges and dependency bumps left out.
+    def commits
+      merge(daily(user.entries.publicly_visible.without_tooling_noise.commits, "entries.occurred_at", "entries.repo_name"))
     end
 
     # Counted on the builder's day already, so read as they are.
