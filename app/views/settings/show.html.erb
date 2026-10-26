@@ -141,6 +141,32 @@
     <%# Refreshed from GitHub when this tab opens. %>
     <%= render "settings/github_repos", **@github_repos_section, refresh: true, note: nil %>
 
+    <%# Each provider gets Connect once it is built; Vercel waits for a read-only token. %>
+    <section class="os-panel" aria-labelledby="site-analytics">
+      <div class="os-between">
+        <h2 id="site-analytics" class="os-h3">Site analytics</h2>
+        <% unless current_user.pro? %><span class="os-tag pro">✦ Pro</span><% end %>
+      </div>
+      <p class="os-sm os-muted mt-1.5 mb-1">Count visits to your projects' websites. Each project picks one source on its own page, so no visit counts twice.</p>
+      <div class="os-row flex items-center gap-3 py-3">
+        <span class="min-w-0 flex-auto">
+          <span class="font-bold">Openstage's script</span>
+          <span class="os-xs os-muted block">One line in your site's code. Free counts one site; Pro counts every project.</span>
+        </span>
+        <% if @counted_sites.any? %>
+          <span class="os-sm font-bold text-up"><%= @counted_sites.one? ? "Counting #{@counted_sites.first}" : "Counting #{@counted_sites.size} sites" %></span>
+        <% else %>
+          <span class="os-xs os-muted">Set up on a project's page</span>
+        <% end %>
+      </div>
+      <% [ "Vercel Web Analytics", "Plausible", "Umami", "Google Analytics 4", "Cloudflare Web Analytics", "PostHog", "Fathom",
+           "Simple Analytics", "Matomo" ].each do |provider| %>
+        <div class="os-row flex items-center gap-3 py-2.5">
+          <span class="min-w-0 flex-auto font-bold text-ink-2"><%= provider %></span><span class="os-xs os-muted">Planned</span>
+        </div>
+      <% end %>
+    </section>
+
     <section class="os-panel" aria-labelledby="readme-badge" data-controller="clipboard">
       <h2 id="readme-badge" class="os-h3">README badge</h2>
       <p class="os-sm os-muted mt-1">Drop this in your README.md to show your live Openstage stats.</p>

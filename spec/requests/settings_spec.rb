@@ -88,6 +88,16 @@ RSpec.describe "Settings", type: :request do
         expect(response.body).to include("/embed/#{user.username}.js")
       end
 
+      it "lists site analytics: the sites the script counts, and the providers planned" do
+        user.update!(pro: true)
+        create(:github_repo, user: user, homepage: "https://shipnote.app", site_source: "script")
+        sign_in_as(user)
+        get settings_path
+
+        section = Nokogiri::HTML(response.body).at_css("section[aria-labelledby='site-analytics']").text.squish
+        expect(section).to include("Counting shipnote.app", "Vercel Web AnalyticsPlanned", "MatomoPlanned")
+      end
+
       it "explains that including a private repo publishes its commit messages" do
         create(:github_repo, user: user)
 

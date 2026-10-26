@@ -49,6 +49,7 @@ class SettingsController < ApplicationController
     @github_repos_section = github_repos_section
     @badge_markdown       = "[![openstage](#{profile_badge_url(current_user.username)})](#{profile_url(current_user.username)}?ref=badge)"
     @embed_script_tag     = "<script src=\"#{profile_embed_url(current_user.username)}\"></script>"
+    @counted_sites        = current_user.github_repos.site_set_up.select(&:counts_site_visits?).filter_map(&:site_host)
     # Free sees how many; Pro sees who, and for which page.
     @subscribers          = current_user.subscriptions.confirmed.includes(:github_repo).order(confirmed_at: :desc)
   end
