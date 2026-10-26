@@ -6,7 +6,7 @@ module SiteVisitsHelper
     when :no_website then [ "Counted on the project's website, once it has one.", "Off" ]
     when :off then [ overview.free_site ? "Free counts one site, and #{site_name(overview.free_site)} counts now." : "Not counted.", "Off" ]
     when :paused then [ "Paused: Free counts one site, and #{site_name(overview.free_site)} counts now.", "Paused" ]
-    else [ site_visits_counting(repo), repo.site_visits_shown? ? "Shown" : "Hidden" ]
+    else [ site_visits_counting(repo, overview.last_site_visit), repo.site_visits_shown? ? "Shown" : "Hidden" ]
     end
   end
 
@@ -24,8 +24,10 @@ module SiteVisitsHelper
 
   private
 
-  def site_visits_counting(repo)
+  # The latest visit says the script works without opening the setup.
+  def site_visits_counting(repo, last_visit)
     line = repo.site_first_visit_at ? "Counted by Openstage's script on #{repo.site_host}." : "Openstage's script on #{repo.site_host}, waiting for its first visit."
+    line += " Last visit #{time_ago_in_words(last_visit)} ago." if repo.site_first_visit_at && last_visit
     repo.user.pro? ? line : "#{line} Free counts one site, and this is it."
   end
 

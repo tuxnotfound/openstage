@@ -26,7 +26,7 @@ RSpec.describe "Setting up a project's site visits", type: :request do
     repo.update!(site_source: "script", site_token: "os_a", site_first_visit_at: Time.current)
     repo.site_visit_days.create!(day: Date.new(2026, 10, 20), visits: 1204, visitors: 800)
 
-    expect(view.text).to include("First visit received today at 14:02", "1,204", "Counted by Openstage's script on shipnote.app.")
+    expect(view.text).to include("First visit received today at 14:02", "1,204", "Counted by Openstage's script on shipnote.app. Last visit less than a minute ago.")
   end
 
   it "hides them from the project's page with its switch, and turns them off" do

@@ -9,9 +9,10 @@ module Projects
 
     attr_accessor :repo
     # project: its Progress::Projects entry, nil with nothing public yet;
-    # site_state: :counting, :paused, :off or :no_website; free_site: the repo
-    # Free counts when it is another one.
-    attr_reader :project, :commits, :last_commit, :site_visits, :site_state, :free_site
+    # last_site_visit: when the latest counted; site_state: :counting,
+    # :paused, :off or :no_website; free_site: the repo Free counts when it is
+    # another one.
+    attr_reader :project, :commits, :last_commit, :site_visits, :last_site_visit, :site_state, :free_site
 
     validates :repo, presence: true
 
@@ -24,6 +25,7 @@ module Projects
       @commits = commits.where(occurred_at: (today - (DAYS - 1)).in_time_zone(user.zone)..).count
       @last_commit = commits.maximum(:occurred_at)&.in_time_zone(user.zone)&.to_date
       @site_visits = repo.site_visit_days.where(day: (today - (DAYS - 1))..today).sum(:visits)
+      @last_site_visit = repo.site_visit_days.maximum(:updated_at)
       @free_site = other_free_site
       @site_state = site_state_now
     end
