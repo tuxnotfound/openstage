@@ -26,6 +26,8 @@ RSpec.describe "Site visits from Openstage's script", type: :request do
     expect(response).to have_http_status(:no_content)
     post "/v", params: "not json", headers: browser
     expect(response).to have_http_status(:no_content)
+    post "/v", params: { p: "os_abc123", u: "https://shipnote.app/", pad: "x" * 5000 }.to_json, headers: browser
+    expect(response).to have_http_status(:no_content)
 
     expect(SiteVisitDay.count).to eq(0)
   end

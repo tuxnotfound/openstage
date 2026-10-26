@@ -15,10 +15,12 @@ class SiteVisitsController < ActionController::API
   private
 
   # The script sends JSON as text/plain, which a browser posts to another
-  # site without asking first.
+  # site without asking first. Read no more than it would send, whatever
+  # the request says its length is.
   def payload
     @payload ||= begin
-      body = request.content_length.to_i <= MAX_BODY ? JSON.parse(request.raw_post.to_s) : {}
+      raw = request.body.read(MAX_BODY + 1).to_s
+      body = raw.bytesize <= MAX_BODY ? JSON.parse(raw) : {}
       body.is_a?(Hash) ? body.transform_values(&:to_s) : {}
     rescue JSON::ParserError
       {}
