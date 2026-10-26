@@ -138,6 +138,9 @@
       </div>
     </section>
 
+    <%# Refreshed from GitHub when this tab opens. %>
+    <%= render "settings/github_repos", **@github_repos_section, refresh: true, note: nil %>
+
     <%# Each provider gets Connect once it is built; Vercel waits for a read-only token. %>
     <section class="os-panel" aria-labelledby="site-analytics">
       <div class="os-between">
@@ -156,16 +159,11 @@
           <span class="os-xs os-muted">Set up on a project's page</span>
         <% end %>
       </div>
-      <% [ "Vercel Web Analytics", "Plausible", "Umami", "Google Analytics 4", "Cloudflare Web Analytics", "PostHog", "Fathom",
-           "Simple Analytics", "Matomo" ].each do |provider| %>
-        <div class="os-row flex items-center gap-3 py-2.5">
-          <span class="min-w-0 flex-auto font-bold text-ink-2"><%= provider %></span><span class="os-xs os-muted">Planned</span>
-        </div>
-      <% end %>
+      <p class="os-xs os-muted border-t border-line pt-3">
+        <span class="font-bold text-ink-2">Planned:</span>
+        Vercel Web Analytics, Plausible, Umami, Google Analytics 4, Cloudflare Web Analytics, PostHog, Fathom, Simple Analytics and Matomo.
+      </p>
     </section>
-
-    <%# Refreshed from GitHub when this tab opens. %>
-    <%= render "settings/github_repos", **@github_repos_section, refresh: true, note: nil %>
 
 
     <section class="os-panel" aria-labelledby="readme-badge" data-controller="clipboard">

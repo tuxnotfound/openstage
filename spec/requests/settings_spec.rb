@@ -95,7 +95,7 @@ RSpec.describe "Settings", type: :request do
         get settings_path
 
         section = Nokogiri::HTML(response.body).at_css("section[aria-labelledby='site-analytics']").text.squish
-        expect(section).to include("Counting shipnote.app", "Vercel Web AnalyticsPlanned", "MatomoPlanned")
+        expect(section).to include("Counting shipnote.app", "Planned: Vercel Web Analytics, Plausible")
       end
 
       it "explains that including a private repo publishes its commit messages" do
