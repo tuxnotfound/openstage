@@ -7,7 +7,11 @@ module ProgressChart
     LABELS = { "visitors" => "Visitors", "views" => "Page views", "follows" => "New followers", "clicks" => "Clicks out",
                "site" => "Site visits" }.freeze
 
-    Line = Data.define(:name, :rank, :values)
+    Line = Data.define(:name, :rank, :values) do
+      def dashed?
+        false
+      end
+    end
 
     def initialize(report)
       @report = report

@@ -1,29 +1,40 @@
 module ProgressChart
-  # A project's site visits on its page: one line, in the project's colour,
-  # through the visits per point of the page's window.
+  # Site visits on their own: one line per project, in its colour and dotted,
+  # as visits are beside commits, through the visits per point of their window.
   class SiteVisits
     include Plot
 
-    Line = Data.define(:name, :rank, :values)
+    Line = Data.define(:name, :rank, :values) do
+      def dashed?
+        true
+      end
+    end
 
-    # tally: a SiteVisits::TallyService; name and rank: the project's.
-    def initialize(tally, name:, rank:)
+    # tally: a SiteVisits::TallyService; projects: the section's
+    # Progress::Projects, for each line's name and colour.
+    def initialize(tally, projects:)
       @tally = tally
-      @name = name
-      @rank = rank
+      @projects = projects
     end
 
     def lines
-      @lines ||= @tally.visits.positive? ? [ Line.new(name: @name, rank: @rank, values: @tally.values) ] : []
+      @lines ||= @tally.lines.filter_map do |repo, values|
+        project = @projects.find(repo)
+        Line.new(name: project&.name || repo.split("/").last, rank: project&.rank, values: values) if values.sum.positive?
+      end
+    end
+
+    def paths
+      super.map { |d, rank| [ d, rank, true ] }
     end
 
     def aria_label
-      "Site visits per #{unit}, #{words}"
+      "Site visits per #{unit} by project, #{words}"
     end
 
     def note
-      "Visits to #{@tally.repo.site_host} per #{unit}, counted by Openstage's script on the site. " \
-        "A visitor is one browser on one day; bots left out."
+      where = @tally.lines.one? ? "Visits to #{@tally.repos.first.site_host}" : "Visits to each project's website"
+      "#{where} per #{unit}, counted by Openstage's script. A visitor is one browser on one day; bots left out."
     end
 
     def empty_note

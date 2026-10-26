@@ -40,7 +40,7 @@ export default function LineChart({ chart, height = "", legend = false }: { char
         <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} preserveAspectRatio="none" role="img" aria-label={chart.ariaLabel}>
           {chart.paths.map((path, i) => (
             <path key={`${i}-${path.rank}`} d={path.d} className={`${projectClass(path.rank)} stroke-(--project)`} fill="none" strokeWidth="4.5"
-                  strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                  strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" strokeDasharray={path.dashed ? "2 9" : undefined} />
           ))}
         </svg>
         {chart.ticks.map((tick) => <div key={`label-${tick.value}`} className="os-ylab -translate-y-1/2" style={{ top: `${tick.top}%` }}>{tick.value}</div>)}
@@ -75,7 +75,7 @@ export default function LineChart({ chart, height = "", legend = false }: { char
         <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] text-ink-2" aria-label="Lines">
           {chart.legend.map((line) => (
             <li key={line.name} className="inline-flex items-center gap-2">
-              <span className={`${projectClass(line.rank)} h-1 w-3.5 rounded-sm bg-(--project)`} aria-hidden="true" />{line.name}
+              <span className={`${projectClass(line.rank)} w-3.5 ${line.dashed ? "border-t-[3px] border-dotted border-(--project)" : "h-1 rounded-sm bg-(--project)"}`} aria-hidden="true" />{line.name}
             </li>
           ))}
         </ul>

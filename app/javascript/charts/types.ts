@@ -4,8 +4,10 @@
 export type Rank = number | null
 
 export type ChartView = {
-  paths: { d: string; rank: Rank }[]
-  ticks: { value: number; top: number }[]
+  // dashed: site visits, drawn dotted beside solid commits.
+  paths: { d: string; rank: Rank; dashed: boolean }[]
+  // value: a count, or a share of each line's peak ("50%") when the chart compares numbers.
+  ticks: { value: number | string; top: number }[]
   columns: { left: number; width: number; mark: number; title: string; rows: { name: string; rank: Rank; value: string }[] }[]
   axis: string[]
   ariaLabel: string
@@ -15,7 +17,7 @@ export type ChartView = {
   empty: boolean
   average: boolean
   // Each line's project, in drawing order's reverse: the busiest first.
-  legend: { name: string; rank: Rank }[]
+  legend: { name: string; rank: Rank; dashed: boolean }[]
 }
 
 export type ProgressRange = "30d" | "90d" | "12m" | "all"
@@ -34,18 +36,20 @@ export type ProgressView = {
   projects: { repo: string; name: string; rank: number; on: boolean; value: string | null }[]
   chart: ChartView
   shipped: { heading: string; empty: string; items: ShippedItem[] }
-  // A project's page with site visits: the same window's, for its tab.
+  // The site visits the chart can draw beside the commits, for the same window.
   site: SiteView | null
 }
 
+// chart: the visits alone; compare: commits and visits, each line against its own peak.
 export type SiteView = {
   value: string
   visitors: string
   chart: ChartView
+  compare: ChartView
 }
 
-// The number a project's page charts.
-export type ProjectMetric = "commits" | "visits"
+// The numbers a chart can draw.
+export type ChartNumber = "commits" | "visits"
 
 export type ShippedItem = {
   id: number

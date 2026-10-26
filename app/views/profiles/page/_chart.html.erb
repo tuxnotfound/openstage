@@ -1,6 +1,6 @@
 <%# The chart of a window: one line per project, in the colours of the
-    project switches beside it, and a tooltip per point. legend: names each
-    line under the chart, where nothing beside it does. %>
+    project switches beside it, site visits dotted, and a tooltip per point.
+    legend: names each line under the chart, where nothing beside it does. %>
 <div data-controller="chart-tooltip">
   <div class="os-chart <%= local_assigns[:height] %>" data-action="mouseleave->chart-tooltip#hide">
     <% chart.ticks.each do |tick| %>
@@ -8,9 +8,9 @@
     <% end %>
     <div class="os-axis"></div>
     <svg viewBox="0 0 <%= ProgressChart::Trend::WIDTH %> <%= ProgressChart::Trend::HEIGHT %>" preserveAspectRatio="none" role="img" aria-label="<%= chart.aria_label %>">
-      <% chart.paths.each do |d, rank| %>
+      <% chart.paths.each do |d, rank, dashed| %>
         <path d="<%= d %>" class="<%= project_class(rank) %> stroke-(--project)" fill="none" stroke-width="4.5"
-              stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+              stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"<%= ' stroke-dasharray="2 9"'.html_safe if dashed %>/>
       <% end %>
     </svg>
     <% chart.ticks.each do |tick| %>
@@ -48,7 +48,7 @@
   <% if local_assigns[:legend] && chart.lines.size > 1 %>
     <ul class="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] text-ink-2" aria-label="Lines">
       <% chart.lines.each do |line| %>
-        <li class="inline-flex items-center gap-2"><span class="<%= project_class(line.rank) %> h-1 w-3.5 rounded-sm bg-(--project)" aria-hidden="true"></span><%= line.name %></li>
+        <li class="inline-flex items-center gap-2"><span class="<%= project_class(line.rank) %> <%= line.dashed? ? 'border-t-[3px] border-dotted border-(--project)' : 'h-1 rounded-sm bg-(--project)' %> w-3.5" aria-hidden="true"></span><%= line.name %></li>
       <% end %>
     </ul>
   <% end %>

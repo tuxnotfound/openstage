@@ -3,11 +3,13 @@ import { createPortal } from "react-dom"
 import LineChart, { projectClass } from "../LineChart"
 import Switches, { type Target } from "../Switches"
 import { useView } from "../useView"
-import type { ProjectMetric, ProgressRange, ProgressView, ShippedItem } from "../types"
+import type { ChartNumber, ChartView, ProgressRange, ProgressView, ShippedItem } from "../types"
 
 // The commit chart and what it counts, on a builder's page, a project's page
-// and the dashboard. A click asks Api::ProgressController for that view and
-// shows it in place; the page's URL follows, so the view stays shareable.
+// and the dashboard, with the site visits each shows beside the commits. A
+// click asks Api::ProgressController for that view and shows it in place; the
+// page's URL follows, so the view stays shareable. Switching a number needs no
+// request: the view carries a chart for each.
 
 export type ProgressProps = {
   initial: ProgressView
@@ -15,8 +17,8 @@ export type ProgressProps = {
   // own (a hidden project's, for its builder).
   endpoint: string
   mode: "page" | "project" | "dashboard"
-  // A project's page: the number charted first.
-  metric?: ProjectMetric
+  // The numbers on at first, on a page with site visits.
+  numbers?: ChartNumber[]
   defaultRange: ProgressRange
   // The What shipped section to keep in step, by element id.
   shippedTarget?: string
@@ -24,10 +26,24 @@ export type ProgressProps = {
 
 const RANGES: [ProgressRange, string][] = [["30d", "30 days"], ["90d", "90 days"], ["12m", "12 months"], ["all", "All time"]]
 const SHOWN = 8
+const NUMBERS: [ChartNumber, string][] = [["commits", "Commits"], ["visits", "Site visits"]]
 
-export default function ProgressIsland({ initial, endpoint, mode, metric: initialMetric = "commits", defaultRange, shippedTarget }: ProgressProps) {
+export default function ProgressIsland({ initial, endpoint, mode, numbers: initialNumbers = ["commits", "visits"], defaultRange, shippedTarget }: ProgressProps) {
   const { view, busy, failed, show, retry, prefetch } = useView(initial, apiUrl(endpoint, initial.range, initial.selected))
-  const [metric, setMetric] = useState<ProjectMetric>(initialMetric)
+  const [picked, setPicked] = useState<ChartNumber[]>(initialNumbers)
+  // The dashboard draws what each project picked; the pages, the toggles' choice.
+  const numbers: ChartNumber[] = !view.site ? ["commits"] : mode === "dashboard" ? ["commits", "visits"] : picked
+
+  // The last number on stays on; the URL names the only one on, or none for both.
+  function toggle(number: ChartNumber) {
+    const next = NUMBERS.map(([each]) => each).filter((each) => (each === number ? !numbers.includes(each) : numbers.includes(each)))
+    if (next.length === 0) return
+    setPicked(next)
+    const url = new URL(window.location.href)
+    if (next.length === 1) url.searchParams.set("show", next[0] ?? "commits")
+    else url.searchParams.delete("show")
+    window.history.replaceState(window.history.state, "", url)
+  }
 
   // The API's address and the page's own for a view: the page keeps its
   // other params (the dashboard's entry filters, a linked entry).
@@ -60,7 +76,8 @@ export default function ProgressIsland({ initial, endpoint, mode, metric: initia
       })}
     </div>
   )
-  const chart = <LineChart chart={view.chart} height={mode === "dashboard" ? "h-[260px]" : ""} legend={mode === "dashboard"} />
+  const chart = <LineChart chart={chartFor(view, numbers)} height={mode === "dashboard" ? "h-[260px]" : ""} legend={mode === "dashboard"} />
+  const toggles = view.site && mode !== "dashboard" ? <NumberToggles view={view} numbers={numbers} toggle={toggle} /> : null
   const shipped = shippedTarget ? document.getElementById(shippedTarget) : null
 
   return (
@@ -70,14 +87,14 @@ export default function ProgressIsland({ initial, endpoint, mode, metric: initia
           <PageHeadline view={view} />
           <div className={`mt-6 grid items-start gap-x-8 gap-y-6 ${view.projects.length > 1 ? "lg:grid-cols-[minmax(0,1fr)_280px]" : ""}`}>
             <div className="min-w-0">
-              <div className="flex justify-end">{pills}</div>
+              <div className="flex flex-wrap items-end justify-between gap-3">{toggles}<div className="ml-auto">{pills}</div></div>
               <div className="mt-[22px]">{chart}</div>
             </div>
             {view.projects.length > 1 && <ProjectSwitches view={view} to={to} />}
           </div>
         </>
       )}
-      {mode === "project" && <ProjectNumbers view={view} metric={metric} pick={setMetric} pills={pills} chart={chart} />}
+      {mode === "project" && <ProjectNumbers view={view} numbers={numbers} toggles={toggles} pills={pills} chart={chart} />}
       {mode === "dashboard" && (
         <>
           <div className="os-between">
@@ -86,7 +103,9 @@ export default function ProgressIsland({ initial, endpoint, mode, metric: initia
           </div>
           <div className="mt-3 flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
             <span className="os-num text-[56px] leading-none">{view.commits}</span>
-            <span className="os-ink2">commits, {view.words}{view.change.words && <> · <Arrow view={view} /> {view.change.words}</>}</span>
+            <span className="os-ink2">
+              commits, {view.words}{view.change.words && <> · <Arrow view={view} /> {view.change.words}</>}{view.site && <> · {view.site.value} site visits</>}
+            </span>
           </div>
           <div className="mt-3.5">{chart}</div>
         </>
@@ -115,48 +134,52 @@ function Arrow({ view }: { view: ProgressView }) {
   return <span className={up ? "text-up" : "text-down"} aria-label={up ? "Up" : "Down"}>{arrow}</span>
 }
 
-// A project's page: with site visits, a tab per number above the chart
-// switches it, and the page's URL keeps the pick.
-function ProjectNumbers({ view, metric, pick, pills, chart }: {
-  view: ProgressView; metric: ProjectMetric; pick: (metric: ProjectMetric) => void; pills: ReactNode; chart: ReactNode
+// The chart for the numbers on: commits alone, visits alone, or both.
+function chartFor(view: ProgressView, numbers: ChartNumber[]): ChartView {
+  if (!view.site || (numbers.length === 1 && numbers[0] === "commits")) return view.chart
+  return numbers.length === 1 ? view.site.chart : view.site.compare
+}
+
+// A toggle per number, with its value and its line: commits solid, visits dotted.
+function NumberToggles({ view, numbers, toggle }: { view: ProgressView; numbers: ChartNumber[]; toggle: (number: ChartNumber) => void }) {
+  const values: Record<ChartNumber, string> = { commits: String(view.commits), visits: view.site?.value ?? "" }
+  return (
+    <div className="os-pills flex-wrap" role="group" aria-label="Numbers">
+      {NUMBERS.map(([number, label]) => (
+        <button key={number} type="button" className="os-pill h-auto flex-col items-start px-[18px] py-2" aria-pressed={numbers.includes(number)}
+                onClick={() => toggle(number)}>
+          <span className="flex items-center gap-1.5 text-xs">
+            <span className={`w-3.5 border-t-[3px] border-current ${number === "visits" ? "border-dotted" : ""}`} aria-hidden="true" />{label}
+          </span>
+          <span className="os-num text-[22px]">{values[number]}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// A project's page: the toggles above the chart, and the number on when only one is.
+function ProjectNumbers({ view, numbers, toggles, pills, chart }: {
+  view: ProgressView; numbers: ChartNumber[]; toggles: ReactNode; pills: ReactNode; chart: ReactNode
 }) {
-  const site = view.site
-  const visits = metric === "visits" && site !== null
-  const tabs: [ProjectMetric, string, string][] = [["commits", "Commits", String(view.commits)], ["visits", "Site visits", site?.value ?? ""]]
-
-  function choose(next: ProjectMetric) {
-    pick(next)
-    const url = new URL(window.location.href)
-    if (next === "commits") url.searchParams.delete("metric")
-    else url.searchParams.set("metric", next)
-    window.history.replaceState(window.history.state, "", url)
-  }
-
+  const only = numbers.length === 1 ? numbers[0] : null
   return (
     <>
-      {site && (
-        <div className="os-pills mt-7 flex-wrap" role="group" aria-label="Numbers">
-          {tabs.map(([key, label, value]) => (
-            <button key={key} type="button" className="os-pill h-auto flex-col items-start px-[18px] py-2" aria-pressed={(key === "visits") === visits}
-                    onClick={() => choose(key)}>
-              <span className="block text-xs">{label}</span><span className="os-num text-[22px]">{value}</span>
-            </button>
-          ))}
-        </div>
-      )}
-      <div className={`os-between items-end ${site ? "mt-5.5" : "mt-7.5"}`}>
+      {toggles && <div className="mt-7">{toggles}</div>}
+      <div className={`os-between items-end ${toggles ? "mt-5.5" : "mt-7.5"}`}>
         <div>
-          <p className="os-label">{visits ? "Site visits" : "Commits"} · {view.words}</p>
-          {visits && site ? (
+          <p className="os-label">{only === "visits" ? "Site visits" : only === "commits" ? "Commits" : "Commits and site visits"} · {view.words}</p>
+          {only === "visits" && view.site && (
             <div className="mt-0.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-1.5">
-              <span className="os-num os-big">{site.value}</span>
-              <span className="text-lg font-semibold text-ink-2">{site.visitors}</span>
+              <span className="os-num os-big">{view.site.value}</span>
+              <span className="text-lg font-semibold text-ink-2">{view.site.visitors}</span>
             </div>
-          ) : <Headcount view={view} />}
+          )}
+          {only === "commits" && <Headcount view={view} />}
         </div>
         {pills}
       </div>
-      <div className="mt-[22px]">{visits && site ? <LineChart chart={site.chart} /> : chart}</div>
+      <div className="mt-[22px]">{chart}</div>
     </>
   )
 }

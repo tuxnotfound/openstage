@@ -53,19 +53,29 @@
       <% if @total_entries.zero? %>
         <%= render "profiles/page/empty", user: @user %>
       <% elsif (section = @page&.section) %>
-        <%= react_island("progress", { initial: ProgressViewSerializer.new(section, linked_id: @linked&.id).as_json, endpoint: api_progress_path(@user.username),
-                                 mode: "page", defaultRange: Progress::Window::DEFAULT, shippedTarget: "what-shipped-panel" }, id: "progress") do %>
+        <% site_view = SiteVisitsViewSerializer.new(@page.site, section) if @page.site %>
+        <% numbers = chart_numbers(site_view, params[:show]) %>
+        <%= react_island("progress", { initial: ProgressViewSerializer.new(section, linked_id: @linked&.id, site: site_view).as_json,
+                                       endpoint: api_progress_path(@user.username, site: (1 if site_view)), mode: "page", numbers: numbers,
+                                       defaultRange: Progress::Window::DEFAULT, shippedTarget: "what-shipped-panel" }, id: "progress") do %>
           <%= render "profiles/page/headline", user: @user, section: section %>
           <% several = section.tally.projects.all.size > 1 %>
           <div class="mt-6 grid items-start gap-x-8 gap-y-6 <%= 'lg:grid-cols-[minmax(0,1fr)_280px]' if several %>">
             <div class="min-w-0">
-              <nav class="os-pills ml-auto w-fit" aria-label="Time range">
-                <% ProgressHelper::RANGES.each do |range, label| %>
-                  <%= link_to label, progress_view_path(@user, range: range == Progress::Window::DEFAULT ? nil : range),
-                        class: "os-pill max-sm:px-2", aria: { current: (section.labels.range == range ? "page" : nil) } %>
+              <div class="flex flex-wrap items-end justify-between gap-3">
+                <% if site_view %>
+                  <%= render "profiles/page/numbers", numbers: numbers,
+                             values: { "commits" => section.tally.totals.commits, "visits" => site_view.attributes[:value] },
+                             path_for: ->(value) { progress_view_path(@user, show: value) } %>
                 <% end %>
-              </nav>
-              <div class="mt-[22px]"><%= render "profiles/page/chart", section: section, chart: ProgressChart::Trend.new(section) %></div>
+                <nav class="os-pills ml-auto w-fit" aria-label="Time range">
+                  <% ProgressHelper::RANGES.each do |range, label| %>
+                    <%= link_to label, progress_view_path(@user, range: range == Progress::Window::DEFAULT ? nil : range),
+                          class: "os-pill max-sm:px-2", aria: { current: (section.labels.range == range ? "page" : nil) } %>
+                  <% end %>
+                </nav>
+              </div>
+              <div class="mt-[22px]"><%= render "profiles/page/chart", section: section, chart: numbers_chart(section, site_view, numbers) %></div>
             </div>
             <%= render "profiles/page/filters", user: @user, section: section if several %>
           </div>
