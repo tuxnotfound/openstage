@@ -1,10 +1,10 @@
-<%# The builder's own chart: the public page's, every project in view, with
-    the site visits picked for it in Your projects. The window switches in
-    the page's script, with no request. %>
+<%# The builder's own chart: the public page's, every project in view, its
+    commits and site visits, each switched on or off in the table under it.
+    The window switches in the page's script, with no request. %>
 <% arrow, change, up = progress_change(section) %>
 <% kept = request.query_parameters.except("page", "range") %>
 <section class="os-panel" aria-labelledby="your-activity">
-  <%= react_island("progress", { initial: ProgressViewSerializer.new(section, site: site_view).as_json,
+  <%= react_island("progress", { initial: ProgressViewSerializer.new(section, lines: lines).as_json,
                                  endpoint: api_progress_path(current_user.username, dashboard: 1),
                                  mode: "dashboard", defaultRange: DashboardController::ACTIVITY_RANGE }, id: "activity-chart") do %>
     <div class="os-between">
@@ -21,12 +21,13 @@
       <span class="os-ink2">
         commits, <%= section.labels.words %><% if change.present? %> ·
           <% if arrow %><span class="<%= up ? 'text-up' : 'text-down' %>" aria-label="<%= up ? 'Up' : 'Down' %>"><%= arrow %></span><% end %>
-          <%= change %><% end %><% if site_view %> · <%= site_view.attributes[:value] %> site visits<% end %>
+          <%= change %><% end %><% if lines&.attributes&.dig(:visits) %> · <%= lines.attributes[:visits] %> site visits<% end %>
       </span>
     </div>
     <div class="mt-3.5">
-      <%= render "profiles/page/chart", section: section, chart: site_view ? site_view.compare_chart : ProgressChart::Trend.new(section),
-                 height: "h-[260px]", legend: true %>
+      <%= render "profiles/page/chart", section: section, chart: lines ? lines.chart : ProgressChart::Trend.new(section), height: "h-[260px]",
+                 legend: lines.nil? %>
+      <%= render "dashboard/lines", lines: lines.attributes, section: section if lines %>
     </div>
   <% end %>
 </section>

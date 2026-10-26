@@ -28,6 +28,11 @@ export class ViewStore<T> {
     this.get(url).catch(() => undefined)
   }
 
+  // After a change on the server every view kept may be out of date.
+  clear(): void {
+    this.views.clear()
+  }
+
   get size(): number {
     return this.views.size
   }

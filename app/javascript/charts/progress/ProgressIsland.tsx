@@ -1,9 +1,9 @@
-import { useState, type ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom"
 import LineChart, { projectClass } from "../LineChart"
 import Switches, { type Target } from "../Switches"
 import { useView } from "../useView"
-import type { ChartNumber, ChartView, ProgressRange, ProgressView, ShippedItem } from "../types"
+import type { ChartNumber, ChartView, LinesRow, LinesView, ProgressRange, ProgressView, ShippedItem } from "../types"
 
 // The commit chart and what it counts, on a builder's page, a project's page
 // and the dashboard, with the site visits each shows beside the commits. A
@@ -29,7 +29,7 @@ const SHOWN = 8
 const NUMBERS: [ChartNumber, string][] = [["commits", "Commits"], ["visits", "Site visits"]]
 
 export default function ProgressIsland({ initial, endpoint, mode, numbers: initialNumbers = ["commits", "visits"], defaultRange, shippedTarget }: ProgressProps) {
-  const { view, busy, failed, show, retry, prefetch } = useView(initial, apiUrl(endpoint, initial.range, initial.selected))
+  const { view, busy, failed, show, reload, retry, prefetch } = useView(initial, apiUrl(endpoint, initial.range, initial.selected))
   const [picked, setPicked] = useState<ChartNumber[]>(initialNumbers)
   // The dashboard draws what each project picked; the pages, the toggles' choice.
   const numbers: ChartNumber[] = !view.site ? ["commits"] : mode === "dashboard" ? ["commits", "visits"] : picked
@@ -76,7 +76,10 @@ export default function ProgressIsland({ initial, endpoint, mode, numbers: initi
       })}
     </div>
   )
-  const chart = <LineChart chart={chartFor(view, numbers)} height={mode === "dashboard" ? "h-[260px]" : ""} legend={mode === "dashboard"} />
+  const lines = useLineSwitches(view.lines, () => reload(...urls(view.range, view.selected)))
+  const chart = mode === "dashboard" && lines.view
+    ? <LineChart chart={lines.chart} height="h-[260px]" />
+    : <LineChart chart={chartFor(view, numbers)} height={mode === "dashboard" ? "h-[260px]" : ""} legend={mode === "dashboard"} />
   const toggles = view.site && mode !== "dashboard" ? <NumberToggles view={view} numbers={numbers} toggle={toggle} /> : null
   const shipped = shippedTarget ? document.getElementById(shippedTarget) : null
 
@@ -104,10 +107,11 @@ export default function ProgressIsland({ initial, endpoint, mode, numbers: initi
           <div className="mt-3 flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
             <span className="os-num text-[56px] leading-none">{view.commits}</span>
             <span className="os-ink2">
-              commits, {view.words}{view.change.words && <> · <Arrow view={view} /> {view.change.words}</>}{view.site && <> · {view.site.value} site visits</>}
+              commits, {view.words}{view.change.words && <> · <Arrow view={view} /> {view.change.words}</>}{view.lines?.visits && <> · {view.lines.visits} site visits</>}
             </span>
           </div>
           <div className="mt-3.5">{chart}</div>
+          {lines.view && <LinesTable lines={lines} words={view.words} />}
         </>
       )}
       {failed && (
@@ -132,6 +136,121 @@ function Arrow({ view }: { view: ProgressView }) {
   const { arrow, up } = view.change
   if (!arrow) return null
   return <span className={up ? "text-up" : "text-down"} aria-label={up ? "Up" : "Down"}>{arrow}</span>
+}
+
+// The dashboard's table switches: a switch answers at once, and its line
+// leaves the chart at once; the save goes to the server, which then draws
+// the chart again on its new scale. A failed save puts the switch back.
+type LineSwitches = {
+  view: LinesView | null
+  chart: ChartView
+  on: (row: LinesRow, number: ChartNumber) => boolean
+  flip: (row: LinesRow, number: ChartNumber) => void
+  failed: boolean
+}
+
+function useLineSwitches(view: LinesView | null, redraw: () => void): LineSwitches {
+  const [pending, setPending] = useState<Record<string, boolean>>({})
+  const [failed, setFailed] = useState(false)
+
+  // A switch the server now agrees with is no longer pending.
+  useEffect(() => {
+    if (!view) return
+    setPending((was) => Object.fromEntries(Object.entries(was).filter(([key, on]) => {
+      const [repo, number] = key.split("|")
+      const row = view.rows.find((each) => each.repo === repo)
+      return row ? row[number as ChartNumber].on !== on : false
+    })))
+  }, [view])
+
+  const key = (row: LinesRow, number: ChartNumber) => `${row.repo}|${number}`
+  const on = (row: LinesRow, number: ChartNumber) => pending[key(row, number)] ?? row[number].on
+
+  async function flip(row: LinesRow, number: ChartNumber) {
+    if (!row.switch) return
+    const next = !on(row, number)
+    const which = key(row, number)
+    setFailed(false)
+    setPending((was) => ({ ...was, [which]: next }))
+    const response = await fetch(row.switch, {
+      method: "PATCH", credentials: "same-origin",
+      headers: { "Content-Type": "application/json", Accept: "application/json", "X-CSRF-Token": csrfToken() },
+      body: JSON.stringify({ number, on: next }),
+    }).catch(() => null)
+    if (response?.ok) return redraw()
+    setPending((was) => Object.fromEntries(Object.entries(was).filter(([each]) => each !== which)))
+    setFailed(true)
+  }
+
+  const chart = view ? { ...view.chart, paths: view.chart.paths.filter((path) => !(path.key && pending[path.key] === false)) } : null
+  return { view, chart: chart ?? emptyChart, on, flip, failed }
+}
+
+function csrfToken(): string {
+  return document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? ""
+}
+
+const emptyChart: ChartView = {
+  paths: [], ticks: [], columns: [], axis: [], ariaLabel: "", note: "", emptyNote: "", none: "", empty: true, average: false, legend: [],
+}
+
+// Under the dashboard's chart: a row per project, a cell per number with the
+// window's value and its switch, each column headed by its line.
+function LinesTable({ lines, words }: { lines: LineSwitches; words: string }) {
+  if (!lines.view) return null
+  return (
+    <div className="mt-5" id="activity-lines">
+      <table className="w-full table-fixed border-collapse text-sm">
+        <caption className="sr-only">What the chart draws for each project</caption>
+        <thead>
+          <tr className="text-xs text-ink-3">
+            <th scope="col" className="py-2 text-left font-bold">On this chart</th>
+            {NUMBERS.map(([number, label]) => (
+              <th key={number} scope="col" className="w-[100px] py-2 text-right font-bold sm:w-[136px]">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className={`w-3.5 border-t-[3px] border-current ${number === "visits" ? "border-dotted" : ""}`} aria-hidden="true" />{label}
+                </span>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {lines.view.rows.map((row) => (
+            <tr key={row.repo} className="border-t border-line" data-line-row={row.repo}>
+              <th scope="row" className="py-2.5 text-left font-bold">
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <span className={`os-dot ${projectClass(row.rank)} shrink-0 bg-(--project)`} /><span className="truncate">{row.name}</span>
+                </span>
+              </th>
+              {NUMBERS.map(([number, label]) => {
+                const cell = row[number]
+                const on = lines.on(row, number)
+                return (
+                  <td key={number} className="py-2.5 text-right">
+                    {cell.setup ? (
+                      <a href={cell.setup} className="inline-flex h-[22px] items-center rounded-full border border-line px-2.5 text-[11px] font-bold text-ink-2 hover:border-accent hover:text-accent-ink" aria-label={`Set up ${row.name}'s site visits`}>Set up</a>
+                    ) : cell.value === null ? (
+                      <span className="os-xs os-muted">–</span>
+                    ) : row.switch === null ? (
+                      <span className="os-num tabular-nums">{cell.value}</span>
+                    ) : (
+                      <span className="inline-flex items-center justify-end gap-2.5">
+                        <span className={`os-num tabular-nums ${on ? "text-ink" : "text-ink-3"}`}>{cell.value}</span>
+                        <button type="button" role="switch" aria-checked={on} aria-label={`Draw ${row.name}'s ${label.toLowerCase()}`} className="os-switch"
+                                onClick={() => lines.flip(row, number)} />
+                      </span>
+                    )}
+                  </td>
+                )
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {lines.failed && <p role="status" className="os-note mt-2">That switch did not save. Try it again.</p>}
+      <p className="os-note mt-2">Values are the {words}. These switches change this chart only.</p>
+    </div>
+  )
 }
 
 // The chart for the numbers on: commits alone, visits alone, or both.

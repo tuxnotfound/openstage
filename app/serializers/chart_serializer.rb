@@ -9,7 +9,7 @@ class ChartSerializer < ApplicationSerializer
 
   def attributes
     {
-      paths: @chart.paths.map { |d, rank, dashed| { d: d, rank: rank, dashed: dashed == true } },
+      paths: @chart.paths.map { |d, rank, dashed, key| { d: d, rank: rank, dashed: dashed == true, key: key } },
       ticks: @chart.ticks.map { |tick| { value: tick.value, top: tick.top } },
       columns: @chart.columns.map { |column| column_of(column) },
       axis: @chart.axis, aria_label: @chart.aria_label, note: @chart.note, empty_note: @chart.empty_note, none: @chart.none,

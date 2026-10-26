@@ -4,8 +4,9 @@
 export type Rank = number | null
 
 export type ChartView = {
-  // dashed: site visits, drawn dotted beside solid commits.
-  paths: { d: string; rank: Rank; dashed: boolean }[]
+  // dashed: site visits, drawn dotted beside solid commits; key: the line a
+  // dashboard switch hides ("repo|number"), null on the other charts.
+  paths: { d: string; rank: Rank; dashed: boolean; key: string | null }[]
   // value: a count, or a share of each line's peak ("50%") when the chart compares numbers.
   ticks: { value: number | string; top: number }[]
   columns: { left: number; width: number; mark: number; title: string; rows: { name: string; rank: Rank; value: string }[] }[]
@@ -38,7 +39,26 @@ export type ProgressView = {
   shipped: { heading: string; empty: string; items: ShippedItem[] }
   // The site visits the chart can draw beside the commits, for the same window.
   site: SiteView | null
+  // The dashboard's chart, with the lines switched off left out, and its table.
+  lines: LinesView | null
 }
+
+// A cell of the dashboard's table: the window's value and its switch; setup:
+// where to start counting a number the project has none of.
+export type LineCell = { value: string | null; on: boolean; setup: string | null }
+
+export type LinesRow = {
+  repo: string
+  name: string
+  rank: Rank
+  // Projects::DashboardNumbersController's path for this project; null
+  // without a synced repo behind it, so nothing to save.
+  switch: string | null
+  commits: LineCell
+  visits: LineCell
+}
+
+export type LinesView = { chart: ChartView; rows: LinesRow[]; visits: string | null }
 
 // chart: the visits alone; compare: commits and visits, each line against its own peak.
 export type SiteView = {

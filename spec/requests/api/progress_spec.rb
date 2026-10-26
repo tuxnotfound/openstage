@@ -98,11 +98,12 @@ RSpec.describe "Api::Progress", type: :request do
     repo.site_visit_days.create!(day: Date.new(2026, 10, 23), visits: 40, visitors: 12)
 
     get "/api/progress/builder", params: { range: "30d", dashboard: 1 }
-    expect(json["site"]).to be_nil
+    expect(json["lines"]).to be_nil
 
     sign_in_as(user)
     get "/api/progress/builder", params: { range: "30d", dashboard: 1 }
-    expect(json["site"]["value"]).to eq("40")
+    expect(json["lines"]["visits"]).to eq("40")
+    expect(json["lines"]["rows"].first).to include("repo" => "builder/app", "visits" => a_hash_including("value" => "40", "on" => true))
     expect(response.headers["Cache-Control"]).to include("private")
   end
 end

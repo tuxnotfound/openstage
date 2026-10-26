@@ -4,7 +4,8 @@ module SiteVisits
   # their visits on their own (TallyService), and their visits on the
   # section's own points, to compare with its commits. A public page shows a
   # project's visits where its builder shows them (GithubRepo#site_visits_public?);
-  # the builder's dashboard, where they picked them for it.
+  # the builder's dashboard, every project counted, so its table shows the
+  # number of one switched off too (Progress::LinesService).
   class GatherService < ApplicationService
     # dashboard: the builder's own chart, rather than a public page's.
     attr_accessor :user, :section, :dashboard
@@ -34,7 +35,7 @@ module SiteVisits
     def drawn_repos
       in_view = (section.selected.presence || section.tally.projects.all).map(&:repo)
       counted = user.github_repos.where(full_name: in_view).where.not(site_first_visit_at: nil).to_a
-      dashboard ? counted.select { |repo| repo.dashboard_numbers.include?("visits") } : counted.select(&:site_visits_public?)
+      dashboard ? counted : counted.select(&:site_visits_public?)
     end
 
     # The 30-day view's points are 7-day averages, as its commits are.

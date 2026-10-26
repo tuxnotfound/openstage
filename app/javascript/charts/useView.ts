@@ -34,11 +34,18 @@ export function useView<T>(initial: T, initialUrl: string) {
       })
   }
 
+  // Ask again, past every view kept, after a change on the server.
+  function reload(url: string, pageUrl: string) {
+    store.clear()
+    show(url, pageUrl)
+  }
+
   return {
     view,
     busy,
     failed: failed !== null,
     show,
+    reload,
     retry: () => failed && show(failed.url, failed.pageUrl),
     prefetch: (url: string) => store.prefetch(url),
   }

@@ -54,32 +54,44 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     expect(user.entries.where(repo_name: "builder/app").pluck(:hidden).uniq).to eq([ true ])
   end
 
-  describe "site visits on Your activity" do
+  describe "the table under Your activity" do
     before do
       tool.update!(homepage: "https://app.example", site_source: "script", site_first_visit_at: 2.days.ago, site_visits_shown: false)
       tool.site_visit_days.create!(day: 1.day.ago.to_date, visits: 90, visitors: 30)
     end
 
-    it "draws a project's visits beside its commits, shown on its page or not, with a chip to leave them out" do
+    def cells(repo)
+      page.css("[data-line-row='#{repo}'] td").map { |cell| [ cell.text.squish, cell.at_css("button[role='switch']")&.[]("aria-checked") ] }
+    end
+
+    it "lists each project with its commits and site visits, each switched on, and offers to set up visits where none count" do
       get "/dashboard"
 
-      expect(page.at_css("section[aria-labelledby='your-activity']").text.squish).to include("90 site visits")
+      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "true" ] ])
+      expect(cells("builder/bare")).to eq([ [ "1", "true" ], [ "Set up", nil ] ])
+      expect(page.at_css("[data-line-row='builder/bare'] a")["href"]).to eq("/projects/#{bare.id}/edit?site=open#site-visits")
+      expect(page.at_css("section[aria-labelledby='your-activity']").text.squish).to include("90 site visits", "These switches change this chart only.")
       expect(response.body).to include("app · site visits", "Solid: commits. Dotted: site visits.")
-      chip = page.at_css("[data-project-row='builder/app'] form[action='/projects/#{tool.id}/dashboard_numbers'] button")
-      expect(chip["aria-pressed"]).to eq("true")
-      expect(page.at_css("[data-project-row='builder/bare'] form[action$='/dashboard_numbers']")).to be_nil
+    end
 
+    it "switches a number off for one project, and the chart leaves its line out" do
       patch "/projects/#{tool.id}/dashboard_numbers", params: { number: "visits", on: "false" }
       expect(response).to redirect_to(dashboard_path(anchor: "your-activity"))
-      expect(tool.reload.dashboard_numbers).to eq([])
+      expect(tool.reload.dashboard_hidden).to eq([ "visits" ])
 
       get "/dashboard"
+      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "false" ] ])
       expect(response.body).not_to include("app · site visits")
+
+      patch "/projects/#{tool.id}/dashboard_numbers", params: { number: "visits", on: true }, as: :json
+      expect(response).to have_http_status(:no_content)
+      expect(tool.reload.dashboard_hidden).to eq([])
     end
 
     it "refuses a number the dashboard cannot draw, and someone else's project" do
-      patch "/projects/#{tool.id}/dashboard_numbers", params: { number: "mrr", on: "true" }
-      expect(tool.reload.dashboard_numbers).to eq([ "visits" ])
+      patch "/projects/#{tool.id}/dashboard_numbers", params: { number: "mrr", on: false }, as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(tool.reload.dashboard_hidden).to eq([])
 
       theirs = create(:github_repo, user: create(:user))
       patch "/projects/#{theirs.id}/dashboard_numbers", params: { number: "visits", on: "false" }

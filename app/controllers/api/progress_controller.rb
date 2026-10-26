@@ -32,14 +32,21 @@ module Api
 
     def view(user, reveal)
       service = Progress::ComposeService.new(user: user, range: range, repos: repos, rolling: true, reveal: reveal)
-      ProgressViewSerializer.new(service.section, site: site_view(user, service.section)).to_json if service.call
+      return unless service.call
+
+      section = service.section
+      ProgressViewSerializer.new(section, site: (site_view(user, section) if params[:site].present?),
+                                          lines: (lines_view(user, section) if dashboard?(user))).to_json
     end
 
     def site_view(user, section)
-      return unless site?(user)
-
-      gather = SiteVisits::GatherService.new(user: user, section: section, dashboard: dashboard?(user))
+      gather = SiteVisits::GatherService.new(user: user, section: section)
       SiteVisitsViewSerializer.new(gather, section) if gather.call && gather.any?
+    end
+
+    def lines_view(user, section)
+      lines = Progress::LinesService.new(user: user, section: section)
+      DashboardLinesSerializer.new(lines, section) if lines.call
     end
 
     def site?(user)

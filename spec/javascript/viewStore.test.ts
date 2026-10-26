@@ -53,4 +53,15 @@ describe("ViewStore", () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
     expect(store.size).toBe(0)
   })
+
+  test("asks again for every view once cleared", async () => {
+    const fetcher = vi.fn(async (url: string) => `view of ${url}`)
+    const store = new ViewStore<string>(10, fetcher)
+    store.seed("/e", "old")
+
+    store.clear()
+
+    await expect(store.get("/e")).resolves.toBe("view of /e")
+    expect(fetcher).toHaveBeenCalledTimes(1)
+  })
 })

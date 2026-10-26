@@ -1,0 +1,50 @@
+<%# Under Your activity's chart: a row per project, a cell per number with
+    the window's value and the switch that draws it, the number's line in the
+    column's head. The chart's script redraws in place; without it, each
+    switch is a form. lines: the DashboardLinesSerializer's attributes. %>
+<div class="mt-5" id="activity-lines">
+  <table class="w-full table-fixed border-collapse text-sm">
+    <caption class="sr-only">What the chart draws for each project</caption>
+    <thead>
+      <tr class="text-xs text-ink-3">
+        <th scope="col" class="py-2 text-left font-bold">On this chart</th>
+        <% SiteVisitsHelper::CHART_NUMBERS.each do |number, label| %>
+          <th scope="col" class="w-[100px] py-2 text-right font-bold sm:w-[136px]">
+            <span class="inline-flex items-center gap-1.5">
+              <span class="w-3.5 border-t-[3px] border-current <%= 'border-dotted' if number == 'visits' %>" aria-hidden="true"></span><%= label %>
+            </span>
+          </th>
+        <% end %>
+      </tr>
+    </thead>
+    <tbody>
+      <% lines[:rows].each do |row| %>
+        <tr class="border-t border-line" data-line-row="<%= row[:repo] %>">
+          <th scope="row" class="py-2.5 text-left font-bold">
+            <span class="flex min-w-0 items-center gap-2.5"><span class="os-dot <%= project_class(row[:rank]) %> bg-(--project) shrink-0"></span><span class="truncate"><%= row[:name] %></span></span>
+          </th>
+          <% SiteVisitsHelper::CHART_NUMBERS.each do |number, label| %>
+            <% cell = row[number.to_sym] %>
+            <td class="py-2.5 text-right">
+              <% if cell[:setup] %>
+                <%= link_to "Set up", cell[:setup], class: "inline-flex h-[22px] items-center rounded-full border border-line px-2.5 text-[11px] font-bold text-ink-2 hover:border-accent hover:text-accent-ink", aria: { label: "Set up #{row[:name]}'s site visits" } %>
+              <% elsif cell[:value].nil? %>
+                <span class="os-xs os-muted">–</span>
+              <% elsif row[:switch].nil? %>
+                <span class="os-num tabular-nums"><%= cell[:value] %></span>
+              <% else %>
+                <span class="inline-flex items-center justify-end gap-2.5">
+                  <span class="os-num tabular-nums <%= cell[:on] ? 'text-ink' : 'text-ink-3' %>"><%= cell[:value] %></span>
+                  <%= button_to "", row[:switch], method: :patch, params: { number: number, on: (!cell[:on]).to_s },
+                        role: "switch", aria: { checked: cell[:on], label: "Draw #{row[:name]}'s #{label.downcase}" }, class: "os-switch",
+                        form: { data: { turbo: false } } %>
+                </span>
+              <% end %>
+            </td>
+          <% end %>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <p class="os-note mt-2">Values are the <%= section.labels.words %>. These switches change this chart only.</p>
+</div>

@@ -29,10 +29,8 @@ RSpec.describe SiteVisits::GatherService do
     expect(gather(repos: [ "builder/lib" ]).any?).to be(false)
   end
 
-  it "draws on the dashboard the projects whose visits the builder picked for it, shown or not" do
-    app.update!(dashboard_numbers: [])
-
-    expect(gather(dashboard: true).repos).to eq([ lib ])
+  it "gathers on the dashboard every project counted, shown on its page or not" do
+    expect(gather(dashboard: true).repos).to contain_exactly(app, lib)
   end
 
   it "puts the visits on the section's points, as 7-day averages over 30 days and sums by week over 90" do
