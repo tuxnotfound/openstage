@@ -9,9 +9,11 @@ class ProgressViewSerializer < ApplicationSerializer
   include ActionView::Helpers::TextHelper
 
   # linked_id: the entry a link pointed at, shown above the page instead.
-  def initialize(section, linked_id: nil)
+  # site: a project page's SiteVisitsViewSerializer, when it shows them.
+  def initialize(section, linked_id: nil, site: nil)
     @section = section
     @linked_id = linked_id
+    @site = site
   end
 
   def attributes
@@ -22,7 +24,7 @@ class ProgressViewSerializer < ApplicationSerializer
       words: @section.labels.words, scope: progress_scope(@section), commits: totals.commits,
       change: { arrow: arrow, words: words.presence, up: up }, shares: shares, kpis: kpis,
       projects: tally.projects.all.map { |project| project_switch(project) },
-      chart: ChartSerializer.new(ProgressChart::Trend.new(@section)).attributes, shipped: shipped
+      chart: ChartSerializer.new(ProgressChart::Trend.new(@section)).attributes, shipped: shipped, site: @site&.attributes
     }
   end
 

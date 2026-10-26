@@ -1,9 +1,9 @@
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { createPortal } from "react-dom"
 import LineChart, { projectClass } from "../LineChart"
 import Switches, { type Target } from "../Switches"
 import { useView } from "../useView"
-import type { ProgressRange, ProgressView, ShippedItem } from "../types"
+import type { ProjectMetric, ProgressRange, ProgressView, ShippedItem } from "../types"
 
 // The commit chart and what it counts, on a builder's page, a project's page
 // and the dashboard. A click asks Api::ProgressController for that view and
@@ -15,6 +15,8 @@ export type ProgressProps = {
   // own (a hidden project's, for its builder).
   endpoint: string
   mode: "page" | "project" | "dashboard"
+  // A project's page: the number charted first.
+  metric?: ProjectMetric
   defaultRange: ProgressRange
   // The What shipped section to keep in step, by element id.
   shippedTarget?: string
@@ -23,8 +25,9 @@ export type ProgressProps = {
 const RANGES: [ProgressRange, string][] = [["30d", "30 days"], ["90d", "90 days"], ["12m", "12 months"], ["all", "All time"]]
 const SHOWN = 8
 
-export default function ProgressIsland({ initial, endpoint, mode, defaultRange, shippedTarget }: ProgressProps) {
+export default function ProgressIsland({ initial, endpoint, mode, metric: initialMetric = "commits", defaultRange, shippedTarget }: ProgressProps) {
   const { view, busy, failed, show, retry, prefetch } = useView(initial, apiUrl(endpoint, initial.range, initial.selected))
+  const [metric, setMetric] = useState<ProjectMetric>(initialMetric)
 
   // The API's address and the page's own for a view: the page keeps its
   // other params (the dashboard's entry filters, a linked entry).
@@ -74,18 +77,7 @@ export default function ProgressIsland({ initial, endpoint, mode, defaultRange, 
           </div>
         </>
       )}
-      {mode === "project" && (
-        <>
-          <div className="os-between mt-7.5 items-end">
-            <div>
-              <p className="os-label">Commits · {view.words}</p>
-              <Headcount view={view} />
-            </div>
-            {pills}
-          </div>
-          <div className="mt-[22px]">{chart}</div>
-        </>
-      )}
+      {mode === "project" && <ProjectNumbers view={view} metric={metric} pick={setMetric} pills={pills} chart={chart} />}
       {mode === "dashboard" && (
         <>
           <div className="os-between">
@@ -121,6 +113,52 @@ function Arrow({ view }: { view: ProgressView }) {
   const { arrow, up } = view.change
   if (!arrow) return null
   return <span className={up ? "text-up" : "text-down"} aria-label={up ? "Up" : "Down"}>{arrow}</span>
+}
+
+// A project's page: with site visits, a tab per number above the chart
+// switches it, and the page's URL keeps the pick.
+function ProjectNumbers({ view, metric, pick, pills, chart }: {
+  view: ProgressView; metric: ProjectMetric; pick: (metric: ProjectMetric) => void; pills: ReactNode; chart: ReactNode
+}) {
+  const site = view.site
+  const visits = metric === "visits" && site !== null
+  const tabs: [ProjectMetric, string, string][] = [["commits", "Commits", String(view.commits)], ["visits", "Site visits", site?.value ?? ""]]
+
+  function choose(next: ProjectMetric) {
+    pick(next)
+    const url = new URL(window.location.href)
+    if (next === "commits") url.searchParams.delete("metric")
+    else url.searchParams.set("metric", next)
+    window.history.replaceState(window.history.state, "", url)
+  }
+
+  return (
+    <>
+      {site && (
+        <div className="os-pills mt-7 flex-wrap" role="group" aria-label="Numbers">
+          {tabs.map(([key, label, value]) => (
+            <button key={key} type="button" className="os-pill h-auto flex-col items-start px-[18px] py-2" aria-pressed={(key === "visits") === visits}
+                    onClick={() => choose(key)}>
+              <span className="block text-xs">{label}</span><span className="os-num text-[22px]">{value}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <div className={`os-between items-end ${site ? "mt-5.5" : "mt-7.5"}`}>
+        <div>
+          <p className="os-label">{visits ? "Site visits" : "Commits"} · {view.words}</p>
+          {visits && site ? (
+            <div className="mt-0.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-1.5">
+              <span className="os-num os-big">{site.value}</span>
+              <span className="text-lg font-semibold text-ink-2">{site.visitors}</span>
+            </div>
+          ) : <Headcount view={view} />}
+        </div>
+        {pills}
+      </div>
+      <div className="mt-[22px]">{visits && site ? <LineChart chart={site.chart} /> : chart}</div>
+    </>
+  )
 }
 
 function Headcount({ view }: { view: ProgressView }) {

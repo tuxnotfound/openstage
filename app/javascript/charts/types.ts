@@ -34,7 +34,18 @@ export type ProgressView = {
   projects: { repo: string; name: string; rank: number; on: boolean; value: string | null }[]
   chart: ChartView
   shipped: { heading: string; empty: string; items: ShippedItem[] }
+  // A project's page with site visits: the same window's, for its tab.
+  site: SiteView | null
 }
+
+export type SiteView = {
+  value: string
+  visitors: string
+  chart: ChartView
+}
+
+// The number a project's page charts.
+export type ProjectMetric = "commits" | "visits"
 
 export type ShippedItem = {
   id: number

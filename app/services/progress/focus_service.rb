@@ -13,8 +13,9 @@ module Progress
     attr_accessor :user, :slug, :range, :reveal
     # page: the GatherService run for this project; others: the rest of the
     # builder's cards; news: the latest highlight; highlights: how many there
-    # are, ever; first_commit: a time; co_builders: CoBuilders, busiest first.
-    attr_reader :project, :page, :card, :others, :news, :highlights, :first_commit, :co_builders
+    # are, ever; first_commit: a time; co_builders: CoBuilders, busiest first;
+    # site: a SiteVisits::TallyService, when the page shows site visits.
+    attr_reader :project, :page, :card, :others, :news, :highlights, :first_commit, :co_builders, :site
 
     validates :user, :slug, presence: true
 
@@ -37,6 +38,7 @@ module Progress
       @highlights = entries.highlights.where(repo_name: project.repo).count
       @first_commit = entries.commits.where(repo_name: project.repo).minimum(:occurred_at)
       @co_builders = co_builders_on(project.repo)
+      @site = site_visits
     end
 
     # Two repos may share a name under different owners; the busier one wins.
@@ -55,6 +57,11 @@ module Progress
                     .joins(:user).merge(User.active).group(:user_id).count
       User.where(id: counts.keys).map { |builder| CoBuilder.new(user: builder, commits: counts[builder.id]) }
           .sort_by { |co| [ -co.commits, co.user.username ] }
+    end
+
+    def site_visits
+      tally = SiteVisits::TallyService.new(repo: card&.github_repo, range: range)
+      tally if tally.call
     end
 
     def split_cards(cards)

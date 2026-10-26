@@ -71,4 +71,22 @@ RSpec.describe "Api::Progress", type: :request do
 
     expect(response).to have_http_status(:not_found)
   end
+
+  it "adds a project page's site visits for the same window, when its page shows them" do
+    repo = create(:github_repo, user: user, full_name: "builder/app", name: "app", homepage: "https://app.example",
+                                site_source: "script", site_token: "os_a", site_first_visit_at: 2.days.ago)
+    repo.site_visit_days.create!(day: Date.new(2026, 10, 23), visits: 40, visitors: 12)
+    user.update!(pro: true)
+
+    get "/api/progress/builder", params: { range: "30d", repo: [ "builder/app" ], site: 1 }
+    expect(json["site"]).to include("value" => "40", "visitors" => "12 visitors")
+    expect(json["site"]["chart"]["ariaLabel"]).to eq("Site visits per day, last 30 days")
+
+    get "/api/progress/builder", params: { range: "30d", repo: [ "builder/app" ] }
+    expect(json["site"]).to be_nil
+
+    repo.update!(site_visits_shown: false)
+    get "/api/progress/builder", params: { range: "90d", repo: [ "builder/app" ], site: 1 }
+    expect(json["site"]).to be_nil
+  end
 end

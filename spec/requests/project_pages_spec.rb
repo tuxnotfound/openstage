@@ -139,6 +139,47 @@ RSpec.describe "Project pages", type: :request do
     end
   end
 
+  describe "site visits" do
+    let(:repo) { user.github_repos.find_by!(name: "side.app") }
+
+    before do
+      travel_to Time.utc(2026, 10, 26, 12)
+      repo.update!(site_source: "script", site_token: "os_a", site_first_visit_at: 3.days.ago)
+      repo.site_visit_days.create!(day: Date.new(2026, 10, 24), visits: 1204, visitors: 800)
+      user.update!(pro: true)
+    end
+
+    def tabs
+      Nokogiri::HTML(response.body).css("nav[aria-label='Numbers'] a").map { |tab| tab.css("span").map(&:text).join(" ") }
+    end
+
+    it "puts a tab per number above the chart, and charts the visits on its tab" do
+      get "/builder/side.app"
+      expect(tabs).to eq([ "Commits 1", "Site visits 1,204" ])
+
+      get "/builder/side.app", params: { metric: "visits", range: "30d" }
+      page = Nokogiri::HTML(response.body)
+      expect(page.at_css(".os-big").text).to eq("1,204")
+      expect(response.body).to include("800 visitors", "Visits to side.example per day, counted by Openstage&#39;s script")
+      props = JSON.parse(page.at_css("#progress-props").text)
+      expect(props).to include("metric" => "visits", "endpoint" => "/api/progress/builder?site=1")
+      expect(props.dig("initial", "site", "value")).to eq("1,204")
+    end
+
+    it "keeps them off the page while switched off, or before Pro on a second site" do
+      repo.update!(site_visits_shown: false)
+      get "/builder/side.app"
+      expect(tabs).to be_empty
+
+      repo.update!(site_visits_shown: true)
+      user.update!(pro: false)
+      other = create(:github_repo, user: user, site_source: "script")
+      other.site_visit_days.create!(day: Date.current, visits: 5000, visitors: 10)
+      get "/builder/side.app"
+      expect(tabs).to be_empty
+    end
+  end
+
   it "is linked from the builder's page and listed in the sitemap" do
     get "/builder"
     expect(response.body).to include(%(href="/builder/side.app"))
