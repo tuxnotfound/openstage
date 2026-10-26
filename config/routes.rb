@@ -47,6 +47,9 @@ Rails.application.routes.draw do
   # Sync triggers
   post "/sync/github", to: "syncs#github", as: :sync_github
 
+  # A page view on a project's website, from Openstage's script (public/v.js).
+  post "/v", to: "site_visits#create", as: :site_visits
+
   # A project's words, website and picture, edited in its dashboard row.
   resources :projects, only: [ :edit, :update ]
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_24_200657) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_26_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -136,6 +136,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_24_200657) do
     t.text "description_edit"
     t.string "website_edit"
     t.string "image_edit"
+    t.string "site_source"
+    t.string "site_token"
+    t.datetime "site_first_visit_at"
+    t.boolean "site_visits_shown", default: true, null: false
+    t.index ["site_token"], name: "index_github_repos_on_site_token", unique: true
     t.index ["user_id", "github_repo_id"], name: "index_github_repos_on_user_id_and_github_repo_id", unique: true
     t.index ["user_id"], name: "index_github_repos_on_user_id"
   end
@@ -174,6 +179,25 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_24_200657) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id", "repo_name", "viewed_at"], name: "index_project_views_on_user_id_and_repo_name_and_viewed_at"
+  end
+
+  create_table "site_visit_days", force: :cascade do |t|
+    t.bigint "github_repo_id", null: false
+    t.date "day", null: false
+    t.integer "visits", default: 0, null: false
+    t.integer "visitors", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["github_repo_id", "day"], name: "index_site_visit_days_on_github_repo_id_and_day", unique: true
+  end
+
+  create_table "site_visitors", force: :cascade do |t|
+    t.bigint "github_repo_id", null: false
+    t.date "day", null: false
+    t.string "visitor_hash", null: false
+    t.integer "hits", default: 1, null: false
+    t.index ["day"], name: "index_site_visitors_on_day"
+    t.index ["github_repo_id", "day", "visitor_hash"], name: "index_site_visitors_once_a_day", unique: true
   end
 
   create_table "solid_queue_blocked_executions", force: :cascade do |t|
@@ -392,6 +416,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_24_200657) do
   add_foreign_key "profile_views", "users"
   add_foreign_key "project_clicks", "users", on_delete: :cascade
   add_foreign_key "project_views", "users", on_delete: :cascade
+  add_foreign_key "site_visit_days", "github_repos", on_delete: :cascade
+  add_foreign_key "site_visitors", "github_repos", on_delete: :cascade
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_claimed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_failed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

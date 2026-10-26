@@ -33,4 +33,32 @@ RSpec.describe GithubRepo do
     repo.preview_image_url = "https://repository-images.githubusercontent.com/1/x"
     expect(repo.missing).to eq(%w[website])
   end
+
+  describe "site visits" do
+    let(:user) { create(:user, pro: true) }
+    let(:site) { create(:github_repo, user: user, website_edit: "https://Shipnote.app/home", site_source: "script") }
+
+    it "counts on the website's host" do
+      expect(site.site_host).to eq("shipnote.app")
+    end
+
+    it "shows them on its page once one came, while switched on and counting" do
+      expect(site.site_visits_public?).to be(false)
+
+      site.update!(site_first_visit_at: Time.current)
+      expect(site.site_visits_public?).to be(true)
+
+      site.update!(site_visits_shown: false)
+      expect(site.site_visits_public?).to be(false)
+
+      site.update!(site_visits_shown: true, site_source: nil)
+      expect(site.site_visits_public?).to be(false)
+    end
+
+    it "refuses a source it does not know" do
+      site.site_source = "vercel"
+
+      expect(site).not_to be_valid
+    end
+  end
 end
