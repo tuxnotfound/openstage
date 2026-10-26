@@ -16,7 +16,7 @@
 <%# The chart over the table of projects that switches it: hiding a project
     from the page reloads the page here, and its line is gone. %>
 <div id="activity" class="scroll-mt-4">
-  <%= render "dashboard/activity", section: @activity, lines: @activity_lines if @activity %>
+  <%= render "dashboard/activity", section: @activity, numbers: @activity_numbers, table: @activity_table if @activity_numbers %>
 </div>
 <% if @badge_nudge || !current_user.pro? %>
   <div class="grid items-start gap-4 lg:grid-cols-2">

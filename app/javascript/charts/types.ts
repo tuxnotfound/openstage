@@ -4,11 +4,8 @@
 export type Rank = number | null
 
 export type ChartView = {
-  // dashed: site visits, drawn dotted beside solid commits; key: the line a
-  // dashboard switch hides ("repo|number"), null on the other charts.
-  paths: { d: string; rank: Rank; dashed: boolean; key: string | null }[]
-  // value: a count, or a share of each line's peak ("50%") when the chart compares numbers.
-  ticks: { value: number | string; top: number }[]
+  paths: { d: string; rank: Rank }[]
+  ticks: { value: number; top: number }[]
   columns: { left: number; width: number; mark: number; title: string; rows: { name: string; rank: Rank; value: string }[] }[]
   axis: string[]
   ariaLabel: string
@@ -18,7 +15,7 @@ export type ChartView = {
   empty: boolean
   average: boolean
   // Each line's project, in drawing order's reverse: the busiest first.
-  legend: { name: string; rank: Rank; dashed: boolean }[]
+  legend: { name: string; rank: Rank }[]
 }
 
 export type ProgressRange = "30d" | "90d" | "12m" | "all"
@@ -35,45 +32,37 @@ export type ProgressView = {
   kpis: string
   // value: the project's commits in the window, while it is in view.
   projects: { repo: string; name: string; rank: number; on: boolean; value: string | null }[]
-  chart: ChartView
+  // Every number the view has; the charted ones (on) with their chart.
+  numbers: NumberView[]
   shipped: { heading: string; empty: string; items: ShippedItem[] }
-  // The site visits the chart can draw beside the commits, for the same window.
-  site: SiteView | null
-  // The dashboard's chart, with the lines switched off left out, and its table.
-  lines: LinesView | null
+  // The dashboard's table of projects under its chart.
+  table: ProjectsTable | null
 }
 
-// A cell of the dashboard's table: the window's value and its switch; setup:
-// where to start counting a number the project has none of.
-export type LineCell = { value: string | null; on: boolean; setup: string | null }
+export type NumberView = {
+  key: string
+  label: string
+  value: string
+  change: { arrow: string | null; words: string | null; up: boolean | null }
+  on: boolean
+  chart: ChartView | null
+}
 
-export type LinesRow = {
+export type ProjectsTable = { columns: { key: string; label: string }[]; rows: ProjectsRow[] }
+
+// chart: whether the dashboard's chart draws it, null for a project hidden
+// from the page; values: by column key, null for a number it does not have;
+// setup: where to start counting its site visits.
+export type ProjectsRow = {
   repo: string
   name: string
   rank: Rank
-  // The project's own view; null without a synced repo behind it.
   edit: string | null
-  // Whether the builder's page shows it, and GithubReposController's path to switch it.
   page: { on: boolean; path: string } | null
-  // Projects::DashboardNumbersController's path for this project; null
-  // without a synced repo behind it, so nothing to save.
-  switch: string | null
-  commits: LineCell
-  visits: LineCell
+  chart: boolean | null
+  values: Record<string, string | null>
+  setup: string | null
 }
-
-export type LinesView = { chart: ChartView; rows: LinesRow[]; visits: string | null }
-
-// chart: the visits alone; compare: commits and visits, each line against its own peak.
-export type SiteView = {
-  value: string
-  visitors: string
-  chart: ChartView
-  compare: ChartView
-}
-
-// The numbers a chart can draw.
-export type ChartNumber = "commits" | "visits"
 
 export type ShippedItem = {
   id: number

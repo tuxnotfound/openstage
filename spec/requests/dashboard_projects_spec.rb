@@ -28,7 +28,7 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     get "/dashboard", params: { q: "work" }
 
     activity = page.at_css("section[aria-labelledby='your-activity']")
-    expect(activity.text.squish).to include("4 commits, last 90 days")
+    expect(activity.at_css("nav[aria-label='Numbers']").text.squish).to eq("Commits 4")
     expect(activity.at_css("svg[role='img']")["aria-label"]).to eq("Commits per week by project, last 90 days")
     month = activity.css("nav[aria-label='Time range'] a").find { |a| a.text == "30 days" }
     expect(month["href"]).to eq("/dashboard?q=work&range=30d")
@@ -66,43 +66,37 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     end
 
     def cells(repo)
-      page.css("[data-line-row='#{repo}'] td").drop(1).map do |cell|
-        [ cell.text.squish.sub(/\A(Commits|Site visits) ?/, ""), cell.at_css("button[role='switch']")&.[]("aria-checked") ]
+      page.css("[data-line-row='#{repo}'] td").map do |cell|
+        [ cell.text.squish.sub(/\A(On the chart|Your page|Commits|Site visits) ?/, ""), cell.at_css("[role='switch']")&.[]("aria-checked") ]
       end
     end
 
-    it "lists each project with its commits and site visits, each switched on, and offers to set up visits where none count" do
+    it "lists each project's numbers, the site visits of one hidden from its page too, and a chart for each" do
       get "/dashboard"
 
-      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "true" ] ])
-      expect(cells("builder/bare")).to eq([ [ "1", "true" ], [ "Set up", nil ] ])
+      expect(cells("builder/app")).to eq([ [ "", "true" ], [ "", "true" ], [ "3", nil ], [ "90", nil ] ])
+      expect(cells("builder/bare")).to eq([ [ "", "true" ], [ "", "true" ], [ "1", nil ], [ "Set up", nil ] ])
       expect(page.at_css("[data-line-row='builder/bare'] a[aria-label^='Set up']")["href"]).to eq("/projects/#{bare.id}/edit?site=open#site-visits")
-      expect(page.at_css("section[aria-labelledby='your-activity']").text.squish).to include("90 site visits", "the others, this chart only.")
-      expect(response.body).to include("app · site visits", "Solid: commits. Dotted: site visits.")
+      activity = page.at_css("section[aria-labelledby='your-activity']")
+      expect(activity.at_css("nav[aria-label='Numbers']").text.squish).to eq("Commits 4 Site visits 90")
+      expect(activity.css("section[aria-label]").map { |chart| chart["aria-label"] }).to eq([ "Commits", "Site visits" ])
     end
 
-    it "switches a number off for one project, and the chart leaves its line out" do
-      patch "/projects/#{tool.id}/dashboard_numbers", params: { number: "visits", on: "false" }
-      expect(response).to redirect_to(dashboard_path(anchor: "your-activity"))
-      expect(tool.reload.dashboard_hidden).to eq([ "visits" ])
-
+    it "switches a project off the chart, keeping the others, and back" do
       get "/dashboard"
-      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "false" ] ])
-      expect(response.body).not_to include("app · site visits")
+      switch = page.at_css("[data-line-row='builder/app'] a[role='switch']")
+      expect(Rack::Utils.parse_nested_query(URI(switch["href"]).query)["repo"]).to eq([ "builder/bare" ])
 
-      patch "/projects/#{tool.id}/dashboard_numbers", params: { number: "visits", on: true }, as: :json
-      expect(response).to have_http_status(:no_content)
-      expect(tool.reload.dashboard_hidden).to eq([])
+      get switch["href"]
+      expect(cells("builder/app").first).to eq([ "", "false" ])
+      back = page.at_css("[data-line-row='builder/app'] a[role='switch']")["href"]
+      expect(Rack::Utils.parse_nested_query(URI(back).query)["repo"]).to be_nil
     end
 
-    it "refuses a number the dashboard cannot draw, and someone else's project" do
-      patch "/projects/#{tool.id}/dashboard_numbers", params: { number: "mrr", on: false }, as: :json
-      expect(response).to have_http_status(:unprocessable_entity)
-      expect(tool.reload.dashboard_hidden).to eq([])
+    it "charts only the numbers picked" do
+      get "/dashboard", params: { show: [ "visits" ] }
 
-      theirs = create(:github_repo, user: create(:user))
-      patch "/projects/#{theirs.id}/dashboard_numbers", params: { number: "visits", on: "false" }
-      expect(response).to have_http_status(:not_found)
+      expect(page.css("section[aria-labelledby='your-activity'] section[aria-label]").map { |chart| chart["aria-label"] }).to eq([ "Site visits" ])
     end
   end
 end

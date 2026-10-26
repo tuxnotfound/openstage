@@ -1,8 +1,8 @@
 module Progress
   # Everything the public page shows below the builder's name: the window's
-  # section (ComposeService), the site visits it shows beside its commits
-  # (SiteVisits::GatherService), a card per project (SummarizeService) and
-  # the latest commits, grouped by project and day.
+  # section (ComposeService), the numbers its chart can draw (NumbersService),
+  # a card per project (SummarizeService) and the latest commits, grouped by
+  # project and day.
   class GatherService < ApplicationService
     # Groups in Recent commits, and the commits read to fill them.
     RECENT_GROUPS = 8
@@ -12,10 +12,10 @@ module Progress
     Group = Data.define(:project, :date, :commits)
 
     # range: a Window range; repos: the projects in view, none for all.
-    # reveal: a repo the builder hid, shown anyway (Entry.on_page).
-    attr_accessor :user, :range, :repos, :reveal
-    # site: a SiteVisits::GatherService, nil with no site visits to show.
-    attr_reader :section, :site, :cards, :recent
+    # reveal: a repo the builder hid, shown anyway (Entry.on_page). picked:
+    # the numbers to chart, none for every one the page has.
+    attr_accessor :user, :range, :repos, :reveal, :picked
+    attr_reader :section, :numbers, :cards, :recent
 
     validates :user, presence: true
 
@@ -26,10 +26,8 @@ module Progress
       return unless run(compose)
 
       @section = compose.section
-      site = SiteVisits::GatherService.new(user: user, section: section)
-      return unless run(site)
-
-      @site = site if site.any?
+      @numbers = NumbersService.new(user: user, section: section, picked: picked)
+      return unless run(numbers)
       summarize = SummarizeService.new(user: user, projects: section.tally.projects.all, zone: section.tally.zone, reveal: reveal)
       return unless run(summarize)
 

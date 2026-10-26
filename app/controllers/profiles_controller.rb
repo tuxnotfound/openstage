@@ -53,7 +53,7 @@ class ProfilesController < ApplicationController
   # The page opens on the last 12 months; ?range= picks another window and
   # ?repo= scopes the whole page.
   def gather
-    service = Progress::GatherService.new(user: @user, range: params[:range], repos: @repo_filter)
+    service = Progress::GatherService.new(user: @user, range: params[:range], repos: @repo_filter, picked: Array(params[:show]))
     service if service.call
   end
 

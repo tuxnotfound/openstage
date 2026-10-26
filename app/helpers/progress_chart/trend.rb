@@ -13,12 +13,7 @@ module ProgressChart
     HEADROOM = 1.1
 
     # values: one per point, in the window's order.
-    Line = Data.define(:repo, :name, :rank, :total, :values) do
-      # Commits draw solid; site visits dotted (Compare).
-      def dashed?
-        false
-      end
-    end
+    Line = Data.define(:repo, :name, :rank, :total, :values)
     Tick = Data.define(:value, :top)
     # rank: the project's colour; nil for an entry with no project.
     Disc = Data.define(:number, :item, :rank, :left, :top)

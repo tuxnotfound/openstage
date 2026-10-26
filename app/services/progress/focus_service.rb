@@ -10,12 +10,12 @@ module Progress
 
     # slug: the repo's name without its owner; range: a Window range.
     # reveal: a repo the builder hid, shown anyway (Entry.on_page).
-    attr_accessor :user, :slug, :range, :reveal
+    # picked: the numbers to chart, none for every one the page has.
+    attr_accessor :user, :slug, :range, :reveal, :picked
     # page: the GatherService run for this project; others: the rest of the
     # builder's cards; news: the latest highlight; highlights: how many there
     # are, ever; first_commit: a time; co_builders: CoBuilders, busiest first;
-    # site: the page's SiteVisits::GatherService, when it shows site visits.
-    attr_reader :project, :page, :card, :others, :news, :highlights, :first_commit, :co_builders, :site
+    attr_reader :project, :page, :card, :others, :news, :highlights, :first_commit, :co_builders
 
     validates :user, :slug, presence: true
 
@@ -28,7 +28,7 @@ module Progress
         return
       end
 
-      gather = GatherService.new(user: user, range: range, repos: [ project.repo ], reveal: reveal)
+      gather = GatherService.new(user: user, range: range, repos: [ project.repo ], reveal: reveal, picked: picked)
       gather.call
       return unless absorb_errors(gather)
 
@@ -38,7 +38,6 @@ module Progress
       @highlights = entries.highlights.where(repo_name: project.repo).count
       @first_commit = entries.commits.where(repo_name: project.repo).minimum(:occurred_at)
       @co_builders = co_builders_on(project.repo)
-      @site = gather.site
     end
 
     # Two repos may share a name under different owners; the busier one wins.

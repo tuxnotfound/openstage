@@ -63,58 +63,23 @@
     <% end %>
   </div>
 
-  <%# With site visits, a toggle per number above the chart; with both on, it compares them. %>
-  <% site_view = SiteVisitsViewSerializer.new(@focus.site, section) if @focus.site %>
-  <% numbers = chart_numbers(site_view, params[:show]) %>
-  <% show = (numbers.first if numbers.one? && site_view) %>
-  <% range_param = section.labels.range == Progress::Window::DEFAULT ? nil : section.labels.range %>
-  <%= react_island("progress", { initial: ProgressViewSerializer.new(section, site: site_view).as_json,
-                                 endpoint: api_progress_path(@user.username, reveal: @revealed, site: (1 if site_view)), mode: "project", numbers: numbers,
+  <%# Every number the project has, charted ones stacked on the same points. %>
+  <% numbers = @focus.page.numbers.numbers %>
+  <% show = params[:show].presence && Array(params[:show]) %>
+  <%= react_island("progress", { initial: ProgressViewSerializer.new(section, numbers: @focus.page.numbers).as_json,
+                                 endpoint: api_progress_path(@user.username, reveal: @revealed), mode: "project",
                                  defaultRange: Progress::Window::DEFAULT, shippedTarget: "what-shipped-panel" }, id: "progress") do %>
-    <% ranges = capture do %>
+    <div class="mt-7 flex flex-wrap items-center justify-between gap-3">
+      <%= render "profiles/page/numbers", numbers: numbers,
+                 path_for: ->(picked) { project_page_for(@user, project, range: (section.labels.range unless section.labels.range == Progress::Window::DEFAULT), show: picked) } %>
       <nav class="os-pills" aria-label="Time range">
         <% ProgressHelper::RANGES.each do |range, label| %>
           <%= link_to label, project_page_for(@user, project, range: range == Progress::Window::DEFAULT ? nil : range, show: show),
                 class: "os-pill max-sm:px-2", aria: { current: (section.labels.range == range ? "page" : nil) } %>
         <% end %>
       </nav>
-    <% end %>
-    <% headline = capture do %>
-      <% if numbers == [ "visits" ] %>
-        <p class="os-label">Site visits · <%= section.labels.words %></p>
-        <div class="mt-0.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-1.5">
-          <span class="os-num os-big"><%= site_view.attributes[:value] %></span>
-          <span class="text-lg font-semibold text-ink-2"><%= site_view.attributes[:visitors] %></span>
-        </div>
-      <% elsif numbers == [ "commits" ] %>
-        <% arrow, change, up = progress_change(section) %>
-        <p class="os-label">Commits · <%= section.labels.words %></p>
-        <div class="mt-0.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-1.5">
-          <span class="os-num os-big"><%= section.tally.totals.commits %></span>
-          <% if change.present? %>
-            <span class="text-lg font-semibold text-ink-2">
-              <% if arrow %><span class="<%= up ? 'text-up' : 'text-down' %>" aria-label="<%= up ? 'Up' : 'Down' %>"><%= arrow %></span><% end %>
-              <%= change %>
-            </span>
-          <% end %>
-        </div>
-      <% else %>
-        <p class="os-label">Commits and site visits · <%= section.labels.words %></p>
-      <% end %>
-    <% end %>
-    <%# With site visits, the numbers and the window share one row, and what the chart shows sits under them. %>
-    <% if site_view %>
-      <div class="mt-7 flex flex-wrap items-center justify-between gap-3">
-        <%= render "profiles/page/numbers", numbers: numbers,
-                   values: { "commits" => section.tally.totals.commits, "visits" => site_view.attributes[:value] },
-                   path_for: ->(value) { project_page_for(@user, project, range: range_param, show: value) } %>
-        <%= ranges %>
-      </div>
-      <div class="mt-5"><%= headline %></div>
-    <% else %>
-      <div class="os-between mt-7.5 items-end"><div><%= headline %></div><%= ranges %></div>
-    <% end %>
-    <div class="mt-[22px]"><%= render "profiles/page/chart", section: section, chart: numbers_chart(section, site_view, numbers) %></div>
+    </div>
+    <div class="mt-5"><%= render "profiles/page/stack", section: section, numbers: numbers %></div>
   <% end %>
 </section>
 

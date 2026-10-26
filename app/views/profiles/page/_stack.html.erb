@@ -1,0 +1,19 @@
+<%# The charted numbers, a chart each on its own scale, stacked on the same
+    points so a week reads straight down them; each headed by its name and
+    its change, its total being in the numbers line above. numbers: a
+    Progress::NumbersService's; legend: names each line under each chart. %>
+<div class="os-stack gap-6">
+  <% numbers.select(&:chart).each do |number| %>
+    <% arrow, change, up = number_change(number, section) %>
+    <section aria-label="<%= number.label %>">
+      <p class="os-label flex flex-wrap items-baseline gap-x-2">
+        <span><%= number.label %></span>
+        <% if change.present? %>
+          <span class="text-xs"><% if arrow %><span class="<%= up ? 'text-up' : 'text-down' %>" aria-label="<%= up ? 'Up' : 'Down' %>"><%= arrow %></span> <% end %><%= change %></span>
+        <% end %>
+      </p>
+      <div class="mt-2"><%= render "profiles/page/chart", section: section, chart: number.chart, tip: number.key,
+                                  height: numbers_chart_height(numbers), legend: local_assigns[:legend] %></div>
+    </section>
+  <% end %>
+</div>

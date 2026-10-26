@@ -5,7 +5,7 @@ module SiteVisits
   # section's own points, to compare with its commits. A public page shows a
   # project's visits where its builder shows them (GithubRepo#site_visits_public?);
   # the builder's dashboard, every project counted, so its table shows the
-  # number of one switched off too (Progress::LinesService).
+  # number in its table too.
   class GatherService < ApplicationService
     # dashboard: the builder's own chart, rather than a public page's.
     attr_accessor :user, :section, :dashboard

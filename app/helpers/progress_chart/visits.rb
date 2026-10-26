@@ -10,11 +10,7 @@ module ProgressChart
     GROUPS = { "commits" => "On GitHub", "site" => "On your websites", "visitors" => "On Openstage", "views" => "On Openstage",
                "follows" => "On Openstage", "clicks" => "On Openstage" }.freeze
 
-    Line = Data.define(:name, :rank, :values) do
-      def dashed?
-        false
-      end
-    end
+    Line = Data.define(:name, :rank, :values)
 
     def initialize(report)
       @report = report

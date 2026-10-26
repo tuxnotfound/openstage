@@ -47,7 +47,7 @@ class DashboardController < ApplicationController
     load_badge
     load_week
     @activity = activity
-    @activity_lines = activity_lines if @activity
+    load_activity_numbers if @activity
     @show_pro_activated = params[:pro] == "activated"
   end
 
@@ -78,15 +78,21 @@ class DashboardController < ApplicationController
     @logged_today = current_user.entries.visible.where(occurred_at: Date.current.all_day).exists?
   end
 
-  # What the chart draws for each project, and the table that switches it.
-  def activity_lines
-    lines = Progress::LinesService.new(user: current_user, section: @activity)
-    DashboardLinesSerializer.new(lines, @activity) if lines.call
+  # The numbers the chart can draw, every project counted, and the table of
+  # projects under it.
+  def load_activity_numbers
+    numbers = Progress::NumbersService.new(user: current_user, section: @activity, picked: Array(params[:show]), builder: true)
+    return unless numbers.call
+
+    @activity_numbers = numbers
+    list = Projects::ListService.new(user: current_user, section: @activity)
+    @activity_table = DashboardProjectsSerializer.new(list, @activity, @activity_numbers) if list.call
   end
 
-  # The public page's chart of the builder's own work, every project in view.
+  # The public page's chart of the builder's own work, every project in view
+  # unless some are picked.
   def activity
-    service = Progress::ComposeService.new(user: current_user, rolling: true,
+    service = Progress::ComposeService.new(user: current_user, rolling: true, repos: Array(params[:repo]).first(Api::ProgressController::MAX_REPOS),
                                            range: params[:range].presence_in(Progress::Window::RANGES) || ACTIVITY_RANGE)
     service.section if service.call
   end
