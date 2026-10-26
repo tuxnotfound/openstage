@@ -18,6 +18,18 @@ RSpec.describe SiteVisits::TallyService do
     expect([ tally.visits, tally.visitors ]).to eq([ 12, 5 ])
   end
 
+  it "draws a dotted line per project in its colour, by week once the history is short" do
+    app.site_visit_days.create!(day: Date.new(2026, 10, 20), visits: 7, visitors: 3)
+    tally = described_class.new(repos: [ app ], range: "12m").tap(&:call!)
+    projects = Progress::Projects.new(Entry.none)
+
+    chart = ProgressChart::SiteVisits.new(tally, projects: projects)
+
+    expect(chart.paths.sole.last).to be(true)
+    expect(chart.aria_label).to eq("Site visits per week by project, last 12 months")
+    expect(chart.note).to start_with("Visits to app.example per week")
+  end
+
   it "needs projects" do
     expect(described_class.new(repos: []).call).to be(false)
   end

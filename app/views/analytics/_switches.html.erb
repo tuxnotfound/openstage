@@ -13,7 +13,7 @@
       <li class="os-row flex items-center gap-2.5 py-2">
         <span class="os-dot <%= project_class(page.rank) %> bg-(--project) <%= 'opacity-40' unless on %>" aria-hidden="true"></span>
         <span class="min-w-0 flex-1 truncate font-bold <%= 'text-ink-3' unless on %>"><%= page.name %></span>
-        <% if on %><span class="os-xs os-muted shrink-0"><%= number_with_delimiter(report.total(report.metrics.first, page: page)) %></span><% end %>
+        <% if on %><span class="os-xs os-muted shrink-0"><%= number_with_delimiter(report.total(report.metric, page: page)) %></span><% end %>
         <% label = "Show #{page.name} in the chart" %>
         <% if on && report.selected.one? %>
           <span role="switch" aria-checked="true" aria-disabled="true" aria-label="<%= label %>" class="os-switch inline-block cursor-not-allowed opacity-50"></span>

@@ -63,8 +63,7 @@ RSpec.describe "Project pages", type: :request do
   it "opens on another window from the pills" do
     get "/builder/side.app", params: { range: "30d" }
 
-    expect(Nokogiri::HTML(response.body).at_css("section[aria-label='Commits'] p.os-label").text.squish).to start_with("Commits")
-    expect(response.body).to include("A 7-day average of commits per day, one line per project.")
+    expect(response.body).to include("Commits · last 30 days")
   end
 
   describe "a project the builder hid" do
@@ -149,47 +148,43 @@ RSpec.describe "Project pages", type: :request do
       user.update!(pro: true)
     end
 
-    def numbers
-      Nokogiri::HTML(response.body).css("nav[aria-label='Numbers'] a").map { |number| [ number.text.squish, number["aria-current"] == "true" ] }
+    def toggles
+      Nokogiri::HTML(response.body).css("nav[aria-label='Numbers'] a").map { |toggle| [ toggle.text.squish, toggle["aria-current"] == "true" ] }
     end
 
-    def charts
-      Nokogiri::HTML(response.body).css("section[aria-label] p.os-label").map { |label| label.text.squish }
-    end
-
-    it "lists every number the project shows, and stacks a chart for each picked, on its own scale" do
+    it "puts a toggle per number above the chart, both on, the chart comparing them" do
       get "/builder/side.app"
-      expect(numbers).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ] ])
-      expect(charts.map { |label| label.split.first }).to eq(%w[Commits Site])
-      expect(response.body).to include("Site visits per week, one line per project.")
+      expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ] ])
+      expect(response.body).to include("Commits and site visits · last 12 months", "Solid: commits. Dotted: site visits.")
 
-      get "/builder/side.app", params: { show: [ "visits" ], range: "30d" }
-      expect(numbers).to eq([ [ "Commits 1", false ], [ "Site visits 1,204", true ] ])
-      expect(charts.sole).to start_with("Site visits")
+      get "/builder/side.app", params: { show: "visits", range: "30d" }
       page = Nokogiri::HTML(response.body)
-      expect(page.at_css("nav[aria-label='Numbers'] a")["href"]).to eq("/builder/side.app?range=30d")
+      expect(toggles).to eq([ [ "Commits 1", false ], [ "Site visits 1,204", true ] ])
+      expect(page.at_css(".os-big").text).to eq("1,204")
+      expect(response.body).to include("800 visitors", "Visits to side.example per day, counted by Openstage&#39;s script")
       props = JSON.parse(page.at_css("#progress-props").text)
-      expect(props.dig("initial", "numbers").map { |number| [ number["key"], number["on"] ] }).to eq([ [ "commits", false ], [ "visits", true ] ])
+      expect(props).to include("numbers" => [ "visits" ], "endpoint" => "/api/progress/builder?site=1")
+      expect(props.dig("initial", "site")).to include("value" => "1,204", "compare" => a_hash_including("ticks"))
     end
 
     it "keeps them off the page while switched off, or before Pro on a second site" do
       repo.update!(site_visits_shown: false)
       get "/builder/side.app"
-      expect(numbers).to eq([ [ "Commits 1", true ] ])
+      expect(toggles).to be_empty
 
       repo.update!(site_visits_shown: true)
       user.update!(pro: false)
       other = create(:github_repo, user: user, site_source: "script")
       other.site_visit_days.create!(day: Date.current, visits: 5000, visitors: 10)
       get "/builder/side.app"
-      expect(numbers).to eq([ [ "Commits 1", true ] ])
+      expect(toggles).to be_empty
     end
 
-    it "shows them on the builder's page too, a line per project in their own chart" do
+    it "shows them on the builder's page too, beside every project's commits" do
       get "/builder"
 
-      expect(numbers).to eq([ [ "Commits 2", true ], [ "Site visits 1,204", true ] ])
-      expect(Nokogiri::HTML(response.body).at_css("section[aria-label='Site visits'] svg")["aria-label"]).to eq("Site visits per week by project, last 12 months")
+      expect(toggles).to eq([ [ "Commits 2", true ], [ "Site visits 1,204", true ] ])
+      expect(response.body).to include("side.app · site visits")
     end
   end
 

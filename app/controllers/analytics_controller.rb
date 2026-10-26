@@ -8,7 +8,7 @@ class AnalyticsController < ApplicationController
   # The view asked for renders first; the page's script asks
   # Api::AnalyticsController for the others.
   def index
-    @report = Analytics::ReportService.new(user: current_user, range: params[:range], picked: Array(params[:pages]), metrics: Array(params[:show]))
+    @report = Analytics::ReportService.new(user: current_user, range: params[:range], picked: Array(params[:pages]), metric: params[:metric])
     return if @report.call
 
     redirect_to dashboard_path, alert: @report.errors.full_messages.to_sentence

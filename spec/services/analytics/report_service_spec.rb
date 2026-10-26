@@ -27,21 +27,20 @@ RSpec.describe Analytics::ReportService do
     user.project_views.create!(repo_name: "me/app", viewed_at: 35.days.ago, ip_hash: "c")
     create(:profile_view, user: user, viewed_at: 2.days.ago)
 
-    picked = report(picked: [ "me/app" ], metrics: [ "views" ])
+    picked = report(picked: [ "me/app" ], metric: "views")
 
     expect(picked.selected.map(&:name)).to eq([ "app" ])
     expect(picked.total("views")).to eq(2)
     expect(picked.change("views")).to eq(100)
-    expect(picked.metrics).to eq([ "views" ])
-    expect(picked.series(picked.selected.first, "views").sum).to eq(2)
-    expect(picked.series(picked.selected.first, "views").size).to eq(30)
+    expect(picked.series(picked.selected.first).sum).to eq(2)
+    expect(picked.series(picked.selected.first).size).to eq(30)
   end
 
-  it "picks every page, and charts commits and site visits, when the params name none it knows" do
-    unknown = report(picked: [ "nope" ], metrics: [ "nope" ], range: "nope")
+  it "picks every page and the commits when the params name none it knows" do
+    unknown = report(picked: [ "nope" ], metric: "nope", range: "nope")
 
     expect(unknown.selected.size).to eq(3)
-    expect(unknown.metrics).to eq(%w[commits site])
+    expect(unknown.metric).to eq("commits")
     expect(unknown.window.range).to eq("30d")
   end
 

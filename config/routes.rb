@@ -54,6 +54,8 @@ Rails.application.routes.draw do
   # where its site visits come from.
   resources :projects, only: [ :edit, :update ] do
     resource :site_visits, only: :update, module: :projects
+    # What it draws on the dashboard's chart beside its commits.
+    resource :dashboard_numbers, only: :update, module: :projects
   end
 
   # Repo management. index is the Settings frame that checks GitHub first.

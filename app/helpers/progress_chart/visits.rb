@@ -1,5 +1,5 @@
 module ProgressChart
-  # One of the analytics page's charts: one line per page through one number,
+  # The analytics page's chart: one line per page through the number picked,
   # a point per day or per week.
   class Visits
     include Plot
@@ -10,17 +10,20 @@ module ProgressChart
     GROUPS = { "commits" => "On GitHub", "site" => "On your websites", "visitors" => "On Openstage", "views" => "On Openstage",
                "follows" => "On Openstage", "clicks" => "On Openstage" }.freeze
 
-    Line = Data.define(:name, :rank, :values)
+    Line = Data.define(:name, :rank, :values) do
+      def dashed?
+        false
+      end
+    end
 
-    def initialize(report, metric)
+    def initialize(report)
       @report = report
-      @metric = metric
     end
 
     # The pages picked with anything in the window.
     def lines
       @lines ||= @report.selected.filter_map do |page|
-        values = @report.series(page, @metric)
+        values = @report.series(page)
         Line.new(name: page.name, rank: page.rank, values: values) if values.sum.positive?
       end
     end
@@ -34,13 +37,13 @@ module ProgressChart
     end
 
     def empty_note
-      return "No site visits in the #{window.words}. Openstage's script counts them, set up from a project's Edit page." if @metric == "site"
+      return "No site visits in the #{window.words}. Openstage's script counts them, set up from a project's Edit page." if @report.metric == "site"
 
       "No #{name.downcase} in the #{window.words}."
     end
 
     def name
-      LABELS.fetch(@metric)
+      LABELS.fetch(@report.metric)
     end
 
     private

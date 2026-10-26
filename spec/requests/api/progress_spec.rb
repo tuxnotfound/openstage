@@ -20,10 +20,8 @@ RSpec.describe "Api::Progress", type: :request do
     expect(response).to have_http_status(:ok)
     expect(json).to include("range" => "30d", "commits" => 3, "scope" => "all 2 projects", "words" => "last 30 days")
     expect(json["kpis"]).to eq("1 shipped · 0 published · 1 project with commits · 3 active days")
-    commits = json["numbers"].sole
-    expect(commits).to include("key" => "commits", "label" => "Commits", "value" => "3", "on" => true)
-    expect(commits["chart"]).to include("ariaLabel" => "7-day average of commits per day by project, last 30 days", "empty" => false)
-    expect(commits["chart"]["paths"].size).to eq(1)
+    expect(json["chart"]).to include("ariaLabel" => "7-day average of commits per day by project, last 30 days", "empty" => false)
+    expect(json["chart"]["paths"].size).to eq(1)
     expect(json["shipped"]["items"].map { |item| item["title"] }).to eq([ "Launched" ])
 
     get "/builder", params: { range: "30d" }
@@ -74,39 +72,38 @@ RSpec.describe "Api::Progress", type: :request do
     expect(response).to have_http_status(:not_found)
   end
 
-  it "adds the site visits the page shows, with a chart only for the numbers picked" do
+  it "adds the site visits a page shows, for the same window, alone and beside the commits" do
     repo = create(:github_repo, user: user, full_name: "builder/app", name: "app", homepage: "https://app.example",
                                 site_source: "script", site_token: "os_a", site_first_visit_at: 2.days.ago)
     repo.site_visit_days.create!(day: Date.new(2026, 10, 23), visits: 40, visitors: 12)
     user.update!(pro: true)
 
-    get "/api/progress/builder", params: { range: "30d" }
-    expect(json["numbers"].map { |number| [ number["key"], number["value"], number["on"] ] }).to eq([ [ "commits", "3", true ], [ "visits", "40", true ] ])
-    expect(json["numbers"].last["chart"]["ariaLabel"]).to eq("7-day average of site visits per day by project, last 30 days")
+    get "/api/progress/builder", params: { range: "30d", repo: [ "builder/app" ], site: 1 }
+    expect(json["site"]).to include("value" => "40", "visitors" => "12 visitors")
+    expect(json["site"]["chart"]["ariaLabel"]).to eq("Site visits per day by project, last 30 days")
+    expect(json["site"]["compare"]["paths"].map { |path| path["dashed"] }).to contain_exactly(false, true)
     expect(response.headers["Cache-Control"]).to include("public")
 
-    get "/api/progress/builder", params: { range: "90d", numbers: [ "visits" ] }
-    expect(json["numbers"].map { |number| [ number["key"], number["on"], number["chart"].present? ] }).to eq([ [ "commits", false, false ], [ "visits", true, true ] ])
-    expect(json["numbers"].last["chart"]["ariaLabel"]).to eq("Site visits per week by project, last 90 days")
+    get "/api/progress/builder", params: { range: "30d" }
+    expect(json["site"]).to be_nil
 
     repo.update!(site_visits_shown: false)
-    get "/api/progress/builder", params: { range: "90d" }
-    expect(json["numbers"].map { |number| number["key"] }).to eq([ "commits" ])
+    get "/api/progress/builder", params: { range: "90d", site: 1 }
+    expect(json["site"]).to be_nil
   end
 
-  it "answers the dashboard, its numbers and table, to the builder alone and never into a shared cache" do
+  it "answers the dashboard's picks to the builder alone, and never into a shared cache" do
     repo = create(:github_repo, user: user, full_name: "builder/app", name: "app", homepage: "https://app.example",
                                 site_source: "script", site_first_visit_at: 2.days.ago, site_visits_shown: false)
     repo.site_visit_days.create!(day: Date.new(2026, 10, 23), visits: 40, visitors: 12)
 
     get "/api/progress/builder", params: { range: "30d", dashboard: 1 }
-    expect(json["table"]).to be_nil
-    expect(json["numbers"].map { |number| number["key"] }).to eq([ "commits" ])
+    expect(json["lines"]).to be_nil
 
     sign_in_as(user)
     get "/api/progress/builder", params: { range: "30d", dashboard: 1 }
-    expect(json["numbers"].map { |number| number["key"] }).to eq(%w[commits visits])
-    expect(json["table"]["rows"].first).to include("repo" => "builder/app", "chart" => true, "values" => { "commits" => "3", "visits" => "40" })
+    expect(json["lines"]["visits"]).to eq("40")
+    expect(json["lines"]["rows"].first).to include("repo" => "builder/app", "visits" => a_hash_including("value" => "40", "on" => true))
     expect(response.headers["Cache-Control"]).to include("private")
   end
 end

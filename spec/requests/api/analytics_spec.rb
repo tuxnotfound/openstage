@@ -23,16 +23,14 @@ RSpec.describe "Api::Analytics", type: :request do
     user.project_views.create!(repo_name: "builder/app", viewed_at: 1.day.ago, ip_hash: "c")
     sign_in_as(user)
 
-    get "/api/analytics", params: { range: "7d", numbers: [ "views" ], pages: [ "builder/app" ] }
+    get "/api/analytics", params: { range: "7d", metric: "views", pages: [ "builder/app" ] }
 
     json = response.parsed_body
-    expect(json).to include("range" => "7d", "selected" => [ "builder/app" ], "scope" => "app")
+    expect(json).to include("range" => "7d", "metric" => "views", "selected" => [ "builder/app" ], "total" => "2", "scope" => "app", "label" => "Views",
+                                "changeLabel" => "vs 7 days before")
     expect(json["rows"].map { |row| row["key"] }).to eq([ "builder/app" ])
-    expect(json["numbers"].map { |number| [ number["key"], number["group"], number["on"] ] })
-      .to eq([ [ "commits", "On GitHub", false ], [ "site", "On your websites", false ], [ "visitors", "On Openstage", false ],
-               [ "views", "On Openstage", true ], [ "follows", "On Openstage", false ], [ "clicks", "On Openstage", false ] ])
-    views = json["numbers"].find { |number| number["key"] == "views" }
-    expect(views).to include("value" => "2", "label" => "Views")
-    expect(views["chart"]["ariaLabel"]).to eq("Views per day by page, last 7 days")
+    expect(json["chart"]["ariaLabel"]).to eq("Views per day by page, last 7 days")
+    expect(json["tabs"].map { |tab| [ tab["metric"], tab["group"] ] }).to eq([ %w[commits On\ GitHub], %w[site On\ your\ websites], %w[visitors On\ Openstage],
+                                                                           %w[views On\ Openstage], %w[follows On\ Openstage], %w[clicks On\ Openstage] ])
   end
 end

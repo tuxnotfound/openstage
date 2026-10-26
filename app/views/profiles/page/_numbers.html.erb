@@ -1,14 +1,13 @@
-<%# Every number the chart can draw, with its total in the window: the ones
-    charted in ink and underlined, the others muted. Each is a switch, the
-    last one on staying on; one line high, it wraps as numbers are added.
-    numbers: a Progress::NumbersService's; path_for: the page for a list of
-    numbers, nil for all of them. %>
-<nav class="flex flex-wrap items-baseline gap-x-5 gap-y-1.5 <%= local_assigns[:class] %>" aria-label="Numbers">
-  <% numbers.each do |number| %>
-    <%= link_to path_for.call(numbers_toggled(numbers, number.key)), aria: { current: (number.chart ? "true" : nil) },
-          class: "inline-flex items-baseline gap-1.5 border-b-2 pb-0.5 #{number.chart ? 'border-accent text-ink' : 'border-transparent text-ink-3 hover:text-ink'}" do %>
-      <span class="text-sm font-bold"><%= number.label %></span>
-      <span class="os-num text-[17px]"><%= number_with_delimiter(number.total) %></span>
+<%# A toggle per number the chart can draw, with its value and its line:
+    commits solid, site visits dotted. The last one on stays on. path_for:
+    the page's address for a ?show= value, nil for both. %>
+<nav class="os-pills flex-wrap <%= local_assigns[:class] %>" aria-label="Numbers">
+  <% SiteVisitsHelper::CHART_NUMBERS.each do |number, label| %>
+    <%= link_to path_for.call(chart_numbers_show(numbers, number)), class: "os-pill gap-2 px-3.5",
+          aria: { current: (numbers.include?(number) ? "true" : nil) } do %>
+      <span class="w-3.5 border-t-[3px] border-current <%= 'border-dotted' if number == 'visits' %>" aria-hidden="true"></span>
+      <span><%= label %></span>
+      <span class="os-num text-[15px]"><%= values.fetch(number) %></span>
     <% end %>
   <% end %>
 </nav>

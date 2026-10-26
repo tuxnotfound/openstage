@@ -1,7 +1,6 @@
-# The Pro analytics page for one window, the pages picked and the numbers
-# charted, as the page shows it: every number with its total and change, the
-# charted ones with their chart. The page renders it first and its script
-# asks for others (Api::AnalyticsController).
+# The Pro analytics page for one window, the pages picked and the number
+# charted, as the page shows it. The page renders it first and its script asks
+# for others (Api::AnalyticsController).
 class AnalyticsViewSerializer < ApplicationSerializer
   include AnalyticsHelper
   include ActionView::Helpers::NumberHelper
@@ -14,12 +13,14 @@ class AnalyticsViewSerializer < ApplicationSerializer
   end
 
   def attributes
+    chart = ProgressChart::Visits.new(@report)
     {
-      range: window.range, selected: everything? ? [] : @report.selected.map(&:key), everything: everything?,
-      window_label: window.label, words: window.words, scope: scope,
-      pages: @report.pages.map { |page| page_switch(page) }, numbers: METRICS.map { |metric| number_of(metric) },
-      columns: METRICS.map { |metric| ProgressChart::Visits::LABELS.fetch(metric) },
-      sources: sources, countries: countries, rows: rows, links: links, badges: badges
+      range: window.range, metric: @report.metric, selected: everything? ? [] : @report.selected.map(&:key),
+      everything: everything?, window_label: window.label, words: window.words,
+      pages: @report.pages.map { |page| page_switch(page) },
+      tabs: METRICS.map { |metric| tab(metric) }, label: chart.name, scope: scope, change_label: change_label,
+      total: number(@report.total(@report.metric)), change: change(@report.change(@report.metric)),
+      chart: ChartSerializer.new(chart).attributes, sources: sources, countries: countries, rows: rows, links: links, badges: badges
     }
   end
 
@@ -37,17 +38,15 @@ class AnalyticsViewSerializer < ApplicationSerializer
     everything? ? "all pages" : @report.selected.map(&:name).to_sentence
   end
 
-  # value: the first number charted, on that page, while it is in view.
+  # value: the number charted, on that page, while it is in view.
   def page_switch(page)
     on = @report.selected.include?(page)
-    { key: page.key, name: page.name, rank: page.rank, on: on, value: (number(@report.total(@report.metrics.first, page: page)) if on) }
+    { key: page.key, name: page.name, rank: page.rank, on: on, value: (number(@report.total(@report.metric, page: page)) if on) }
   end
 
-  def number_of(metric)
-    on = @report.metrics.include?(metric)
-    { key: metric, label: ProgressChart::Visits::LABELS.fetch(metric), group: ProgressChart::Visits::GROUPS.fetch(metric),
-      value: number(@report.total(metric)), change: change(@report.change(metric)), on: on,
-      chart: (ChartSerializer.new(ProgressChart::Visits.new(@report, metric)).attributes if on) }
+  def tab(metric)
+    { metric: metric, label: ProgressChart::Visits::LABELS.fetch(metric), group: ProgressChart::Visits::GROUPS.fetch(metric),
+      value: number(@report.total(metric)), change: change(@report.change(metric)) }
   end
 
   # arrow, text and up?, as the page writes a change; nils with nothing to compare.
@@ -65,15 +64,18 @@ class AnalyticsViewSerializer < ApplicationSerializer
     @report.countries.map { |label, count| { label: label, count: number(count) } }
   end
 
-  # The pages picked, busiest in the first number charted first, each number
-  # with its change against the days before.
+  # The table's last column: the picked number against the days before.
+  def change_label
+    "vs #{window.label} before"
+  end
+
+  # The pages picked, busiest in the number picked first, with each number
+  # and that number's change.
   def rows
-    @report.selected.sort_by { |page| -@report.total(@report.metrics.first, page: page) }.map do |page|
-      cells = METRICS.map do |metric|
-        value = @report.total(metric, page: page)
-        { value: value.positive? ? number(value) : "–", change: change(@report.change(metric, page: page)) }
-      end
-      { key: page.key, name: page.name, rank: page.rank, cells: cells }
+    @report.selected.sort_by { |page| -@report.total(@report.metric, page: page) }.map do |page|
+      values = METRICS.map { |metric| @report.total(metric, page: page) }
+      { key: page.key, name: page.name, rank: page.rank, values: values.map { |value| value.positive? ? number(value) : "–" },
+        change: change(@report.change(@report.metric, page: page)) }
     end
   end
 

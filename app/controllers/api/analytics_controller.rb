@@ -7,7 +7,7 @@ module Api
     before_action :require_pro_builder
 
     def show
-      report = Analytics::ReportService.new(user: current_user, range: params[:range], picked: Array(params[:pages]).first(Api::ProgressController::MAX_REPOS), metrics: Array(params[:numbers]))
+      report = Analytics::ReportService.new(user: current_user, range: params[:range], picked: Array(params[:pages]).first(Api::ProgressController::MAX_REPOS), metric: params[:metric])
       return render(json: { error: report.errors.full_messages.to_sentence }, status: :unprocessable_entity) unless report.call
 
       render json: AnalyticsViewSerializer.new(report).to_json

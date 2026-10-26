@@ -6,18 +6,16 @@
 class ProgressViewSerializer < ApplicationSerializer
   include ApplicationHelper
   include ProgressHelper
-  include NumbersHelper
-  include ActionView::Helpers::NumberHelper
   include ActionView::Helpers::TextHelper
 
-  # numbers: the Progress::NumbersService for the section; linked_id: the
-  # entry a link pointed at, shown above the page instead; table: the
-  # dashboard's DashboardProjectsSerializer.
-  def initialize(section, numbers:, linked_id: nil, table: nil)
+  # linked_id: the entry a link pointed at, shown above the page instead.
+  # site: a page's SiteVisitsViewSerializer, when it shows them; lines: the
+  # dashboard's DashboardLinesSerializer.
+  def initialize(section, linked_id: nil, site: nil, lines: nil)
     @section = section
-    @numbers = numbers.numbers
     @linked_id = linked_id
-    @table = table
+    @site = site
+    @lines = lines
   end
 
   def attributes
@@ -28,7 +26,8 @@ class ProgressViewSerializer < ApplicationSerializer
       words: @section.labels.words, scope: progress_scope(@section), commits: totals.commits,
       change: { arrow: arrow, words: words.presence, up: up }, shares: shares, kpis: kpis,
       projects: tally.projects.all.map { |project| project_switch(project) },
-      numbers: @numbers.map { |number| number_of(number) }, shipped: shipped, table: @table&.attributes
+      chart: ChartSerializer.new(ProgressChart::Trend.new(@section)).attributes, shipped: shipped, site: @site&.attributes,
+      lines: @lines&.attributes
     }
   end
 
@@ -54,19 +53,10 @@ class ProgressViewSerializer < ApplicationSerializer
       "#{pluralize(totals.active_days, 'active day')}"
   end
 
-  # value: the first number charted, for the project, while it is in view.
   def project_switch(project)
     on = !@section.filtered? || @section.selected.include?(project)
-    first = @numbers.find(&:chart)
     { repo: project.repo, name: project.name, rank: project.rank, on: on,
-      value: (pluralize(number_with_delimiter(first.by_project.fetch(project.repo, 0)), first.unit) if on) }
-  end
-
-  # Every number with its total and change; the charted ones with their chart.
-  def number_of(number)
-    arrow, words, up = number_change(number, @section)
-    { key: number.key, label: number.label, value: number_with_delimiter(number.total), change: { arrow: arrow, words: words.presence, up: up },
-      on: number.chart.present?, chart: (ChartSerializer.new(number.chart).attributes if number.chart) }
+      value: (pluralize(tally.totals.counts.fetch(project.repo, 0), "commit") if on) }
   end
 
   # Newest first, in the builder's words.
