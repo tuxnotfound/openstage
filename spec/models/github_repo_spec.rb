@@ -27,13 +27,6 @@ RSpec.describe GithubRepo do
     expect([ repo.live?, repo.outbound_url("visit") ]).to eq([ false, nil ])
   end
 
-  it "lists what the project's page still lacks" do
-    expect(repo.missing).to eq(%w[website picture])
-
-    repo.preview_image_url = "https://repository-images.githubusercontent.com/1/x"
-    expect(repo.missing).to eq(%w[website])
-  end
-
   describe "site visits" do
     let(:user) { create(:user, pro: true) }
     let(:site) { create(:github_repo, user: user, website_edit: "https://Shipnote.app/home", site_source: "script") }

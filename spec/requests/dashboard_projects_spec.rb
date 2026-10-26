@@ -30,13 +30,13 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     expect(month["href"]).to eq("/dashboard?q=work&range=30d")
   end
 
-  it "lists every repo with work, says what each page is missing, and leaves out repos with none" do
+  it "lists every repo with work, each with Edit, and leaves out repos with none" do
     get "/dashboard"
 
     expect(project_rows.keys).to eq(%w[builder/app builder/bare])
-    expect(project_rows["builder/app"]).to include("app 3 commits", "Add website and picture · Edit")
-    expect(project_rows["builder/bare"]).to include("Add description, website, and picture · Edit")
-    expect(page.at_css("[data-project-row='builder/bare'] a")["href"]).to eq("/projects/#{bare.id}/edit")
+    expect(project_rows["builder/app"]).to include("app 3 commits Edit")
+    expect(project_rows["builder/app"]).not_to include("Add website")
+    expect(page.at_css("[data-project-row='builder/bare'] a.os-btn2")["href"]).to eq("/projects/#{bare.id}/edit")
     expect(idle).to be_persisted
   end
 

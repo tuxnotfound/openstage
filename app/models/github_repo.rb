@@ -93,9 +93,4 @@ class GithubRepo < ApplicationRecord
   def site_visits_public?
     site_visits_shown? && site_first_visit_at.present? && counts_site_visits?
   end
-
-  # What the project's page still lacks, for the dashboard to list.
-  def missing
-    { "description" => project_description, "website" => website, "picture" => picture }.select { |_what, value| value.blank? }.keys
-  end
 end
