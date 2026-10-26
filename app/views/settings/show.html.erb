@@ -138,9 +138,6 @@
       </div>
     </section>
 
-    <%# Refreshed from GitHub when this tab opens. %>
-    <%= render "settings/github_repos", **@github_repos_section, refresh: true, note: nil %>
-
     <%# Each provider gets Connect once it is built; Vercel waits for a read-only token. %>
     <section class="os-panel" aria-labelledby="site-analytics">
       <div class="os-between">
@@ -166,6 +163,10 @@
         </div>
       <% end %>
     </section>
+
+    <%# Refreshed from GitHub when this tab opens. %>
+    <%= render "settings/github_repos", **@github_repos_section, refresh: true, note: nil %>
+
 
     <section class="os-panel" aria-labelledby="readme-badge" data-controller="clipboard">
       <h2 id="readme-badge" class="os-h3">README badge</h2>
