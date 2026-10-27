@@ -68,6 +68,16 @@ RSpec.describe "Admin", type: :request do
         expect(response.body).not_to include('data-ref="recap"')
       end
 
+      it "counts visits from Reddit" do
+        reset!
+        get "/", params: { ref: "reddit" }, headers: { "HTTP_USER_AGENT" => "Mozilla/5.0 (Macintosh) Safari/605.1.15" }
+        reset!
+        sign_in_as(owner)
+
+        get "/admin"
+        expect(response.body).to include('data-ref-visit="reddit" data-count="1"')
+      end
+
       it "labels rows that predate ref tagging rather than dropping them" do
         create(:user, username: "old_row", signup_ref: nil, created_at: 2.days.ago)
 
