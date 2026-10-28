@@ -26,6 +26,22 @@ RSpec.describe "Editing a project", type: :request do
     expect(repo.reload.included).to be(false)
   end
 
+  it "hides its commits from visitors with their switch, which is no longer locked on, and shows them again" do
+    commits = -> { Nokogiri::HTML(response.body).at_css("button[role='switch'][aria-label='Show commits on app\\'s page']") }
+    get "/projects/#{repo.id}/edit"
+    expect(commits.call["aria-checked"]).to eq("true")
+    expect(commits.call["aria-disabled"]).to be_nil
+
+    patch "/projects/#{repo.id}/numbers", params: { number: "commits", shown: "false", back: "project" }
+    expect(response).to redirect_to(edit_project_path(repo, anchor: "numbers"))
+    get "/projects/#{repo.id}/edit"
+    expect(commits.call["aria-checked"]).to eq("false")
+    expect(repo.reload.hidden_numbers).to eq([ "commits" ])
+
+    patch "/projects/#{repo.id}/numbers", params: { number: "commits", shown: "true", back: "project" }
+    expect(repo.reload.hidden_numbers).to eq([])
+  end
+
   it "keeps the builder's words over GitHub's, and goes back to GitHub's when cleared" do
     patch "/projects/#{repo.id}", params: { github_repo: { description_edit: "  My own words.  ", website_edit: "https://mine.example", image_edit: "" } }
 
