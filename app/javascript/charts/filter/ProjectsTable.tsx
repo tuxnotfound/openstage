@@ -61,7 +61,7 @@ export default function ProjectsTable({ table, drawn, lines, indexed, words, foc
             <th scope="col" className="w-full pt-1.5 pb-2 text-left font-bold">
               <span className="flex items-center gap-3">
                 {label}
-                {rows.all && <button type="button" className="os-link rounded-md px-1.5 text-[13px] no-underline" onClick={rows.all.go} onPointerEnter={rows.all.warm} onFocus={rows.all.warm}>Show all</button>}
+                {rows.all && <button type="button" className="os-link inline-flex min-h-7 items-center rounded-md px-1.5 text-[13px] no-underline" onClick={rows.all.go} onPointerEnter={rows.all.warm} onFocus={rows.all.warm}>Show all</button>}
               </span>
             </th>
             {switches && <th scope="col" className="w-px whitespace-nowrap pt-1.5 pb-2 pl-[18px] text-right font-bold max-md:hidden">Your page</th>}
