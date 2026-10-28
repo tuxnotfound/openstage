@@ -63,7 +63,9 @@ module ProgressChart
       end
     end
 
+    # None without a line, so an empty chart suggests no scale.
     def ticks
+      return [] if lines.empty?
       return [ PEAK / 2, PEAK ].map { |value| Trend::Tick.new(value: "#{value.to_i}%", top: top(value)) } if indexed?
 
       scale.drop(1).map { |value| Trend::Tick.new(value: words.tick(lined.first, value), top: top(value)) }

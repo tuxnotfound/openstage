@@ -92,4 +92,10 @@ RSpec.describe ProgressChart::Compare do
     expect(chart([ line("app", commits, [ 0, 0 ]) ], numbers: [ commits ]).note).to eq("No commits in the last 90 days.")
     expect(chart([ line("app", commits, [ 0, 0 ]) ], numbers: [ commits ]).paths).to be_empty
   end
+
+  it "draws no gridlines without a line, so an empty chart suggests no scale" do
+    expect(chart([ line("app", commits, [ 0, 0 ]) ], numbers: [ commits ]).ticks).to be_empty
+    expect(chart([], numbers: [ visits ], range: "30d", average: true).ticks).to be_empty
+    expect(chart([], numbers: []).ticks).to be_empty
+  end
 end
