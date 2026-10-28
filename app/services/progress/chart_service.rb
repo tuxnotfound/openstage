@@ -45,16 +45,21 @@ module Progress
       @columns = builder ? builder_columns : totals.map(&:number)
     end
 
-    # A list that names no project of theirs shows them all, as no list does.
+    # A list that names no project of theirs, or every one, shows them all,
+    # as no list does; a project's page keeps its one project.
     def compose
       service = composed(repos)
-      service = composed([]) if service && Array(repos).any? && service.section.selected.empty?
+      service = composed([]) if service && Array(repos).any? && (service.section.selected.empty? || (!lone && every?(service.section)))
       @section = service&.section
     end
 
     def composed(picked)
       service = ComposeService.new(user: user, range: range, repos: Array(picked), rolling: true, reveal: reveal)
       service if run(service)
+    end
+
+    def every?(section)
+      section.selected.size == section.tally.projects.all.size
     end
 
     # The page's projects, and on the builder's own view the ones hidden from their page.

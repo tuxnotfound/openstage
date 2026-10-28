@@ -82,11 +82,22 @@ RSpec.describe Progress::ChartService do
     expect(totals(service).keys).to eq(%w[commits])
   end
 
-  it "shows every project for a list that names none of theirs" do
-    service = chart(repos: [ "builder/nope" ])
+  it "shows every project for a list that names none of theirs, or every one" do
+    [ [ "builder/nope" ], %w[builder/lib builder/app] ].each do |repos|
+      service = chart(repos: repos)
 
-    expect(service.section.filtered?).to be(false)
-    expect(service.rows.map(&:on)).to eq([ true, true ])
+      expect(service.section.filtered?).to be(false)
+      expect([ service.selected_keys, service.rows.map(&:on) ]).to eq([ [], [ true, true ] ])
+    end
+  end
+
+  it "keeps a project's page on its project when it is the builder's only one" do
+    lib.destroy!
+    user.entries.where(repo_name: "builder/lib").delete_all
+
+    service = chart(repos: [ "builder/app" ], lone: true)
+
+    expect([ service.section.filtered?, service.rows.map(&:name) ]).to eq([ true, [ "app" ] ])
   end
 
   it "needs a builder" do
