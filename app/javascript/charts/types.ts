@@ -3,24 +3,6 @@
 
 export type Rank = number | null
 
-export type ChartView = {
-  // dashed: site visits, drawn dotted beside solid commits; key: the line a
-  // dashboard switch hides ("repo|number"), null on the other charts.
-  paths: { d: string; rank: Rank; dashed: boolean; key: string | null }[]
-  // value: a count, or a share of each line's peak ("50%") when the chart compares numbers.
-  ticks: { value: number | string; top: number }[]
-  columns: { left: number; width: number; mark: number; title: string; rows: { name: string; rank: Rank; value: string }[] }[]
-  axis: string[]
-  ariaLabel: string
-  note: string
-  emptyNote: string
-  none: string
-  empty: boolean
-  average: boolean
-  // Each line's project, in drawing order's reverse: the busiest first.
-  legend: { name: string; rank: Rank; dashed: boolean }[]
-}
-
 export type ProgressRange = "30d" | "90d" | "12m" | "all"
 
 // A chart filter's chart (CompareChartSerializer): each line carries its

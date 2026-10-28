@@ -8,8 +8,6 @@ module Api
   # revalidate with an ETag. A project the builder hid, and the dashboard,
   # answer for the builder alone, never into a shared cache.
   class ProgressController < ApplicationController
-    # More projects than any page shows; a longer list is not a person.
-    MAX_REPOS = Progress::Filter::MAX_PROJECTS
     # A ceiling, for a change the cache key cannot see.
     EXPIRES = 10.minutes
     # How fresh a chart's site visits stay: a busy site would otherwise
