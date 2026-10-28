@@ -1,40 +1,20 @@
-<%# The numbers above the chart, a toggle each: its line while drawn (a plus
-    when not), its name, its total for the projects in view and a thin bar
-    of how that splits across them, in their colours; on the dashboard also
-    its change. Each links to the view it switches to; the last number drawn
-    stays drawn, and three is the most. Every toggle shows here: the chart's
-    script folds the ones that do not fit its row behind "+ n more".
-    view: a ProgressViewSerializer's attributes; path_for: the page's address
-    for some params changed; changes: whether toggles carry their change. %>
-<% full = view[:drawn].size >= Progress::DrawService::MAX_DRAWN %>
-<div class="flex min-w-0 flex-[1_1_480px] flex-wrap items-center gap-2" role="group" aria-label="Numbers on the chart">
-  <% view[:numbers].each do |number| %>
-    <% drawn = view[:drawn].include?(number[:key]) %>
-    <% after = chart_show_toggled(view, number[:key]) %>
-    <% css = "relative inline-flex h-11 items-center gap-[7px] whitespace-nowrap rounded-control border-[1.5px] px-[13px] max-md:gap-1.5 max-md:px-[11px] " +
-             (drawn ? "border-ink bg-surface text-ink" : full ? "border-dashed border-line text-ink-3" : "border-line text-ink-2 hover:border-ink-3") %>
-    <% inside = capture do %>
-      <% if drawn %>
-        <%= render "charts/key", line: chart_line(view, number[:key]) %>
-      <% else %>
-        <span class="w-3 text-center font-bold text-ink-3" aria-hidden="true">+</span>
-      <% end %>
-      <span class="text-[13px] font-bold"><%= number[:label] %></span>
-      <span class="os-num text-base tracking-[-.02em]"><%= number[:value] %></span>
-      <% if local_assigns[:changes] && number[:change] %>
-        <span class="text-[11px] font-bold text-ink-2 max-md:hidden"><span class="<%= chart_tone(number[:change][:up]) %>"><%= number[:change][:arrow] %></span> <%= number[:change][:text] %></span>
-      <% end %>
-      <span class="absolute inset-x-3 bottom-[5px] flex h-[3px] gap-0.5 <%= 'opacity-45' unless drawn %>" aria-hidden="true">
-        <% number[:split].each do |part| %>
-          <span class="<%= project_class(part[:rank]) %> min-w-[3px] rounded-[2px] bg-(--project)" style="flex: <%= part[:value] %> 1 0"></span>
-        <% end %>
-      </span>
+<%# The numbers above the chart, a toggle each (charts/toggle). On analytics
+    they sit in their groups, each named before its toggles (On GitHub, On
+    your websites, On Openstage). Every toggle shows here: the chart's script
+    folds the ones that do not fit its row behind "+ n more".
+    view: a ChartFilterSerializer's attributes; path_for: the page's address
+    for some params changed; changes: whether toggles carry their change;
+    groups: whether they sit in their groups. %>
+<% locals = { view: view, path_for: path_for, changes: local_assigns[:changes], full: view[:drawn].size >= Progress::DrawService::MAX_DRAWN } %>
+<div class="flex min-w-0 flex-[1_1_480px] flex-wrap items-center <%= local_assigns[:groups] ? 'gap-x-4 gap-y-2' : 'gap-2' %>" role="group" aria-label="Numbers on the chart">
+  <% if local_assigns[:groups] %>
+    <% view[:numbers].chunk_while { |one, other| one[:group] == other[:group] }.each do |numbers| %>
+      <div class="inline-flex min-w-0 flex-wrap items-center gap-2" role="group" aria-label="<%= numbers.first[:group] %>">
+        <span class="pr-0.5 text-xs font-bold whitespace-nowrap text-ink-3" aria-hidden="true"><%= numbers.first[:group] %></span>
+        <%= render partial: "charts/toggle", collection: numbers, as: :number, locals: locals %>
+      </div>
     <% end %>
-    <% if after %>
-      <%= link_to inside, path_for.call(show: after), class: css, aria: { current: ("true" if drawn) } %>
-    <% else %>
-      <span class="<%= css %>" aria-disabled="true" aria-current="<%= 'true' if drawn %>"
-            title="<%= drawn ? 'The chart keeps at least one number.' : 'Switch a number off first' %>"><%= inside %></span>
-    <% end %>
+  <% else %>
+    <%= render partial: "charts/toggle", collection: view[:numbers], as: :number, locals: locals %>
   <% end %>
 </div>

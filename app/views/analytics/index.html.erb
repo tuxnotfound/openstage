@@ -1,146 +1,34 @@
 <% content_for :title, "Analytics — Openstage" %>
 <% content_for :main_class, "os-wrap pt-1.5" %>
-<% report = @report %>
-<% window = report.window %>
-<% chart = ProgressChart::Visits.new(report) %>
-<% everything = report.selected.size == report.pages.size %>
+<% serializer = AnalyticsViewSerializer.new(@report) %>
+<% view = serializer.attributes %>
+<% default_range = Analytics::ReportService::DEFAULT_RANGE %>
+<% path_for = ->(changes) { analytics_path(chart_params(view, default_range: default_range, **changes).compact) } %>
 
-<%= react_island("analytics", { initial: AnalyticsViewSerializer.new(report).as_json, endpoint: api_analytics_path }, id: "analytics", class: "os-stack") do %>
+<%# The chart filter every chart page shares, as the page's script draws it
+    (AnalyticsIsland) and as it reads without the script: the window beside
+    the title; the numbers in their groups, each with its change; the chart;
+    and the pages under it, each value with its change. Then where visitors
+    came from, the links they followed and the badge and embed, for the same
+    window and pages. %>
+<%= react_island("analytics", { initial: serializer.as_json, endpoint: api_analytics_path, defaultRange: default_range }, id: "analytics", class: "os-stack") do %>
   <div class="os-between">
     <div class="flex items-center gap-2.5">
       <h1 class="os-h2 text-[30px]">Analytics</h1>
       <span class="os-tag pro">✦ Pro</span>
     </div>
-    <nav class="os-pills" aria-label="Time range">
-      <% Analytics::Window::RANGES.each_key do |range| %>
-        <%= link_to Analytics::Window.new(range: range, today: window.today).label, analytics_view_path(range: range == Analytics::Window::DEFAULT ? nil : range),
-              class: "os-pill", aria: { current: (window.range == range ? "page" : nil) } %>
-      <% end %>
-    </nav>
+    <%= render "charts/window", view: view, path_for: path_for, css: "max-md:flex max-md:w-full max-md:justify-between" %>
   </div>
 
   <section class="os-panel" aria-label="Numbers">
-    <%# Every number in one bar, grouped by where it happens, each with its
-        value and its change against the days before. One row whatever the
-        count: past the panel's width it scrolls sideways. %>
-    <div class="max-w-full overflow-x-auto rounded-[22px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-    <div class="os-pills w-max flex-nowrap items-center whitespace-nowrap" data-numbers>
-      <% Analytics::CountService::METRICS.group_by { |metric| ProgressChart::Visits::GROUPS.fetch(metric) }.each do |group, metrics| %>
-        <span role="group" aria-label="<%= group %>" class="contents">
-          <span class="px-2 text-[10px] font-bold uppercase tracking-[0.08em] text-ink-3" aria-hidden="true"><%= group %></span>
-          <% metrics.each do |metric| %>
-            <% arrow, change, up = analytics_change(report.change(metric)) %>
-            <%= link_to analytics_view_path(metric: metric == Analytics::CountService::METRICS.first ? nil : metric),
-                  class: "os-pill gap-2 px-3.5", aria: { current: (report.metric == metric ? "page" : nil) } do %>
-              <span><%= ProgressChart::Visits::LABELS.fetch(metric) %></span>
-              <span class="os-num text-[15px]"><%= number_with_delimiter(report.total(metric)) %></span>
-              <% if arrow %><span class="text-[11px] opacity-75"><%= arrow %> <%= change %></span><% end %>
-            <% end %>
-          <% end %>
-        </span>
-      <% end %>
-    </div>
-    </div>
-
-    <div class="mt-5.5 grid items-start gap-x-8 gap-y-6 <%= 'lg:grid-cols-[minmax(0,1fr)_280px]' if report.pages.size > 1 %>">
-      <div class="min-w-0">
-        <p class="os-label"><%= chart.name %> · <%= everything ? "all pages" : report.selected.map(&:name).to_sentence %>, <%= window.words %></p>
-        <% arrow, change, up = analytics_change(report.change(report.metric)) %>
-        <div class="mt-0.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-1.5">
-          <span class="os-num os-big"><%= number_with_delimiter(report.total(report.metric)) %></span>
-          <span class="text-lg font-semibold text-ink-2">
-            <% if arrow %>
-              <span class="<%= analytics_tone(up) %>" aria-label="<%= { true => 'Up', false => 'Down' }.fetch(up, 'No change') %>"><%= arrow %></span> <%= change %> vs the <%= window.label %> before
-            <% else %>
-              none in the <%= window.label %> before
-            <% end %>
-          </span>
-        </div>
-        <div class="mt-5"><%= render "profiles/page/chart", chart: chart, height: "h-[260px]" %></div>
-      </div>
-
-      <%= render "analytics/switches", report: report if report.pages.size > 1 %>
-    </div>
+    <%= render "charts/toggles", view: view, path_for: path_for, changes: true, groups: true %>
+    <%= render "charts/chart", view: view, height: "h-[260px]" %>
+    <% if view[:changes_note] %>
+      <p class="os-xs os-muted mt-5.5"><%= view[:changes_note] %></p>
+    <% end %>
+    <%= render "charts/table", view: view, path_for: path_for, label: "Pages" %>
+    <p class="os-note mt-0 border-t border-line pt-2.5">Commits: yours, public, merges and dependency bumps left out. Site visits: page views on a project's own website, counted by Openstage's script. On Openstage, your page and your project pages: a visitor is one browser on one day; views count every page load; new followers confirmed by email, for your page or one project; clicks out are a project's Visit and View on GitHub buttons and the links in your entries. Your own visits and bots are left out.</p>
   </section>
 
-  <section class="os-panel" aria-labelledby="by-page">
-    <div class="os-between">
-      <h2 id="by-page" class="os-h2">By page</h2>
-      <span class="os-xs os-muted"><%= window.words.upcase_first %>, against the <%= window.label %> before</span>
-    </div>
-    <div class="mt-2.5 overflow-x-auto">
-      <table class="w-full min-w-[640px] border-collapse text-sm">
-        <thead>
-          <tr class="text-right text-xs text-ink-3">
-            <th scope="col" class="py-2 text-left font-bold">Page</th>
-            <% Analytics::CountService::METRICS.each do |metric| %><th scope="col" class="py-2 font-bold"><%= ProgressChart::Visits::LABELS.fetch(metric) %></th><% end %>
-            <th scope="col" class="py-2 font-bold">vs <%= window.label %> before</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% report.selected.sort_by { |page| -report.total(report.metric, page: page) }.each do |page| %>
-            <% arrow, change, up = analytics_change(report.change(report.metric, page: page)) %>
-            <tr class="border-t border-line text-right" data-page-row="<%= page.key %>">
-              <th scope="row" class="py-2.5 text-left font-bold">
-                <span class="inline-flex items-center gap-2"><span class="os-dot <%= project_class(page.rank) %> bg-(--project)"></span><%= page.name %></span>
-              </th>
-              <% Analytics::CountService::METRICS.each do |metric| %>
-                <% value = report.total(metric, page: page) %>
-                <td class="os-num py-2.5"><%= value.positive? ? number_with_delimiter(value) : "–" %></td>
-              <% end %>
-              <td class="py-2.5 font-bold <%= analytics_tone(up) %>"><%= arrow ? "#{arrow} #{change}" : "–" %></td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
-    <p class="os-note border-t border-line pt-2.5">Commits: yours, public, merges and dependency bumps left out. Site visits: page views on a project's own website, counted by Openstage's script. On Openstage, your page and your project pages: a visitor is one browser on one day; views count every page load; new followers confirmed by email, for your page or one project; clicks out are a project's Visit and View on GitHub buttons and the links in your entries. Your own visits and bots are left out.</p>
-  </section>
-
-  <div class="grid items-start gap-4 lg:grid-cols-3">
-    <section class="os-panel" aria-labelledby="visitors-from">
-      <h2 id="visitors-from" class="os-h3">Where visitors came from</h2>
-      <p class="os-xs os-muted mt-1 mb-2">Views of your Openstage pages, by the site they came from, <%= window.words %>.</p>
-      <% if report.sources.any? %>
-        <% most = report.sources.first.last %>
-        <% report.sources.each do |source, count| %>
-          <div class="os-row py-2">
-            <div class="os-between"><span class="os-sm font-semibold"><%= source %></span><span class="os-sm os-num font-bold"><%= number_with_delimiter(count) %></span></div>
-            <div class="mt-1.5 h-1 rounded-sm bg-accent" style="width: <%= (100.0 * count / most).round %>%" aria-hidden="true"></div>
-          </div>
-        <% end %>
-      <% else %>
-        <p class="os-note">No visits in the <%= window.words %>.</p>
-      <% end %>
-      <% if report.countries.any? %>
-        <h3 class="os-label mt-4.5">Countries</h3>
-        <% report.countries.each do |country, count| %>
-          <div class="os-row os-between py-2"><span class="os-sm"><%= country %></span><span class="os-sm os-num font-bold"><%= number_with_delimiter(count) %></span></div>
-        <% end %>
-      <% end %>
-    </section>
-
-    <section class="os-panel" aria-labelledby="links-followed">
-      <h2 id="links-followed" class="os-h3">Links they followed</h2>
-      <p class="os-xs os-muted mt-1 mb-2">Clicks from your pages, <%= window.words %>.</p>
-      <% report.links.each do |link| %>
-        <div class="os-row os-between gap-3 py-2.5">
-          <span class="min-w-0"><span class="block text-[15px] font-semibold"><%= link.title %></span><span class="os-xs os-muted"><%= link.page.name %></span></span>
-          <span class="os-num font-bold"><%= number_with_delimiter(link.count) %></span>
-        </div>
-      <% end %>
-      <% if report.links.empty? %><p class="os-note">No clicks out in the <%= window.words %>.</p><% end %>
-    </section>
-
-    <section class="os-panel" aria-labelledby="badge-embed">
-      <h2 id="badge-embed" class="os-h3">README badge and embed</h2>
-      <p class="os-xs os-muted mt-1 mb-2">Times they were shown on other sites, <%= window.words %>.</p>
-      <% report.shown.each do |kind, count, sites| %>
-        <div class="os-row os-between py-2.5">
-          <span class="os-sm font-semibold"><%= kind == "badge" ? "README badge" : "Embed widget" %></span>
-          <span class="os-sm"><span class="os-num font-bold"><%= number_with_delimiter(count) %></span> <span class="os-muted">· <%= pluralize(sites, "site") %></span></span>
-        </div>
-      <% end %>
-    </section>
-  </div>
+  <%= render "analytics/panels", view: view %>
 <% end %>

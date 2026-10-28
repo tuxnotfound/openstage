@@ -2,12 +2,11 @@ require "rails_helper"
 
 RSpec.describe Analytics::CountService do
   let(:user) { create(:user, time_zone: "Europe/Lisbon") }
-  let(:window) { Analytics::Window.new(range: "7d", today: Date.new(2026, 10, 24)) }
 
   before { travel_to Time.utc(2026, 10, 24, 12) }
 
-  def counts
-    described_class.new(user: user, window: window).tap(&:call!).counts
+  def counts(from: Date.new(2026, 10, 18))
+    described_class.new(user: user, from: from).tap(&:call!).counts
   end
 
   it "counts each day in the builder's zone, a visitor once a day" do
@@ -41,15 +40,26 @@ RSpec.describe Analytics::CountService do
     expect(counts["clicks"]["page"].values.sum).to eq(1)
   end
 
-  it "covers the days before the window too, and nothing older" do
-    create(:profile_view, user: user, viewed_at: 10.days.ago)
-    create(:profile_view, user: user, viewed_at: 20.days.ago)
+  it "counts a project's public commits and the visits to its website under their numbers' keys" do
+    repo = create(:github_repo, user: user, full_name: "me/app", name: "app")
+    create(:entry, user: user, repo_name: "me/app", occurred_at: 2.days.ago)
+    create(:entry, user: user, repo_name: "me/app", occurred_at: 2.days.ago, visibility: :private_entry)
+    repo.site_visit_days.create!(day: Date.new(2026, 10, 23), visits: 40, visitors: 12)
 
-    expect(counts["views"]["page"].values.sum).to eq(1)
+    expect(counts["commits"]).to eq("me/app" => { Date.new(2026, 10, 22) => 1 })
+    expect(counts["visits"]).to eq("me/app" => { Date.new(2026, 10, 23) => 40 })
   end
 
-  it "refuses without a builder or a window" do
-    expect(described_class.new(window: window).call).to be(false)
-    expect(described_class.new(user: user).call).to be(false)
+  it "counts from the first day asked for, or every day" do
+    create(:profile_view, user: user, viewed_at: 3.days.ago)
+    create(:profile_view, user: user, viewed_at: 20.days.ago)
+    create(:github_repo, user: user, full_name: "me/app", name: "app").site_visit_days.create!(day: Date.new(2026, 9, 1), visits: 5, visitors: 5)
+
+    expect([ counts["views"]["page"].values.sum, counts["visits"] ]).to eq([ 1, {} ])
+    expect([ counts(from: nil)["views"]["page"].values.sum, counts(from: nil)["visits"]["me/app"].values.sum ]).to eq([ 2, 5 ])
+  end
+
+  it "refuses without a builder" do
+    expect(described_class.new(from: nil).call).to be(false)
   end
 end

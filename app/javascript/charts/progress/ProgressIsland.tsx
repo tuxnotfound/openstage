@@ -1,20 +1,17 @@
 import { useEffect, useState } from "react"
 import { createPortal } from "react-dom"
-import type { Target } from "../Switches"
-import { useView } from "../useView"
-import CompareChart, { type Focus } from "../filter/CompareChart"
+import CompareChart from "../filter/CompareChart"
 import NumberToggles from "../filter/NumberToggles"
-import ProjectsTable, { csrfToken, type CellSwitches, type RowTargets } from "../filter/ProjectsTable"
+import ProjectsTable, { csrfToken, type CellSwitches } from "../filter/ProjectsTable"
 import WindowPills from "../filter/WindowPills"
-import { apiUrl, lineOrder, linesFrom, pageUrl, reconcile, toggled, type Lines, type Place } from "../filter/lines"
+import { lineOrder } from "../filter/lines"
+import { useFilter } from "../filter/useFilter"
 import type { CompareChartView, ProgressRange, ProgressView, ShippedItem, TableCell, TableRow } from "../types"
 
-// The chart filter on a builder's page, a project's page and the dashboard:
-// the numbers above the chart, the window, the chart, and the projects'
-// table under it. Each click asks Api::ProgressController for that view,
-// warmed when the pointer or focus reaches it, and shows it in place; the
-// page's URL follows, so the view stays shareable. The dashboard's switches
-// save what visitors see, then ask for the view again.
+// The chart filter on a builder's page, a project's page and the dashboard
+// (useFilter): the numbers above the chart, the window, the chart, and the
+// projects' table under it. The dashboard's switches save what visitors
+// see, then ask for the view again.
 
 export type ProgressProps = {
   initial: ProgressView
@@ -28,59 +25,16 @@ export type ProgressProps = {
   shippedTarget?: string
 }
 
-type Next = { range?: ProgressRange; lines?: Lines; projects?: string[] }
-
 const SHOWN = 8
 
 export default function ProgressIsland({ initial, endpoint, mode, defaultRange, shippedTarget }: ProgressProps) {
-  const placeOf = (view: ProgressView): Place => ({ range: view.range, show: view.drawn, projects: mode === "project" ? [] : view.selected })
-  const order = (view: ProgressView) => view.numbers.map((number) => number.key)
-  const { view, busy, failed, show, reload, retry, prefetch } = useView(initial, apiUrl(endpoint, placeOf(initial), order(initial)))
-  const [kept, setKept] = useState<Lines>(() => linesFrom(initial.drawn))
-  const [notice, setNotice] = useState("")
-  const [focus, setFocus] = useState<Focus | null>(null)
-  const lines = reconcile(kept, view.drawn)
+  // A builder's page drops its old repo[]; the dashboard's repo filters its entries.
+  const filter = useFilter(initial, { endpoint, defaultRange, named: mode !== "project", dropped: mode === "page" ? ["repo", "repo[]"] : [] })
+  const { view, busy, failed, lines, focus } = filter
+  const cells = useCellSwitches(view, filter.reload)
 
-  // The API's address and the page's own for a view.
-  function urls(next: Next): [string, string] {
-    const to: Place = { range: next.range ?? view.range, show: lineOrder(next.lines ?? lines), projects: mode === "project" ? [] : next.projects ?? view.selected }
-    const page = pageUrl(window.location.href, to, { range: defaultRange, show: view.defaultShow }, { projects: mode !== "project", repo: mode === "page" })
-    return [apiUrl(endpoint, to, order(view)), page]
-  }
-
-  // Any change of view clears the line under the controls.
-  function to(next: Next): Target {
-    const landed = next.lines ? () => setKept(next.lines ?? {}) : undefined
-    return { go: () => { setNotice(""); show(...urls(next), landed) }, warm: () => prefetch(urls(next)[0]) }
-  }
-
-  function numberTarget(key: string): Target {
-    const result = toggled(lines, key, view.numbers.find((number) => number.key === key)?.word ?? key)
-    if ("notice" in result) return { go: () => setNotice(result.notice), warm: () => undefined }
-    return to({ lines: result.lines })
-  }
-
-  const cells = useCellSwitches(view, () => reload(...urls({})))
-  const drawable = view.table?.rows.filter((row) => row.drawable).map((row) => row.repo) ?? []
-  const inView = view.selected.length > 0 ? view.selected : drawable
-  const rows: RowTargets = {
-    box: (repo) => {
-      const after = inView.includes(repo) ? inView.filter((each) => each !== repo) : drawable.filter((each) => inView.includes(each) || each === repo)
-      if (after.length === 0) return null
-      return to({ projects: after.length === drawable.length ? [] : after })
-    },
-    only: (repo) => to({ projects: [repo] }),
-    all: view.selected.length > 0 ? to({ projects: [] }) : null,
-    refuse: () => setNotice("The chart keeps at least one project."),
-    focus: (repo) => setFocus(repo ? { kind: "project", key: repo } : null),
-  }
-
-  const toggles = (
-    <NumberToggles numbers={view.numbers} lines={lines} indexed={view.chart.indexed} changes={mode === "dashboard"}
-                   toggle={(key) => numberTarget(key).go()} warm={(key) => numberTarget(key).warm()}
-                   focus={(key) => setFocus(key ? { kind: "number", key } : null)} />
-  )
-  const pills = <WindowPills range={view.range} target={(range) => to({ range })} className={mode === "dashboard" ? "" : "max-md:flex max-md:w-full max-md:justify-between"} />
+  const toggles = <NumberToggles numbers={view.numbers} lines={lines} indexed={view.chart.indexed} changes={mode === "dashboard"} {...filter.numbers} />
+  const pills = <WindowPills range={view.range} target={filter.window} className={mode === "dashboard" ? "" : "max-md:flex max-md:w-full max-md:justify-between"} />
   const shipped = shippedTarget ? document.getElementById(shippedTarget) : null
 
   return (
@@ -96,16 +50,16 @@ export default function ProgressIsland({ initial, endpoint, mode, defaultRange, 
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">{toggles}{pills}</div>
       )}
-      <p role="status" className="mt-2.5 text-[13px] font-semibold text-ink-2 empty:mt-0">{notice}</p>
+      <p role="status" className="mt-2.5 text-[13px] font-semibold text-ink-2 empty:mt-0">{filter.notice}</p>
       <CompareChart chart={view.chart} numbers={view.numbers} lines={lines} focus={focus} height={mode === "dashboard" ? "h-[260px]" : ""}
                     hidden={mode === "dashboard" ? cells.hidden : undefined} />
       {view.table && (
         <ProjectsTable table={view.table} drawn={lineOrder(lines)} lines={lines} indexed={view.chart.indexed} words={view.words}
-                       focused={focus?.kind === "project" ? focus.key : null} rows={rows} switches={mode === "dashboard" ? cells.switches : undefined} />
+                       focused={focus?.kind === "project" ? focus.key : null} rows={filter.rows} switches={mode === "dashboard" ? cells.switches : undefined} />
       )}
       {failed && (
         <p role="status" className="os-note mt-3">
-          That view did not load. <button type="button" className="os-link text-[13px]" onClick={retry}>Try again</button>
+          That view did not load. <button type="button" className="os-link text-[13px]" onClick={filter.retry}>Try again</button>
         </p>
       )}
       {mode === "dashboard" && (

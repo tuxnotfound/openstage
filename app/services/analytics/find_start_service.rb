@@ -1,56 +1,59 @@
 module Analytics
-  # The first day any of the pages picked had something to count: a commit, a
-  # visit, a follower, a click or a visit to a project's website, in the
-  # builder's zone; nil before anything happened.
-  # The analytics chart starts there when it falls inside the window.
+  # The first day each page counted each number, ever, in the builder's zone:
+  # each project's first public commit and first visit to its website, and
+  # the first visitor, follower and click out on the builder's own page
+  # (CountService::PAGE) and on each project's page. A chart starts where the
+  # numbers it draws start, and a number compares with the window before only
+  # once it counted before the window began.
   class FindStartService < ApplicationService
-    # pages: page keys, CountService::PAGE or repos' full names.
-    attr_accessor :user, :pages
-    attr_reader :first_day
+    attr_accessor :user
+    # firsts: {number's key => {page => date}}.
+    attr_reader :firsts
 
     validates :user, presence: true
 
     private
 
     def execute
-      firsts = [ first_commit, *visits, *follows, *clicks, site_visits ].compact
-      @first_day = firsts.min&.in_time_zone(user.zone)&.to_date
+      views = days(earliest(own(user.profile_views.minimum(:viewed_at)), user.project_views.group(:repo_name).minimum(:viewed_at)))
+      @firsts = { "commits" => commits, "visits" => site_visits, "visitors" => views, "views" => views, "follows" => follows, "clicks" => clicks }
     end
 
-    def own?
-      Array(pages).include?(CountService::PAGE)
+    # As the public page counts them: public, merges and dependency bumps left out.
+    def commits
+      days(user.entries.publicly_visible.without_tooling_noise.commits.where.not(repo_name: nil).group(:repo_name).minimum(:occurred_at))
     end
 
-    def repos
-      Array(pages) - [ CountService::PAGE ]
+    # Counted on the builder's day already.
+    def site_visits
+      SiteVisitDay.joins(:github_repo).where(github_repos: { user_id: user.id }).group("github_repos.full_name").minimum(:day)
     end
 
-    def visits
-      [ (user.profile_views.minimum(:viewed_at) if own?),
-        (user.project_views.where(repo_name: repos).minimum(:viewed_at) if repos.any?) ]
-    end
-
+    # Confirmed: for the builder's page, or for one project.
     def follows
       confirmed = user.subscriptions.confirmed
-      [ (confirmed.whole_page.minimum(:confirmed_at) if own?),
-        (confirmed.projects.joins(:github_repo).where(github_repos: { full_name: repos }).minimum(:confirmed_at) if repos.any?) ]
+      days(earliest(own(confirmed.whole_page.minimum(:confirmed_at)),
+                    confirmed.projects.joins(:github_repo).group("github_repos.full_name").minimum(:confirmed_at)))
     end
 
-    def first_commit
-      user.entries.publicly_visible.without_tooling_noise.commits.where(repo_name: repos).minimum(:occurred_at) if repos.any?
-    end
-
-    # Its start in the builder's zone, to compare with the times above.
-    def site_visits
-      return if repos.empty?
-
-      SiteVisitDay.joins(:github_repo).where(github_repos: { user_id: user.id, full_name: repos }).minimum(:day)&.in_time_zone(user.zone)
-    end
-
-    # An entry's link counts for its project, or for the builder's page with none.
+    # A project's Visit and View on GitHub buttons, and the links in the
+    # builder's entries: an entry's for its project, or their page with none.
     def clicks
-      on_entries = user.entry_clicks.joins(:entry).where(entries: { repo_name: own? ? [ nil, *repos ] : repos })
-      [ on_entries.minimum(:clicked_at), (user.project_clicks.where(repo_name: repos).minimum(:clicked_at) if repos.any?) ]
+      on_entries = user.entry_clicks.joins(:entry).group("entries.repo_name").minimum(:clicked_at).transform_keys { |repo| repo || CountService::PAGE }
+      days(earliest(on_entries, user.project_clicks.group(:repo_name).minimum(:clicked_at)))
+    end
+
+    def own(time)
+      time ? { CountService::PAGE => time } : {}
+    end
+
+    # {page => time} from several, the earliest for each page.
+    def earliest(*parts)
+      parts.reduce({}) { |all, part| all.merge(part) { |_, one, other| [ one, other ].min } }
+    end
+
+    def days(times)
+      times.transform_values { |time| time.in_time_zone(user.zone).to_date }
     end
   end
 end

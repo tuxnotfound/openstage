@@ -1,10 +1,10 @@
-import type { CompareChartView, NumberView } from "../types"
+import type { CompareChartView, NumberView, Rank } from "../types"
 
 // The chart filter's own rules in the browser, as the canvas boards drew
-// them (chartkit.js): which line each drawn number takes, what a toggle's
-// click does, the note's line styles, the addresses of a view, where a line
-// stands at a point, and how many toggles fit a row. Every number comes from
-// the server; this only arranges what it sent.
+// them (chartkit.js): which line each drawn number takes and in what
+// colour, what a toggle's click does, the note's line styles, the addresses
+// of a view, where a line stands at a point, and how many toggles fit a
+// row. Every number comes from the server; this only arranges what it sent.
 
 export const MAX_DRAWN = 3
 // A number's line by its place in the line order: solid, dotted, dashed.
@@ -17,6 +17,14 @@ const HEIGHT = 280
 
 // The line each drawn number takes, 0 to 2, by its key.
 export type Lines = Record<string, number>
+
+// The class that gives a line, a box or a dot its row's colour, as
+// ProgressHelper#project_class: by rank, the seventh project on grey, and
+// ink for none (the builder's own page, on analytics).
+export function projectClass(rank: Rank): string {
+  if (rank === null) return "os-project-none"
+  return rank < 6 ? `os-project-${rank + 1}` : "os-project-other"
+}
 
 // The lines of the numbers drawn, in line order.
 export function linesFrom(drawn: string[]): Lines {
@@ -87,19 +95,39 @@ export function pathTops(d: string, height = HEIGHT): number[] {
   return [...d.matchAll(/[ML]\s*-?[\d.]+\s+(-?[\d.]+)/g)].map((match) => (100 * Number(match[1])) / height)
 }
 
+// A group of toggles as the row measures it: its label's width (0 for a
+// row without groups) and each toggle's.
+export type Measured = { label: number; toggles: number[] }
+
 // How many toggles fit one row of a width; when not all of them do, the
-// "+ n more" button takes its place beside them.
-export function fitting(widths: number[], more: number, width: number, gap: number): number {
-  const all = widths.reduce((sum, each) => sum + each, 0) + gap * Math.max(0, widths.length - 1)
-  if (all <= width) return widths.length
+// "+ n more" button takes its place beside them. Groups fold whole, so a
+// group never splits across the rows, unless not even the first one fits:
+// then its toggles fit one by one. gap: between toggles, and after a
+// group's label; groupGap: between groups, and before the button.
+export function fitting(groups: Measured[], more: number, width: number, gap: number, groupGap = gap): number {
+  const span = (group: Measured) => (group.label ? group.label + gap : 0) + sum(group.toggles) + gap * Math.max(0, group.toggles.length - 1)
+  const count = sum(groups.map((group) => group.toggles.length))
+  if (sum(groups.map(span)) + groupGap * Math.max(0, groups.length - 1) <= width) return count
   let used = more
-  let count = 0
-  for (const each of widths) {
+  let fit = 0
+  for (const group of groups) {
+    if (used + groupGap + span(group) > width) break
+    used += groupGap + span(group)
+    fit += group.toggles.length
+  }
+  if (fit > 0) return fit
+  const first = groups[0]
+  used = more + groupGap + (first?.label ? first.label + gap : 0) - gap
+  for (const each of first?.toggles ?? []) {
     if (used + gap + each > width) break
     used += gap + each
-    count += 1
+    fit += 1
   }
-  return Math.max(1, count)
+  return Math.max(1, fit)
+}
+
+function sum(values: number[]): number {
+  return values.reduce((total, each) => total + each, 0)
 }
 
 // A view as the page's URL and the API's name it.
@@ -124,12 +152,14 @@ function rank(order: string[], key: string): number {
 
 // The page's own address for a view: its other params stay (the
 // dashboard's entry filters, a linked entry), and the window, the numbers in
-// line order and the projects stay out at the page's defaults. repo: the
-// old params a builder's page drops, which projects now name.
-export function pageUrl(href: string, place: Place, defaults: { range: string; show: string[] }, own: { projects: boolean; repo: boolean }): string {
+// line order and the projects stay out at the page's defaults. projects:
+// whether the page's URL names the rows in view; dropped: the old params it
+// drops, as the view's own now name what they named (a builder's page's
+// repo[], analytics' pages[] and metric).
+export function pageUrl(href: string, place: Place, defaults: { range: string; show: string[] }, own: { projects: boolean; dropped: string[] }): string {
   const url = new URL(href)
   const query = url.searchParams
-  ;["range", "show", "projects", ...(own.repo ? ["repo", "repo[]"] : [])].forEach((key) => query.delete(key))
+  ;["range", "show", "projects", ...own.dropped].forEach((key) => query.delete(key))
   if (place.range !== defaults.range) query.set("range", place.range)
   if (place.show.join(",") !== defaults.show.join(",")) query.set("show", place.show.join(","))
   if (own.projects && place.projects.length) query.set("projects", place.projects.join(","))

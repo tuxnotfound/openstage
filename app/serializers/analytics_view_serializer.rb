@@ -1,93 +1,56 @@
-# The Pro analytics page for one window, the pages picked and the number
-# charted, as the page shows it. The page renders it first and its script asks
-# for others (Api::AnalyticsController).
+# The Pro analytics page for one window, the numbers drawn and the pages in
+# view: the chart filter every chart page shows (ChartFilterSerializer), its
+# toggles and its table's cells each with its change against the window
+# before, and under it where visitors came from, the links they followed and
+# where the badge and embed showed. The page renders it first and its script
+# asks for others (Api::AnalyticsController).
 class AnalyticsViewSerializer < ApplicationSerializer
-  include AnalyticsHelper
   include ActionView::Helpers::NumberHelper
   include ActionView::Helpers::TextHelper
 
-  METRICS = Analytics::CountService::METRICS
-
+  # report: an Analytics::ReportService.
   def initialize(report)
     @report = report
   end
 
+  # changes_note: what the changes compare with, nil for all time, which
+  # compares with nothing; quiet: what a panel with nothing in it says
+  # ("in the last 30 days", "yet").
   def attributes
-    chart = ProgressChart::Visits.new(@report)
-    {
-      range: window.range, metric: @report.metric, selected: everything? ? [] : @report.selected.map(&:key),
-      everything: everything?, window_label: window.label, words: window.words,
-      pages: @report.pages.map { |page| page_switch(page) },
-      tabs: METRICS.map { |metric| tab(metric) }, label: chart.name, scope: scope, change_label: change_label,
-      total: number(@report.total(@report.metric)), change: change(@report.change(@report.metric)),
-      chart: ChartSerializer.new(chart).attributes, sources: sources, countries: countries, rows: rows, links: links, badges: badges
-    }
+    @attributes ||= ChartFilterSerializer.new(@report, changes: true, table: true, cell_changes: true).attributes.merge(
+      changes_note: changes_note, quiet: quiet, sources: sources, countries: countries, links: links, badges: badges
+    )
   end
 
   private
 
-  def window
-    @report.window
+  def labels
+    @report.period.labels
   end
 
-  def everything?
-    @report.selected.size == @report.pages.size
+  def changes_note
+    span = Progress::WindowLabels::SPANS[labels.range]
+    "Changes compare each value with the #{span} before." if span
   end
 
-  def scope
-    everything? ? "all pages" : @report.selected.map(&:name).to_sentence
-  end
-
-  # value: the number charted, on that page, while it is in view.
-  def page_switch(page)
-    on = @report.selected.include?(page)
-    { key: page.key, name: page.name, rank: page.rank, on: on, value: (number(@report.total(@report.metric, page: page)) if on) }
-  end
-
-  def tab(metric)
-    { metric: metric, label: ProgressChart::Visits::LABELS.fetch(metric), group: ProgressChart::Visits::GROUPS.fetch(metric),
-      value: number(@report.total(metric)), change: change(@report.change(metric)) }
-  end
-
-  # arrow, text and up?, as the page writes a change; nils with nothing to compare.
-  def change(percent)
-    arrow, text, up = analytics_change(percent)
-    { arrow: arrow, text: text, up: up }
+  def quiet
+    labels.range == "all" ? "yet" : "in the #{labels.span_words}"
   end
 
   def sources
     most = @report.sources.first&.last.to_i
-    @report.sources.map { |label, count| { label: label, count: number(count), width: (100.0 * count / most).round } }
+    @report.sources.map { |label, count| { label: label, count: number_with_delimiter(count), width: (100.0 * count / most).round } }
   end
 
   def countries
-    @report.countries.map { |label, count| { label: label, count: number(count) } }
-  end
-
-  # The table's last column: the picked number against the days before.
-  def change_label
-    "vs #{window.label} before"
-  end
-
-  # The pages picked, busiest in the number picked first, with each number
-  # and that number's change.
-  def rows
-    @report.selected.sort_by { |page| -@report.total(@report.metric, page: page) }.map do |page|
-      values = METRICS.map { |metric| @report.total(metric, page: page) }
-      { key: page.key, name: page.name, rank: page.rank, values: values.map { |value| value.positive? ? number(value) : "–" },
-        change: change(@report.change(@report.metric, page: page)) }
-    end
+    @report.countries.map { |label, count| { label: label, count: number_with_delimiter(count) } }
   end
 
   def links
-    @report.links.map { |link| { title: link.title, page: link.page.name, count: number(link.count) } }
+    @report.links.map { |link| { title: link.title, page: link.page.name, count: number_with_delimiter(link.count) } }
   end
 
   def badges
-    @report.shown.map { |kind, count, sites| { label: kind == "badge" ? "README badge" : "Embed widget", count: number(count), sites: pluralize(sites, "site") } }
-  end
-
-  def number(value)
-    number_with_delimiter(value)
+    @report.shown.map { |kind, count, sites| { label: kind == "badge" ? "README badge" : "Embed widget", count: number_with_delimiter(count), sites: pluralize(sites, "site") } }
   end
 end

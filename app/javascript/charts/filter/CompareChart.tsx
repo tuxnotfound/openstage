@@ -1,8 +1,7 @@
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
-import { projectClass } from "../LineChart"
 import type { CompareChartView, NumberView } from "../types"
 import LineKey from "./LineKey"
-import { LINE_DASHES, lineOf, noteOf, pathTops, type Lines } from "./lines"
+import { LINE_DASHES, lineOf, noteOf, pathTops, projectClass, type Lines } from "./lines"
 
 // Draws a chart filter's chart as the server worked it out
 // (CompareChartSerializer), as charts/_chart renders the same view: a line

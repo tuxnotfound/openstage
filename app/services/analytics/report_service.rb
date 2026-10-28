@@ -1,68 +1,112 @@
 module Analytics
-  # Everything the Pro analytics page shows, for a window and the pages picked:
-  # the builder's page and one per project, as the public page orders and
-  # colours them. Totals and the chart come from CountService; where visitors
-  # came from, the links they followed and where the badge and embed showed are
-  # read here.
+  # Everything the Pro analytics page shows for a window, the numbers drawn
+  # and the pages in view, on the chart filter every chart page shares: a row
+  # per page, the builder's own and one per project, as the public page
+  # orders and colours them, each counting Openstage's own four numbers and a
+  # project also its commits and site visits, as its builder shows them; what
+  # Progress::DrawService makes of their counts, each number's total and
+  # change for the pages in view and the one chart of the numbers drawn; and
+  # where visitors came from, the links they followed and where the badge and
+  # embed showed.
   class ReportService < ApplicationService
-    # key: CountService::PAGE or a repo's full name; rank: its colour, nil for the builder's page.
-    Page = Data.define(:key, :name, :rank)
+    # It opens on the last 30 days and on commits alone.
+    DEFAULT_RANGE = "30d".freeze
+    DEFAULT_SHOW = %w[commits].freeze
     Link = Data.define(:title, :page, :count)
     TOP = 6
 
-    # picked: page keys; none for all of them.
-    attr_accessor :user, :range, :picked, :metric
-    attr_reader :window, :pages, :selected, :counts, :sources, :countries, :links, :shown
+    # range: a Progress::Window range, nil for the default; show: the numbers
+    # asked for, by key in line order; picked: page keys, none for all of them.
+    attr_accessor :user, :range, :show, :picked
+    # period: the Window the totals cover; rows: a Progress::Row per page, in
+    # the pages' fixed order; drawing: the DrawService of the totals and the chart.
+    attr_reader :period, :rows, :counts, :drawing, :sources, :countries, :links, :shown
+
+    delegate :totals, :drawn, :default_drawn, :window, :chart, :value, :previous, to: :drawing
 
     validates :user, presence: true
 
-    # One page's count, or the selection's, over the window or the one before.
-    def total(metric, page: nil, days: window.days)
-      Array(page || selected).sum { |each| days.sum { |day| counts.dig(metric, each.key, day).to_i } }
+    def selected
+      rows.select(&:on)
     end
 
-    # Percent against the days before; nil when there were none.
-    def change(metric, page: nil)
-      before = total(metric, page: page, days: window.previous_days)
-      ((100.0 * total(metric, page: page) / before) - 100).round if before.positive?
+    # The pages in view, by key; none for all of them.
+    def selected_keys
+      rows.all?(&:on) ? [] : selected.map(&:key)
     end
 
-    # The metric per point of the chart, for one page.
-    def series(page)
-      window.buckets.map { |bucket| (bucket.first..bucket.last).sum { |day| counts.dig(metric, page.key, day).to_i } }
+    # The table's numbers: every one a page shows.
+    def columns
+      totals.map(&:number)
+    end
+
+    # Analytics is the builder's own and every page has a box: no switches
+    # for what visitors see, and no project off their page.
+    def builder
+      false
+    end
+
+    def off_page
+      []
     end
 
     private
 
     def execute
-      @metric = CountService::METRICS.include?(metric) ? metric : CountService::METRICS.first
-      @pages = [ Page.new(key: CountService::PAGE, name: "Your page", rank: nil) ] + projects
-      @selected = pages.select { |page| Array(picked).include?(page.key) }.presence || pages
-      start = FindStartService.new(user: user, pages: selected.map(&:key))
-      start.call
-      return unless absorb_errors(start)
+      @period = Progress::Window.new(range: range.presence_in(Progress::Window::RANGES) || DEFAULT_RANGE, today: today, first_activity: nil)
+      return unless count
 
-      @window = Window.new(range: range, today: Time.current.in_time_zone(user.zone).to_date, first_day: start.first_day)
-      count = CountService.new(user: user, window: window)
-      count.call
-      return unless absorb_errors(count)
+      @rows = pages
+      return unless draw
 
-      @counts = count.counts
       read_visits
       @links = top_links
       @shown = badges
     end
 
+    def today
+      @today ||= Time.current.in_time_zone(user.zone).to_date
+    end
+
+    # The window before the range too, for the changes; every day for all time.
+    def count
+      start = FindStartService.new(user: user)
+      return unless run(start)
+
+      service = CountService.new(user: user, from: period.span_before&.first)
+      @counts = Progress::Counts.new(days: service.counts, firsts: start.firsts) if run(service)
+    end
+
+    # The builder's page first, then each project, every page in view when
+    # the pages picked name none of theirs.
+    def pages
+      synced = user.github_repos.where(full_name: projects.map(&:repo)).index_by(&:full_name)
+      all = [ [ CountService::PAGE, "Your page", nil ] ] + projects.map { |project| [ project.repo, project.name, project.rank ] }
+      in_view = Array(picked) & all.map(&:first)
+      all.map { |key, name, rank| row(key, name, rank, synced[key], in_view.empty? || in_view.include?(key)) }
+    end
+
     def projects
-      Progress::Projects.new(user.entries.publicly_visible.without_tooling_noise).all.map do |project|
-        Page.new(key: project.repo, name: project.name, rank: project.rank)
-      end
+      @projects ||= Progress::Projects.new(user.entries.publicly_visible.without_tooling_noise).all
+    end
+
+    # A page counts a number once it has counted it on any day; a project
+    # shows the ones its builder picked to show, and Openstage's own always.
+    def row(key, name, rank, repo, on)
+      counted = Progress::Numbers::ALL.select { |number| counts.first_day(number.key, [ key ]) }
+      shown = counted.select { |number| !number.picked || repo.nil? || repo.shows?(number.key) }
+      Progress::Row.new(key: key, name: name, rank: rank, repo: repo, on: on, counted: counted.map(&:key), shown: shown.map(&:key))
+    end
+
+    def draw
+      service = Progress::DrawService.new(rows: rows, counts: counts, period: period, show: show, default_show: DEFAULT_SHOW, per: "page")
+      @drawing = service if run(service)
     end
 
     # Hosts grouped as the old analytics grouped them (Hacker News, GitHub,
     # Direct...), and the countries Cloudflare names, busiest first.
     def read_visits
-      views = [ (user.profile_views if selected?(CountService::PAGE)), user.project_views.where(repo_name: selected.map(&:key)) ].compact
+      views = [ (user.profile_views if page_for(CountService::PAGE)), user.project_views.where(repo_name: selected.map(&:key)) ].compact
       views = views.map { |scope| scope.where(viewed_at: times) }
       @sources = tally(views.flat_map { |scope| scope.group(:referrer).count.to_a }) { |host| ReferrerClassifier.classify(host) }
       @countries = tally(views.flat_map { |scope| scope.where.not(country: [ nil, "" ]).group(:country).count.to_a }, &:itself).first(5)
@@ -107,16 +151,20 @@ module Analytics
       nil
     end
 
+    # A page in view.
     def page_for(key)
-      selected.find { |page| page.key == key }
+      selected.find { |row| row.key == key }
     end
 
-    def selected?(key)
-      page_for(key).present?
-    end
-
+    # The window's days in the builder's zone; every day before today for all time.
     def times
-      window.days.first.in_time_zone(user.zone)..window.today.in_time_zone(user.zone).end_of_day
+      first = period.span&.first
+      (first&.in_time_zone(user.zone))..(today.in_time_zone(user.zone).end_of_day)
+    end
+
+    def run(service)
+      service.call
+      absorb_errors(service)
     end
   end
 end

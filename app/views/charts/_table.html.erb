@@ -1,15 +1,18 @@
-<%# The projects under the chart, its key: a row per project, a column per
-    number, each cell the project's value over the window, drawn cells in
-    ink. A row's box draws it or not, and Only shows it alone; each is a link
-    to its view, and the last project in view keeps its box. On the
-    dashboard (manage) a row also has Edit and whether the builder's page
-    lists it, and each cell the switch for what visitors see, or Set up; a
-    project hidden from the page comes last, with no box. On a phone each row
-    stacks, with only the numbers it counts.
-    view: a ProgressViewSerializer's attributes; path_for: the page's address
-    for some params changed; back: the view's params, for the forms. %>
+<%# The projects under the chart, its key: a row per project (per page on
+    analytics), a column per number, each cell the row's value over the
+    window (on analytics with its change under it), drawn cells in ink. A
+    row's box draws it or not, and Only shows it alone; each is a link to its
+    view, and the last row in view keeps its box. On the dashboard (manage) a
+    row also has Edit and whether the builder's page lists it, and each cell
+    the switch for what visitors see, or Set up; a project hidden from the
+    page comes last, with no box. On a phone each row stacks, with only the
+    numbers it counts.
+    view: a ChartFilterSerializer's attributes; path_for: the page's address
+    for some params changed; back: the view's params, for the forms; label:
+    what a row is, "Projects" unless told. %>
 <% table = view[:table] %>
 <% back = local_assigns.fetch(:back, {}) %>
+<% label = local_assigns.fetch(:label, "Projects") %>
 <% columns = table[:columns].index_by { |column| column[:key] } %>
 <% on = table[:rows].count { |row| row[:on] } %>
 <div class="mt-5" data-chart-table>
@@ -17,11 +20,11 @@
     <p class="os-sm os-ink2">No repo has commits here yet. Your public repos appear once the first sync is done.</p>
   <% else %>
     <table class="w-full border-collapse text-sm max-md:block">
-      <caption class="sr-only">Projects: what the chart draws, and each number over the <%= view[:words] %></caption>
+      <caption class="sr-only"><%= label %>: what the chart draws, and each number over the <%= view[:words] %></caption>
       <thead class="max-md:block">
         <tr class="text-xs text-ink-3 max-md:flex">
           <th scope="col" class="w-full pt-1.5 pb-2 text-left font-bold">
-            <span class="flex items-center gap-3">Projects
+            <span class="flex items-center gap-3"><%= label %>
               <%= link_to "Show all", path_for.call(projects: []), class: "os-link rounded-md px-1.5 text-[13px] no-underline" if view[:selected].any? %>
             </span>
           </th>
@@ -93,7 +96,12 @@
                     <%= link_to "Set up", cell[:setup], aria: { label: "Set up #{row[:name]}'s site visits" },
                           class: "inline-flex min-h-6 items-center text-[13px] font-bold text-accent-ink underline underline-offset-3" %>
                   <% else %>
-                    <span class="os-num text-[15px] tracking-[-.02em] <%= lit ? 'text-ink' : 'text-ink-3' %> <%= 'font-medium' unless cell[:shown] %>"><%= cell[:value] || "–" %></span>
+                    <span class="inline-block">
+                      <span class="os-num text-[15px] tracking-[-.02em] <%= lit ? 'text-ink' : 'text-ink-3' %> <%= 'font-medium' unless cell[:shown] %>"><%= cell[:value] || "–" %></span>
+                      <% if cell[:change] %>
+                        <span class="mt-px block text-[11px] font-bold text-ink-2"><span class="<%= chart_tone(cell[:change][:up]) %>"><%= cell[:change][:arrow] %></span> <%= cell[:change][:text] %></span>
+                      <% end %>
+                    </span>
                   <% end %>
                   <% unless cell[:pick].nil? %>
                     <%= button_to "", row[:switch], method: :patch, params: back.merge(number: cell[:key], shown: (!cell[:pick]).to_s),

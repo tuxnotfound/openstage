@@ -44,22 +44,31 @@ export type CompareChartView = {
   indexed: boolean
 }
 
-// A number the page's projects show: its total for the projects in view,
-// each one's part of it for the toggle's bar, and its change on the dashboard.
+// A change against the window before, as the pages write it: the arrow
+// carries the direction and only it wears the colour; nulls with nothing
+// to compare with.
+export type Change = { arrow: string | null; text: string | null; up: boolean | null }
+
+// A number the page's rows show: its total for the rows in view, each one's
+// part of it for the toggle's bar, and its change on the dashboard and
+// analytics.
 export type NumberView = {
   key: string
   label: string
   // Its name inside a sentence: "site visits", "MRR".
   word: string
+  // Where it happens, for the toggles grouped under it: "On GitHub".
+  group: string
   value: string
   split: { repo: string; rank: Rank; value: number }[]
-  change: AnalyticsChange | null
+  change: Change | null
 }
 
-// A cell of the projects' table: the project's value over the window, or
-// null; shown: whether visitors see it; pick: the dashboard's switch for
-// what visitors see, null without one; setup: where to start counting.
-export type TableCell = { key: string; value: string | null; shown: boolean; pick: boolean | null; setup: string | null }
+// A cell of the table: the row's value over the window, or null; shown:
+// whether visitors see it; pick: the dashboard's switch for what visitors
+// see, null without one; setup: where to start counting; change: its change
+// on analytics, null elsewhere.
+export type TableCell = { key: string; value: string | null; shown: boolean; pick: boolean | null; setup: string | null; change: Change | null }
 
 export type TableRow = {
   repo: string
@@ -80,11 +89,12 @@ export type TableRow = {
 // columns: a number each, with its names, whether a project here shows it or not.
 export type TableView = { columns: { key: string; label: string; word: string }[]; rows: TableRow[] }
 
-export type ProgressView = {
+// A chart filter's view, the same on every chart page (ChartFilterSerializer).
+export type FilterView = {
   range: ProgressRange
   // What a number's total covers: "last 90 days", "all time".
   words: string
-  // The projects in view; none for all of them.
+  // The rows in view; none for all of them.
   selected: string[]
   numbers: NumberView[]
   // The numbers drawn, in line order; defaultShow: the page's own.
@@ -92,6 +102,10 @@ export type ProgressView = {
   defaultShow: string[]
   chart: CompareChartView
   table: TableView | null
+}
+
+// A builder's page, a project's page or the dashboard (ProgressViewSerializer).
+export type ProgressView = FilterView & {
   shipped: { heading: string; empty: string; items: ShippedItem[] } | null
 }
 
@@ -107,31 +121,15 @@ export type ShippedItem = {
   project: string | null
 }
 
-export type AnalyticsRange = "7d" | "30d" | "90d"
-export type Metric = "commits" | "site" | "visitors" | "views" | "follows" | "clicks"
-export type AnalyticsChange = { arrow: string | null; text: string | null; up: boolean | null }
-
-export type AnalyticsView = {
-  range: AnalyticsRange
-  metric: Metric
-  selected: string[]
-  everything: boolean
-  windowLabel: string
-  words: string
-  // value: the number charted, on that page, while it is in view.
-  pages: { key: string; name: string; rank: Rank; on: boolean; value: string | null }[]
-  // group: where the number happens: "On GitHub", "On your websites" or "On Openstage".
-  tabs: { metric: Metric; label: string; group: string; value: string; change: AnalyticsChange }[]
-  label: string
-  scope: string
-  // The table's last column: the picked number against the days before.
-  changeLabel: string
-  total: string
-  change: AnalyticsChange
-  chart: ChartView
+// The analytics page (AnalyticsViewSerializer): the chart filter, then where
+// visitors came from, the links they followed and the badge and embed.
+export type AnalyticsView = FilterView & {
+  // What the changes compare with; null for all time.
+  changesNote: string | null
+  // What a panel with nothing in it says: "in the last 30 days", "yet".
+  quiet: string
   sources: { label: string; count: string; width: number }[]
   countries: { label: string; count: string }[]
-  rows: { key: string; name: string; rank: Rank; values: string[]; change: AnalyticsChange }[]
   links: { title: string; page: string; count: string }[]
   badges: { label: string; count: string; sites: string }[]
 }

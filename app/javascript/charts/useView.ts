@@ -7,6 +7,9 @@ import { ViewStore } from "./viewStore"
 // with anything the island keeps beside the view (landed).
 const BUSY_AFTER_MS = 150
 
+// A view to show on click, and to warm when the pointer or focus reaches it.
+export type Target = { go: () => void; warm: () => void }
+
 export function useView<T>(initial: T, initialUrl: string) {
   const [store] = useState(() => {
     const views = new ViewStore<T>()

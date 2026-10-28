@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest"
-import { apiUrl, fitting, lineOf, lineOrder, linesFrom, noteOf, pageUrl, pathTops, reconcile, sentence, toggled } from "../../app/javascript/charts/filter/lines"
+import { apiUrl, fitting, lineOf, lineOrder, linesFrom, noteOf, pageUrl, pathTops, projectClass, reconcile, sentence, toggled } from "../../app/javascript/charts/filter/lines"
 import type { CompareChartView, NumberView } from "../../app/javascript/charts/types"
 
-const number = (key: string, label: string): NumberView => ({ key, label, word: label.toLowerCase(), value: "1", split: [], change: null })
+const number = (key: string, label: string): NumberView => ({ key, label, word: label.toLowerCase(), group: "On GitHub", value: "1", split: [], change: null })
 const numbers = [number("commits", "Commits"), number("visits", "Site visits"), number("stars", "Stars")]
 
 describe("the lines of the numbers drawn", () => {
@@ -31,6 +31,10 @@ describe("the lines of the numbers drawn", () => {
   test("are solid for a number drawn alone on its own axis", () => {
     expect(lineOf({ visits: 1 }, "visits", false)).toBe(0)
     expect(lineOf({ visits: 1 }, "visits", true)).toBe(1)
+  })
+
+  test("wear their row's colour, the seventh on grey, and ink for the builder's own page", () => {
+    expect([projectClass(0), projectClass(5), projectClass(6), projectClass(null)]).toEqual(["os-project-1", "os-project-6", "os-project-other", "os-project-none"])
   })
 })
 
@@ -61,10 +65,24 @@ describe("a line at a point", () => {
 })
 
 describe("the row of number toggles", () => {
+  const row = (...toggles: number[]) => [{ label: 0, toggles }]
+
   test("holds every toggle that fits, and folds the rest behind the more button", () => {
-    expect(fitting([100, 100, 100], 60, 400, 8)).toBe(3)
-    expect(fitting([100, 100, 100, 100], 60, 400, 8)).toBe(3)
-    expect(fitting([300, 100], 60, 200, 8)).toBe(1)
+    expect(fitting(row(100, 100, 100), 60, 400, 8)).toBe(3)
+    expect(fitting(row(100, 100, 100, 100), 60, 400, 8)).toBe(3)
+    expect(fitting(row(300, 100), 60, 200, 8)).toBe(1)
+  })
+
+  test("folds whole groups, each with its label, so a group never splits across the rows", () => {
+    const groups = [{ label: 60, toggles: [150] }, { label: 100, toggles: [160] }, { label: 90, toggles: [120, 120, 120] }]
+    // 218 + 16 + 268 + 16 + 474 = 992 fits a row of 1000 whole.
+    expect(fitting(groups, 80, 1000, 8, 16)).toBe(5)
+    // In 900 the last group folds whole, though one of its toggles would fit.
+    expect(fitting(groups, 80, 900, 8, 16)).toBe(2)
+  })
+
+  test("fits the first group's toggles one by one when not even it fits", () => {
+    expect(fitting([{ label: 60, toggles: [150, 150, 150] }, { label: 90, toggles: [120] }], 80, 400, 8, 16)).toBe(1)
   })
 })
 
@@ -77,9 +95,15 @@ describe("a view's addresses", () => {
 
   test("leave the page's defaults out of its URL and keep its other params", () => {
     const defaults = { range: "12m", show: ["commits", "visits"] }
-    expect(pageUrl("http://x.test/me?repo%5B%5D=me%2Fapp&entry=4#top", { range: "12m", show: ["commits", "visits"], projects: [] }, defaults, { projects: true, repo: true }))
+    expect(pageUrl("http://x.test/me?repo%5B%5D=me%2Fapp&entry=4#top", { range: "12m", show: ["commits", "visits"], projects: [] }, defaults, { projects: true, dropped: ["repo", "repo[]"] }))
       .toBe("/me?entry=4#top")
-    expect(pageUrl("http://x.test/dashboard?q=work&repo=me%2Fapp", { range: "30d", show: ["visits", "commits"], projects: ["me/app", "me/lib"] }, defaults, { projects: true, repo: false }))
+    expect(pageUrl("http://x.test/dashboard?q=work&repo=me%2Fapp", { range: "30d", show: ["visits", "commits"], projects: ["me/app", "me/lib"] }, defaults, { projects: true, dropped: [] }))
       .toBe("/dashboard?q=work&repo=me/app&range=30d&show=visits,commits&projects=me/app,me/lib")
+  })
+
+  test("drop analytics' old params once a view names the same", () => {
+    const place = { range: "90d", show: ["views"], projects: ["page", "me/app"] }
+    expect(pageUrl("http://x.test/analytics?metric=site&pages%5B%5D=me%2Fapp", place, { range: "30d", show: ["commits"] }, { projects: true, dropped: ["pages", "pages[]", "metric"] }))
+      .toBe("/analytics?range=90d&show=views&projects=page,me/app")
   })
 })

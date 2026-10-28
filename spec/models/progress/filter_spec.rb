@@ -28,6 +28,14 @@ RSpec.describe Progress::Filter do
     expect(described_class.from(ActionController::Parameters.new(repo: "me/app"), repo: false).projects).to eq([])
   end
 
+  it "reads analytics' old links: pages[] for its pages, and metric for the one number it drew" do
+    old = described_class.from_analytics(ActionController::Parameters.new(metric: "site", pages: %w[page me/app], range: "7d"))
+    expect([ old.range, old.show, old.projects ]).to eq([ nil, %w[visits], %w[page me/app] ])
+
+    now = described_class.from_analytics(ActionController::Parameters.new(show: "views,commits", projects: "page", metric: "site", pages: %w[me/app]))
+    expect([ now.show, now.projects ]).to eq([ %w[views commits], %w[page] ])
+  end
+
   it "takes fifty projects at most" do
     expect(filter(projects: (1..60).map { |i| "me/#{i}" }.join(",")).projects.size).to eq(50)
   end

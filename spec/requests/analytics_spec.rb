@@ -2,14 +2,22 @@ require "rails_helper"
 
 RSpec.describe "Analytics", type: :request do
   let(:user) { create(:user, pro: true, username: "builder") }
-  let(:browser) { { "HTTP_USER_AGENT" => "Mozilla/5.0 (Macintosh) Safari/605.1.15" } }
 
   def page
     Nokogiri::HTML(response.body)
   end
 
-  def row(key)
-    page.at_css("[data-page-row='#{key}']").css("td").map { |cell| cell.text.squish }
+  def toggles
+    page.at_css("[aria-label='Numbers on the chart']")
+  end
+
+  # Each cell's words, its label for phones first.
+  def cells(key)
+    page.at_css("[data-chart-row='#{key}']").css("td").map { |cell| cell.text.squish }
+  end
+
+  def query(link)
+    Rack::Utils.parse_query(URI(link["href"]).query)
   end
 
   it "sends a visitor who is not signed in home" do
@@ -28,9 +36,10 @@ RSpec.describe "Analytics", type: :request do
   context "as a Pro builder" do
     let!(:repo) { create(:github_repo, user: user, name: "app", full_name: "builder/app", homepage: "https://app.example") }
 
+    # Saturday: the 30-day view runs from Sep 25, the window before it from
+    # Aug 26 to Sep 24, where the first commit is.
     before do
       travel_to Time.utc(2026, 10, 24, 12)
-      # Before the window, so it starts where the window does.
       create(:entry, user: user, repo_name: "builder/app", occurred_at: 40.days.ago)
       sign_in_as(user)
     end
@@ -42,70 +51,90 @@ RSpec.describe "Analytics", type: :request do
       expect(response.body).to include("No visits in the last 30 days.", "No clicks out in the last 30 days.")
     end
 
-    it "counts each page's visitors, views, new followers and clicks out, with where visitors came from" do
-      create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a", referrer: "news.ycombinator.com", country: "PT")
-      create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a", referrer: "news.ycombinator.com", country: "PT")
-      user.project_views.create!(repo_name: "builder/app", viewed_at: 1.day.ago, ip_hash: "b", referrer: "x.com")
+    it "opens on commits alone over the last 30 days, the window beside the title, the numbers in their groups with their changes" do
+      repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
+      repo.site_visit_days.create!(day: Date.new(2026, 9, 10), visits: 10, visitors: 9)
+      create(:entry, user: user, repo_name: "builder/app", occurred_at: 2.days.ago)
+      create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a")
+
+      get "/analytics"
+
+      expect(toggles.css("[role='group']").map { |group| group["aria-label"] }).to eq([ "On GitHub", "On your websites", "On Openstage" ])
+      expect(toggles.text.squish).to eq("On GitHub Commits 1 ± 0% On your websites + Site visits 30 ▲ 200% On Openstage + Visitors 1 + Views 1")
+      expect(toggles.css("[aria-current='true']").map { |drawn| [ drawn.name, drawn.text.squish ] }).to eq([ [ "span", "Commits 1 ± 0%" ] ])
+      expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Commits per day by page, last 30 days")
+      expect(page.at_css("nav[aria-label='Time range'] a[aria-current='page']").text).to eq("30 days")
+      expect(response.body).to include("Changes compare each value with the 30 days before.")
+    end
+
+    it "lists every page under the chart in their fixed order, each value with its change, the builder's page with no commits or site visits" do
+      repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
+      create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a")
+      create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "b", referrer: "news.ycombinator.com", country: "PT")
+      user.project_views.create!(repo_name: "builder/app", viewed_at: 1.day.ago, ip_hash: "c", referrer: "x.com")
       user.subscriptions.create!(email: "fan@example.com", github_repo: repo, confirmed_at: 3.days.ago)
       user.project_clicks.create!(repo_name: "builder/app", kind: "visit", clicked_at: 1.day.ago)
 
       get "/analytics"
 
-      expect(row("page")).to eq([ "–", "–", "1", "2", "–", "–", "–" ])
-      expect(row("builder/app")).to eq([ "–", "–", "1", "1", "1", "1", "▼ 100%" ])
-      expect(page.at_css("[data-numbers]").text.squish)
-        .to eq("On GitHub Commits 0 ▼ 100% On your websites Site visits 0 On Openstage Visitors 2 Views 3 New followers 1 Clicks out 1")
+      expect(page.css("[data-chart-row]").map { |row| row["data-chart-row"] }).to eq([ "page", "builder/app" ])
+      expect(page.css("[data-chart-table] thead th").map { |head| head.text.squish })
+        .to eq([ "Pages", "Commits", "Site visits", "Visitors", "Views", "New followers", "Clicks out" ])
+      expect(cells("page")).to eq([ "Commits –", "Site visits –", "Visitors 2", "Views 2", "New followers –", "Clicks out –" ])
+      expect(cells("builder/app")).to eq([ "Commits 0 ▼ 100%", "Site visits 30", "Visitors 1", "Views 1", "New followers 1", "Clicks out 1" ])
       expect(response.body).to include("Hacker News", "Twitter / X", "PT", "Visit app.example")
     end
 
-    it "opens on commits, site visits beside them, the table's last column following the number picked" do
+    it "draws the numbers and the pages asked for, and still reads analytics' old links" do
       repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
-      repo.site_visit_days.create!(day: Date.new(2026, 9, 10), visits: 10, visitors: 9)
-      create(:entry, user: user, repo_name: "builder/app", occurred_at: 2.days.ago)
+      create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a")
+
+      get "/analytics", params: { show: "views,commits", projects: "builder/app" }
+      expect(toggles.css("[aria-current='true']").map { |drawn| drawn.text.squish.split.first }).to eq(%w[Commits Views])
+      expect(page.at_css("[data-chart-row='page'] [role='checkbox']")["aria-checked"]).to eq("false")
+      expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Views and commits per day by page, last 30 days")
+      expect(response.body).to include("No commits in the last 30 days. None of the pages in view counts views.")
+
+      get "/analytics", params: { metric: "site", pages: [ "builder/app" ] }
+      expect(toggles.css("[aria-current='true']").map { |drawn| drawn.text.squish.split.first }).to eq(%w[Site])
+      expect(page.at_css("[data-chart-row='builder/app'] [aria-disabled='true']")).to be_present
+    end
+
+    it "links each control to its view, leaving the page's defaults out" do
+      create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a")
 
       get "/analytics"
-      expect(page.at_css("[data-numbers] a[aria-current='page']").text.squish).to eq("Commits 1 ± 0%")
-      expect(response.body).to include("Commits per day by page, last 30 days")
 
-      get "/analytics", params: { metric: "site" }
-      expect(page.at_css("[role='group'][aria-label='On your websites']").text.squish).to include("Site visits 30")
-      expect(page.css("thead th").last.text).to eq("vs 30 days before")
-      expect(row("builder/app")).to eq([ "1", "30", "–", "–", "–", "–", "▲ 200%" ])
+      expect(query(toggles.css("a").find { |link| link.text.include?("Views") })).to eq("show" => "commits,views")
+      expect(query(page.css("nav[aria-label='Time range'] a").find { |link| link.text == "90 days" })).to eq("range" => "90d")
+      expect(query(page.at_css("[data-chart-row='page'] [role='checkbox']"))).to eq("projects" => "builder/app")
+      expect(query(page.at_css("[data-chart-row='page'] a[aria-label='Show only Your page']"))).to eq("projects" => "page")
     end
 
-    it "compares with the days just before" do
-      create(:profile_view, user: user, viewed_at: 40.days.ago, ip_hash: "old")
-      create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "new1")
-      create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "new2")
+    it "draws 90 days by week and 12 months by month, and the last 30 days for a window it does not know" do
+      create(:entry, user: user, repo_name: "builder/app", occurred_at: 200.days.ago)
 
-      get "/analytics", params: { metric: "visitors" }
-
-      expect(page.at_css(".os-big").text).to eq("2")
-      expect(response.body).to include("100% vs the 30 days before")
-    end
-
-    it "narrows to the pages picked, and charts the number picked" do
-      create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a")
-      user.project_views.create!(repo_name: "builder/app", viewed_at: 1.day.ago, ip_hash: "b")
-
-      get "/analytics", params: { pages: [ "builder/app" ], metric: "views", range: "7d" }
-
-      expect(page.css("[data-page-row]").map { |each| each["data-page-row"] }).to eq([ "builder/app" ])
-      expect(page.at_css("p.os-label").text.squish).to eq("Views · app, last 7 days")
-      expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Views per day by page, last 7 days")
-      switch = page.at_css("[aria-label='Pages'] [role='switch'][aria-label='Show Your page in the chart']")
-      expect(switch["aria-checked"]).to eq("false")
-      expect(Rack::Utils.parse_nested_query(URI(switch["href"]).query)["pages"]).to be_nil
-      expect(page.at_css("[aria-label='Show app in the chart']")["aria-disabled"]).to eq("true")
-    end
-
-    it "draws 90 days a week a point, and falls back to 30 days for a range it does not know" do
-      create(:entry, user: user, repo_name: "builder/app", occurred_at: 120.days.ago)
       get "/analytics", params: { range: "90d" }
-      expect(page.css("[data-chart-tooltip-template-param]").size).to eq(13)
+      expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Commits per week by page, last 90 days")
 
-      get "/analytics", params: { range: "1y" }
-      expect(page.css("[data-chart-tooltip-template-param]").size).to eq(30)
+      get "/analytics", params: { range: "12m" }
+      expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Commits per month by page, last 12 months")
+
+      get "/analytics", params: { range: "all" }
+      expect(response.body).not_to include("Changes compare")
+
+      get "/analytics", params: { range: "7d" }
+      expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Commits per day by page, last 30 days")
+    end
+
+    it "leaves out of the chart and the table the numbers a project's builder hides" do
+      repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
+      repo.update!(hidden_numbers: %w[visits])
+
+      get "/analytics", params: { show: "visits" }
+
+      expect(toggles.text.squish).to eq("On GitHub Commits 0 ▼ 100%")
+      expect(cells("builder/app")).to eq([ "Commits 0 ▼ 100%" ])
     end
 
     it "shows where the badge and the embed were shown" do

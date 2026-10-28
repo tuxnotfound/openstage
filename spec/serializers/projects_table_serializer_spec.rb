@@ -12,8 +12,8 @@ RSpec.describe ProjectsTableSerializer do
     app.site_visit_days.create!(day: Date.new(2026, 10, 27), visits: 1204, visitors: 800)
   end
 
-  def table(**options)
-    described_class.new(Progress::ChartService.new(user: user, range: "30d", **options).tap(&:call!)).as_json
+  def table(changes: false, **options)
+    described_class.new(Progress::ChartService.new(user: user, range: "30d", **options).tap(&:call!), changes: changes).as_json
   end
 
   def cells(json, name)
@@ -27,6 +27,16 @@ RSpec.describe ProjectsTableSerializer do
     expect(json["columns"]).to eq([ { "key" => "commits", "label" => "Commits", "word" => "commits" } ])
     expect(cells(json, "app")).to eq("commits" => { "value" => "1", "shown" => true, "pick" => nil, "setup" => nil })
     expect(json["rows"].first).to include("edit" => nil, "page" => nil, "switch" => nil, "drawable" => true)
+  end
+
+  it "gives each cell visitors see its change against the window before, when asked, and only while it counted before" do
+    create(:entry, user: user, repo_name: "me/app", occurred_at: 40.days.ago)
+    json = table(changes: true)
+
+    expect(cells(json, "app")["commits"]).to include("value" => "1")
+    expect(json["rows"].map { |row| [ row["name"], row["cells"].to_h { |cell| [ cell["key"], cell["change"] ] } ] })
+      .to eq([ [ "app", { "commits" => { "arrow" => "±", "text" => "0%", "up" => nil }, "visits" => nil } ], [ "lib", { "commits" => nil, "visits" => nil } ] ])
+    expect(table["rows"].flat_map { |row| row["cells"].pluck("change") }.uniq).to eq([ nil ])
   end
 
   it "gives the builder every value with its switch, Set up where a project counts no site visits, and the projects off their page last" do

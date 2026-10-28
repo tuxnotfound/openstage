@@ -1,19 +1,19 @@
-import { projectClass } from "../LineChart"
-import type { Target } from "../Switches"
-import type { TableCell, TableRow, TableView } from "../types"
+import type { Change, TableCell, TableRow, TableView } from "../types"
+import type { Target } from "../useView"
 import LineKey from "./LineKey"
-import { lineOf, type Lines } from "./lines"
+import { lineOf, projectClass, type Lines } from "./lines"
 
-// The projects under the chart, its key, as charts/_table renders them: a
-// row per project, a column per number, each cell the project's value over
-// the window, drawn cells in ink. A row's box, in the project's colour,
-// draws it or not, Only shows it alone and Show all brings the rest back;
-// the last project in view keeps its box, and a click says so. Hovering or
-// focusing a row brings its lines forward. On the dashboard (manage) a row
-// also has Edit and whether the builder's page lists it, and each cell the
-// switch for what visitors see (its value grey while they do not), or Set
-// up; a project hidden from the page comes last, with no box. On a phone
-// each row stacks, with only the numbers it counts.
+// The rows under the chart, its key, as charts/_table renders them: a row
+// per project (per page on analytics), a column per number, each cell the
+// row's value over the window (on analytics with its change under it),
+// drawn cells in ink. A row's box, in its colour, draws it or not, Only
+// shows it alone and Show all brings the rest back; the last row in view
+// keeps its box, and a click says so. Hovering or focusing a row brings its
+// lines forward. On the dashboard (manage) a row also has Edit and whether
+// the builder's page lists it, and each cell the switch for what visitors
+// see (its value grey while they do not), or Set up; a project hidden from
+// the page comes last, with no box. On a phone each row stacks, with only
+// the numbers it counts.
 
 export type RowTargets = {
   // A row's box; null when it is the last project in view.
@@ -41,9 +41,11 @@ type Props = {
   focused: string | null
   rows: RowTargets
   switches?: CellSwitches
+  // What a row is: "Projects", or "Pages" on analytics.
+  label?: string
 }
 
-export default function ProjectsTable({ table, drawn, lines, indexed, words, focused, rows, switches }: Props) {
+export default function ProjectsTable({ table, drawn, lines, indexed, words, focused, rows, switches, label = "Projects" }: Props) {
   if (table.rows.length === 0) {
     return <div className="mt-5"><p className="os-sm os-ink2">No repo has commits here yet. Your public repos appear once the first sync is done.</p></div>
   }
@@ -51,12 +53,12 @@ export default function ProjectsTable({ table, drawn, lines, indexed, words, foc
   return (
     <div className="mt-5" data-chart-table>
       <table className="w-full border-collapse text-sm max-md:block">
-        <caption className="sr-only">Projects: what the chart draws, and each number over the {words}</caption>
+        <caption className="sr-only">{label}: what the chart draws, and each number over the {words}</caption>
         <thead className="max-md:block">
           <tr className="text-xs text-ink-3 max-md:flex">
             <th scope="col" className="w-full pt-1.5 pb-2 text-left font-bold">
               <span className="flex items-center gap-3">
-                Projects
+                {label}
                 {rows.all && <button type="button" className="os-link rounded-md px-1.5 text-[13px] no-underline" onClick={rows.all.go} onPointerEnter={rows.all.warm} onFocus={rows.all.warm}>Show all</button>}
               </span>
             </th>
@@ -143,13 +145,22 @@ function Cell({ row, cell, word, drawn, switches }: { row: TableRow; cell: Table
   const pick = switches?.pick(row, cell) ?? null
   return (
     <span className="inline-flex items-center gap-2.5">
-      <span className={`os-num text-[15px] tracking-[-.02em] ${row.on && shown && drawn ? "text-ink" : "text-ink-3"} ${shown ? "" : "font-medium"}`}>{cell.value ?? "–"}</span>
+      <span className="inline-block">
+        <span className={`os-num text-[15px] tracking-[-.02em] ${row.on && shown && drawn ? "text-ink" : "text-ink-3"} ${shown ? "" : "font-medium"}`}>{cell.value ?? "–"}</span>
+        {cell.change?.arrow && <ChangeLine change={cell.change} />}
+      </span>
       {switches && pick !== null && (
         <button type="button" role="switch" aria-checked={pick} aria-label={`Show ${word} for ${row.name}`} className="os-switch"
                 onClick={() => switches.flip(row, cell)} />
       )}
     </span>
   )
+}
+
+// A cell's change, under its value; only the arrow wears the colour.
+function ChangeLine({ change }: { change: Change }) {
+  const tone = change.up === null ? "" : change.up ? "text-up" : "text-down"
+  return <span className="mt-px block text-[11px] font-bold text-ink-2"><span className={tone}>{change.arrow}</span> {change.text}</span>
 }
 
 // GithubReposController switches it and sends the dashboard back, as the

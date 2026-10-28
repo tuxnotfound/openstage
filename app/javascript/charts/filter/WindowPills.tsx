@@ -1,5 +1,5 @@
-import type { Target } from "../Switches"
 import type { ProgressRange } from "../types"
+import type { Target } from "../useView"
 
 // The window, at the top right of what it scopes: the same four on every
 // chart page. Each asks for its view on click and warms it when the pointer
