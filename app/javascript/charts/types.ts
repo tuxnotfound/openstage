@@ -8,7 +8,7 @@ export type ProgressRange = "30d" | "90d" | "12m" | "all"
 // A chart filter's chart (CompareChartSerializer): each line carries its
 // project and its number, and the browser gives it its number's line style.
 export type CompareChartView = {
-  // repo: the project's repo; number: the number's key.
+  // repo: the row's key (TableRow); number: the number's key.
   paths: { d: string; rank: Rank; number: string; repo: string }[]
   ticks: { value: string; top: number }[]
   // values: one per number in heads, "–" where the project counts none.
@@ -53,6 +53,8 @@ export type NumberView = {
 export type TableCell = { key: string; value: string | null; shown: boolean; pick: boolean | null; setup: string | null; change: Change | null }
 
 export type TableRow = {
+  // The row's key: its repo's full name, or on analytics "page" for the
+  // builder's own page, which has no rank and draws in ink.
   repo: string
   name: string
   rank: Rank
