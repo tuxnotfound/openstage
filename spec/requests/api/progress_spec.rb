@@ -124,6 +124,7 @@ RSpec.describe "Api::Progress", type: :request do
 
       get "/api/progress/builder", params: { range: "30d", dashboard: 1 }
       expect(json["table"]["rows"].first["switch"]).to be_nil
+      expect(response.headers["Cache-Control"]).to include("private")
 
       sign_in_as(user)
       get "/api/progress/builder", params: { range: "30d", dashboard: 1 }

@@ -98,7 +98,7 @@ RSpec.describe "Project pages", type: :request do
       params = { range: "30d", project: "builder/side.app", reveal: "builder/side.app" }
       get "/api/progress/builder", params: params
       expect(response.parsed_body["numbers"]).to eq([])
-      expect(response.headers["Cache-Control"]).to include("public")
+      expect(response.headers["Cache-Control"]).to include("private")
 
       sign_in_as(user)
       get "/api/progress/builder", params: params

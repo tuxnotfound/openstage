@@ -6,7 +6,9 @@ module Api
   # Public, like the pages. Cached until the builder's public work or their
   # projects change, and their site visits every few minutes; browsers
   # revalidate with an ETag. A project the builder hid, and the dashboard,
-  # answer for the builder alone, never into a shared cache.
+  # answer for the builder alone, and an address that asks for either never
+  # goes into a shared cache, whoever asks: the cache would hand a visitor's
+  # answer to the builder.
   class ProgressController < ApplicationController
     # A ceiling, for a change the cache key cannot see.
     EXPIRES = 10.minutes
@@ -20,7 +22,7 @@ module Api
 
       reveal = hidden_repo(user)
       key = cache_key(user, reveal)
-      return unless stale?(etag: key, public: reveal.nil? && !dashboard?(user))
+      return unless stale?(etag: key, public: params[:reveal].blank? && params[:dashboard].blank?)
 
       json = Rails.cache.fetch(key, expires_in: EXPIRES, skip_nil: true) { view(user, reveal) }
       json ? render(json: json) : head(:unprocessable_entity)
