@@ -20,7 +20,7 @@ module Progress
     # columns, its numbers; drawing: the DrawService of the totals and the chart.
     attr_reader :section, :rows, :off_page, :columns, :counts, :drawing
 
-    delegate :totals, :drawn, :default_drawn, :window, :chart, :value, :previous, to: :drawing
+    delegate :totals, :drawn, :default_drawn, :window, :chart, to: :drawing
 
     validates :user, presence: true
 
@@ -32,6 +32,12 @@ module Progress
     # The projects in view, by key; none for all of them.
     def selected_keys
       section.filtered? ? section.selected.map(&:repo) : []
+    end
+
+    # A row's cells under the table's numbers, as the builder's own view
+    # manages what visitors see.
+    def cells(row)
+      drawing.cells(row, columns, manage: builder.present?)
     end
 
     private

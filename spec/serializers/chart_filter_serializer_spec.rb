@@ -11,9 +11,11 @@ RSpec.describe ChartFilterSerializer do
     create(:entry, user: user, repo_name: "me/app", occurred_at: 40.days.ago)
   end
 
-  def view(repos: [], **options)
+  # table: whether the view has its table; cell_changes: whether its cells
+  # carry their change.
+  def view(repos: [], table: false, cell_changes: false, **options)
     chart = Progress::ChartService.new(user: user, range: "30d", repos: repos).tap(&:call!)
-    described_class.new(chart, **options).as_json
+    described_class.new(chart, table: (ProjectsTableSerializer.new(chart, changes: cell_changes) if table), **options).as_json
   end
 
   it "sends the window, the rows in view, a toggle per number with its group and split, the numbers drawn and the chart" do

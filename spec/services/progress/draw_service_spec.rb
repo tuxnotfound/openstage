@@ -49,8 +49,20 @@ RSpec.describe Progress::DrawService do
 
     expect(totals(service)["commits"]).to eq([ 3, 2, [ [ "app", 3 ] ] ])
     expect(service.chart.lines.map(&:repo)).to eq([ "me/app" ])
-    expect(service.value(Progress::Numbers.find("commits"), service.rows.last)).to eq(1)
-    expect(service.previous(Progress::Numbers.find("commits"), [ service.rows.last ])).to be_nil
+    expect(service.cells(service.rows.last, [ Progress::Numbers.find("commits") ]).sole.to_h.slice(:value, :previous, :shown)).to eq(value: 1, previous: nil, shown: true)
+  end
+
+  it "fills a row's cells with what visitors see, and on the builder's own table what it counts and hides, its switch, or Set up" do
+    repo = build(:github_repo, hidden_numbers: [ "visits" ])
+    hiding = Progress::Row.new(key: "me/app", name: "app", rank: 0, repo: repo, on: true, counted: %w[commits visits], shown: %w[commits])
+    plain = Progress::Row.new(key: "me/lib", name: "lib", rank: 1, repo: repo, on: true, counted: %w[commits], shown: %w[commits])
+    columns = Progress::Numbers.in_order(%w[commits visits])
+    service = draw([ hiding, plain ])
+    cell = ->(cells) { cells.map { |each| [ each.number.key, each.value, each.previous, each.shown, each.pick, each.setup ] } }
+
+    expect(cell.call(service.cells(hiding, columns))).to eq([ [ "commits", 3, 2, true, nil, false ], [ "visits", nil, nil, false, nil, false ] ])
+    expect(cell.call(service.cells(hiding, columns, manage: true))).to eq([ [ "commits", 3, 2, true, true, false ], [ "visits", 40, nil, false, false, false ] ])
+    expect(cell.call(service.cells(plain, columns, manage: true)).last).to eq([ "visits", nil, nil, false, nil, true ])
   end
 
   it "starts the chart where the numbers drawn start, and draws each point's own count unless it averages" do

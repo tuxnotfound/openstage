@@ -17,7 +17,7 @@ class ProgressViewSerializer < ApplicationSerializer
   end
 
   def attributes
-    @attributes ||= ChartFilterSerializer.new(@chart, changes: @chart.builder.present?, table: table?).attributes
+    @attributes ||= ChartFilterSerializer.new(@chart, changes: @chart.builder.present?, table: table).attributes
                                          .merge(shipped: (shipped unless @chart.builder))
   end
 
@@ -37,8 +37,10 @@ class ProgressViewSerializer < ApplicationSerializer
 
   # The dashboard always has its table: it is where the builder picks what
   # visitors see. A page has one with more than one project.
-  def table?
-    @chart.builder.present? || (!@chart.lone && @chart.rows.size > 1)
+  def table
+    return unless @chart.builder.present? || (!@chart.lone && @chart.rows.size > 1)
+
+    ProjectsTableSerializer.new(@chart, manage: @chart.builder.present?, off_page: @chart.off_page)
   end
 
   # Newest first, in the builder's words.

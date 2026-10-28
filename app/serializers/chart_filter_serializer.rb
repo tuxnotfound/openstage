@@ -7,13 +7,12 @@
 class ChartFilterSerializer < ApplicationSerializer
   include ActionView::Helpers::NumberHelper
 
-  # changes: whether the toggles carry their change; table: whether the view
-  # has its table; cell_changes: whether its cells carry theirs too.
-  def initialize(filter, changes:, table:, cell_changes: false)
+  # changes: whether the toggles carry their change; table: the
+  # ProjectsTableSerializer of the rows under the chart, nil without one.
+  def initialize(filter, changes:, table: nil)
     @filter = filter
     @changes = changes
     @table = table
-    @cell_changes = cell_changes
   end
 
   # selected: the rows in view, none for all of them; drawn: the numbers
@@ -24,7 +23,7 @@ class ChartFilterSerializer < ApplicationSerializer
       range: labels.range, words: labels.span_words, selected: @filter.selected_keys,
       numbers: @filter.totals.map { |total| number_of(total) }, drawn: @filter.drawn.map(&:key), default_show: @filter.default_drawn.map(&:key),
       chart: CompareChartSerializer.new(@filter.chart).attributes,
-      table: (ProjectsTableSerializer.new(@filter, changes: @cell_changes).attributes if @table)
+      table: @table&.attributes
     }
   end
 

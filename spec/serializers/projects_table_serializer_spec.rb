@@ -13,7 +13,8 @@ RSpec.describe ProjectsTableSerializer do
   end
 
   def table(changes: false, **options)
-    described_class.new(Progress::ChartService.new(user: user, range: "30d", **options).tap(&:call!), changes: changes).as_json
+    chart = Progress::ChartService.new(user: user, range: "30d", **options).tap(&:call!)
+    described_class.new(chart, changes: changes, manage: chart.builder.present?, off_page: chart.off_page).as_json
   end
 
   def cells(json, name)

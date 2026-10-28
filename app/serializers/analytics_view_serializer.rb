@@ -18,7 +18,7 @@ class AnalyticsViewSerializer < ApplicationSerializer
   # panel with nothing in it says ("in the last 30 days", "yet").
   def attributes
     @attributes ||= begin
-      view = ChartFilterSerializer.new(@report, changes: true, table: true, cell_changes: true).attributes
+      view = ChartFilterSerializer.new(@report, changes: true, table: ProjectsTableSerializer.new(@report, changes: true)).attributes
       view.merge(changes_note: (changes_note if compared?(view)), quiet: quiet, sources: sources, countries: countries, links: links, badges: badges)
     end
   end

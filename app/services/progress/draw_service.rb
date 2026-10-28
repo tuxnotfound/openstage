@@ -13,6 +13,11 @@ module Progress
     # nothing to compare with), and the part of each row in view with any,
     # as [row, count].
     Total = Data.define(:number, :value, :previous, :split)
+    # A row's cell under one of the table's numbers: its value over the
+    # window where the table lists it (nil otherwise), the window before's
+    # where visitors see it, whether they do, and on the builder's own table
+    # its switch (pick) or whether to set it up.
+    Cell = Data.define(:number, :value, :previous, :shown, :pick, :setup)
 
     # rows: Progress::Rows, in the page's order; counts: a Progress::Counts;
     # period: the Window the totals cover. show: the numbers asked for, by key
@@ -25,19 +30,14 @@ module Progress
 
     validates :counts, :period, presence: true
 
-    # A row's count of a number over the window.
-    def value(number, row)
-      counts.sum(number.key, row.key, period.span)
-    end
-
-    # Some rows' count of a number over the window before, only while it
-    # counted before the window began; nil otherwise.
-    def previous(number, some)
-      before = period.span_before
-      first = counts.first_day(number.key, some.map(&:key))
-      return unless before && first && first < period.span.first
-
-      some.sum { |row| counts.sum(number.key, row.key, before) }
+    # A row's cells under the table's numbers (columns); manage: the
+    # builder's own table, where they pick what visitors see.
+    def cells(row, columns, manage: false)
+      columns.map do |number|
+        key = number.key
+        Cell.new(number: number, value: (value(number, row) if row.lists?(key, manage)), previous: (previous(number, [ row ]) if row.shows?(key)),
+                 shown: row.shows?(key), pick: (row.pick(key) if manage), setup: manage && row.setup?(key))
+      end
     end
 
     private
@@ -75,6 +75,21 @@ module Progress
       ProgressChart::Compare::Line.new(repo: row.key, name: row.name, rank: row.rank, number: number,
                                        values: counts.per_point(number.key, row.key, window.buckets, average: average.present?),
                                        total: counts.sum(number.key, row.key, window.days))
+    end
+
+    # A row's count of a number over the window.
+    def value(number, row)
+      counts.sum(number.key, row.key, period.span)
+    end
+
+    # Some rows' count of a number over the window before, only while it
+    # counted before the window began; nil otherwise.
+    def previous(number, some)
+      before = period.span_before
+      first = counts.first_day(number.key, some.map(&:key))
+      return unless before && first && first < period.span.first
+
+      some.sum { |row| counts.sum(number.key, row.key, before) }
     end
   end
 end

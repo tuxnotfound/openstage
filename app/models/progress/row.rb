@@ -13,5 +13,24 @@ module Progress
     def shows?(number)
       shown.include?(number)
     end
+
+    # Whether the table lists its value of a number: visitors see the ones
+    # it shows, and its builder, managing what they see, also the ones it
+    # counts and hides from them.
+    def lists?(number, manage)
+      shows?(number) || (manage && counts?(number))
+    end
+
+    # Its builder's switch for a number it counts: on while they pick it for
+    # visitors; nil without a synced repo or a count.
+    def pick(number)
+      repo.picks?(number) if repo && counts?(number)
+    end
+
+    # Whether its builder can set a number up here: site visits, on a synced
+    # repo that counts none yet.
+    def setup?(number)
+      repo.present? && number == "visits" && !counts?(number)
+    end
   end
 end

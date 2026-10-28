@@ -23,7 +23,7 @@ module Analytics
     # the pages' fixed order; drawing: the DrawService of the totals and the chart.
     attr_reader :period, :rows, :counts, :drawing, :sources, :countries, :links, :badges
 
-    delegate :totals, :drawn, :default_drawn, :window, :chart, :value, :previous, to: :drawing
+    delegate :totals, :drawn, :default_drawn, :window, :chart, to: :drawing
 
     validates :user, presence: true
 
@@ -41,14 +41,10 @@ module Analytics
       totals.map(&:number)
     end
 
-    # Analytics is the builder's own and every page has a box: no switches
-    # for what visitors see, and no project off their page.
-    def builder
-      false
-    end
-
-    def off_page
-      []
+    # A row's cells under the table's numbers. Analytics only reads them:
+    # what visitors see is picked on the dashboard.
+    def cells(row)
+      drawing.cells(row, columns)
     end
 
     private
