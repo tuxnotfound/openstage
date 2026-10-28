@@ -85,6 +85,16 @@ RSpec.describe Progress::DrawService do
     expect(draw(show: %w[commits]).window.first).to eq(Date.new(2026, 8, 3))
   end
 
+  it "counts a row with no colour in the totals, with its part, and draws no line for it, nor starts the chart at its data" do
+    old = Progress::Row.new(key: "me/old", name: "old", rank: 10, repo: nil, on: true, counted: %w[visits], shown: %w[visits])
+    all_time = Progress::Window.new(range: "all", today: today, first_activity: Date.new(2026, 1, 5))
+    service = described_class.new(rows: [ app, old ], counts: counts, totals_window: all_time, show: %w[visits]).tap(&:call!)
+
+    expect(totals(service)["visits"]).to eq([ 47, nil, [ [ "app", 40 ], [ "old", 7 ] ] ])
+    expect(service.chart.lines.map(&:repo)).to eq([ "me/app" ])
+    expect(service.window.first).to eq(Date.new(2026, 10, 26))
+  end
+
   it "words its chart by what its rows are" do
     expect(draw(per: "page").chart.note).to eq("Commits per week, one line per page.")
     expect(draw.chart.note).to eq("Commits per week, one line per project.")

@@ -53,6 +53,17 @@ RSpec.describe "Project pages", type: :request do
     expect(preview.call).to eq([ "https://side.example/cover.png" ] * 2)
   end
 
+  it "draws a project past the tenth in ink on its own page, with no dot by its name" do
+    9.times { |i| 2.times { create(:entry, user: user, repo_name: "builder/p#{i}") } }
+
+    get "/builder/side.app"
+
+    page = Nokogiri::HTML(response.body)
+    expect(page.at_css("h1 .os-dot")).to be_nil
+    expect(page.css("svg path[data-number]").map { |path| path["class"] }.uniq).to eq([ "os-project-none stroke-(--project)" ])
+    expect(page.at_css("section[aria-label='side.app']")["class"].split).to include("os-project-none")
+  end
+
   it "finds the project whatever the case of its name" do
     get "/builder/SIDE.APP"
 

@@ -1,5 +1,6 @@
 <%# A blog post: its title and date, and the line of the project it is about
-    when it names one (BlogPost#chart) across the bottom, else what it says. %>
+    when it names one (BlogPost#chart) across the bottom, in ink past the
+    palette, else what it says. %>
 <%= render "og_images/wordmark", x: 64, y: 100, size: 34, tail: "blog" %>
 <%= share_card_text(@post.published_on.strftime("%b %-d, %Y"), x: 1136, y: 100, size: 26, fill: ShareCardHelper::INK_3, anchor: "end") %>
 <% title = share_card_lines(@post.title, width: 1072, size: 58, lines: 3, font: ShareCardHelper::DISPLAY) %>
@@ -9,7 +10,7 @@
 
 <% if @chart %>
   <% card = @chart.card %>
-  <% color = share_card_color(card.rank) %>
+  <% color = share_card_color(card.rank) || ShareCardHelper::INK %>
   <% since = card.weeks.size < Progress::SummarizeService::WEEKS ? "since #{@chart.first_commit.strftime('%B %Y')}" : "over the last 12 months" %>
   <%= share_card_text("#{card.name}, commits per week #{since}", x: 1136, y: 432, size: 24, fill: ShareCardHelper::INK_3, anchor: "end") %>
   <% line, area = progress_sparkline(card.weeks, width: 1200, height: 176) %>

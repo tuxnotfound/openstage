@@ -78,7 +78,7 @@ module ProgressChart
       @chart.discs.map do |disc|
         cx = PLOT[:left] + (disc.left / 100.0 * (PLOT[:right] - PLOT[:left]))
         cy = y_at(disc.top)
-        fill = disc.rank ? color(disc.rank) : INK
+        fill = color(disc.rank)
         %(<circle cx="#{cx.round(1)}" cy="#{cy}" r="26" fill="#{fill}" stroke="#FFFFFF" stroke-width="4"/>) +
           %(<text x="#{cx.round(1)}" y="#{cy + 9}" text-anchor="middle" font-size="24" font-weight="700" fill="#{Palette.ink_on(fill)}">#{disc.number}</text>)
       end
@@ -93,8 +93,9 @@ module ProgressChart
       (PLOT[:top] + (percent / 100.0 * (PLOT[:bottom] - PLOT[:top]))).round(1)
     end
 
+    # A project's colour; ink for no project, and past the palette.
     def color(rank)
-      Palette.project_color(rank)
+      Palette.project_color(rank) || INK
     end
   end
 end

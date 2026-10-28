@@ -34,6 +34,16 @@ RSpec.describe ProjectsTableSerializer do
     expect(json["rows"].first).to include("edit" => nil, "page" => nil, "switch" => nil, "drawable" => true)
   end
 
+  it "gives a project past the tenth no colour and no box, and keeps its values" do
+    8.times { |i| create(:entry, user: user, repo_name: "me/p#{i}", occurred_at: 2.days.ago) }
+    create(:entry, user: user, repo_name: "me/zz", occurred_at: 2.days.ago)
+    json = table
+
+    expect(json["rows"].find { |row| row["name"] == "zz" }).to include("colorClass" => nil, "drawable" => false, "on" => false)
+    expect(cells(json, "zz")["commits"]).to eq("value" => "1", "shown" => true, "pick" => nil, "link" => nil)
+    expect(json["rows"].map { |row| row["colorClass"] }.compact).to eq((1..10).map { |n| "os-project-#{n}" })
+  end
+
   it "gives each cell visitors see its change against the window before, when asked, and only while it counted before" do
     create(:entry, user: user, repo_name: "me/app", occurred_at: 40.days.ago)
     json = table(changes: true)

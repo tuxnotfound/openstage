@@ -9,14 +9,15 @@ import { lineOf, type Lines } from "./lines"
 // row's value over the window (on analytics with its change under it),
 // drawn cells in ink. A row's box, in its colour, draws it or not, Only
 // shows it alone and Show all brings the rest back; the last row in view
-// keeps its box, and a click says so. Hovering or focusing a row brings its
-// lines forward. On the dashboard (manage) a row also has Edit and whether
-// the builder's page lists it, and each cell the switch for what visitors
-// see (its value grey while they do not), or Set up or Paused where site
-// visits do not count; a project hidden from the page comes last, with no
-// box. On a phone each row stacks, with only the numbers it counts. Only
-// shows on hover, and always on a touch screen, where there is no hover to
-// find it by.
+// keeps its box, and a click says so. A project past the palette has no
+// colour, so no box, and keeps its values in grey. Hovering or focusing a
+// row brings its lines forward. On the dashboard (manage) a row also has
+// Edit and whether the builder's page lists it, and each cell the switch
+// for what visitors see (its value grey while they do not), or Set up or
+// Paused where site visits do not count; a project hidden from the page
+// comes last, with no box. On a phone each row stacks, with only the
+// numbers it counts. Only shows on hover, and always on a touch screen,
+// where there is no hover to find it by.
 
 export type RowTargets = {
   // A row's box; null when it is the last project in view.

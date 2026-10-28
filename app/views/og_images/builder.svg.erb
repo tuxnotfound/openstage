@@ -1,7 +1,8 @@
 <%# A builder's page: who they are, their projects' share of the last 12
     months' commits, and the three projects their page shows first, each with
-    its line and commits. X lays the site's name over the bottom left corner,
-    so nothing that matters goes there. %>
+    its line and commits. A project past the palette has no colour: its share
+    stays empty, and it has no mark and an ink line. X lays the site's name
+    over the bottom left corner, so nothing that matters goes there. %>
 <% shares = @cards.select { |card| card.commits.positive? }.sort_by { |card| -card.commits } %>
 <clipPath id="face"><circle cx="112" cy="112" r="48"/></clipPath>
 <% if @avatar %>
@@ -19,19 +20,20 @@
   <clipPath id="bar"><rect x="64" y="196" width="1072" height="16" rx="8"/></clipPath>
   <g clip-path="url(#bar)">
     <% share_card_segments(shares.map(&:commits), x: 64, width: 1072, gap: 6, min: 12).zip(shares).each do |(x, width), card| %>
-      <rect x="<%= x %>" y="196" width="<%= width %>" height="16" fill="<%= share_card_color(card.rank) %>"/>
+      <% if (color = share_card_color(card.rank)) %><rect x="<%= x %>" y="196" width="<%= width %>" height="16" fill="<%= color %>"/><% end %>
     <% end %>
   </g>
 <% end %>
 
 <% @cards.first(3).each_with_index do |card, i| %>
   <% mid = 290 + (i * 96) %>
-  <% color = share_card_color(card.rank) %>
+  <% mark = share_card_color(card.rank) %>
+  <% color = mark || ShareCardHelper::INK %>
   <% line, area = progress_sparkline(card.weeks, width: 400, height: 60) %>
   <% if i.positive? %><line x1="64" x2="1136" y1="<%= mid - 48 %>" y2="<%= mid - 48 %>" stroke="<%= ShareCardHelper::LINE %>" stroke-width="2"/><% end %>
-  <rect x="64" y="<%= mid - 12 %>" width="24" height="24" rx="7" fill="<%= color %>"/>
-  <% project, size = share_card_fit(card.name, width: 434, sizes: [ 42, 36 ], font: ShareCardHelper::DISPLAY) %>
-  <%= share_card_text(project, x: 106, y: mid + 14, size: size, font: ShareCardHelper::DISPLAY, weight: 700) %>
+  <% if mark %><rect x="64" y="<%= mid - 12 %>" width="24" height="24" rx="7" fill="<%= mark %>"/><% end %>
+  <% project, size = share_card_fit(card.name, width: mark ? 434 : 476, sizes: [ 42, 36 ], font: ShareCardHelper::DISPLAY) %>
+  <%= share_card_text(project, x: mark ? 106 : 64, y: mid + 14, size: size, font: ShareCardHelper::DISPLAY, weight: 700) %>
   <g transform="translate(560 <%= mid - 32 %>)">
     <path d="<%= area %>" fill="<%= color %>" fill-opacity="0.16"/>
     <path d="<%= line %>" fill="none" stroke="<%= color %>" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>

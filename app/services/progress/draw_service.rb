@@ -3,7 +3,9 @@ module Progress
   # on every chart page: each number a row shows, with its total for the rows
   # in view, the window before's and each row's part of it; the numbers drawn
   # (those asked for, else the page's own, else the first); and the one chart
-  # of them, from where the numbers drawn start for the rows in view.
+  # of them, from where the numbers drawn start for the rows in view with a
+  # colour. A row past the palette has none: it counts in the totals and
+  # draws no line (ProgressChart::Compare#lines).
   class DrawService < ApplicationService
     # The numbers a chart draws at once, each in its own line.
     MAX_DRAWN = 3
@@ -62,7 +64,7 @@ module Progress
     end
 
     def draw
-      first = drawn.filter_map { |number| counts.first_day(number.key, showing(number).map(&:key)) }.min
+      first = drawn.filter_map { |number| counts.first_day(number.key, showing(number).select(&:color_class).map(&:key)) }.min
       @window = Window.new(range: totals_window.range, today: totals_window.today, first_activity: first)
       lines = drawn.flat_map { |number| showing(number).map { |row| line(number, row) } }
       ProgressChart::Compare.new(window: window, lines: lines, numbers: drawn, average: average.present?, lone: lone.present?, per: per || "project")

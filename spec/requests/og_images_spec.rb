@@ -66,6 +66,18 @@ RSpec.describe "Share cards", type: :request do
       expect(drawn.last).to include(">app<", "Bea Builder", ">Live<", "A tool for builders.", "commits in 12 months")
     end
 
+    it "draws a project past the tenth with no mark, its name where the mark was, and its line in ink" do
+      8.times { |i| create(:entry, user: user, repo_name: "builder/p#{i}", occurred_at: 2.days.ago) }
+      create(:github_repo, user: user, full_name: "builder/zz", name: "zz")
+      create(:entry, user: user, repo_name: "builder/zz", occurred_at: 2.days.ago)
+
+      get "/og/builder/zz"
+
+      expect(response).to have_http_status(:ok)
+      expect(drawn.last).not_to include(%(rx="9"))
+      expect(drawn.last).to include(%(x="64" y="120"), %(stroke="#{ShareCardHelper::INK}" stroke-width="6"))
+    end
+
     it "answers 404 for a name that is no project of theirs" do
       get "/og/builder/nope"
 

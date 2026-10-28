@@ -52,12 +52,13 @@ module Progress
       @columns = builder ? builder_columns : totals.map(&:number)
     end
 
-    # A list that names no project of theirs, or every one, shows them all,
-    # as no list does; a project's page keeps its one project.
+    # The projects a list names, as far as they stay in view (in_view).
     def compose
       service = composed(repos)
-      service = composed([]) if service && Array(repos).any? && (service.section.selected.empty? || (!lone && every?(service.section)))
-      @section = service&.section
+      return unless service
+
+      named = in_view(service.section)
+      @section = named.sort == Array(repos).uniq.sort ? service.section : composed(named)&.section
     end
 
     def composed(in_view)
@@ -65,8 +66,16 @@ module Progress
       service if run(service)
     end
 
-    def every?(section)
-      section.selected.size == section.tally.projects.all.size
+    # A list that names no project of theirs with a colour, or every one,
+    # shows them all, as no list does: a project past the palette draws no
+    # line, so a list never puts it in view. A project's page keeps its one
+    # project.
+    def in_view(section)
+      return section.selected.map(&:repo) if lone && section.selected.any?
+
+      colored = section.tally.projects.all.select { |project| ProgressChart::Palette.project_class(project.rank) }
+      named = section.selected & colored
+      named.size == colored.size ? [] : named.map(&:repo)
     end
 
     # The page's projects, and on the builder's own view the ones hidden from
@@ -81,9 +90,16 @@ module Progress
 
     def row(project, repo, slot)
       counted = [ ("commits" if project.commits.positive?), ("visits" if repo&.site_first_visit_at) ].compact
-      Row.new(key: project.repo, name: project.name, rank: project.rank, color_class: ProgressChart::Palette.project_class(project.rank), repo: repo,
+      Row.new(key: project.repo, name: project.name, rank: project.rank, color_class: color_class(project), repo: repo,
               on: !section.filtered? || section.selected.include?(project), counted: counted,
               shown: counted.select { |key| repo.nil? || repo.public_number?(key, slot: slot) }, site: (slot.state(repo) if repo))
+    end
+
+    # A project's colour by rank. Past the palette it has none, so no box
+    # and no line, except on its own page, which draws it in ink, as its
+    # card draws its chart.
+    def color_class(project)
+      ProgressChart::Palette.project_class(project.rank) || (ProgressChart::Palette::INK if lone)
     end
 
     def count

@@ -24,7 +24,20 @@ RSpec.describe Analytics::ReportService do
   it "has a row per page, the builder's own first, then each project in the public page's order and colours" do
     rows = report.rows
 
-    expect(rows.map { |row| [ row.key, row.name, row.rank ] }).to eq([ [ "page", "Your page", nil ], [ "me/app", "app", 0 ], [ "me/lib", "lib", 1 ] ])
+    expect(rows.map { |row| [ row.key, row.name, row.rank, row.color_class ] })
+      .to eq([ [ "page", "Your page", nil, "os-project-none" ], [ "me/app", "app", 0, "os-project-1" ], [ "me/lib", "lib", 1, "os-project-2" ] ])
+  end
+
+  it "gives a project's page past the tenth no colour, and never puts it in view by name" do
+    8.times { |i| create(:entry, user: user, repo_name: "me/p#{i}", occurred_at: 2.days.ago) }
+    create(:entry, user: user, repo_name: "me/quiet", occurred_at: 2.days.ago)
+
+    service = report(pages: %w[me/quiet])
+    expect(service.rows.last).to have_attributes(key: "me/quiet", color_class: nil, on: true)
+    expect(service.selected_keys).to eq([])
+    expect(service.chart.lines.map(&:repo)).not_to include("me/quiet")
+    expect(report(pages: %w[me/quiet me/lib]).selected_keys).to eq([ "me/lib" ])
+    expect(report(pages: %w[page me/app me/lib] + (0..7).map { |i| "me/p#{i}" }).selected_keys).to eq([])
   end
 
   it "gives each page the numbers it has counted: a project its commits and site visits, every page Openstage's own" do

@@ -14,22 +14,19 @@ RSpec.describe ProgressChart::Palette do
     (high + 0.05) / (low + 0.05)
   end
 
-  it "colors the ten busiest projects and grays the rest" do
-    expect((0..10).map { |rank| described_class.project_color(rank) })
-      .to eq(%w[#2f6ee0 #eb6834 #1baf7a #eda100 #e87ba4 #008300 #6250d6 #e34948 #9e8eff #7c3856 #8A8F98])
+  it "colors the ten busiest projects, and no project and the rest not at all" do
+    expect((0..11).map { |rank| described_class.project_color(rank) })
+      .to eq(%w[#2f6ee0 #eb6834 #1baf7a #eda100 #e87ba4 #008300 #6250d6 #e34948 #9e8eff #7c3856] + [ nil, nil ])
+    expect(described_class.project_color(nil)).to be_nil
   end
 
-  it "uses the dark palette and the card's faint gray on a card" do
-    expect([ described_class.project_color(9, :dark), described_class.project_color(10, :light), described_class.project_color(nil, :dark) ])
-      .to eq(%w[#8b4664 #8A8E86 #6B7378])
+  it "gives the marks of the ten busiest projects their colour's class, no project ink, and the rest none" do
+    expect([ 0, 9, 10, 25, nil ].map { |rank| described_class.project_class(rank) }).to eq([ "os-project-1", "os-project-10", nil, nil, "os-project-none" ])
   end
 
-  it "gives the marks of the ten busiest projects their colour's class, the rest grey and no project ink" do
-    expect([ 0, 9, 10, nil ].map { |rank| described_class.project_class(rank) }).to eq(%w[os-project-1 os-project-10 os-project-other os-project-none])
-  end
-
-  it "sets the page's tokens to the same ten colours in each mode" do
+  it "sets the page's tokens to the same ten colours in each mode, and none past them" do
     expect(tokens.transform_values { |set| (1..10).map { |n| set["project-#{n}"] } }).to eq(described_class::PROJECT_COLORS)
+    expect(tokens.values.flat_map(&:keys).grep(/\Aproject-/).uniq).to match_array((1..10).map { |n| "project-#{n}" })
   end
 
   it "puts text on each new colour in whichever of the mode's ground and ink contrasts more with it" do

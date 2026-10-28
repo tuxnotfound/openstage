@@ -31,7 +31,8 @@ class ChartFilterSerializer < ApplicationSerializer
 
   # group: where it happens, for the toggles grouped under it; value: "–"
   # when no row in view shows it; split: the part of each row in view with
-  # any, in the class of its colour, for the toggle's bar.
+  # any, in the class of its colour, for the toggle's bar, where a row past
+  # the palette (nil) leaves its share empty.
   def number_of(total)
     number = total.number
     { key: number.key, label: number.label, word: number.word, group: number.group, value: total.value ? number_with_delimiter(total.value) : "–",

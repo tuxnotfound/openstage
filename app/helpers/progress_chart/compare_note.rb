@@ -82,12 +82,21 @@ module ProgressChart
       chart.average? ? "A 7-day average of #{number.word} per day#{per_line}." : "#{number.label} per #{labels.unit_word}#{per_line}."
     end
 
-    # The numbers drawn with no line: none in the window, or no project in
-    # view that counts them.
+    # The numbers drawn with no line, and why.
     def rest
-      quiet, missing = (chart.numbers - chart.lined).partition { |number| chart.every_line.any? { |line| line.number == number } }
-      [ (" No #{sentence(quiet.map(&:word), 'or')} #{labels.word}." if quiet.any?),
+      colorless, quiet, missing = unlined
+      [ (" Only #{chart.per}s without a colour count #{sentence(colorless.map(&:word), 'or')}, and those draw no line." if colorless.any?),
+        (" No #{sentence(quiet.map(&:word), 'or')} #{labels.word}." if quiet.any?),
         (" None of the #{chart.per}s in view counts #{sentence(missing.map(&:word), 'or')}." if missing.any?) ].join
+    end
+
+    # The numbers drawn with no line, as [counted only by projects past the
+    # palette, which have no colour to draw in; with none in the window;
+    # counted by no project in view].
+    def unlined
+      lines = ->(number) { chart.every_line.select { |line| line.number == number } }
+      colorless, rest = (chart.numbers - chart.lined).partition { |number| lines.call(number).any? { |line| line.total.positive? } }
+      [ colorless, *rest.partition { |number| lines.call(number).any? } ]
     end
 
     def empty

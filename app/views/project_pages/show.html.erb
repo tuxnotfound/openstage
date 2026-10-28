@@ -25,7 +25,9 @@
   <span class="font-bold" aria-current="page"><%= project.name %></span>
 </nav>
 
-<section class="os-panel <%= project_class(project.rank) %>" aria-label="<%= project.name %>">
+<%# A project past the palette has no colour: no dot by its name, and ink behind its picture. %>
+<% color = project_class(project.rank) %>
+<section class="os-panel <%= color || ProgressChart::Palette::INK %>" aria-label="<%= project.name %>">
   <div class="flex flex-wrap items-start gap-x-9 gap-y-6">
     <div class="min-w-0 flex-[999_1_520px]">
       <div class="flex flex-wrap gap-2">
@@ -37,7 +39,7 @@
         <% if card&.last_commit %><span class="os-tag">Last commit <%= progress_ago(card.last_commit) %></span><% end %>
       </div>
       <h1 class="os-h1 mt-3.5 flex items-center gap-4 text-[clamp(36px,5vw,56px)] [overflow-wrap:anywhere]">
-        <span class="os-dot size-4 shrink-0 bg-(--project)" aria-hidden="true"></span><%= project.name %>
+        <% if color %><span class="os-dot size-4 shrink-0 bg-(--project)" aria-hidden="true"></span><% end %><%= project.name %>
       </h1>
       <% if card&.description %>
         <p class="os-p mt-3 max-w-[62ch] text-[19px]/[1.5] text-ink"><%= card.description %></p>
@@ -141,7 +143,7 @@
           <li class="os-row py-0">
             <%= link_to project_page_for(@user, other), class: "flex items-center justify-between gap-3 py-2.5 hover:underline" do %>
               <span class="inline-flex min-w-0 items-center gap-2.5 font-bold">
-                <span class="os-dot <%= project_class(other.rank) %> bg-(--project)" aria-hidden="true"></span><span class="truncate"><%= other.name %></span>
+                <% if (other_color = project_class(other.rank)) %><span class="os-dot <%= other_color %> bg-(--project)" aria-hidden="true"></span><% end %><span class="truncate"><%= other.name %></span>
               </span>
               <% if other.last_commit %><span class="os-xs os-muted shrink-0"><%= progress_ago(other.last_commit) %></span><% end %>
             <% end %>

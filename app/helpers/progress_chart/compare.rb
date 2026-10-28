@@ -14,8 +14,9 @@ module ProgressChart
     PEAK = 100.0
 
     # rank: its row's place in the table; color_class: the class it wears
-    # (Palette); number: a Progress::Numbers::Number; values: one per point;
-    # total: its count over the window's days, without which it draws no line.
+    # (Palette), nil past the palette; number: a Progress::Numbers::Number;
+    # values: one per point; total: its count over the window's days. Without
+    # a colour or a total it draws no line.
     Line = Data.define(:repo, :name, :rank, :color_class, :number, :values, :total)
     # values: one per number with lines; "–" where the project has none of it.
     Row = Data.define(:repo, :name, :color_class, :values)
@@ -37,9 +38,10 @@ module ProgressChart
       @per = per
     end
 
-    # The lines with anything in the window.
+    # The lines with anything in the window and a colour: a project past the
+    # palette has none, and draws no line.
     def lines
-      @lines ||= every_line.select { |line| line.total.positive? }
+      @lines ||= every_line.select { |line| line.color_class && line.total.positive? }
     end
 
     # The numbers drawn that have lines, in the pages' order: the tooltip's columns.

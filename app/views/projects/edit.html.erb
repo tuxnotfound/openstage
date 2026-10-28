@@ -12,7 +12,9 @@
   <span class="font-bold" aria-current="page"><%= @repo.name %></span>
 </nav>
 
-<section class="os-panel <%= project_class(overview.project&.rank) %>" aria-labelledby="project-name">
+<%# A project past the palette has no colour: no dot. %>
+<% color = project_class(overview.project&.rank) %>
+<section class="os-panel <%= color %>" aria-labelledby="project-name">
   <div class="flex flex-wrap items-start gap-x-9 gap-y-5">
     <div class="min-w-0 flex-[999_1_520px]">
       <div class="flex flex-wrap gap-2">
@@ -21,7 +23,7 @@
         <% if overview.last_commit %><span class="os-tag">Last commit <%= progress_ago(overview.last_commit) %></span><% end %>
       </div>
       <h1 id="project-name" class="os-h1 mt-3.5 flex items-center gap-4 text-[clamp(36px,5vw,56px)] [overflow-wrap:anywhere]">
-        <span class="os-dot size-4 shrink-0 bg-(--project)" aria-hidden="true"></span><%= @repo.name %>
+        <% if color %><span class="os-dot size-4 shrink-0 bg-(--project)" aria-hidden="true"></span><% end %><%= @repo.name %>
       </h1>
       <% if @repo.project_description %>
         <p class="os-p mt-2.5 max-w-[62ch] text-[19px]/[1.5] text-ink"><%= @repo.project_description %></p>

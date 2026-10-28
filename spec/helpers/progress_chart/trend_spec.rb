@@ -49,6 +49,18 @@ RSpec.describe ProgressChart::Trend do
     expect(chart("90d", repos: [ "me/late" ]).lines.first.values.first).to eq(2)
   end
 
+  it "draws no line for a project past the tenth, unless it is the one project in view" do
+    10.times { |i| commits("me/p#{i}", Time.utc(2026, 10, 13, 10), 2) }
+    commits("me/quiet", Time.utc(2026, 10, 13, 10))
+    milestone("Shipped quietly", Time.utc(2026, 10, 13, 12), repo: "me/quiet")
+
+    every = chart("90d", discs: true)
+    expect(every.lines.map(&:repo)).to eq((0..9).map { |i| "me/p#{i}" })
+    expect(every.columns.last.rows.map(&:name)).not_to include("quiet")
+    expect(every.discs.sole).to have_attributes(rank: 10, top: 94)
+    expect(chart("90d", repos: [ "me/quiet" ]).lines.map { |line| [ line.repo, line.rank ] }).to eq([ [ "me/quiet", 10 ] ])
+  end
+
   it "draws the lines alone on a page; discs are the weekly email's" do
     commits("me/app", Time.utc(2026, 10, 13, 10), 4)
     milestone("Shipped", Time.utc(2026, 10, 13, 12), repo: "me/app")

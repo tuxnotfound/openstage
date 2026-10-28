@@ -42,7 +42,8 @@ export type NumberView = {
   // Where it happens, for the toggles grouped under it: "On GitHub".
   group: string
   value: string
-  split: { key: string; colorClass: string; value: number }[]
+  // colorClass: null for a row with no colour, whose share stays empty.
+  split: { key: string; colorClass: string | null; value: number }[]
   change: Change | null
 }
 

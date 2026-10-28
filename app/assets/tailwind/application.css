@@ -82,7 +82,7 @@
   --color-accent-soft: #E0EDEE;
   --color-accent-ink: #006B72;
 
-  /* By all-time commit order (ProgressChart::Palette); the 11th on is grey.
+  /* By all-time commit order (ProgressChart::Palette); the 11th on has none.
      Project 1 was #2a78d6, darkened on 2026-10-23 so white text on it holds
      4.5:1; the validator passes it and it sits further from the accent. */
   --color-project-1: #2f6ee0;
@@ -95,7 +95,6 @@
   --color-project-8: #e34948;
   --color-project-9: #9e8eff;
   --color-project-10: #7c3856;
-  --color-project-other: #8A8F98;
   /* Text on a project colour (a disc's number, a picked chip, a box's
      tick), by the kit's rule: dark text when the colour's luminance is over
      0.2. From the 7th on, whichever of ground and ink contrasts more with
@@ -110,7 +109,6 @@
   --color-on-project-8: #0E0F12;
   --color-on-project-9: #0E0F12;
   --color-on-project-10: #FFFFFF;
-  --color-on-project-other: #111111;
 }
 
 @layer base {
@@ -146,12 +144,10 @@
       --color-project-8: #e66767;
       --color-project-9: #5f4bb4;
       --color-project-10: #8b4664;
-      --color-project-other: #6F757F;
       --color-on-project-1: #111111;
       --color-on-project-7: #0E0F12;
       --color-on-project-9: #F3F4F6;
       --color-on-project-10: #F3F4F6;
-      --color-on-project-other: #FFFFFF;
     }
   }
 
@@ -248,7 +244,8 @@
   .os-avatar { width: 56px; height: 56px; flex: none; border-radius: 50%; object-fit: cover; background: var(--color-strong); color: var(--color-ground); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 20px; }
 
   /* A project's colour by rank (project_class), for the marks that wear it:
-     bg-(--project), stroke-(--project), text-(--on-project). No project: ink. */
+     bg-(--project), stroke-(--project), text-(--on-project). No project: ink.
+     A project past the tenth has no class, and leaves its marks out. */
   .os-project-1 { --project: var(--color-project-1); --on-project: var(--color-on-project-1); }
   .os-project-2 { --project: var(--color-project-2); --on-project: var(--color-on-project-2); }
   .os-project-3 { --project: var(--color-project-3); --on-project: var(--color-on-project-3); }
@@ -259,7 +256,6 @@
   .os-project-8 { --project: var(--color-project-8); --on-project: var(--color-on-project-8); }
   .os-project-9 { --project: var(--color-project-9); --on-project: var(--color-on-project-9); }
   .os-project-10 { --project: var(--color-project-10); --on-project: var(--color-on-project-10); }
-  .os-project-other { --project: var(--color-project-other); --on-project: var(--color-on-project-other); }
   .os-project-none { --project: var(--color-strong); --on-project: var(--color-ground); }
 
   /* Charts: one line per project, the share bar under the headline number */

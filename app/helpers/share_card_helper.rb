@@ -77,6 +77,8 @@ module ShareCardHelper
     user.display_name.to_s.split.first(2).map { |word| word[0] }.join.upcase.presence || user.username[0].upcase
   end
 
+  # A project's colour; nil past the palette, where a card leaves out the
+  # project's mark and draws its line in ink.
   def share_card_color(rank)
     ProgressChart::Palette.project_color(rank)
   end

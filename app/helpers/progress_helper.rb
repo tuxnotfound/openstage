@@ -15,7 +15,8 @@ module ProgressHelper
     project_page_path(user.username, project.repo.split("/").last, **params)
   end
 
-  # The class that gives marks a project's colour (ProgressChart::Palette).
+  # The class that gives marks a project's colour (ProgressChart::Palette);
+  # nil past the palette, where its marks are left out.
   def project_class(rank)
     ProgressChart::Palette.project_class(rank)
   end

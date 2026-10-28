@@ -1,8 +1,9 @@
 <%# A number above the chart: its line while drawn (a plus when not), its
     name, its total for the rows in view and a thin bar of how that splits
-    across them, in their colours; on the dashboard and analytics also its
-    change. It links to the view it switches to; the last number drawn stays
-    drawn, and three is the most (full).
+    across them, in their colours, a share left empty for a row with none;
+    on the dashboard and analytics also its change. It links to the view it
+    switches to; the last number drawn stays drawn, and three is the most
+    (full).
     number: one of a ChartFilterSerializer's numbers; view, path_for and
     changes as charts/toggles has them. %>
 <% drawn = view[:drawn].include?(number[:key]) %>
@@ -22,7 +23,7 @@
   <% end %>
   <span class="absolute inset-x-3 bottom-[5px] flex h-[3px] gap-0.5 <%= 'opacity-45' unless drawn %>" aria-hidden="true">
     <% number[:split].each do |part| %>
-      <span class="<%= part[:color_class] %> min-w-[3px] rounded-[2px] bg-(--project)" style="flex: <%= part[:value] %> 1 0"></span>
+      <span class="min-w-[3px] rounded-[2px] <%= "#{part[:color_class]} bg-(--project)" if part[:color_class] %>" style="flex: <%= part[:value] %> 1 0"></span>
     <% end %>
   </span>
 <% end %>

@@ -28,6 +28,17 @@ RSpec.describe ChartFilterSerializer do
     expect(json["chart"]["paths"].map { |path| path["key"] }).to eq([ "me/app" ])
   end
 
+  it "leaves the share of a project past the tenth empty in a toggle's bar, and its lines off the chart" do
+    8.times { |i| create(:entry, user: user, repo_name: "me/p#{i}", occurred_at: 2.days.ago) }
+    create(:entry, user: user, repo_name: "me/zz", occurred_at: 2.days.ago)
+
+    json = view(changes: false)
+
+    expect(json["numbers"].sole["split"].last).to eq("key" => "me/zz", "colorClass" => nil, "value" => 1)
+    expect(json["chart"]["paths"].pluck("key")).not_to include("me/zz")
+    expect(json["chart"]["paths"].pluck("colorClass").uniq.size).to eq(10)
+  end
+
   it "writes a dash for a number no row in view shows" do
     user.github_repos.find_by(full_name: "me/app").update!(site_source: "script", site_set_up_at: 3.days.ago, site_first_visit_at: 2.days.ago)
     user.github_repos.find_by(full_name: "me/app").site_visit_days.create!(day: 2.days.ago.to_date, visits: 5, visitors: 2)

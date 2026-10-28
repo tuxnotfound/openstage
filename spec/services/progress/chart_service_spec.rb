@@ -117,6 +117,42 @@ RSpec.describe Progress::ChartService do
     expect([ service.section.filtered?, service.rows.map(&:name) ]).to eq([ true, [ "app" ] ])
   end
 
+  describe "a project past the tenth" do
+    # app and lib, eight more, then quiet: the eleventh by all-time commits.
+    before do
+      8.times { |i| create(:entry, user: user, repo_name: "builder/p#{i}", occurred_at: 2.days.ago) }
+      create(:entry, user: user, repo_name: "builder/quiet", occurred_at: 2.days.ago)
+    end
+
+    def colors(service)
+      service.rows.to_h { |row| [ row.name, row.color_class ] }
+    end
+
+    it "has no colour: it counts in the totals, with its part, and draws no line" do
+      service = chart
+
+      expect(colors(service)).to include("app" => "os-project-1", "p7" => "os-project-10", "quiet" => nil)
+      expect(totals(service)["commits"]).to eq([ 13, [ [ "app", 3 ], [ "lib", 1 ], *(0..7).map { |i| [ "p#{i}", 1 ] }, [ "quiet", 1 ] ] ])
+      expect(service.chart.lines.map(&:repo)).not_to include("builder/quiet")
+      expect(service.chart.lines.size).to eq(11)
+    end
+
+    it "is never put in view by a list that names it, and a list of every project with a colour shows them all" do
+      expect(chart(repos: [ "builder/quiet" ]).selected_keys).to eq([])
+      pair = chart(repos: %w[builder/quiet builder/lib])
+      expect([ pair.selected_keys, pair.rows.select(&:on).map(&:name) ]).to eq([ [ "builder/lib" ], [ "lib" ] ])
+      every = chart(repos: %w[builder/app builder/lib] + (0..7).map { |i| "builder/p#{i}" })
+      expect([ every.selected_keys, every.rows.count(&:on) ]).to eq([ [], 11 ])
+    end
+
+    it "draws in ink on its own page" do
+      service = chart(repos: [ "builder/quiet" ], lone: true)
+
+      expect(colors(service)).to eq("quiet" => "os-project-none")
+      expect(service.chart.paths.map { |path| path[1] }).to eq([ "os-project-none" ])
+    end
+  end
+
   it "needs a builder" do
     expect(described_class.new.call).to be(false)
   end

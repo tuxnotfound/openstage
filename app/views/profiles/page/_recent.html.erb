@@ -12,7 +12,7 @@
         <% if local_assigns.fetch(:by_project, true) %>
           <div class="min-w-0 flex-[0_0_190px]">
             <div class="flex items-center gap-2 font-bold">
-              <span class="os-dot <%= project_class(group.project.rank) %> bg-(--project)"></span><%= group.project.name %>
+              <% if (color = project_class(group.project.rank)) %><span class="os-dot <%= color %> bg-(--project)"></span><% end %><%= group.project.name %>
             </div>
             <div class="os-xs os-muted"><%= group.date.strftime("%b %-d") %> · <%= pluralize(group.commits.size, "commit") %></div>
           </div>

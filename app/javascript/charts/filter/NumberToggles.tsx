@@ -6,15 +6,15 @@ import { MAX_DRAWN, fitting, lineOf, type Lines } from "./lines"
 
 // The numbers above the chart, one row of toggles: a number's line while it
 // is drawn (a plus when not), its name, its total for the rows in view, a
-// thin bar of how that splits across them in their colours, and on the
-// dashboard and analytics its change. On analytics they sit in their groups,
-// each named before its toggles (On GitHub, On your websites, On
-// Openstage). What does not fit the row folds behind "+ n more", measured
-// as the row's width changes, whole groups at a time: one line on a wide
-// screen, and on a phone, where the toggles wrap, up to PHONE_LINES. It
-// opens in a second row, which stays open while one of its numbers is drawn
-// or once one of them is clicked, so no drawn number hides and the focus
-// never drops out of a row that closes.
+// thin bar of how that splits across them in their colours (a row with none
+// leaves its share empty), and on the dashboard and analytics its change.
+// On analytics they sit in their groups, each named before its toggles (On
+// GitHub, On your websites, On Openstage). What does not fit the row folds
+// behind "+ n more", measured as the row's width changes, whole groups at a
+// time: one line on a wide screen, and on a phone, where the toggles wrap,
+// up to PHONE_LINES. It opens in a second row, which stays open while one of
+// its numbers is drawn or once one of them is clicked, so no drawn number
+// hides and the focus never drops out of a row that closes.
 
 const GAP = 8
 // Between groups, and before the more button when there are groups.
@@ -155,7 +155,7 @@ function Toggle({ number, line, full, changes, events }: { number: NumberView; l
       {changes && number.change?.arrow && <ChangeText change={number.change} />}
       <span className={`absolute inset-x-3 bottom-[5px] flex h-[3px] gap-0.5 ${drawn ? "" : "opacity-45"}`} aria-hidden="true">
         {number.split.map((part) => (
-          <span key={part.key} className={`${part.colorClass} min-w-[3px] rounded-[2px] bg-(--project)`} style={{ flex: `${part.value} 1 0` }} />
+          <span key={part.key} className={`min-w-[3px] rounded-[2px] ${part.colorClass ? `${part.colorClass} bg-(--project)` : ""}`} style={{ flex: `${part.value} 1 0` }} />
         ))}
       </span>
     </button>

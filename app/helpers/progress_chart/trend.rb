@@ -12,10 +12,12 @@ module ProgressChart
     # Room over the top gridline, so a peak and the disc on it stay inside.
     HEADROOM = 1.1
 
-    # values: one per point, in the window's order.
+    # rank: the project's colour (Palette), none past the palette, which
+    # draws in ink; values: one per point, in the window's order.
     Line = Data.define(:repo, :name, :rank, :total, :values)
     Tick = Data.define(:value, :top)
-    # rank: the project's colour; nil for an entry with no project.
+    # rank: the project's colour; nil for an entry with no project. Without
+    # a colour a disc is ink.
     Disc = Data.define(:number, :item, :rank, :left, :top)
     Row = Data.define(:name, :rank, :value)
     # mark: where the point sits inside the column, in percent of its width.
@@ -40,11 +42,13 @@ module ProgressChart
       period.range == "30d"
     end
 
-    # The projects in view with commits in the window, busiest of all time first.
+    # The projects in view with commits in the window, busiest of all time
+    # first. One past the palette has no colour and draws no line, unless it
+    # is the one project in view, which draws in ink, as its card does.
     def lines
       @lines ||= begin
         counts = tally.totals.counts
-        tally.projects.all.select { |project| counts.fetch(project.repo, 0).positive? }.map do |project|
+        tally.projects.all.select { |project| counts.fetch(project.repo, 0).positive? && lined?(project) }.map do |project|
           Line.new(repo: project.repo, name: project.name, rank: project.rank, total: counts[project.repo], values: values_for(project.repo))
         end
       end
@@ -136,6 +140,10 @@ module ProgressChart
 
     def labels
       section.labels
+    end
+
+    def lined?(project)
+      Palette.project_class(project.rank) || section.project == project
     end
 
     def values_for(repo)

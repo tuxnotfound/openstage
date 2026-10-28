@@ -195,6 +195,23 @@ RSpec.describe "Profiles", type: :request do
         expect(response.body).to include("Commits per week over the last 12 months")
       end
 
+      it "gives the card of a project ranked eleventh no dot and its chart in ink, and the chart above no box or line for it" do
+        8.times { |i| create(:entry, user: user, repo_name: "builder/p#{i}", occurred_at: 2.days.ago) }
+        create(:entry, user: user, repo_name: "builder/zz", occurred_at: 2.days.ago)
+
+        get "/builder"
+
+        page = Nokogiri::HTML(response.body)
+        all = page.css("section[aria-labelledby='projects'] .os-card")
+        card = all.find { |each| each.at_css(".os-h3").text.squish == "zz" }
+        expect(card["class"].split).to include("os-project-none")
+        expect([ card.at_css(".os-dot"), card.css("svg path").size ]).to eq([ nil, 2 ])
+        expect(all.count { |each| each.at_css(".os-h3 .os-dot") }).to eq(10)
+        expect(page.at_css("[data-chart-row='builder/zz'] a")).to be_nil
+        expect(page.at_css("[data-chart-row='builder/zz']").text.squish).to eq("zz Commits 1")
+        expect(page.css("svg path[data-number='commits']").size).to eq(10)
+      end
+
       it "says nothing of weekly commits when no card shows them" do
         user.github_repos.each { |repo| repo.update!(hidden_numbers: [ "commits" ]) }
 

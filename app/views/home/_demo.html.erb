@@ -18,7 +18,8 @@
   <% if shares.any? %>
     <div class="os-sharebar mt-3" role="img" aria-label="Share of commits by project">
       <% shares.each do |project, n| %>
-        <div class="<%= project_class(project.rank) %> min-w-1.5 bg-(--project)" style="flex: <%= n %> 1 0" title="<%= project.name %>: <%= pluralize(n, 'commit') %>"></div>
+        <% color = project_class(project.rank) %>
+        <div class="min-w-1.5 <%= "#{color} bg-(--project)" if color %>" style="flex: <%= n %> 1 0" title="<%= project.name %>: <%= pluralize(n, 'commit') %>"></div>
       <% end %>
     </div>
   <% end %>

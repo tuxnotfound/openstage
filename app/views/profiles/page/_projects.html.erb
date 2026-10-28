@@ -1,7 +1,8 @@
 <%# One card per project: what it is, its status as GitHub says it (Live
     with a website there, Archived), and how it moved over the last 52 weeks,
     each on its own scale, unless its builder hides its commits. Its picture
-    shows on its own page, never here. %>
+    shows on its own page, never here. A project past the palette has no
+    colour: no dot, and its chart in ink. %>
 <section class="os-panel" aria-labelledby="projects">
   <h2 id="projects" class="os-h2">Projects</h2>
   <% if cards.any?(&:commits_shown?) %>
@@ -9,11 +10,12 @@
   <% end %>
   <div class="os-grid2 mt-4">
     <% cards.each do |card| %>
-      <div class="os-card flex flex-col <%= project_class(card.rank) %>">
+      <% color = project_class(card.rank) %>
+      <div class="os-card flex flex-col <%= color || ProgressChart::Palette::INK %>">
         <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <span class="inline-flex flex-wrap items-center gap-2">
             <%= link_to project_page_for(user, card), class: "os-h3 inline-flex items-center gap-2 text-xl hover:underline", data: { turbo_frame: "_top" } do %>
-              <span class="os-dot size-[11px] bg-(--project)"></span><%= card.name %>
+              <% if color %><span class="os-dot size-[11px] bg-(--project)"></span><% end %><%= card.name %>
             <% end %>
             <% if card.live? %><span class="os-tag soft">Live</span><% end %>
             <% if card.archived? %><span class="os-tag">Archived</span><% end %>

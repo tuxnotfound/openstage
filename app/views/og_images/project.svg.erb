@@ -1,11 +1,13 @@
 <%# One project's page, for a project without a picture of its own: its name,
     who builds it, its status, what it is, its commits, and its line across
-    the bottom, where X's label over the bottom left corner covers only line. %>
+    the bottom, where X's label over the bottom left corner covers only line.
+    A project past the palette has no colour: no mark, and its line in ink. %>
 <% card = @cards.first %>
-<% color = share_card_color(card.rank) %>
-<rect x="64" y="84" width="30" height="30" rx="9" fill="<%= color %>"/>
-<% name, size = share_card_fit(card.name, width: 790, sizes: [ 76, 64, 52, 44 ], font: ShareCardHelper::DISPLAY) %>
-<%= share_card_text(name, x: 112, y: 120, size: size, font: ShareCardHelper::DISPLAY, weight: 700) %>
+<% mark = share_card_color(card.rank) %>
+<% color = mark || ShareCardHelper::INK %>
+<% if mark %><rect x="64" y="84" width="30" height="30" rx="9" fill="<%= mark %>"/><% end %>
+<% name, size = share_card_fit(card.name, width: mark ? 790 : 838, sizes: [ 76, 64, 52, 44 ], font: ShareCardHelper::DISPLAY) %>
+<%= share_card_text(name, x: mark ? 112 : 64, y: 120, size: size, font: ShareCardHelper::DISPLAY, weight: 700) %>
 <%= render "og_images/wordmark", x: 1136, y: 106, size: 34, anchor: "end" %>
 
 <clipPath id="face"><circle cx="84" cy="178" r="20"/></clipPath>

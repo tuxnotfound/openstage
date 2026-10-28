@@ -56,3 +56,20 @@ describe("the dashboard's site visits cell", () => {
     expect([quiet, fresh].join()).not.toContain('role="switch"')
   })
 })
+
+describe("a project past the tenth", () => {
+  test("has no box and no colour, and keeps its value in grey", () => {
+    const commits: TableCell = { key: "commits", value: "4", shown: true, pick: null, link: null, change: null }
+    const quiet: TableRow = { key: "me/quiet", name: "quiet", colorClass: null, on: false, drawable: false, cells: [commits], edit: null, page: null, switch: null }
+    const html = renderToStaticMarkup(
+      <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits" }], rows: [{ ...quiet, key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true }, quiet] }}
+                     drawn={["commits"]} lines={{ commits: 0 }} indexed={false} words="last 90 days" focused={null} rows={rows} />,
+    )
+    const row = html.slice(html.indexOf('data-chart-row="me/quiet"'))
+
+    expect(html.match(/type="checkbox"/g)).toHaveLength(1)
+    expect(row).not.toContain("os-project")
+    expect(row).not.toContain('type="checkbox"')
+    expect(row).toMatch(/text-ink-3 ">4<\/span>/)
+  })
+})

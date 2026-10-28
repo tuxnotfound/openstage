@@ -23,9 +23,10 @@
           </div>
           <div class="flex flex-wrap items-center gap-1.5">
             <% progress_tag_choices(item, section).each do |project, n| %>
+              <% color = project_class(project.rank) %>
               <%= button_to entry_project_path(item.id), method: :patch, params: back.merge(repo_name: project.repo),
-                    class: "os-chip #{project_class(project.rank)} h-[30px] px-2.5 text-xs text-ink" do %>
-                <span class="os-dot size-2 bg-(--project)"></span><%= project.name %><%= " · #{n} that day" if n %>
+                    class: "os-chip #{color} h-[30px] px-2.5 text-xs text-ink" do %>
+                <% if color %><span class="os-dot size-2 bg-(--project)"></span><% end %><%= project.name %><%= " · #{n} that day" if n %>
               <% end %>
             <% end %>
             <%= form_with url: entry_project_path(item.id), method: :patch, data: { controller: "autosubmit" } do %>

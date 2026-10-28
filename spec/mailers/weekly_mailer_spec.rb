@@ -130,6 +130,15 @@ RSpec.describe WeeklyMailer do
         expect(text).to include("2 commits", "https://openstage.dev/maker/app?range=30d&ref=digest", "updates on openstage.dev/maker/app")
         expect(text).not_to include("Opened the beta", "Other project work")
       end
+
+      it "draws a project past the tenth for its follower in ink, which the builder's whole week leaves out" do
+        10.times { |i| 3.times { create(:entry, user: builder, repo_name: "maker/p#{i}", occurred_at: 1.day.ago) } }
+        chip = %r{background: #0E0F12;"></span> app <strong}
+
+        expect(mail.attachments[ProgressChart::EmailImage::FILE]).to be_present
+        expect(mail.html_part.body.to_s).to match(chip)
+        expect(described_class.week_ready(builder).html_part.body.to_s).not_to match(%r{</span> app <strong})
+      end
     end
   end
 end

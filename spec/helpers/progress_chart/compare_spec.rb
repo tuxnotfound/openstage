@@ -66,6 +66,22 @@ RSpec.describe ProgressChart::Compare do
     expect(missing.note).to eq("Commits per week. None of the projects in view counts site visits.")
   end
 
+  it "leaves out a project with no colour: no line, no row in the tooltip and no part in the scale" do
+    quiet = described_class::Line.new(repo: "builder/quiet", name: "quiet", rank: 10, color_class: nil, number: commits, values: [ 0, 90 ], total: 90)
+    compare = chart([ line("app", commits, [ 3, 1 ]), quiet ], numbers: [ commits ])
+
+    expect(compare.paths.map(&:last)).to eq([ "builder/app" ])
+    expect(compare.columns.last.rows.map(&:name)).to eq([ "app" ])
+    expect(compare.ticks.map(&:value)).to eq(%w[2 4])
+  end
+
+  it "says which numbers drawn only projects with no colour count" do
+    quiet = described_class::Line.new(repo: "builder/quiet", name: "quiet", rank: 10, color_class: nil, number: visits, values: [ 0, 90 ], total: 90)
+
+    expect(chart([ line("app", commits, [ 3, 1 ]), quiet ]).note)
+      .to eq("Commits per week, one line per project. Only projects without a colour count site visits, and those draw no line.")
+  end
+
   it "gives a peak of one in the singular" do
     compare = chart([ line("app", commits, [ 1, 0 ]), line("app", visits, [ 0, 400 ]) ])
 
