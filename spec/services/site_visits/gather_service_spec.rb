@@ -8,7 +8,7 @@ RSpec.describe SiteVisits::GatherService do
   end
   let!(:lib) do
     create(:github_repo, user: user, full_name: "builder/lib", name: "lib", homepage: "https://lib.example",
-                         site_source: "script", site_first_visit_at: 3.days.ago, site_visits_shown: false)
+                         site_source: "script", site_first_visit_at: 3.days.ago, hidden_numbers: [ "visits" ])
   end
 
   before do

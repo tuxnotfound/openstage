@@ -27,6 +27,16 @@ RSpec.describe GithubRepo do
     expect([ repo.live?, repo.outbound_url("visit") ]).to eq([ false, nil ])
   end
 
+  it "shows every number its builder did not hide, and hides only numbers a project shows" do
+    expect([ repo.shows?("commits"), repo.shows?("visits") ]).to eq([ true, true ])
+
+    repo.hidden_numbers = [ "commits" ]
+    expect([ repo.shows?("commits"), repo.shows?("visits") ]).to eq([ false, true ])
+
+    repo.hidden_numbers = [ "views" ]
+    expect(repo).not_to be_valid
+  end
+
   describe "site visits" do
     let(:user) { create(:user, pro: true) }
     let(:site) { create(:github_repo, user: user, website_edit: "https://Shipnote.app/home", site_source: "script") }
@@ -41,10 +51,10 @@ RSpec.describe GithubRepo do
       site.update!(site_first_visit_at: Time.current)
       expect(site.site_visits_public?).to be(true)
 
-      site.update!(site_visits_shown: false)
+      site.update!(hidden_numbers: [ "visits" ])
       expect(site.site_visits_public?).to be(false)
 
-      site.update!(site_visits_shown: true, site_source: nil)
+      site.update!(hidden_numbers: [], site_source: nil)
       expect(site.site_visits_public?).to be(false)
     end
 

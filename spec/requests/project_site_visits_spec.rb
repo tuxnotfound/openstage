@@ -32,8 +32,9 @@ RSpec.describe "Setting up a project's site visits", type: :request do
   it "hides them from the project's page with its switch, and turns them off" do
     repo.update!(site_source: "script", site_token: "os_a")
 
-    patch "/projects/#{repo.id}/site_visits", params: { shown: "false" }
-    expect(repo.reload.site_visits_shown).to be(false)
+    patch "/projects/#{repo.id}/numbers", params: { number: "visits", shown: "false", back: "project" }
+    expect(response).to redirect_to(edit_project_path(repo, anchor: "numbers"))
+    expect(repo.reload.hidden_numbers).to eq([ "visits" ])
     expect(view.text).to include("Hidden")
 
     patch "/projects/#{repo.id}/site_visits", params: { source: "off" }

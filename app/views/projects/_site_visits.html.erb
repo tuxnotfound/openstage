@@ -15,9 +15,11 @@
       <span data-toggle-target="openIcon"><%= repo.site_source ? "Change source" : "Set up" %></span><span data-toggle-target="closeIcon" class="hidden">Close</span>
     </button>
     <span class="os-xs os-muted whitespace-nowrap"><%= state %></span>
-    <%= form_with url: project_site_visits_path(repo), method: :patch, data: { turbo: false } do %>
-      <%= hidden_field_tag :shown, (!repo.site_visits_shown?).to_s, id: nil %>
-      <button type="submit" role="switch" aria-checked="<%= repo.site_visits_shown? %>" aria-label="Show site visits on <%= repo.name %>'s page" class="os-switch"></button>
+    <%= form_with url: project_numbers_path(repo), method: :patch, data: { turbo: false } do %>
+      <%= hidden_field_tag :number, "visits", id: nil %>
+      <%= hidden_field_tag :shown, (!repo.shows?("visits")).to_s, id: nil %>
+      <%= hidden_field_tag :back, "project", id: nil %>
+      <button type="submit" role="switch" aria-checked="<%= repo.shows?("visits") %>" aria-label="Show site visits on <%= repo.name %>'s page" class="os-switch"></button>
     <% end %>
   </div>
 

@@ -87,14 +87,14 @@ RSpec.describe "Api::Progress", type: :request do
     get "/api/progress/builder", params: { range: "30d" }
     expect(json["site"]).to be_nil
 
-    repo.update!(site_visits_shown: false)
+    repo.update!(hidden_numbers: [ "visits" ])
     get "/api/progress/builder", params: { range: "90d", site: 1 }
     expect(json["site"]).to be_nil
   end
 
   it "answers the dashboard's picks to the builder alone, and never into a shared cache" do
     repo = create(:github_repo, user: user, full_name: "builder/app", name: "app", homepage: "https://app.example",
-                                site_source: "script", site_first_visit_at: 2.days.ago, site_visits_shown: false)
+                                site_source: "script", site_first_visit_at: 2.days.ago, hidden_numbers: [ "visits" ])
     repo.site_visit_days.create!(day: Date.new(2026, 10, 23), visits: 40, visitors: 12)
 
     get "/api/progress/builder", params: { range: "30d", dashboard: 1 }
@@ -103,7 +103,7 @@ RSpec.describe "Api::Progress", type: :request do
     sign_in_as(user)
     get "/api/progress/builder", params: { range: "30d", dashboard: 1 }
     expect(json["lines"]["visits"]).to eq("40")
-    expect(json["lines"]["rows"].first).to include("repo" => "builder/app", "visits" => a_hash_including("value" => "40", "on" => true))
+    expect(json["lines"]["rows"].first).to include("repo" => "builder/app", "visits" => a_hash_including("value" => "40", "on" => false))
     expect(response.headers["Cache-Control"]).to include("private")
   end
 end

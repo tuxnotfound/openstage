@@ -168,11 +168,11 @@ RSpec.describe "Project pages", type: :request do
     end
 
     it "keeps them off the page while switched off, or before Pro on a second site" do
-      repo.update!(site_visits_shown: false)
+      repo.update!(hidden_numbers: [ "visits" ])
       get "/builder/side.app"
       expect(toggles).to be_empty
 
-      repo.update!(site_visits_shown: true)
+      repo.update!(hidden_numbers: [])
       user.update!(pro: false)
       other = create(:github_repo, user: user, site_source: "script")
       other.site_visit_days.create!(day: Date.current, visits: 5000, visitors: 10)

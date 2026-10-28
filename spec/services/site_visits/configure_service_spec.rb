@@ -14,14 +14,6 @@ RSpec.describe SiteVisits::ConfigureService do
     expect(repo.reload).to have_attributes(site_source: "script", site_token: token)
   end
 
-  it "switches whether the page shows them, leaving the source" do
-    repo.update!(site_source: "script")
-
-    described_class.new(repo: repo, shown: false).call!
-
-    expect(repo.reload).to have_attributes(site_visits_shown: false, site_source: "script")
-  end
-
   it "needs a project" do
     expect(described_class.new(source: "script").call).to be(false)
   end

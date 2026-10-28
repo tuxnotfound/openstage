@@ -55,8 +55,8 @@ export type LinesRow = {
   edit: string | null
   // Whether the builder's page shows it, and GithubReposController's path to switch it.
   page: { on: boolean; path: string } | null
-  // Projects::DashboardNumbersController's path for this project; null
-  // without a synced repo behind it, so nothing to save.
+  // Projects::NumbersController's path for this project; null without a
+  // synced repo behind it, so nothing to save.
   switch: string | null
   commits: LineCell
   visits: LineCell

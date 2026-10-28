@@ -1,8 +1,6 @@
 class GithubRepo < ApplicationRecord
   # Where a project's site visits can come from; nil counts none.
   SITE_SOURCES = %w[script].freeze
-  # The numbers a project can draw on its builder's dashboard chart.
-  CHART_NUMBERS = %w[commits visits].freeze
 
   belongs_to :user
   has_many :subscriptions, dependent: :delete_all
@@ -18,7 +16,7 @@ class GithubRepo < ApplicationRecord
                                         format: { with: %r{\Ahttps?://}i, message: "must start with http:// or https://" }, allow_blank: true
   validates :description_edit, length: { maximum: 280 }
   validates :site_source, inclusion: { in: SITE_SOURCES }, allow_nil: true
-  validate :dashboard_hidden_known
+  validate :hidden_numbers_known
 
   normalizes :description_edit, :website_edit, :image_edit, with: ->(value) { value.strip.presence }
 
@@ -94,17 +92,18 @@ class GithubRepo < ApplicationRecord
 
   # Shown on its page: switched on, counting, and counted at least once.
   def site_visits_public?
-    site_visits_shown? && site_first_visit_at.present? && counts_site_visits?
+    shows?("visits") && site_first_visit_at.present? && counts_site_visits?
   end
 
-  # Whether its builder's dashboard chart draws this number for it.
-  def on_dashboard?(number)
-    !dashboard_hidden.include?(number)
+  # Whether its builder lets visitors see a number on its pages: every
+  # number shows until they hide it (Progress::Numbers::PICKED).
+  def shows?(number)
+    hidden_numbers.exclude?(number)
   end
 
   private
 
-  def dashboard_hidden_known
-    errors.add(:dashboard_hidden, "names a number the dashboard cannot draw") unless (Array(dashboard_hidden) - CHART_NUMBERS).empty?
+  def hidden_numbers_known
+    errors.add(:hidden_numbers, "names a number a project cannot hide") unless (Array(hidden_numbers) - Progress::Numbers::PICKED).empty?
   end
 end

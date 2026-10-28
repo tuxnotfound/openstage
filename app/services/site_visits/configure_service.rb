@@ -1,10 +1,11 @@
 module SiteVisits
-  # A project's site visits as its builder sets them: where they come from,
-  # Openstage's script or nowhere ("off"), and whether its page shows them.
-  # Free counts one site: setting up a second refuses, unless asked to count
-  # this one instead, which turns the other's source off.
+  # Where a project's site visits come from, as its builder sets it:
+  # Openstage's script or nowhere ("off"). Free counts one site: setting up a
+  # second refuses, unless asked to count this one instead, which turns the
+  # other's source off. Whether its page shows them is one of its numbers
+  # (Projects::ShowNumberService).
   class ConfigureService < ApplicationService
-    attr_accessor :repo, :source, :shown, :count_here
+    attr_accessor :repo, :source, :count_here
 
     validates :repo, presence: true
     validates :source, inclusion: { in: [ *GithubRepo::SITE_SOURCES, "off" ] }, allow_nil: true
@@ -17,7 +18,6 @@ module SiteVisits
         others.update_all(site_source: nil) if count_here
         repo.site_source = source == "off" ? nil : source if source
         repo.site_token ||= "os_#{SecureRandom.alphanumeric(12).downcase}" if repo.site_source
-        repo.site_visits_shown = shown unless shown.nil?
         repo.save
         absorb_errors(repo)
       end

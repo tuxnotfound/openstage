@@ -175,7 +175,7 @@ function useLineSwitches(view: LinesView | null, redraw: () => void): LineSwitch
     const response = await fetch(row.switch, {
       method: "PATCH", credentials: "same-origin",
       headers: { "Content-Type": "application/json", Accept: "application/json", "X-CSRF-Token": csrfToken() },
-      body: JSON.stringify({ number, on: next }),
+      body: JSON.stringify({ number, shown: next }),
     }).catch(() => null)
     if (response?.ok) return redraw()
     setPending((was) => Object.fromEntries(Object.entries(was).filter(([each]) => each !== which)))
@@ -246,7 +246,7 @@ function LinesTable({ lines, words, range }: { lines: LineSwitches; words: strin
         </tbody>
       </table>
       {lines.failed && <p role="status" className="os-note mt-2">That switch did not save. Try it again.</p>}
-      <p className="os-note mt-2">Values are the {words}. Your page switches what visitors see; the others, this chart only.</p>
+      <p className="os-note mt-2">Values are the {words}. The switches set what visitors see on your page and your project pages, and this chart follows them.</p>
     </div>
   )
 }
@@ -282,7 +282,7 @@ function LineCellView({ lines, row, number, label }: { lines: LineSwitches; row:
   return (
     <span className="inline-flex items-center gap-2.5">
       <span className={`os-num tabular-nums ${on ? "text-ink" : "text-ink-3"}`}>{cell.value}</span>
-      <button type="button" role="switch" aria-checked={on} aria-label={`Draw ${row.name}'s ${label.toLowerCase()}`} className="os-switch"
+      <button type="button" role="switch" aria-checked={on} aria-label={`Show ${label.toLowerCase()} for ${row.name}`} className="os-switch"
               onClick={() => lines.flip(row, number)} />
     </span>
   )

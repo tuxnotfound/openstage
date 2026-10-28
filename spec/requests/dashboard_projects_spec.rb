@@ -61,7 +61,7 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
 
   describe "the table under Your activity" do
     before do
-      tool.update!(homepage: "https://app.example", site_source: "script", site_first_visit_at: 2.days.ago, site_visits_shown: false)
+      tool.update!(homepage: "https://app.example", site_source: "script", site_first_visit_at: 2.days.ago)
       tool.site_visit_days.create!(day: 1.day.ago.to_date, visits: 90, visitors: 30)
     end
 
@@ -71,37 +71,40 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       end
     end
 
-    it "lists each project with its commits and site visits, each switched on, and offers to set up visits where none count" do
+    it "lists each project with its commits and site visits, each shown to visitors, and offers to set up visits where none count" do
       get "/dashboard"
 
       expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "true" ] ])
       expect(cells("builder/bare")).to eq([ [ "1", "true" ], [ "Set up", nil ] ])
       expect(page.at_css("[data-line-row='builder/bare'] a[aria-label^='Set up']")["href"]).to eq("/projects/#{bare.id}/edit?site=open#site-visits")
-      expect(page.at_css("section[aria-labelledby='your-activity']").text.squish).to include("90 site visits", "the others, this chart only.")
+      expect(page.at_css("section[aria-labelledby='your-activity']").text.squish).to include("90 site visits", "and this chart follows them.")
       expect(response.body).to include("app · site visits", "Solid: commits. Dotted: site visits.")
     end
 
-    it "switches a number off for one project, and the chart leaves its line out" do
-      patch "/projects/#{tool.id}/dashboard_numbers", params: { number: "visits", on: "false" }
-      expect(response).to redirect_to(dashboard_path(anchor: "your-activity"))
-      expect(tool.reload.dashboard_hidden).to eq([ "visits" ])
+    it "hides a number from visitors for one project, and the chart leaves its line out" do
+      patch "/projects/#{tool.id}/numbers", params: { number: "visits", shown: "false", range: "30d" }
+      expect(response).to redirect_to(dashboard_path(range: "30d", anchor: "your-activity"))
+      expect(tool.reload.hidden_numbers).to eq([ "visits" ])
 
       get "/dashboard"
       expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "false" ] ])
       expect(response.body).not_to include("app · site visits")
 
-      patch "/projects/#{tool.id}/dashboard_numbers", params: { number: "visits", on: true }, as: :json
+      patch "/projects/#{tool.id}/numbers", params: { number: "visits", shown: true }, as: :json
       expect(response).to have_http_status(:no_content)
-      expect(tool.reload.dashboard_hidden).to eq([])
+      expect(tool.reload.hidden_numbers).to eq([])
     end
 
-    it "refuses a number the dashboard cannot draw, and someone else's project" do
-      patch "/projects/#{tool.id}/dashboard_numbers", params: { number: "mrr", on: false }, as: :json
+    it "refuses a number a project cannot hide, a switch with no state, and someone else's project" do
+      patch "/projects/#{tool.id}/numbers", params: { number: "views", shown: false }, as: :json
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(tool.reload.dashboard_hidden).to eq([])
+      patch "/projects/#{tool.id}/numbers", params: { number: "visits" }
+      expect(response).to redirect_to(dashboard_path(anchor: "your-activity"))
+      expect(flash[:alert]).to eq("That number cannot be switched.")
+      expect(tool.reload.hidden_numbers).to eq([])
 
       theirs = create(:github_repo, user: create(:user))
-      patch "/projects/#{theirs.id}/dashboard_numbers", params: { number: "visits", on: "false" }
+      patch "/projects/#{theirs.id}/numbers", params: { number: "visits", shown: "false" }
       expect(response).to have_http_status(:not_found)
     end
   end

@@ -27,7 +27,7 @@ class DashboardLinesSerializer < ApplicationSerializer
     shown = @section.tally.projects.all.map do |project|
       repo = @lines.repos[project.repo]
       row(project.repo, project.name, project.rank, repo).merge(
-        commits: { value: number(commits.fetch(project.repo, 0)), on: repo.nil? || repo.on_dashboard?("commits"), setup: nil },
+        commits: { value: number(commits.fetch(project.repo, 0)), on: repo.nil? || repo.shows?("commits"), setup: nil },
         visits: visits_cell(repo)
       )
     end
@@ -37,7 +37,7 @@ class DashboardLinesSerializer < ApplicationSerializer
   private
 
   def row(full_name, name, rank, repo)
-    { repo: full_name, name: name, rank: rank, edit: (edit_project_path(repo) if repo), switch: (project_dashboard_numbers_path(repo) if repo),
+    { repo: full_name, name: name, rank: rank, edit: (edit_project_path(repo) if repo), switch: (project_numbers_path(repo) if repo),
       page: ({ on: repo.included?, path: github_repo_path(repo) } if repo) }
   end
 
@@ -62,7 +62,7 @@ class DashboardLinesSerializer < ApplicationSerializer
     return empty_cell unless repo
     return { value: nil, on: false, setup: edit_project_path(repo, site: "open", anchor: "site-visits") } unless visits.key?(repo.full_name)
 
-    { value: number(visits[repo.full_name]), on: repo.on_dashboard?("visits"), setup: nil }
+    { value: number(visits[repo.full_name]), on: repo.shows?("visits"), setup: nil }
   end
 
   def number(value)
