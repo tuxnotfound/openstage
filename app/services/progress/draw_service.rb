@@ -20,15 +20,15 @@ module Progress
     Cell = Data.define(:number, :value, :previous, :shown, :pick, :setup)
 
     # rows: Progress::Rows, in the page's order; counts: a Progress::Counts;
-    # period: the Window the totals cover. show: the numbers asked for, by key
+    # totals_window: the Window the totals cover. show: the numbers asked for, by key
     # in line order; default_show: the page's own. average: each point a
     # 7-day average; lone: one project's page; per: what a row is, "project"
     # or "page".
-    attr_accessor :rows, :counts, :period, :show, :default_show, :average, :lone, :per
+    attr_accessor :rows, :counts, :totals_window, :show, :default_show, :average, :lone, :per
     # window: the chart's points.
     attr_reader :totals, :drawn, :default_drawn, :window, :chart
 
-    validates :counts, :period, presence: true
+    validates :counts, :totals_window, presence: true
 
     # A row's cells under the table's numbers (columns); manage: the
     # builder's own table, where they pick what visitors see.
@@ -62,7 +62,7 @@ module Progress
 
     def draw
       first = drawn.filter_map { |number| counts.first_day(number.key, showing(number).map(&:key)) }.min
-      @window = Window.new(range: period.range, today: period.today, first_activity: first)
+      @window = Window.new(range: totals_window.range, today: totals_window.today, first_activity: first)
       lines = drawn.flat_map { |number| showing(number).map { |row| line(number, row) } }
       ProgressChart::Compare.new(window: window, lines: lines, numbers: drawn, average: average.present?, lone: lone.present?, per: per || "project")
     end
@@ -79,15 +79,15 @@ module Progress
 
     # A row's count of a number over the window.
     def value(number, row)
-      counts.sum(number.key, row.key, period.span)
+      counts.sum(number.key, row.key, totals_window.span)
     end
 
     # Some rows' count of a number over the window before, only while it
     # counted before the window began; nil otherwise.
     def previous(number, some)
-      before = period.span_before
+      before = totals_window.span_before
       first = counts.first_day(number.key, some.map(&:key))
-      return unless before && first && first < period.span.first
+      return unless before && first && first < totals_window.span.first
 
       some.sum { |row| counts.sum(number.key, row.key, before) }
     end

@@ -50,7 +50,7 @@ RSpec.describe Analytics::ReportService do
     service = report
     commits = total(service, "commits")
 
-    expect([ service.period.range, service.drawn.map(&:key), commits.value, commits.previous ]).to eq([ "30d", %w[commits], 3, 1 ])
+    expect([ service.totals_window.range, service.drawn.map(&:key), commits.value, commits.previous ]).to eq([ "30d", %w[commits], 3, 1 ])
     expect(service.chart.lines.map(&:repo)).to contain_exactly("me/app", "me/lib")
     expect([ service.chart.average?, service.chart.note ]).to eq([ false, "Commits per day, one line per page." ])
     expect(service.cells(service.rows.last).find { |cell| cell.number.key == "commits" }.previous).to be_nil
@@ -68,7 +68,7 @@ RSpec.describe Analytics::ReportService do
   it "shows every page for pages it does not know, and the last 30 days for a window it does not know" do
     service = report(pages: %w[me/nope], range: "7d")
 
-    expect([ service.selected_keys, service.rows.map(&:on).uniq, service.period.range ]).to eq([ [], [ true ], "30d" ])
+    expect([ service.selected_keys, service.rows.map(&:on).uniq, service.totals_window.range ]).to eq([ [], [ true ], "30d" ])
   end
 
   it "draws 12 months by week while the data is under 13 weeks old, then by month, and all time from where it starts" do

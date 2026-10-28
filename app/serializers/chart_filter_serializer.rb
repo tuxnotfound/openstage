@@ -18,7 +18,7 @@ class ChartFilterSerializer < ApplicationSerializer
   # selected: the rows in view, none for all of them; drawn: the numbers
   # drawn, in line order; default_show: the page's own, which its URL leaves out.
   def attributes
-    labels = @filter.period.labels
+    labels = @filter.totals_window.labels
     {
       range: labels.range, words: labels.span_words, selected: @filter.selected_keys,
       numbers: @filter.totals.map { |total| number_of(total) }, drawn: @filter.drawn.map(&:key), default_show: @filter.default_drawn.map(&:key),

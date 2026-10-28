@@ -26,7 +26,7 @@ class AnalyticsViewSerializer < ApplicationSerializer
   private
 
   def labels
-    @report.period.labels
+    @report.totals_window.labels
   end
 
   def compared?(view)

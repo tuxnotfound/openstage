@@ -4,7 +4,7 @@ RSpec.describe Progress::DrawService do
   # Wednesday: the 90-day view runs from Monday Aug 3, and the window before
   # it from May 4 to Jul 29.
   let(:today) { Date.new(2026, 10, 28) }
-  let(:period) { Progress::Window.new(range: "90d", today: today, first_activity: nil) }
+  let(:totals_window) { Progress::Window.new(range: "90d", today: today, first_activity: nil) }
   let(:counts) do
     Progress::Counts.new(
       days: { "commits" => { "me/app" => { today - 1 => 3, Date.new(2026, 7, 1) => 2 }, "me/lib" => { today - 40 => 1 } },
@@ -20,7 +20,7 @@ RSpec.describe Progress::DrawService do
   end
 
   def draw(rows = [ app, lib ], **options)
-    described_class.new(rows: rows, counts: counts, period: period, **options).tap(&:call!)
+    described_class.new(rows: rows, counts: counts, totals_window: totals_window, **options).tap(&:call!)
   end
 
   def totals(service)
@@ -85,7 +85,7 @@ RSpec.describe Progress::DrawService do
   end
 
   it "needs the counts and the window" do
-    expect(described_class.new(rows: [ app ], period: period).call).to be(false)
+    expect(described_class.new(rows: [ app ], totals_window: totals_window).call).to be(false)
     expect(described_class.new(rows: [ app ], counts: counts).call).to be(false)
   end
 end

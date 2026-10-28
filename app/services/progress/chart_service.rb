@@ -26,7 +26,7 @@ module Progress
     validates :user, presence: true
 
     # The window the totals cover.
-    def period
+    def totals_window
       section.tally.period
     end
 
@@ -93,13 +93,13 @@ module Progress
     # The window before the range, and the six days before it that the
     # 30-day view's first average reads; every day for all time.
     def count_from
-      [ period.span_before&.first, period.span && (period.span.first - (Window::AVERAGE - 1)) ].compact.min
+      [ totals_window.span_before&.first, totals_window.span && (totals_window.span.first - (Window::AVERAGE - 1)) ].compact.min
     end
 
     # Each number its projects show visitors, the numbers drawn and the chart.
     def draw
-      service = DrawService.new(rows: rows, counts: counts, period: period, show: show, default_show: DEFAULT_SHOW,
-                                average: period.range == "30d", lone: lone, per: "project")
+      service = DrawService.new(rows: rows, counts: counts, totals_window: totals_window, show: show, default_show: DEFAULT_SHOW,
+                                average: totals_window.range == "30d", lone: lone, per: "project")
       @drawing = service if run(service)
     end
 

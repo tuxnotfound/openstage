@@ -19,9 +19,9 @@ module Analytics
     # asked for, by key in line order; pages: the pages in view, by key, none
     # for all of them.
     attr_accessor :user, :range, :show, :pages
-    # period: the Window the totals cover; rows: a Progress::Row per page, in
+    # totals_window: the Window the totals cover; rows: a Progress::Row per page, in
     # the pages' fixed order; drawing: the DrawService of the totals and the chart.
-    attr_reader :period, :rows, :counts, :drawing, :sources, :countries, :links, :badges
+    attr_reader :totals_window, :rows, :counts, :drawing, :sources, :countries, :links, :badges
 
     delegate :totals, :drawn, :default_drawn, :window, :chart, to: :drawing
 
@@ -50,7 +50,7 @@ module Analytics
     private
 
     def execute
-      @period = Progress::Window.new(range: range.presence_in(Progress::Window::RANGES) || DEFAULT_RANGE, today: today, first_activity: nil)
+      @totals_window = Progress::Window.new(range: range.presence_in(Progress::Window::RANGES) || DEFAULT_RANGE, today: today, first_activity: nil)
       return unless count
 
       @rows = page_rows
@@ -70,7 +70,7 @@ module Analytics
       start = FindStartService.new(user: user)
       return unless run(start)
 
-      service = CountService.new(user: user, from: period.span_before&.first)
+      service = CountService.new(user: user, from: totals_window.span_before&.first)
       @counts = Progress::Counts.new(days: service.counts, firsts: start.firsts) if run(service)
     end
 
@@ -96,7 +96,7 @@ module Analytics
     end
 
     def draw
-      service = Progress::DrawService.new(rows: rows, counts: counts, period: period, show: show, default_show: DEFAULT_SHOW, per: "page")
+      service = Progress::DrawService.new(rows: rows, counts: counts, totals_window: totals_window, show: show, default_show: DEFAULT_SHOW, per: "page")
       @drawing = service if run(service)
     end
 
@@ -154,7 +154,7 @@ module Analytics
 
     # The window's days in the builder's zone; every day before today for all time.
     def times
-      first = period.span&.first
+      first = totals_window.span&.first
       (first&.in_time_zone(user.zone))..(today.in_time_zone(user.zone).end_of_day)
     end
 
