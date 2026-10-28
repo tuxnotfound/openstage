@@ -8,11 +8,11 @@ module Progress
     # visit_repos: the GithubRepos whose visits count; from: the first day
     # needed, nil for every day. reveal: a repo the builder hid, counted
     # anyway (Entry.on_page).
-    attr_accessor :user, :zone, :reveal, :commit_repos, :visit_repos, :from
+    attr_accessor :user, :reveal, :commit_repos, :visit_repos, :from
     # counts: a Progress::Counts.
     attr_reader :counts
 
-    validates :user, :zone, presence: true
+    validates :user, presence: true
 
     private
 
@@ -49,6 +49,10 @@ module Progress
 
     def names
       @names ||= Array(visit_repos).to_h { |repo| [ repo.id, repo.full_name ] }
+    end
+
+    def zone
+      user.zone
     end
 
     # {[project, day] => count} as {project => {day => count}}.

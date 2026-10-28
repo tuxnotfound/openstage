@@ -7,7 +7,7 @@ RSpec.describe Progress::CountService do
   before { travel_to Time.utc(2026, 10, 28, 12) }
 
   def counts(**options)
-    described_class.new(user: user, zone: user.zone, commit_repos: [ "me/app" ], visit_repos: [ repo ], **options).tap(&:call!).counts
+    described_class.new(user: user, commit_repos: [ "me/app" ], visit_repos: [ repo ], **options).tap(&:call!).counts
   end
 
   it "counts each project's public commits per day in the builder's zone, and the first day it had one" do
@@ -35,7 +35,7 @@ RSpec.describe Progress::CountService do
     expect(counted.first_day("visits", [ "me/app" ])).to eq(Date.new(2026, 9, 1))
   end
 
-  it "needs a builder and their zone" do
-    expect(described_class.new.call).to be(false)
+  it "needs a builder" do
+    expect(described_class.new(commit_repos: [ "me/app" ]).call).to be(false)
   end
 end

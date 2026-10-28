@@ -77,7 +77,7 @@ module Progress
     end
 
     def count
-      service = CountService.new(user: user, zone: section.tally.zone, reveal: reveal, from: count_from,
+      service = CountService.new(user: user, reveal: reveal, from: count_from,
                                  commit_repos: rows.select { |row| row.counts?("commits") }.map(&:key),
                                  visit_repos: rows.select { |row| builder ? row.counts?("visits") : row.shows?("visits") }.map(&:repo))
       @counts = service.counts if run(service)
