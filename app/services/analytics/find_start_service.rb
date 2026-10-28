@@ -26,7 +26,7 @@ module Analytics
 
     # Counted on the builder's day already.
     def site_visits
-      SiteVisitDay.joins(:github_repo).where(github_repos: { user_id: user.id }).group("github_repos.full_name").minimum(:day)
+      user.site_visit_days.group("github_repos.full_name").minimum(:day)
     end
 
     # Confirmed: for the builder's page, or for one project.

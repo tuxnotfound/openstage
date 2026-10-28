@@ -1,6 +1,14 @@
 require "rails_helper"
 
 RSpec.describe User, type: :model do
+  it "reads the site visits of its own repos alone" do
+    user = create(:user)
+    mine = create(:github_repo, user: user).site_visit_days.create!(day: Date.current, visits: 3, visitors: 1)
+    create(:github_repo).site_visit_days.create!(day: Date.current, visits: 9, visitors: 2)
+
+    expect(user.site_visit_days).to eq([ mine ])
+  end
+
   describe "validations" do
     subject { build(:user) }
 

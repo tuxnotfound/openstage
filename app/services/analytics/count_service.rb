@@ -37,7 +37,7 @@ module Analytics
 
     # Counted on the builder's day already, so read as they are.
     def site_visits
-      scope = SiteVisitDay.joins(:github_repo).where(github_repos: { user_id: user.id })
+      scope = user.site_visit_days
       scope = scope.where(day: from..) if from
       merge(scope.group("github_repos.full_name", :day).sum(:visits))
     end

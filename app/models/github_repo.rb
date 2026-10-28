@@ -33,6 +33,11 @@ class GithubRepo < ApplicationRecord
     where("EXISTS (SELECT 1 FROM entries WHERE entries.user_id = github_repos.user_id AND entries.repo_name = github_repos.full_name)")
   }
 
+  # The repos with these full names, by full name.
+  def self.by_full_name(full_names)
+    where(full_name: full_names).index_by(&:full_name)
+  end
+
   # Repos under different owners can share a name, so Settings names the owner
   # of every repo that is not the builder's own.
   def owner_login

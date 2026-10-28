@@ -53,7 +53,7 @@ module Progress
     end
 
     def github_repos
-      user.github_repos.where(full_name: Array(projects).map(&:repo)).index_by(&:full_name)
+      user.github_repos.by_full_name(Array(projects).map(&:repo))
     end
 
     def commits

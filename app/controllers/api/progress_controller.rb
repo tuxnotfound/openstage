@@ -79,7 +79,7 @@ module Api
     end
 
     def site_stamp(user)
-      SiteVisitDay.joins(:github_repo).where(github_repos: { user_id: user.id }).maximum(:updated_at).to_i / SITE_FRESHNESS.to_i
+      user.site_visit_days.maximum(:updated_at).to_i / SITE_FRESHNESS.to_i
     end
   end
 end

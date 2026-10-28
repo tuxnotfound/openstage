@@ -65,7 +65,7 @@ module Progress
     # The page's projects, and on the builder's own view the ones hidden from their page.
     def list
       projects = lone ? section.selected : section.tally.projects.all
-      synced = user.github_repos.where(full_name: projects.map(&:repo)).index_by(&:full_name)
+      synced = user.github_repos.by_full_name(projects.map(&:repo))
       @rows = projects.map { |project| row(project, synced[project.repo]) }
       @off_page = builder ? user.github_repos.with_entries.where(included: false).order(:name).to_a : []
     end

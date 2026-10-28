@@ -3,6 +3,15 @@ require "rails_helper"
 RSpec.describe GithubRepo do
   let(:repo) { build(:github_repo, description: nil, readme_line: "From the README.", homepage: nil, preview_image_url: nil) }
 
+  it "finds a builder's repos by full name, keyed by it" do
+    user = create(:user)
+    app = create(:github_repo, user: user, full_name: "me/app")
+    create(:github_repo, user: user, full_name: "me/lib")
+    create(:github_repo, full_name: "me/app")
+
+    expect(user.github_repos.by_full_name([ "me/app", "me/gone" ])).to eq("me/app" => app)
+  end
+
   it "says what the project is in the builder's words, else GitHub's, else the README's" do
     expect(repo.project_description).to eq("From the README.")
 

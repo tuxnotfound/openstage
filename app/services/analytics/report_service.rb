@@ -80,7 +80,7 @@ module Analytics
     # The builder's page first, then each project, every page in view when
     # the pages picked name none of theirs.
     def pages
-      synced = user.github_repos.where(full_name: projects.map(&:repo)).index_by(&:full_name)
+      synced = user.github_repos.by_full_name(projects.map(&:repo))
       all = [ [ CountService::PAGE, "Your page", nil ] ] + projects.map { |project| [ project.repo, project.name, project.rank ] }
       in_view = Array(picked) & all.map(&:first)
       all.map { |key, name, rank| row(key, name, rank, synced[key], in_view.empty? || in_view.include?(key)) }

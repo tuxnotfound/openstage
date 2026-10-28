@@ -18,6 +18,7 @@ class User < ApplicationRecord
   has_many :events, dependent: :delete_all
   has_many :subscriptions, dependent: :delete_all
   has_many :github_repos, dependent: :destroy
+  has_many :site_visit_days, through: :github_repos
   has_many :sync_logs, dependent: :destroy
   has_many :profile_views, dependent: :destroy
   has_many :project_views, dependent: :delete_all
