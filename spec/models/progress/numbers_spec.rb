@@ -18,6 +18,11 @@ RSpec.describe Progress::Numbers do
 
   it "names a number inside a sentence in lower case, unless its name is in capitals" do
     expect(described_class.find("visits").word).to eq("site visits")
-    expect(described_class::Number.new(key: "mrr", label: "MRR", group: "On Stripe", level: true, money: true, picked: true).word).to eq("MRR")
+    expect(described_class::Number.new(key: "mrr", label: "MRR", one: "MRR", group: "On Stripe", level: true, money: true, picked: true).word).to eq("MRR")
+  end
+
+  it "names one of a number in the singular, and any other amount in the plural" do
+    clicks = described_class.find("clicks")
+    expect([ clicks.word_after("1"), clicks.word_after("1.0"), clicks.word_after("12") ]).to eq([ "click out", "clicks out", "clicks out" ])
   end
 end

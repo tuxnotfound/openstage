@@ -65,6 +65,12 @@ RSpec.describe ProgressChart::Compare do
     expect(missing.note).to eq("Commits per week. None of the projects in view counts site visits.")
   end
 
+  it "gives a peak of one in the singular" do
+    compare = chart([ line("app", commits, [ 1, 0 ]), line("app", visits, [ 0, 400 ]) ])
+
+    expect(compare.note).to end_with("100% is 1 commit a week and 400 site visits a week.")
+  end
+
   it "averages the 30-day view to a tenth, its tooltip saying so" do
     compare = chart([ line("app", commits, [ 0, 0, 0, 0, 0, 0, 0, 0, 0.5, 1.5 ]) ], numbers: [ commits ], range: "30d", average: true)
 

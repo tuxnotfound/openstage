@@ -7,8 +7,9 @@ module Progress
   # analytics' alone, and no project picks them. MRR, stars and pull requests
   # join as rows here.
   class Numbers
-    # picked: a project's builder shows it or hides it.
-    Number = Data.define(:key, :label, :group, :level, :money, :picked) do
+    # one: its name inside a sentence for one of it ("site visit"); picked:
+    # a project's builder shows it or hides it.
+    Number = Data.define(:key, :label, :one, :group, :level, :money, :picked) do
       def level?
         level
       end
@@ -21,15 +22,20 @@ module Progress
       def word
         label.match?(/\A[A-Z]{2,}\z/) ? label : label.downcase
       end
+
+      # Its name after an amount as the pages write it: "1 site visit", "3 site visits".
+      def word_after(amount)
+        amount == "1" ? one : word
+      end
     end
 
     ALL = [
-      Number.new(key: "commits", label: "Commits", group: "On GitHub", level: false, money: false, picked: true),
-      Number.new(key: "visits", label: "Site visits", group: "On your websites", level: false, money: false, picked: true),
-      Number.new(key: "visitors", label: "Visitors", group: "On Openstage", level: false, money: false, picked: false),
-      Number.new(key: "views", label: "Views", group: "On Openstage", level: false, money: false, picked: false),
-      Number.new(key: "follows", label: "New followers", group: "On Openstage", level: false, money: false, picked: false),
-      Number.new(key: "clicks", label: "Clicks out", group: "On Openstage", level: false, money: false, picked: false)
+      Number.new(key: "commits", label: "Commits", one: "commit", group: "On GitHub", level: false, money: false, picked: true),
+      Number.new(key: "visits", label: "Site visits", one: "site visit", group: "On your websites", level: false, money: false, picked: true),
+      Number.new(key: "visitors", label: "Visitors", one: "visitor", group: "On Openstage", level: false, money: false, picked: false),
+      Number.new(key: "views", label: "Views", one: "view", group: "On Openstage", level: false, money: false, picked: false),
+      Number.new(key: "follows", label: "New followers", one: "new follower", group: "On Openstage", level: false, money: false, picked: false),
+      Number.new(key: "clicks", label: "Clicks out", one: "click out", group: "On Openstage", level: false, money: false, picked: false)
     ].freeze
 
     # The numbers a project's builder shows its visitors or hides from them.

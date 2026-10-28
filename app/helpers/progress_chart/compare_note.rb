@@ -70,7 +70,8 @@ module ProgressChart
     end
 
     def peak_words(number)
-      "#{amount(number, chart.peak(number))} #{number.word}#{" a #{labels.unit_word}" unless number.level?}"
+      text = amount(number, chart.peak(number))
+      "#{text} #{number.word_after(text)}#{" a #{labels.unit_word}" unless number.level?}"
     end
 
     def one
