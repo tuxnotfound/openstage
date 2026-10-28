@@ -23,6 +23,3 @@
 <% if view[:table] %>
   <%= render "charts/table", view: view, path_for: path_for, manage: dashboard, back: local_assigns.fetch(:back, {}) %>
 <% end %>
-<% if dashboard %>
-  <p class="os-note mt-2.5">The switches set what visitors see on your page and your project pages, and this chart follows them; the boxes and the numbers above the chart change this chart only.</p>
-<% end %>

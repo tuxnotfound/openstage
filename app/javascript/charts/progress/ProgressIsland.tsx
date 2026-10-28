@@ -62,12 +62,7 @@ export default function ProgressIsland({ initial, endpoint, mode, defaultRange, 
           That view did not load. <button type="button" className="os-link text-[13px]" onClick={filter.retry}>Try again</button>
         </p>
       )}
-      {mode === "dashboard" && (
-        <>
-          {cells.failed && <p role="status" className="os-note mt-2">That switch did not save. Try it again.</p>}
-          <p className="os-note mt-2.5">The switches set what visitors see on your page and your project pages, and this chart follows them; the boxes and the numbers above the chart change this chart only.</p>
-        </>
-      )}
+      {mode === "dashboard" && cells.failed && <p role="status" className="os-note mt-2">That switch did not save. Try it again.</p>}
       {shipped && view.shipped && createPortal(<Shipped shipped={view.shipped} />, shipped)}
     </div>
   )

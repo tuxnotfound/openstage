@@ -35,6 +35,8 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     expect(month["href"]).to eq("/dashboard?q=work&range=30d")
     only = activity.at_css("[data-chart-row='builder/bare'] a[aria-label='Show only bare']")
     expect(only["href"]).to eq("/dashboard?projects=builder%2Fbare&q=work")
+    expect(activity.css("p.os-note").map(&:text).grep(/The switches set what visitors see/).size).to eq(1)
+    expect(activity.at_css("[data-react] p.os-note:contains('The switches set')")).to be_nil
   end
 
   it "lists every repo with work under the chart, each with Edit, and leaves out repos with none" do

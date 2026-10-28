@@ -12,5 +12,7 @@
     <%= render "charts/filter", view: view, mode: "dashboard", path_for: path_for,
                back: chart_params(view, default_range: DashboardController::ACTIVITY_RANGE).compact %>
   <% end %>
+  <%# Outside the island, which never redraws it. %>
+  <p class="os-note mt-2.5">The switches set what visitors see on your page and your project pages, and this chart follows them; the boxes and the numbers above the chart change this chart only.</p>
   <div class="mt-4 border-t border-line pt-3"><%= render "dashboard/sync" %></div>
 </section>
