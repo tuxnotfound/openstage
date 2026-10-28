@@ -11,9 +11,9 @@ RSpec.describe ProgressHelper, type: :helper do
   end
 
   describe "#project_class" do
-    it "colours the first six projects by rank, the rest grey and no project in ink" do
-      expect([ 0, 5, 6, nil ].map { |rank| helper.project_class(rank) })
-        .to eq(%w[os-project-1 os-project-6 os-project-other os-project-none])
+    it "colours the first ten projects by rank, the rest grey and no project in ink" do
+      expect([ 0, 9, 10, nil ].map { |rank| helper.project_class(rank) })
+        .to eq(%w[os-project-1 os-project-10 os-project-other os-project-none])
     end
   end
 end

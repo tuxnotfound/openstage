@@ -82,7 +82,7 @@
   --color-accent-soft: #E0EDEE;
   --color-accent-ink: #006B72;
 
-  /* By all-time commit order (ProgressChart::Palette); the 7th on is grey.
+  /* By all-time commit order (ProgressChart::Palette); the 11th on is grey.
      Project 1 was #2a78d6, darkened on 2026-10-23 so white text on it holds
      4.5:1; the validator passes it and it sits further from the accent. */
   --color-project-1: #2f6ee0;
@@ -91,15 +91,25 @@
   --color-project-4: #eda100;
   --color-project-5: #e87ba4;
   --color-project-6: #008300;
+  --color-project-7: #6250d6;
+  --color-project-8: #e34948;
+  --color-project-9: #9e8eff;
+  --color-project-10: #7c3856;
   --color-project-other: #8A8F98;
-  /* Text on a project colour (a disc's number, a picked chip), by the kit's
-     rule: dark text when the colour's luminance is over 0.2. */
+  /* Text on a project colour (a disc's number, a picked chip, a box's
+     tick), by the kit's rule: dark text when the colour's luminance is over
+     0.2. From the 7th on, whichever of ground and ink contrasts more with
+     the colour in each mode. */
   --color-on-project-1: #FFFFFF;
   --color-on-project-2: #111111;
   --color-on-project-3: #111111;
   --color-on-project-4: #111111;
   --color-on-project-5: #111111;
   --color-on-project-6: #FFFFFF;
+  --color-on-project-7: #FFFFFF;
+  --color-on-project-8: #0E0F12;
+  --color-on-project-9: #0E0F12;
+  --color-on-project-10: #FFFFFF;
   --color-on-project-other: #111111;
 }
 
@@ -132,8 +142,15 @@
       --color-project-4: #c98500;
       --color-project-5: #d55181;
       --color-project-6: #008300;
+      --color-project-7: #9085e9;
+      --color-project-8: #e66767;
+      --color-project-9: #5f4bb4;
+      --color-project-10: #8b4664;
       --color-project-other: #6F757F;
       --color-on-project-1: #111111;
+      --color-on-project-7: #0E0F12;
+      --color-on-project-9: #F3F4F6;
+      --color-on-project-10: #F3F4F6;
       --color-on-project-other: #FFFFFF;
     }
   }
@@ -238,6 +255,10 @@
   .os-project-4 { --project: var(--color-project-4); --on-project: var(--color-on-project-4); }
   .os-project-5 { --project: var(--color-project-5); --on-project: var(--color-on-project-5); }
   .os-project-6 { --project: var(--color-project-6); --on-project: var(--color-on-project-6); }
+  .os-project-7 { --project: var(--color-project-7); --on-project: var(--color-on-project-7); }
+  .os-project-8 { --project: var(--color-project-8); --on-project: var(--color-on-project-8); }
+  .os-project-9 { --project: var(--color-project-9); --on-project: var(--color-on-project-9); }
+  .os-project-10 { --project: var(--color-project-10); --on-project: var(--color-on-project-10); }
   .os-project-other { --project: var(--color-project-other); --on-project: var(--color-on-project-other); }
   .os-project-none { --project: var(--color-strong); --on-project: var(--color-ground); }
 

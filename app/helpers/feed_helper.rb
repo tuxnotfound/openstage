@@ -25,8 +25,9 @@ module FeedHelper
     date.strftime(date.year == Date.current.year ? "%b %-d" : "%b %-d, %Y")
   end
 
-  # A builder's colour on the feed, the same one on every visit.
+  # A builder's colour on the feed, the same one on every visit: one of the
+  # project colours, by their id.
   def feed_color(user)
-    project_class(user.id % ProgressChart::Palette::PROJECT_COLORS[:light].size)
+    ProgressChart::Palette.project_class(user.id % ProgressChart::Palette::PROJECT_COLORS[:light].size)
   end
 end
