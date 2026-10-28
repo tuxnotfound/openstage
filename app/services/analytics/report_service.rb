@@ -16,8 +16,9 @@ module Analytics
     TOP = 6
 
     # range: a Progress::Window range, nil for the default; show: the numbers
-    # asked for, by key in line order; picked: page keys, none for all of them.
-    attr_accessor :user, :range, :show, :picked
+    # asked for, by key in line order; pages: the pages in view, by key, none
+    # for all of them.
+    attr_accessor :user, :range, :show, :pages
     # period: the Window the totals cover; rows: a Progress::Row per page, in
     # the pages' fixed order; drawing: the DrawService of the totals and the chart.
     attr_reader :period, :rows, :counts, :drawing, :sources, :countries, :links, :badges
@@ -56,7 +57,7 @@ module Analytics
       @period = Progress::Window.new(range: range.presence_in(Progress::Window::RANGES) || DEFAULT_RANGE, today: today, first_activity: nil)
       return unless count
 
-      @rows = pages
+      @rows = page_rows
       return unless draw
 
       read_visits
@@ -78,11 +79,11 @@ module Analytics
     end
 
     # The builder's page first, then each project, every page in view when
-    # the pages picked name none of theirs.
-    def pages
+    # the pages asked for name none of theirs.
+    def page_rows
       synced = user.github_repos.by_full_name(projects.map(&:repo))
       all = [ [ CountService::PAGE, "Your page", nil ] ] + projects.map { |project| [ project.repo, project.name, project.rank ] }
-      in_view = Array(picked) & all.map(&:first)
+      in_view = Array(pages) & all.map(&:first)
       all.map { |key, name, rank| row(key, name, rank, synced[key], in_view.empty? || in_view.include?(key)) }
     end
 
@@ -91,10 +92,10 @@ module Analytics
     end
 
     # A page counts a number once it has counted it on any day; a project
-    # shows the ones its builder picked to show, and Openstage's own always.
+    # shows the ones its builder picks, and Openstage's own always.
     def row(key, name, rank, repo, on)
       counted = Progress::Numbers::ALL.select { |number| counts.first_day(number.key, [ key ]) }
-      shown = counted.select { |number| !number.picked || repo.nil? || repo.picks?(number.key) }
+      shown = counted.select { |number| !number.pickable || repo.nil? || repo.picks?(number.key) }
       Progress::Row.new(key: key, name: name, rank: rank, repo: repo, on: on, counted: counted.map(&:key), shown: shown.map(&:key))
     end
 

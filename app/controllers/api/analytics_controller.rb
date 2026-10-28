@@ -8,7 +8,7 @@ module Api
 
     def show
       filter = Progress::Filter.from_analytics(params)
-      report = Analytics::ReportService.new(user: current_user, range: filter.range, show: filter.show, picked: filter.projects)
+      report = Analytics::ReportService.new(user: current_user, range: filter.range, show: filter.show, pages: filter.projects)
       return render(json: { error: report.errors.full_messages.to_sentence }, status: :unprocessable_entity) unless report.call
 
       render json: AnalyticsViewSerializer.new(report).to_json

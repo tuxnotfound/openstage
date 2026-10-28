@@ -56,9 +56,9 @@ RSpec.describe Analytics::ReportService do
     expect(service.previous(Progress::Numbers.find("commits"), [ service.rows.last ])).to be_nil
   end
 
-  it "draws the numbers asked for on the pages picked" do
+  it "draws the numbers asked for on the pages asked for" do
     create(:profile_view, user: user, viewed_at: 2.days.ago)
-    service = report(show: %w[views commits], picked: %w[page me/lib])
+    service = report(show: %w[views commits], pages: %w[page me/lib])
 
     expect([ service.drawn.map(&:key), service.selected_keys ]).to eq([ %w[views commits], %w[page me/lib] ])
     expect(service.chart.lines.map { |line| [ line.repo, line.number.key ] }).to contain_exactly(%w[page views], %w[me/lib commits])
@@ -66,7 +66,7 @@ RSpec.describe Analytics::ReportService do
   end
 
   it "shows every page for pages it does not know, and the last 30 days for a window it does not know" do
-    service = report(picked: %w[me/nope], range: "7d")
+    service = report(pages: %w[me/nope], range: "7d")
 
     expect([ service.selected_keys, service.rows.map(&:on).uniq, service.period.range ]).to eq([ [], [ true ], "30d" ])
   end
@@ -90,7 +90,7 @@ RSpec.describe Analytics::ReportService do
     expect([ recent.sources.map(&:first), recent.countries.map(&:first), recent.badges.first ]).to eq([ [ "Hacker News" ], [ "PT" ], [ "badge", 0, 0 ] ])
     ever = report(range: "all")
     expect([ ever.sources.map(&:first), ever.badges.first ]).to eq([ [ "Hacker News", "Twitter / X" ], [ "badge", 1, 1 ] ])
-    expect(report(picked: %w[me/app]).sources).to eq([])
+    expect(report(pages: %w[me/app]).sources).to eq([])
   end
 
   it "lists the links visitors followed, busiest first, on the pages in view" do
@@ -99,7 +99,7 @@ RSpec.describe Analytics::ReportService do
     user.project_clicks.create!(repo_name: "me/app", kind: "github", clicked_at: 1.day.ago)
 
     expect(report.links.map { |link| [ link.title, link.page.name, link.count ] }).to eq([ [ "Launched", "lib", 2 ], [ "View on GitHub", "app", 1 ] ])
-    expect(report(picked: [ "me/app" ]).links.map(&:title)).to eq([ "View on GitHub" ])
+    expect(report(pages: [ "me/app" ]).links.map(&:title)).to eq([ "View on GitHub" ])
   end
 
   it "refuses without a builder" do

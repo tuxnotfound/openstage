@@ -6,7 +6,7 @@ module Projects
     attr_accessor :repo, :number, :shown
 
     validates :repo, presence: true
-    validates :number, inclusion: { in: Progress::Numbers::PICKED, message: "is not one a project shows" }
+    validates :number, inclusion: { in: Progress::Numbers::PICKABLE, message: "is not one a project shows" }
     validates :shown, inclusion: { in: [ true, false ] }
 
     private

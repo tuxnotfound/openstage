@@ -10,7 +10,7 @@
     groups: whether they sit in their groups. %>
 <% groups = local_assigns[:groups].present? %>
 <% locals = { view: view, path_for: path_for, changes: local_assigns[:changes], full: view[:drawn].size >= Progress::DrawService::MAX_DRAWN } %>
-<% head, tail = groups ? view[:numbers].partition { |number| Progress::Numbers.find(number[:key]).picked } : [ view[:numbers], [] ] %>
+<% head, tail = groups ? view[:numbers].partition { |number| Progress::Numbers.find(number[:key]).pickable } : [ view[:numbers], [] ] %>
 <% open = tail.any? { |number| view[:drawn].include?(number[:key]) } %>
 <% gaps = groups ? "gap-x-4 gap-y-2" : "gap-2" %>
 <div class="min-w-0 flex-[1_1_480px]">

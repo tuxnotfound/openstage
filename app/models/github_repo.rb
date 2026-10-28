@@ -101,7 +101,7 @@ class GithubRepo < ApplicationRecord
   end
 
   # Whether its builder picks a number for visitors to see on its pages:
-  # every number is picked until they hide it (Progress::Numbers::PICKED).
+  # every number is picked until they hide it (Progress::Numbers::PICKABLE).
   def picks?(number)
     hidden_numbers.exclude?(number)
   end
@@ -115,6 +115,6 @@ class GithubRepo < ApplicationRecord
   private
 
   def hidden_numbers_known
-    errors.add(:hidden_numbers, "names a number a project cannot hide") unless (Array(hidden_numbers) - Progress::Numbers::PICKED).empty?
+    errors.add(:hidden_numbers, "names a number a project cannot hide") unless (Array(hidden_numbers) - Progress::Numbers::PICKABLE).empty?
   end
 end

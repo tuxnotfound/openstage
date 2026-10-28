@@ -34,8 +34,8 @@ module ChartFilterHelper
   # nil when the last one in view would go.
   def chart_projects_toggled(view, repo)
     all = view[:table][:rows].select { |row| row[:drawable] }.pluck(:repo)
-    picked = view[:selected].presence || all
-    after = picked.include?(repo) ? picked - [ repo ] : all & (picked + [ repo ])
+    in_view = view[:selected].presence || all
+    after = in_view.include?(repo) ? in_view - [ repo ] : all & (in_view + [ repo ])
     return if after.empty?
 
     after.size == all.size ? [] : after

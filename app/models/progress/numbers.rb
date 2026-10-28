@@ -7,9 +7,9 @@ module Progress
   # analytics' alone, and no project picks them. MRR, stars and pull requests
   # join as rows here.
   class Numbers
-    # one: its name inside a sentence for one of it ("site visit"); picked:
-    # a project's builder shows it or hides it.
-    Number = Data.define(:key, :label, :one, :group, :level, :money, :picked) do
+    # one: its name inside a sentence for one of it ("site visit");
+    # pickable: a project's builder shows it or hides it.
+    Number = Data.define(:key, :label, :one, :group, :level, :money, :pickable) do
       def level?
         level
       end
@@ -30,16 +30,16 @@ module Progress
     end
 
     ALL = [
-      Number.new(key: "commits", label: "Commits", one: "commit", group: "On GitHub", level: false, money: false, picked: true),
-      Number.new(key: "visits", label: "Site visits", one: "site visit", group: "On your websites", level: false, money: false, picked: true),
-      Number.new(key: "visitors", label: "Visitors", one: "visitor", group: "On Openstage", level: false, money: false, picked: false),
-      Number.new(key: "views", label: "Views", one: "view", group: "On Openstage", level: false, money: false, picked: false),
-      Number.new(key: "follows", label: "New followers", one: "new follower", group: "On Openstage", level: false, money: false, picked: false),
-      Number.new(key: "clicks", label: "Clicks out", one: "click out", group: "On Openstage", level: false, money: false, picked: false)
+      Number.new(key: "commits", label: "Commits", one: "commit", group: "On GitHub", level: false, money: false, pickable: true),
+      Number.new(key: "visits", label: "Site visits", one: "site visit", group: "On your websites", level: false, money: false, pickable: true),
+      Number.new(key: "visitors", label: "Visitors", one: "visitor", group: "On Openstage", level: false, money: false, pickable: false),
+      Number.new(key: "views", label: "Views", one: "view", group: "On Openstage", level: false, money: false, pickable: false),
+      Number.new(key: "follows", label: "New followers", one: "new follower", group: "On Openstage", level: false, money: false, pickable: false),
+      Number.new(key: "clicks", label: "Clicks out", one: "click out", group: "On Openstage", level: false, money: false, pickable: false)
     ].freeze
 
     # The numbers a project's builder shows its visitors or hides from them.
-    PICKED = ALL.select(&:picked).map(&:key).freeze
+    PICKABLE = ALL.select(&:pickable).map(&:key).freeze
 
     def self.find(key)
       ALL.find { |number| number.key == key.to_s }

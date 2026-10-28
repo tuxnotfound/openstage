@@ -7,7 +7,7 @@ RSpec.describe Progress::Numbers do
   end
 
   it "lets a project's builder pick only the numbers a project counts" do
-    expect(described_class::PICKED).to eq(%w[commits visits])
+    expect(described_class::PICKABLE).to eq(%w[commits visits])
   end
 
   it "finds a number by its key, and puts keys in the pages' order once each" do
@@ -18,7 +18,7 @@ RSpec.describe Progress::Numbers do
 
   it "names a number inside a sentence in lower case, unless its name is in capitals" do
     expect(described_class.find("visits").word).to eq("site visits")
-    expect(described_class::Number.new(key: "mrr", label: "MRR", one: "MRR", group: "On Stripe", level: true, money: true, picked: true).word).to eq("MRR")
+    expect(described_class::Number.new(key: "mrr", label: "MRR", one: "MRR", group: "On Stripe", level: true, money: true, pickable: true).word).to eq("MRR")
   end
 
   it "names one of a number in the singular, and any other amount in the plural" do

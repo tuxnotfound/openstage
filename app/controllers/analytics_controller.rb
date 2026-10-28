@@ -10,7 +10,7 @@ class AnalyticsController < ApplicationController
   # page's script asks Api::AnalyticsController for the others.
   def index
     filter = Progress::Filter.from_analytics(params)
-    @report = Analytics::ReportService.new(user: current_user, range: filter.range, show: filter.show, picked: filter.projects)
+    @report = Analytics::ReportService.new(user: current_user, range: filter.range, show: filter.show, pages: filter.projects)
     return if @report.call
 
     redirect_to dashboard_path, alert: @report.errors.full_messages.to_sentence

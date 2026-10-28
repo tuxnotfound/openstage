@@ -53,8 +53,8 @@ module Progress
       @section = service&.section
     end
 
-    def composed(picked)
-      service = ComposeService.new(user: user, range: range, repos: Array(picked), rolling: true, reveal: reveal)
+    def composed(in_view)
+      service = ComposeService.new(user: user, range: range, repos: Array(in_view), rolling: true, reveal: reveal)
       service if run(service)
     end
 
@@ -99,7 +99,7 @@ module Progress
     # Every number a project here could show, so one none shows yet can be
     # switched on, and site visits, so a project can set them up.
     def builder_columns
-      Numbers::ALL.select { |number| number.picked && (number.key == "visits" || rows.any? { |row| row.counts?(number.key) }) }
+      Numbers::ALL.select { |number| number.pickable && (number.key == "visits" || rows.any? { |row| row.counts?(number.key) }) }
     end
 
     def run(service)
