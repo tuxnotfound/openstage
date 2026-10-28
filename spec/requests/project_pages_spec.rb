@@ -90,6 +90,7 @@ RSpec.describe "Project pages", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Only you can see this page", "Ship the form", "Launched it")
+      expect(Nokogiri::HTML(response.body).at_css("a:contains('Show it again on the dashboard')")["href"]).to eq("/dashboard#activity")
       expect(user.project_views.count).to eq(0)
     end
 
