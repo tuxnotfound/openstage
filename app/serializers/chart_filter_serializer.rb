@@ -31,11 +31,12 @@ class ChartFilterSerializer < ApplicationSerializer
 
   private
 
-  # group: where it happens, for the toggles grouped under it; split: the
-  # part of each row in view with any, for the toggle's bar.
+  # group: where it happens, for the toggles grouped under it; value: "–"
+  # when no row in view shows it; split: the part of each row in view with
+  # any, for the toggle's bar.
   def number_of(total)
     number = total.number
-    { key: number.key, label: number.label, word: number.word, group: number.group, value: number_with_delimiter(total.value),
+    { key: number.key, label: number.label, word: number.word, group: number.group, value: total.value ? number_with_delimiter(total.value) : "–",
       split: total.split.map { |row, count| { repo: row.key, rank: row.rank, value: count } },
       change: (chart_change(total.value, total.previous) if @changes) }
   end

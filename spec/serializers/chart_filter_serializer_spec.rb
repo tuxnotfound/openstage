@@ -26,6 +26,15 @@ RSpec.describe ChartFilterSerializer do
     expect(json["chart"]["paths"].map { |path| path["repo"] }).to eq([ "me/app" ])
   end
 
+  it "writes a dash for a number no row in view shows" do
+    user.github_repos.find_by(full_name: "me/app").update!(site_source: "script", site_first_visit_at: 2.days.ago)
+    user.github_repos.find_by(full_name: "me/app").site_visit_days.create!(day: 2.days.ago.to_date, visits: 5, visitors: 2)
+
+    json = view(changes: true, table: false, repos: [ "me/lib" ])
+
+    expect(json["numbers"].map { |number| [ number["key"], number["value"], number["change"] ] }).to eq([ [ "commits", "1", nil ], [ "visits", "–", nil ] ])
+  end
+
   it "gives the toggles their change, and the table's cells theirs only when asked" do
     toggles = view(changes: true, table: true)
     expect(toggles["numbers"].sole["change"]).to eq("arrow" => "▲", "text" => "200%", "up" => true)

@@ -31,6 +31,12 @@ RSpec.describe Progress::DrawService do
     expect(totals(draw)).to eq("commits" => [ 4, 2, [ [ "app", 3 ], [ "lib", 1 ] ] ], "visits" => [ 40, nil, [ [ "app", 40 ] ] ])
   end
 
+  it "totals no number for rows in view that do not show it, rather than nothing of it" do
+    service = draw([ row("me/app", %w[commits visits], on: false), lib ])
+
+    expect(totals(service)).to eq("commits" => [ 1, nil, [ [ "lib", 1 ] ] ], "visits" => [ nil, nil, [] ])
+  end
+
   it "draws the numbers asked for in their line order, else the page's own, else the first, three at most" do
     expect(draw(show: %w[visits commits], default_show: %w[commits]).drawn.map(&:key)).to eq(%w[visits commits])
     expect(draw(show: %w[views], default_show: %w[visits]).drawn.map(&:key)).to eq(%w[visits])

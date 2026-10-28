@@ -9,8 +9,9 @@ module Progress
     MAX_DRAWN = 3
 
     # A number a row shows, with its total for the rows in view over the
-    # window, the window before's (nil with nothing to compare with), and the
-    # part of each row in view with any, as [row, count].
+    # window (nil when none of them shows it), the window before's (nil with
+    # nothing to compare with), and the part of each row in view with any,
+    # as [row, count].
     Total = Data.define(:number, :value, :previous, :split)
 
     # rows: Progress::Rows, in the page's order; counts: a Progress::Counts;
@@ -51,7 +52,7 @@ module Progress
     def total(number)
       shown = showing(number)
       split = shown.map { |row| [ row, value(number, row) ] }
-      Total.new(number: number, value: split.sum(&:last), previous: previous(number, shown), split: split.select { |_, count| count.positive? })
+      Total.new(number: number, value: (split.sum(&:last) if shown.any?), previous: previous(number, shown), split: split.select { |_, count| count.positive? })
     end
 
     def drawable(keys)
