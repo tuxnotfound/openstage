@@ -11,8 +11,9 @@ import { MAX_DRAWN, fitting, lineOf, projectClass, type Lines } from "./lines"
 // Openstage). What does not fit the row folds behind "+ n more", measured
 // as the row's width changes, whole groups at a time: one line on a wide
 // screen, and on a phone, where the toggles wrap, up to PHONE_LINES. It
-// opens in a second row, which stays open while one of its numbers is
-// drawn, so no drawn number hides.
+// opens in a second row, which stays open while one of its numbers is drawn
+// or once one of them is clicked, so no drawn number hides and the focus
+// never drops out of a row that closes.
 
 const GAP = 8
 // Between groups, and before the more button when there are groups.
@@ -46,12 +47,14 @@ export default function NumberToggles({ numbers, lines, indexed, changes, groups
   const [fit, setFit] = useState(numbers.length)
   const [more, setMore] = useState(false)
   const full = Object.keys(lines).length >= MAX_DRAWN
-  const shape = numbers.map((number) => `${number.key}:${number.value}:${lines[number.key] ?? "-"}:${number.change?.text ?? ""}`).join("|")
+  const shape = numbers.map((number) => `${number.key}:${number.value}:${number.change?.text ?? ""}`).join("|")
   const all = grouped(numbers, groups)
 
-  // The ruler holds every group's label and toggle as they would look, out
-  // of sight and clipped, so the row knows how many fit before it shows
-  // them, and the page never scrolls sideways to a row it does not show.
+  // The ruler holds every group's label and toggle as they would look
+  // drawn, their widest, out of sight and clipped: the row knows how many fit
+  // before it shows them, a toggle switched on or off never moves another
+  // between the rows, and the page never scrolls sideways to a row it does
+  // not show.
   useLayoutEffect(() => {
     const box = row.current
     const sample = ruler.current
@@ -76,6 +79,8 @@ export default function NumberToggles({ numbers, lines, indexed, changes, groups
   const open = tail.length > 0 && (more || tailDrawn)
   const line = (number: NumberView) => (lines[number.key] === undefined ? null : lineOf(lines, number.key, indexed))
   const toggle = (number: NumberView) => <Toggle key={number.key} number={number} line={line(number)} full={full} changes={changes} events={events} />
+  const folded = { ...events, toggle: (key: string) => { setMore(true); events.toggle(key) } }
+  const tailToggle = (number: NumberView) => <Toggle key={number.key} number={number} line={line(number)} full={full} changes={changes} events={folded} />
   const gaps = groups ? "gap-x-4 gap-y-2" : "gap-2"
 
   return (
@@ -91,7 +96,7 @@ export default function NumberToggles({ numbers, lines, indexed, changes, groups
           <div ref={ruler} className="flex w-max gap-2">
             {all.flatMap((group) => [
               ...(group.label ? [<Label key={`label-${group.label}`} label={group.label} />] : []),
-              ...group.numbers.map((number) => <Toggle key={number.key} number={number} line={line(number)} full={full} changes={changes} />),
+              ...group.numbers.map((number) => <Toggle key={number.key} number={number} line={0} full={full} changes={changes} />),
             ])}
             <span className="h-11 px-3 text-[13px] font-bold whitespace-nowrap">+ {numbers.length} more</span>
           </div>
@@ -99,7 +104,7 @@ export default function NumberToggles({ numbers, lines, indexed, changes, groups
       </div>
       {open && (
         <div className={`mt-2.5 flex flex-wrap items-center ${gaps}`} role="group" aria-label="More numbers">
-          {grouped(tail, groups).map((group) => <Grouped key={group.label ?? "all"} group={group}>{group.numbers.map(toggle)}</Grouped>)}
+          {grouped(tail, groups).map((group) => <Grouped key={group.label ?? "all"} group={group}>{group.numbers.map(tailToggle)}</Grouped>)}
         </div>
       )}
     </div>
