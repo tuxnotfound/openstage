@@ -15,7 +15,7 @@ class CompareChartSerializer < ApplicationSerializer
       ticks: @chart.ticks.map { |tick| { value: tick.value, top: tick.top } },
       columns: @chart.columns.map { |column| column_of(column) }, heads: @chart.lined.map(&:key), axis: @chart.axis,
       aria_label: @chart.aria_label, note: @chart.note, note_parts: ({ before: before, after: after } if @chart.indexed?),
-      none: @chart.none, empty: @chart.lines.empty?, indexed: @chart.indexed?
+      none: @chart.none, indexed: @chart.indexed?
     }
   end
 

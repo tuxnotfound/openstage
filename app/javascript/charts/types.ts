@@ -22,7 +22,6 @@ export type CompareChartView = {
   note: string
   noteParts: { before: string; after: string } | null
   none: string
-  empty: boolean
   indexed: boolean
 }
 

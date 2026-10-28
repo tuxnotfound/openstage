@@ -1,7 +1,7 @@
 module Progress
-  # The words a Window goes by on the public page: what it spans, what its
-  # change is measured against, its axis and its tooltips. Answers the
-  # PeriodLabels calls the page and the tag line make.
+  # The words a Window goes by on the public page: what it spans, its axis
+  # and its tooltips. Answers the PeriodLabels calls the page and the tag
+  # line make.
   class WindowLabels
     SPANS = { "30d" => "30 days", "90d" => "90 days", "12m" => "12 months" }.freeze
 
@@ -36,11 +36,6 @@ module Progress
 
     def empty_tagged(project, **)
       "No entries tagged #{project} #{word}."
-    end
-
-    # "vs the previous 90 days"; nil for all time.
-    def versus
-      "vs the previous #{SPANS.fetch(range)}" unless range == "all"
     end
 
     # "12m-2026-10-23", "all-time-2026-10-23": a card's file name.

@@ -24,7 +24,7 @@ RSpec.describe "Api::Progress", type: :request do
     expect(response).to have_http_status(:ok)
     expect(json).to include("range" => "30d", "words" => "last 30 days", "drawn" => [ "commits" ], "selected" => [])
     expect(totals).to eq("commits" => "3")
-    expect(json["chart"]).to include("ariaLabel" => "7-day average of commits per day by project, last 30 days", "empty" => false)
+    expect(json["chart"]).to include("ariaLabel" => "7-day average of commits per day by project, last 30 days")
     expect(json["chart"]["paths"].map { |path| path.slice("number", "repo") }).to eq([ { "number" => "commits", "repo" => "builder/app" } ])
     expect(json["table"]["rows"].map { |row| [ row["name"], row["cells"].first["value"] ] }).to eq([ [ "app", "3" ], [ "lib", "0" ] ])
     expect(json["shipped"]["items"].map { |item| item["title"] }).to eq([ "Launched" ])

@@ -19,7 +19,7 @@ RSpec.describe CompareChartSerializer do
     expect(json["heads"]).to eq(%w[commits visits])
     expect(json["columns"].last["rows"]).to eq([ { "repo" => "me/app", "name" => "app", "rank" => 0, "values" => %w[1 400] } ])
     expect(json["noteParts"]).to eq("before" => "", "after" => ", each against its own peak in the window; 100% is 3 commits a week and 400 site visits a week.")
-    expect(json).to include("indexed" => true, "empty" => false, "none" => "Nothing this week", "axis" => [ "Oct 19", "Today" ])
+    expect(json).to include("indexed" => true, "none" => "Nothing this week", "axis" => [ "Oct 19", "Today" ])
   end
 
   it "sends no note parts for a chart of one number" do

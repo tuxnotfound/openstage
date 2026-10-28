@@ -71,10 +71,10 @@ RSpec.describe Progress::Window do
   end
 
   describe "its words" do
-    it "names the window, what it is measured against, and its points" do
+    it "names the window and its points" do
       labels = window("90d").labels
 
-      expect([ labels.words, labels.word, labels.versus ]).to eq([ "last 90 days", "in the last 90 days", "vs the previous 90 days" ])
+      expect([ labels.words, labels.word ]).to eq([ "last 90 days", "in the last 90 days" ])
       expect(labels.empty).to eq("Nothing shipped or published in the last 90 days.")
       expect(labels.bucket_title(window("90d").buckets.last)).to eq("Week of Oct 12–15")
       expect(labels.axis(window("90d").buckets.first)).to eq("Jul 20")
@@ -84,7 +84,7 @@ RSpec.describe Progress::Window do
       labels = window("12m").labels
 
       expect(window("12m").buckets.map { |bucket| labels.axis(bucket) }.values_at(0, 2, 11)).to eq([ "Nov 2025", "Jan", "Oct" ])
-      expect([ window("all").labels.words, window("all").labels.versus ]).to eq([ "since January 2025", nil ])
+      expect(window("all").labels.words).to eq("since January 2025")
     end
   end
 end

@@ -31,8 +31,6 @@ module Progress
     # repos: the projects in view; none for all of them. reveal: a repo the builder hid, shown anyway (Entry.on_page).
     attr_accessor :user, :range, :offset, :repos, :rolling, :reveal
     attr_reader :zone, :period, :projects, :items, :buckets, :totals, :previous_totals, :first_active_day
-    # The period's first day with a commit in view; nil without one.
-    attr_reader :first_commit_day
     # The period's entries with no project that the builder has not marked as
     # having none, newest first; whatever the filter, so they can be tagged.
     attr_reader :untagged
@@ -51,7 +49,7 @@ module Progress
       @buckets = period.buckets.map { |bucket| tally_bucket(bucket) }
       @totals = totals_on(period.first..period.last_day)
       @previous_totals = totals_on(period.comparison) if period.comparison
-      @first_commit_day = selected_commits_on(period.first..period.last_day).keys.map(&:first).min
+      first_commit_day = selected_commits_on(period.first..period.last_day).keys.map(&:first).min
       @first_active_day = [ first_commit_day, *items.map(&:date) ].compact.min
       @untagged = untagged_on(period.first..period.last_day)
       @day_counts = window_commits.group_by { |(date, _repo), _count| date }.transform_values { |commits| tally(commits) }
