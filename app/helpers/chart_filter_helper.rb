@@ -1,7 +1,7 @@
-# The links of a chart filter's first paint, which work without the chart's
-# script: a number toggle, a window pill and a project's box, Only and Show
-# all each link to the view they switch to. view: a ProgressViewSerializer's
-# attributes.
+# A chart filter's first paint on every chart page, which works without the
+# chart's script: a number toggle, a window pill and a project's box, Only
+# and Show all each link to the view they switch to, and each number wears
+# its line. view: a ChartFilterSerializer's attributes.
 module ChartFilterHelper
   # A number's line by its place in the line order: solid, dotted, dashed.
   LINE_DASHES = [ nil, "2 9", "14 10" ].freeze

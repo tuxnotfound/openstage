@@ -8,7 +8,8 @@ module Progress
   # rows the numbers their visitors do not see, and the projects hidden from
   # their page; its chart draws what visitors see.
   class ChartService < ApplicationService
-    # Every chart page opens on these, as far as its projects show them.
+    # A builder's page, a project's page and the dashboard open on these, as
+    # far as their projects show them; analytics opens on its own.
     DEFAULT_SHOW = %w[commits visits].freeze
 
     # repos: the projects in view, none for all of them; show: the numbers

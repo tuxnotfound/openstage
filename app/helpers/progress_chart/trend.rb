@@ -1,9 +1,10 @@
 module ProgressChart
-  # The public page's chart: one line per project through each point's
-  # commits, or each day's 7-day average over the last 30 days, with the
-  # listed entries as numbered discs on their project's line. Drawn in a 1000
-  # by 280 box that stretches to its column; the HTML laid over it is placed
-  # in percentages, so it stays put at any width.
+  # The chart of the landing's sample page, the weekly emails and the share
+  # cards: one line per project through each point's commits, or each day's
+  # 7-day average over the last 30 days, with the listed entries as numbered
+  # discs on their project's line. Drawn in a 1000 by 280 box that stretches
+  # to its column; the HTML laid over it is placed in percentages, so it
+  # stays put at any width.
   class Trend
     WIDTH = 1000
     HEIGHT = 280

@@ -42,7 +42,7 @@ module Analytics
       merge(scope.group("github_repos.full_name", :day).sum(:visits))
     end
 
-    # Confirmed in the window: for the builder's page, or for one project.
+    # Confirmed: for the builder's page, or for one project.
     def follows
       confirmed = user.subscriptions.confirmed
       merge(daily(confirmed.whole_page, "subscriptions.confirmed_at"),

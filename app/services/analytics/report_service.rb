@@ -148,7 +148,6 @@ module Analytics
       nil
     end
 
-    # A page in view.
     def page_for(key)
       selected.find { |row| row.key == key }
     end

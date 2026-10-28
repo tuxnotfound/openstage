@@ -1,5 +1,5 @@
-// The views the API sends (app/serializers), camelCased: the pages render
-// them as they arrive, and compute nothing of their own.
+// The views the API sends (app/serializers), camelCased: every number in
+// them is the server's, and the pages only arrange them (filter/lines.ts).
 
 export type Rank = number | null
 
