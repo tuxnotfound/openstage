@@ -98,6 +98,17 @@ describe("the row of number toggles", () => {
   test("fits the first group's toggles one by one when not even it fits", () => {
     expect(fitting([{ label: 60, toggles: [150, 150, 150] }, { label: 90, toggles: [120] }], 80, 400, 8, 16)).toBe(1)
   })
+
+  test("wraps on a phone, folding only what does not fit its lines", () => {
+    // Analytics on a phone: On GitHub and On your websites take a line each,
+    // the more button the third, and On Openstage folds whole.
+    const analytics = [{ label: 65, toggles: [150] }, { label: 105, toggles: [175] }, { label: 85, toggles: [125, 110, 135] }]
+    expect(fitting(analytics, 85, 326, 8, 16)).toBe(1)
+    expect(fitting(analytics, 85, 326, 8, 16, 3)).toBe(2)
+    // A row without groups wraps toggle by toggle.
+    expect(fitting(row(150, 175, 160, 140), 80, 300, 8, 8, 3)).toBe(3)
+    expect(fitting(row(150, 175, 160), 80, 300, 8, 8, 3)).toBe(3)
+  })
 })
 
 describe("a view's addresses", () => {

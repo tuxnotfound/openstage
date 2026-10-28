@@ -110,31 +110,51 @@ export function tipLeft(x: number, width: number, span: number, gap = 14, edge =
 // row without groups) and each toggle's.
 export type Measured = { label: number; toggles: number[] }
 
-// How many toggles fit one row of a width; when not all of them do, the
-// "+ n more" button takes its place beside them. Groups fold whole, so a
-// group never splits across the rows, unless not even the first one fits:
-// then its toggles fit one by one. gap: between toggles, and after a
+// How many toggles fit a row of a width, in as many lines as it may take
+// (one on a wide screen; on a phone the toggles wrap); when not all of them
+// do, the "+ n more" button takes its place after them. The row wraps as
+// flex-wrap does: a group, or in a row without groups a toggle, that does
+// not fit beside the last starts a line. Groups fold whole, so a group never
+// splits across the rows, unless not even the first one fits: then its
+// toggles fit one line one by one. gap: between toggles, and after a
 // group's label; groupGap: between groups, and before the button.
-export function fitting(groups: Measured[], more: number, width: number, gap: number, groupGap = gap): number {
+export function fitting(groups: Measured[], more: number, width: number, gap: number, groupGap = gap, lines = 1): number {
+  const labelled = groups.some((group) => group.label > 0)
   const span = (group: Measured) => (group.label ? group.label + gap : 0) + sum(group.toggles) + gap * Math.max(0, group.toggles.length - 1)
+  const items = labelled ? groups.map(span) : groups.flatMap((group) => group.toggles)
+  const step = labelled ? groupGap : gap
   const count = sum(groups.map((group) => group.toggles.length))
-  if (sum(groups.map(span)) + groupGap * Math.max(0, groups.length - 1) <= width) return count
-  let used = more
-  let fit = 0
-  for (const group of groups) {
-    if (used + groupGap + span(group) > width) break
-    used += groupGap + span(group)
-    fit += group.toggles.length
-  }
-  if (fit > 0) return fit
+  if (linesFor(items, width, step) <= lines) return count
+  let whole = 0
+  while (whole < items.length && linesFor([...items.slice(0, whole + 1), more], width, step) <= lines) whole += 1
+  if (!labelled) return Math.max(1, whole)
+  if (whole > 0) return sum(groups.slice(0, whole).map((group) => group.toggles.length))
   const first = groups[0]
-  used = more + groupGap + (first?.label ? first.label + gap : 0) - gap
+  let used = more + groupGap + (first?.label ? first.label + gap : 0) - gap
+  let fit = 0
   for (const each of first?.toggles ?? []) {
     if (used + gap + each > width) break
     used += gap + each
     fit += 1
   }
   return Math.max(1, fit)
+}
+
+// The lines some items take in a row of a width, each gap apart, as
+// flex-wrap places them; Infinity when one is wider than the row.
+function linesFor(items: number[], width: number, gap: number): number {
+  let lines = 0
+  let used = 0
+  for (const item of items) {
+    if (item > width) return Infinity
+    if (lines > 0 && used + gap + item <= width) {
+      used += gap + item
+    } else {
+      lines += 1
+      used = item
+    }
+  }
+  return lines
 }
 
 function sum(values: number[]): number {

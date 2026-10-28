@@ -9,13 +9,17 @@ import { MAX_DRAWN, fitting, lineOf, projectClass, type Lines } from "./lines"
 // dashboard and analytics its change. On analytics they sit in their groups,
 // each named before its toggles (On GitHub, On your websites, On
 // Openstage). What does not fit the row folds behind "+ n more", measured
-// as the row's width changes, whole groups at a time; it opens in a second
-// row, which stays open while one of its numbers is drawn, so no drawn
-// number hides.
+// as the row's width changes, whole groups at a time: one line on a wide
+// screen, and on a phone, where the toggles wrap, up to PHONE_LINES. It
+// opens in a second row, which stays open while one of its numbers is
+// drawn, so no drawn number hides.
 
 const GAP = 8
 // Between groups, and before the more button when there are groups.
 const GROUP_GAP = 16
+// The lines the row may take on a phone (Tailwind's max-md) before it folds.
+const PHONE_LINES = 3
+const PHONE = "(width < 48rem)"
 
 export type NumberEvents = {
   toggle: (key: string) => void
@@ -57,7 +61,8 @@ export default function NumberToggles({ numbers, lines, indexed, changes, groups
       const button = widths.pop() ?? 0
       let at = 0
       const measured = all.map((group) => ({ label: group.label ? widths[at++] ?? 0 : 0, toggles: group.numbers.map(() => widths[at++] ?? 0) }))
-      setFit(fitting(measured, button, box.clientWidth, GAP, groups ? GROUP_GAP : GAP))
+      const most = window.matchMedia(PHONE).matches ? PHONE_LINES : 1
+      setFit(fitting(measured, button, box.clientWidth, GAP, groups ? GROUP_GAP : GAP, most))
     }
     place()
     const observer = new ResizeObserver(place)
