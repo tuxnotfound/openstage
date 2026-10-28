@@ -13,7 +13,8 @@ RSpec.describe "Analytics", type: :request do
 
   # The numbers drawn, wherever their toggles sit.
   def drawn
-    page.css("section[aria-label='Numbers'] [aria-current='true']").map { |toggle| toggle.text.squish.split.first }
+    page.css("[aria-label='Numbers on the chart'] [aria-current='true'], [aria-label='More numbers'] [aria-current='true']").uniq
+        .map { |toggle| toggle.text.squish.split.first }
   end
 
   # Each cell's words, its label for phones first.
@@ -68,7 +69,7 @@ RSpec.describe "Analytics", type: :request do
       expect(toggles.text.squish).to eq("On GitHub Commits 1 ± 0% On your websites + Site visits 30 ▲up 200% + 2 more On Openstage + Visitors 1 + Views 1")
       expect(toggles.css("[aria-current='true']").map { |drawn| [ drawn.name, drawn.text.squish ] }).to eq([ [ "span", "Commits 1 ± 0%" ] ])
       expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Commits per day by page, last 30 days")
-      expect(page.at_css("nav[aria-label='Time range'] a[aria-current='page']").text).to eq("30 days")
+      expect(page.at_css("[aria-label='Time range'] a[aria-current='page']").text).to eq("30 days")
       expect(response.body).to include("Changes compare each value with the 30 days before.")
     end
 
@@ -121,13 +122,13 @@ RSpec.describe "Analytics", type: :request do
 
       get "/analytics", params: { show: "views,commits", projects: "builder/app" }
       expect(drawn).to eq(%w[Commits Views])
-      expect(page.at_css("[data-chart-row='page'] [role='checkbox']")["aria-checked"]).to eq("false")
+      expect(page.at_css("[data-chart-row='page'] th > span > a:first-child")["aria-current"]).to be_nil
       expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Views and commits per day by page, last 30 days")
       expect(response.body).to include("No commits in the last 30 days. None of the pages in view counts views.")
 
       get "/analytics", params: { metric: "site", pages: [ "builder/app" ] }
       expect(drawn).to eq(%w[Site])
-      expect(page.at_css("[data-chart-row='builder/app'] [aria-disabled='true']")).to be_present
+      expect(page.at_css("[data-chart-row='builder/app'] [role='link'][aria-disabled='true']")).to be_present
     end
 
     it "links each control to its view, leaving the page's defaults out" do
@@ -136,8 +137,8 @@ RSpec.describe "Analytics", type: :request do
       get "/analytics"
 
       expect(query(toggles.css("a").find { |link| link.text.include?("Views") })).to eq("show" => "commits,views")
-      expect(query(page.css("nav[aria-label='Time range'] a").find { |link| link.text == "90 days" })).to eq("range" => "90d")
-      expect(query(page.at_css("[data-chart-row='page'] [role='checkbox']"))).to eq("projects" => "builder/app")
+      expect(query(page.css("[aria-label='Time range'] a").find { |link| link.text == "90 days" })).to eq("range" => "90d")
+      expect(query(page.at_css("[data-chart-row='page'] th > span > a:first-child"))).to eq("projects" => "builder/app")
       expect(query(page.at_css("[data-chart-row='page'] a[aria-label='Show only Your page']"))).to eq("projects" => "page")
     end
 

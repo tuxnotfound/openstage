@@ -29,6 +29,6 @@
 <% if after %>
   <%= link_to inside, path_for.call(show: after), class: css, aria: { current: ("true" if drawn) } %>
 <% else %>
-  <span class="<%= css %>" aria-disabled="true" aria-current="<%= 'true' if drawn %>"
-        title="<%= drawn ? 'The chart keeps at least one number.' : 'Switch a number off first' %>"><%= inside %></span>
+  <%= tag.span inside, class: css, role: "link", aria: { disabled: "true", current: ("true" if drawn) },
+                title: drawn ? "The chart keeps at least one number." : "Switch a number off first" %>
 <% end %>

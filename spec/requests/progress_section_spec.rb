@@ -79,8 +79,10 @@ RSpec.describe "The public page's chart and what shipped" do
     expect(shipped).to include("No entries tagged openstage in the last 12 months.")
   end
 
+  # A row's box, which comes first in its header: a link to its view, current
+  # while the row is in view.
   def box_for(name)
-    panel.css("[data-chart-row] [role='checkbox']").find { |box| box.text.squish == name }
+    panel.css("[data-chart-row] th > span > :first-child").find { |box| box.text.squish == name }
   end
 
   def query_of(link)
@@ -91,14 +93,14 @@ RSpec.describe "The public page's chart and what shipped" do
     get "/tux", params: { range: "90d" }
     box = box_for("openstage")
 
-    expect(box["aria-checked"]).to eq("true")
+    expect(box["aria-current"]).to eq("true")
     expect(query_of(box)).to eq("range" => "90d", "projects" => (1..6).map { |i| progress_repo(i) }.join(","))
 
     get box["href"]
-    expect(box_for("openstage")["aria-checked"]).to eq("false")
+    expect(box_for("openstage")["aria-current"]).to be_nil
     expect(box_for("openstage")["href"]).to eq("/tux?range=90d")
     expect(panel.at_css("[data-chart-table] a", text: "Show all")["href"]).to eq("/tux?range=90d")
-    windows = panel.css("nav[aria-label='Time range'] a").to_h { |a| [ a.text, query_of(a) ] }
+    windows = panel.css("[aria-label='Time range'] a").to_h { |a| [ a.text, query_of(a) ] }
     expect(windows["12 months"].keys).to eq([ "projects" ])
     expect(windows["30 days"]).to include("range" => "30d")
   end
@@ -110,8 +112,8 @@ RSpec.describe "The public page's chart and what shipped" do
 
     get "/tux", params: { projects: progress_repo(0) }
     expect(box_for("openstage")).to have_attributes(name: "span")
-    expect(box_for("openstage")["aria-disabled"]).to eq("true")
-    expect(box_for("wheels-off")["aria-checked"]).to eq("false")
+    expect(box_for("openstage").to_h.slice("role", "aria-disabled", "aria-current")).to eq("role" => "link", "aria-disabled" => "true", "aria-current" => "true")
+    expect(box_for("wheels-off")["aria-current"]).to be_nil
     expect(panel.at_css("[data-chart-row='#{progress_repo(0)}'] a[aria-label^='Show only']")).to be_nil
   end
 
@@ -138,7 +140,7 @@ RSpec.describe "The public page's chart and what shipped" do
     create(:entry, user: user, repo_name: progress_repo(2), title: "A goal_atlas commit", occurred_at: 1.hour.ago)
     get "/tux", params: { projects: [ progress_repo(0), progress_repo(1) ].join(",") }
 
-    expect(panel.css("[data-chart-row] [role='checkbox'][aria-checked='true']").map { |box| box.text.squish }).to eq(%w[openstage wheels-off])
+    expect(panel.css("[data-chart-row] th > span > [aria-current='true']").map { |box| box.text.squish }).to eq(%w[openstage wheels-off])
     expect(response.body).to include("A wheels-off commit")
     expect(response.body).not_to include("A goal_atlas commit")
   end
@@ -147,6 +149,6 @@ RSpec.describe "The public page's chart and what shipped" do
     get "/tux", params: { show: "commits" }
 
     expect(panel.css("svg[role='img'] path").map { |path| path["stroke-dasharray"] }.uniq).to eq([ nil ])
-    expect(panel.at_css("nav[aria-label='Time range'] a", text: "30 days")["href"]).to eq("/tux?range=30d")
+    expect(panel.at_css("[aria-label='Time range'] a", text: "30 days")["href"]).to eq("/tux?range=30d")
   end
 end

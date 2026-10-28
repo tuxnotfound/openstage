@@ -31,7 +31,7 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     expect(activity.at_css("[aria-label='Numbers on the chart']").text.squish).to eq("Commits 4")
     expect(activity.css(".os-num.leading-none, .os-big")).to be_empty
     expect(activity.at_css("svg[role='img']")["aria-label"]).to eq("Commits per week by project, last 90 days")
-    month = activity.css("nav[aria-label='Time range'] a").find { |a| a.text == "30 days" }
+    month = activity.css("[aria-label='Time range'] a").find { |a| a.text == "30 days" }
     expect(month["href"]).to eq("/dashboard?q=work&range=30d")
     only = activity.at_css("[data-chart-row='builder/bare'] a[aria-label='Show only bare']")
     expect(only["href"]).to eq("/dashboard?projects=builder%2Fbare&q=work")
@@ -59,7 +59,7 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     expect(project_rows.keys.last).to eq("builder/app")
     expect(page_switch("builder/app")["aria-checked"]).to eq("false")
     expect(page.css("[data-chart-row='builder/app'] td").map { |cell| cell.text.squish }.last(2)).to eq([ "Commits –", "Site visits –" ])
-    expect(page.at_css("[data-chart-row='builder/app'] [role='checkbox']")).to be_nil
+    expect(page.at_css("[data-chart-row='builder/app'] th a[href*='projects=']")).to be_nil
     expect(user.entries.where(repo_name: "builder/app").pluck(:hidden).uniq).to eq([ true ])
   end
 

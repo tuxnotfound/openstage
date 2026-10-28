@@ -64,7 +64,7 @@ RSpec.describe "Project pages", type: :request do
     get "/builder/side.app", params: { range: "30d" }
 
     page = Nokogiri::HTML(response.body)
-    expect(page.at_css("nav[aria-label='Time range'] a[aria-current='page']").text).to eq("30 days")
+    expect(page.at_css("[aria-label='Time range'][role='group'] a[aria-current='page']").text).to eq("30 days")
     expect(page.at_css("[data-react='progress'] svg[role='img']")["aria-label"]).to eq("7-day average of commits per day by project, last 30 days")
     expect(page.css("[data-react='progress'] .os-big, [data-chart-table]")).to be_empty
   end
