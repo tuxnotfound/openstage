@@ -7,8 +7,7 @@ module ProgressChart
   class Trend
     WIDTH = 1000
     HEIGHT = 280
-    # Days in the 30-day view's average.
-    AVERAGE = 7
+    AVERAGE = Progress::Window::AVERAGE
     # Room over the top gridline, so a peak and the disc on it stay inside.
     HEADROOM = 1.1
 

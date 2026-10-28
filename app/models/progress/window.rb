@@ -13,6 +13,8 @@ module Progress
     # month or two would leave the chart a point or two. A week is the finest
     # a short history draws.
     SHORT = 13.weeks
+    # Days in the 30-day view's average, as its charts draw each day.
+    AVERAGE = 7
 
     attr_reader :range, :today, :first_activity, :first
 

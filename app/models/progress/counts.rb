@@ -25,7 +25,7 @@ module Progress
     # each day's 7-day average, as the 30-day view draws commits.
     def per_point(key, repo, buckets, average: false)
       daily = daily(key, repo)
-      span = ProgressChart::Trend::AVERAGE
+      span = Window::AVERAGE
       buckets.map do |bucket|
         next (bucket.first..bucket.last).sum { |day| daily.fetch(day, 0) } unless average
 

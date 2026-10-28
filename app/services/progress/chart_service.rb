@@ -86,7 +86,7 @@ module Progress
     # The window before the range, and the six days before it that the
     # 30-day view's first average reads; every day for all time.
     def count_from
-      [ period.span_before&.first, period.span && (period.span.first - (ProgressChart::Trend::AVERAGE - 1)) ].compact.min
+      [ period.span_before&.first, period.span && (period.span.first - (Window::AVERAGE - 1)) ].compact.min
     end
 
     # Each number its projects show visitors, the numbers drawn and the chart.
