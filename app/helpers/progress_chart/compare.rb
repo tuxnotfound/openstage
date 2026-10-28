@@ -101,10 +101,11 @@ module ProgressChart
                  title: "#{window.labels.bucket_title(bucket)}#{' · 7-day average' if average?}", rows: rows_at(i))
     end
 
-    # A row per project with anything at the point, in the projects' order.
+    # A row per project with anything at the point, in the table's order:
+    # by rank, after the builder's own page (analytics' one row with none).
     def rows_at(index)
       projects = lines.select { |line| line.values[index].positive? }.map { |line| [ line.repo, line.name, line.rank ] }.uniq
-      projects.sort_by { |_, name, rank| [ rank || Float::INFINITY, name ] }.map do |repo, name, rank|
+      projects.sort_by { |_, name, rank| [ rank || -1, name ] }.map do |repo, name, rank|
         Row.new(repo: repo, name: name, rank: rank, values: lined.map { |number| value_at(repo, number, index) })
       end
     end

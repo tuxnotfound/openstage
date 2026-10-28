@@ -75,7 +75,11 @@ RSpec.describe ProgressChart::Compare do
     expect(compare.columns.last.rows.sole.values).to eq([ "1.5" ])
   end
 
-  it "words a chart of pages by page, as analytics draws it" do
+  it "words a chart of pages by page, as analytics draws it, the builder's own page first in the tooltip" do
+    views = Progress::Numbers.find("views")
+    own = described_class::Line.new(repo: "page", name: "Your page", rank: nil, number: views, values: [ 0, 5 ], total: 5)
+    expect(chart([ line("app", views, [ 0, 2 ]), own ], numbers: [ views ], per: "page").columns.last.rows.map(&:name)).to eq([ "Your page", "app" ])
+
     compare = chart([ line("app", commits, [ 3, 1 ]) ], per: "page")
 
     expect(compare.note).to eq("Commits per week, one line per page. None of the pages in view counts site visits.")
