@@ -13,19 +13,24 @@ class AnalyticsViewSerializer < ApplicationSerializer
     @report = report
   end
 
-  # changes_note: what the changes compare with, nil for all time, which
-  # compares with nothing; quiet: what a panel with nothing in it says
-  # ("in the last 30 days", "yet").
+  # changes_note: what the changes compare with, while a toggle or a cell
+  # has one (never for all time, which compares with nothing); quiet: what a
+  # panel with nothing in it says ("in the last 30 days", "yet").
   def attributes
-    @attributes ||= ChartFilterSerializer.new(@report, changes: true, table: true, cell_changes: true).attributes.merge(
-      changes_note: changes_note, quiet: quiet, sources: sources, countries: countries, links: links, badges: badges
-    )
+    @attributes ||= begin
+      view = ChartFilterSerializer.new(@report, changes: true, table: true, cell_changes: true).attributes
+      view.merge(changes_note: (changes_note if compared?(view)), quiet: quiet, sources: sources, countries: countries, links: links, badges: badges)
+    end
   end
 
   private
 
   def labels
     @report.period.labels
+  end
+
+  def compared?(view)
+    view[:numbers].any? { |number| number[:change] } || view[:table][:rows].any? { |row| row[:cells].any? { |cell| cell[:change] } }
   end
 
   def changes_note

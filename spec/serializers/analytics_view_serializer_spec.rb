@@ -41,4 +41,8 @@ RSpec.describe AnalyticsViewSerializer do
     expect(json).to include("changesNote" => nil, "quiet" => "yet", "words" => "all time")
     expect(json["numbers"].sole["change"]).to be_nil
   end
+
+  it "says nothing of changes when no value has one, as when the data starts inside the window" do
+    expect(view(range: "12m")).to include("changesNote" => nil, "quiet" => "in the last 12 months")
+  end
 end

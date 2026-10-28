@@ -23,6 +23,8 @@ RSpec.describe "Api::Analytics", type: :request do
 
   it "answers a Pro builder's view for the window, the numbers and the pages asked for, camelCased, to them alone" do
     create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a", referrer: "news.ycombinator.com")
+    # Before the window, so the builder's page has changes to explain.
+    create(:profile_view, user: user, viewed_at: 100.days.ago, ip_hash: "z")
     user.project_views.create!(repo_name: "builder/app", viewed_at: 1.day.ago, ip_hash: "b")
     user.project_views.create!(repo_name: "builder/app", viewed_at: 1.day.ago, ip_hash: "c")
     sign_in_as(user)
@@ -35,6 +37,7 @@ RSpec.describe "Api::Analytics", type: :request do
       .to eq([ [ "commits", "On GitHub", "1" ], [ "visitors", "On Openstage", "2" ], [ "views", "On Openstage", "2" ] ])
     expect(json["chart"]["ariaLabel"]).to eq("Views per week by page, last 90 days")
     expect(json["table"]["rows"].map { |row| row.values_at("repo", "name", "on") }).to eq([ [ "page", "Your page", false ], [ "builder/app", "app", true ] ])
+    expect(json["table"]["rows"].first["cells"].find { |cell| cell["key"] == "visitors" }).to include("value" => "1", "change" => { "arrow" => "±", "text" => "0%", "up" => nil })
     expect(json["sources"]).to eq([ { "label" => "Direct", "count" => "2", "width" => 100 } ])
     expect(response.headers["Cache-Control"]).to include("private")
   end
