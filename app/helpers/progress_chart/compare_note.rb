@@ -30,7 +30,7 @@ module ProgressChart
 
       named = sentence((chart.lined.presence || chart.numbers).map(&:word))
       what = chart.average? ? "7-day average of #{named} per day" : "#{named.upcase_first} per #{labels.unit_word}"
-      "#{what} by project, #{'each against its own peak, ' if chart.indexed?}#{labels.words}"
+      "#{what} by #{chart.per}, #{'each against its own peak, ' if chart.indexed?}#{labels.words}"
     end
 
     # A tooltip's words for a point where no project has anything.
@@ -77,7 +77,7 @@ module ProgressChart
       number = chart.lined.first
       return "" unless number
 
-      per_line = chart.lone ? "" : ", one line per project"
+      per_line = chart.lone ? "" : ", one line per #{chart.per}"
       chart.average? ? "A 7-day average of #{number.word} per day#{per_line}." : "#{number.label} per #{labels.unit_word}#{per_line}."
     end
 
@@ -86,11 +86,11 @@ module ProgressChart
     def rest
       quiet, missing = (chart.numbers - chart.lined).partition { |number| chart.every_line.any? { |line| line.number == number } }
       [ (" No #{sentence(quiet.map(&:word), 'or')} #{labels.word}." if quiet.any?),
-        (" None of the projects in view counts #{sentence(missing.map(&:word), 'or')}." if missing.any?) ].join
+        (" None of the #{chart.per}s in view counts #{sentence(missing.map(&:word), 'or')}." if missing.any?) ].join
     end
 
     def empty
-      chart.lone ? "This project shows no numbers yet." : "No project here shows a number yet."
+      chart.lone ? "This project shows no numbers yet." : "No #{chart.per} here shows a number yet."
     end
 
     def sentence(words, last = "and")

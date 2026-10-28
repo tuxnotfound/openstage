@@ -75,6 +75,14 @@ RSpec.describe ProgressChart::Compare do
     expect(compare.columns.last.rows.sole.values).to eq([ "1.5" ])
   end
 
+  it "words a chart of pages by page, as analytics draws it" do
+    compare = chart([ line("app", commits, [ 3, 1 ]) ], per: "page")
+
+    expect(compare.note).to eq("Commits per week, one line per page. None of the pages in view counts site visits.")
+    expect(compare.aria_label).to eq("Commits per week by page, last 90 days")
+    expect(chart([], numbers: [], per: "page").note).to eq("No page here shows a number yet.")
+  end
+
   it "says when nothing is drawn, or nothing is in the window" do
     expect(chart([], numbers: []).note).to eq("No project here shows a number yet.")
     expect(chart([ line("app", commits, [ 0, 0 ]) ], numbers: [ commits ]).note).to eq("No commits in the last 90 days.")

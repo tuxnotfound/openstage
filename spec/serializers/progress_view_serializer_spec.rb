@@ -36,7 +36,7 @@ RSpec.describe ProgressViewSerializer do
     it "sends a toggle per number with its total and each project's part, the numbers drawn, and the table" do
       json = view
 
-      expect(json["numbers"]).to eq([ { "key" => "commits", "label" => "Commits", "word" => "commits", "value" => "3", "change" => nil,
+      expect(json["numbers"]).to eq([ { "key" => "commits", "label" => "Commits", "word" => "commits", "group" => "On GitHub", "value" => "3", "change" => nil,
                                         "split" => [ { "repo" => "me/app", "rank" => 0, "value" => 2 }, { "repo" => "me/lib", "rank" => 1, "value" => 1 } ] } ])
       expect(json).to include("range" => "30d", "words" => "last 30 days", "selected" => [], "drawn" => [ "commits" ], "defaultShow" => [ "commits" ])
       expect(json["table"]["rows"].map { |row| [ row["name"], row["on"], row["cells"].map { |cell| cell["value"] } ] })
@@ -47,6 +47,7 @@ RSpec.describe ProgressViewSerializer do
       json = view(builder: true)
 
       expect(json["numbers"].first["change"]).to eq("arrow" => "▲", "text" => "200%", "up" => true)
+      expect(json["table"]["rows"].flat_map { |row| row["cells"].pluck("change") }.uniq).to eq([ nil ])
       expect(json["table"]["rows"].first).to include("edit" => "/projects/#{user.github_repos.first.id}/edit", "switch" => "/projects/#{user.github_repos.first.id}/numbers")
       expect(json["shipped"]).to be_nil
     end

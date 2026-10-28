@@ -21,17 +21,19 @@ module ProgressChart
     Column = Data.define(:left, :width, :mark, :title, :rows)
 
     # numbers: the numbers drawn, in line order. average: each point a 7-day
-    # average. lone: one project's page.
-    attr_reader :window, :numbers, :every_line, :lone
+    # average. lone: one project's page. per: what a line's row is, "project"
+    # or, on analytics, "page".
+    attr_reader :window, :numbers, :every_line, :lone, :per
 
     delegate :note, :note_parts, :aria_label, :none, to: :words
 
-    def initialize(window:, lines:, numbers:, average: false, lone: false)
+    def initialize(window:, lines:, numbers:, average: false, lone: false, per: "project")
       @window = window
       @every_line = lines
       @numbers = numbers
       @average = average
       @lone = lone
+      @per = per
     end
 
     # The lines with anything in the window.
