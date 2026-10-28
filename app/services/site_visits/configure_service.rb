@@ -1,45 +1,40 @@
 module SiteVisits
   # Where a project's site visits come from, as its builder sets it:
-  # Openstage's script or nowhere ("off"). Free counts one site: setting up a
-  # second refuses, unless asked to count this one instead, which turns the
-  # other's source off. Whether its page shows them is one of its numbers
+  # Openstage's script or nowhere ("off"). The first time it becomes the
+  # script, its setup time is kept for good. Free counts the one project set
+  # up first (Slot): setting up any other is refused, with Pro offered.
+  # Whether its page shows them is one of its numbers
   # (Projects::ShowNumberService).
   class ConfigureService < ApplicationService
-    attr_accessor :repo, :source, :count_here
+    attr_accessor :repo, :source
 
     validates :repo, presence: true
     validates :source, inclusion: { in: [ *GithubRepo::SITE_SOURCES, "off" ] }, allow_nil: true
-    validate :a_website_to_count_on, :one_site_on_free
+    validate :a_website_to_count_on, :one_project_on_free
 
     private
 
     def execute
-      transaction do
-        others.update_all(site_source: nil) if count_here
-        repo.site_source = source == "off" ? nil : source if source
-        repo.site_token ||= "os_#{SecureRandom.alphanumeric(12).downcase}" if repo.site_source
-        repo.save
-        absorb_errors(repo)
+      repo.site_source = source == "off" ? nil : source if source
+      if script?
+        repo.site_token ||= "os_#{SecureRandom.alphanumeric(12).downcase}"
+        repo.site_set_up_at ||= Time.current
       end
+      repo.save
+      absorb_errors(repo)
     end
 
     def a_website_to_count_on
       errors.add(:base, "Add #{repo.name}'s website first: the script counts only there.") if script? && repo.site_host.nil?
     end
 
-    def one_site_on_free
-      return unless script? && !count_here && others.exists?
-
-      errors.add(:base, "Free counts one site. Count this one instead, or go Pro to count both.")
+    def one_project_on_free
+      counted = Slot.new(repo.user).instead_of(repo) if script?
+      errors.add(:base, "Free counts site visits for one project, #{counted.name}. Go Pro to count them for every project.") if counted
     end
 
     def script?
       repo && source == "script"
-    end
-
-    # The builder's other projects set up, which Free would also count.
-    def others
-      repo.user.pro? ? GithubRepo.none : repo.user.github_repos.site_set_up.where.not(id: repo.id)
     end
   end
 end

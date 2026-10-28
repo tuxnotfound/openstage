@@ -1,18 +1,18 @@
 module Projects
   # What a project's builder sees on its own view: its colour, its numbers over
   # the last 30 days, and where its site visits stand. Site visits are counted
-  # (by the script, on its website), paused (on Free, while another project is
-  # the one site it counts), or off; a project without a website has nowhere
-  # to count them.
+  # (by the script, on its website), paused (the script on while Free counts
+  # another project, SiteVisits::Slot), or off; a project without a website
+  # has nowhere to count them.
   class GatherService < ApplicationService
     DAYS = 30
 
     attr_accessor :repo
     # project: its Progress::Projects entry, nil with nothing public yet;
     # last_site_visit: when the latest counted; site_state: :counting,
-    # :paused, :off or :no_website; free_site: the repo Free counts when it is
-    # another one.
-    attr_reader :project, :commits, :last_commit, :site_visits, :last_site_visit, :site_state, :free_site
+    # :paused, :off or :no_website; free_project: the project Free counts
+    # instead of this one, nil when this one can count.
+    attr_reader :project, :commits, :last_commit, :site_visits, :last_site_visit, :site_state, :free_project
 
     validates :repo, presence: true
 
@@ -26,8 +26,9 @@ module Projects
       @last_commit = commits.maximum(:occurred_at)&.in_time_zone(user.zone)&.to_date
       @site_visits = repo.site_visit_days.where(day: (today - (DAYS - 1))..today).sum(:visits)
       @last_site_visit = repo.site_visit_days.maximum(:updated_at)
-      @free_site = other_free_site
-      @site_state = site_state_now
+      slot = SiteVisits::Slot.new(user)
+      @free_project = slot.instead_of(repo)
+      @site_state = site_state_now(slot.state(repo))
     end
 
     def user
@@ -38,19 +39,10 @@ module Projects
       Time.current.in_time_zone(user.zone).to_date
     end
 
-    def other_free_site
-      return if user.pro?
-
-      counting = user.github_repos.site_set_up.busiest_site_first.first
-      counting unless counting == repo
-    end
-
-    def site_state_now
-      if repo.site_host.nil? then :no_website
-      elsif repo.site_source.nil? then :off
-      elsif free_site then :paused
-      else :counting
-      end
+    # A paused project stays paused whatever its website; otherwise the
+    # script has nowhere to count without one.
+    def site_state_now(state)
+      state != :paused && repo.site_host.nil? ? :no_website : state
     end
   end
 end

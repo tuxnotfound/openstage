@@ -52,26 +52,45 @@ RSpec.describe "Setting up a project's site visits", type: :request do
 
   context "on Free" do
     let(:user) { create(:user, username: "builder", pro: false) }
-    let!(:other) { create(:github_repo, user: user, name: "tidepool", homepage: "https://tidepool.dev", site_source: "script", site_token: "os_t") }
-
-    it "counts one site: a second asks to count it instead, which turns the other off" do
-      expect(view.text).to include("Free counts one site, and tidepool.dev counts now.", "Count this one instead")
-
-      patch "/projects/#{repo.id}/site_visits", params: { source: "script" }
-      expect(flash[:alert]).to include("Free counts one site")
-      expect(repo.reload.site_source).to be_nil
-
-      patch "/projects/#{repo.id}/site_visits", params: { source: "script", count_here: "1" }
-      expect(repo.reload.site_source).to eq("script")
-      expect(other.reload.site_source).to be_nil
-      expect(view.text).to include("Free counts one site, and this is it.")
+    let!(:other) do
+      create(:github_repo, user: user, name: "tidepool", homepage: "https://tidepool.dev", site_source: "script", site_token: "os_t", site_set_up_at: 10.days.ago)
     end
 
-    it "pauses the rest after a downgrade, counting the busiest" do
-      repo.update!(site_source: "script", site_token: "os_s")
-      other.site_visit_days.create!(day: Date.current, visits: 9, visitors: 3)
+    def state
+      view.at_css(".os-row > .os-muted.whitespace-nowrap").text
+    end
 
-      expect(view.text).to include("Paused: Free counts one site, and tidepool.dev counts now.")
+    it "sets up one project for life: any other is refused with the Pro prompt, and offers no setup" do
+      expect(view.text.squish).to include("Free counts site visits for one project, tidepool.")
+      expect(view.at_css("a[href='/pricing']").text).to eq("Go Pro")
+      expect(view.at_css("#site-source, [data-toggle-target='trigger']")).to be_nil
+      expect(state).to eq("Off")
+
+      patch "/projects/#{repo.id}/site_visits", params: { source: "script" }
+      expect(flash[:alert]).to eq("Free counts site visits for one project, tidepool. Go Pro to count them for every project.")
+      expect(repo.reload).to have_attributes(site_source: nil, site_set_up_at: nil)
+      expect(view.text).not_to include("Count this one instead")
+    end
+
+    it "keeps the slot with that project while its script is off, so it can count again" do
+      other.update!(site_source: nil)
+      get "/projects/#{other.id}/edit", params: { site: "open" }
+      row = Nokogiri::HTML(response.body).at_css("#site-visits")
+      expect(row.text.squish).to include("Not counted.", "Openstage's script")
+
+      patch "/projects/#{other.id}/site_visits", params: { source: "script" }
+      expect(other.reload.site_source).to eq("script")
+      get "/projects/#{other.id}/edit"
+      expect(response.body).to include("Free counts site visits for one project, and this is it.")
+    end
+
+    it "pauses a project set up on Pro after the one set up first, and keeps its totals" do
+      repo.update!(site_source: "script", site_token: "os_s", site_set_up_at: 3.days.ago, site_first_visit_at: 3.days.ago)
+      repo.site_visit_days.create!(day: Date.current, visits: 9, visitors: 3)
+
+      expect(view.text.squish).to include("Site visits 9", "Free counts site visits for one project, tidepool. Visits here are not counted, and the totals so far stay.")
+      expect(state).to eq("Paused")
+      expect(view.at_css("a[href='/pricing']").text).to eq("Go Pro")
     end
   end
 

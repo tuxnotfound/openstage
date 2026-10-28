@@ -98,6 +98,17 @@ RSpec.describe "Settings", type: :request do
         expect(section).to include("Counting shipnote.app", "Planned: Vercel Web Analytics, Plausible")
       end
 
+      it "counts on Free only the project set up first, and says so" do
+        create(:github_repo, user: user, homepage: "https://shipnote.app", site_source: "script", site_set_up_at: 10.days.ago)
+        create(:github_repo, user: user, homepage: "https://tidepool.dev", site_source: "script", site_set_up_at: 3.days.ago)
+        sign_in_as(user)
+        get settings_path
+
+        section = Nokogiri::HTML(response.body).at_css("section[aria-labelledby='site-analytics']").text.squish
+        expect(section).to include("Free counts the first project you set up, and Pro counts every project.", "Counting shipnote.app")
+        expect(section).not_to include("tidepool.dev")
+      end
+
       it "explains that including a private repo publishes its commit messages" do
         create(:github_repo, user: user)
 

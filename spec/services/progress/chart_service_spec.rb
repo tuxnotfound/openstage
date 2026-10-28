@@ -75,6 +75,23 @@ RSpec.describe Progress::ChartService do
     expect(builder.chart.lines.map { |line| line.number.key }.uniq).to eq(%w[commits])
   end
 
+  it "reads which project Free counts site visits for once, however many projects it lists" do
+    user.update!(pro: false)
+    app.update!(site_set_up_at: 10.days.ago)
+    5.times do |i|
+      create(:github_repo, user: user, full_name: "builder/side#{i}", name: "side#{i}", homepage: "https://side#{i}.example", site_source: "script",
+                           site_set_up_at: 2.days.ago, site_first_visit_at: 2.days.ago)
+      create(:entry, user: user, repo_name: "builder/side#{i}", occurred_at: 2.days.ago)
+    end
+    reads = 0
+    counter = ->(*, payload) { reads += 1 if payload[:sql].include?("site_set_up_at") }
+
+    service = ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { chart(builder: true) }
+
+    expect(reads).to eq(1)
+    expect(service.rows.to_h { |row| [ row.name, row.shows?("visits") ] }).to include("app" => true, "side0" => false, "side4" => false)
+  end
+
   it "shows a project's page that project alone" do
     service = chart(repos: [ "builder/lib" ], lone: true)
 

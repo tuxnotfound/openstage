@@ -22,11 +22,10 @@ class GithubRepo < ApplicationRecord
 
   scope :included_repos, -> { where(included: true) }
   scope :public_repos, -> { where(private_repo: false) }
-  scope :site_set_up, -> { where(site_source: "script") }
-  # Most site visits ever first, then the oldest: the order Free picks in.
-  scope :busiest_site_first, -> {
-    left_joins(:site_visit_days).group(:id).order(Arel.sql("COALESCE(SUM(site_visit_days.visits), 0) DESC"), :id)
-  }
+  scope :site_script_on, -> { where(site_source: "script") }
+  # Every project ever set up for site visits, the first set up first: the
+  # one Free counts (SiteVisits::Slot) leads.
+  scope :site_set_up_first, -> { where.not(site_set_up_at: nil).order(:site_set_up_at, :id) }
   # Repos with work on Openstage, shown or hidden: the projects a builder
   # chooses between on the dashboard.
   scope :with_entries, -> {
@@ -86,18 +85,17 @@ class GithubRepo < ApplicationRecord
     nil
   end
 
-  # Whether visits to its website count now: every project set up, on Pro;
-  # on Free, the busiest one set up, so a downgrade keeps the one that
-  # matters most and pauses the rest with their totals kept.
-  def counts_site_visits?
-    return false unless site_source == "script"
-
-    user.pro? || user.github_repos.site_set_up.busiest_site_first.first == self
+  # Whether visits to its website count now: on Pro, every project set up;
+  # on Free, only the one set up first (SiteVisits::Slot). slot: its
+  # builder's, passed in where a list of their projects asks, so the list
+  # reads it once.
+  def counts_site_visits?(slot: nil)
+    (slot || SiteVisits::Slot.new(user)).counts?(self)
   end
 
   # Shown on its page: switched on, counting, and counted at least once.
-  def site_visits_public?
-    picks?("visits") && site_first_visit_at.present? && counts_site_visits?
+  def site_visits_public?(slot: nil)
+    picks?("visits") && site_first_visit_at.present? && counts_site_visits?(slot: slot)
   end
 
   # Whether its builder picks a number for visitors to see on its pages:
@@ -108,8 +106,8 @@ class GithubRepo < ApplicationRecord
 
   # Whether its visitors see a number it counts: one its builder picks and,
   # for site visits, one that still counts.
-  def public_number?(number)
-    number == "visits" ? site_visits_public? : picks?(number)
+  def public_number?(number, slot: nil)
+    number == "visits" ? site_visits_public?(slot: slot) : picks?(number)
   end
 
   private

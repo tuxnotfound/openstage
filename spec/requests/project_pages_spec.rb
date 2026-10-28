@@ -147,7 +147,7 @@ RSpec.describe "Project pages", type: :request do
     let(:repo) { user.github_repos.find_by!(name: "side.app") }
 
     before do
-      repo.update!(site_source: "script", site_token: "os_a", site_first_visit_at: 3.days.ago)
+      repo.update!(site_source: "script", site_token: "os_a", site_set_up_at: 3.days.ago, site_first_visit_at: 3.days.ago)
       repo.site_visit_days.create!(day: Date.current, visits: 1204, visitors: 800)
       user.update!(pro: true)
     end
@@ -178,17 +178,24 @@ RSpec.describe "Project pages", type: :request do
       expect(toggles).to eq([ [ "Site visits 1,204", true ] ])
     end
 
-    it "keeps them off the page while switched off, or before Pro on a second site" do
+    it "keeps them off the page while switched off, or while Free counts the project set up first" do
       repo.update!(hidden_numbers: [ "visits" ])
       get "/builder/side.app"
       expect(toggles).to eq([ [ "Commits 1", true ] ])
 
       repo.update!(hidden_numbers: [])
       user.update!(pro: false)
-      other = create(:github_repo, user: user, site_source: "script")
-      other.site_visit_days.create!(day: Date.current, visits: 5000, visitors: 10)
+      get "/builder/side.app"
+      expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ] ])
+
+      first = create(:github_repo, user: user, homepage: "https://first.example", site_source: "script", site_set_up_at: 10.days.ago)
       get "/builder/side.app"
       expect(toggles).to eq([ [ "Commits 1", true ] ])
+      expect(response.body).not_to include("1,204")
+
+      first.destroy!
+      get "/builder/side.app"
+      expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ] ])
     end
 
     it "shows them on the builder's page too, beside every project's commits" do

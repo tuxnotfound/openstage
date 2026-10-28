@@ -69,18 +69,20 @@ module Progress
       section.selected.size == section.tally.projects.all.size
     end
 
-    # The page's projects, and on the builder's own view the ones hidden from their page.
+    # The page's projects, and on the builder's own view the ones hidden from
+    # their page. Which project Free counts site visits for is read once.
     def list
       projects = lone ? section.selected : section.tally.projects.all
       synced = user.github_repos.by_full_name(projects.map(&:repo))
-      @rows = projects.map { |project| row(project, synced[project.repo]) }
+      slot = SiteVisits::Slot.new(user)
+      @rows = projects.map { |project| row(project, synced[project.repo], slot) }
       @off_page = builder ? user.github_repos.with_entries.where(included: false).order(:name).to_a : []
     end
 
-    def row(project, repo)
+    def row(project, repo, slot)
       counted = [ ("commits" if project.commits.positive?), ("visits" if repo&.site_first_visit_at) ].compact
       Row.new(key: project.repo, name: project.name, rank: project.rank, repo: repo, on: !section.filtered? || section.selected.include?(project),
-              counted: counted, shown: counted.select { |key| repo.nil? || repo.public_number?(key) })
+              counted: counted, shown: counted.select { |key| repo.nil? || repo.public_number?(key, slot: slot) })
     end
 
     def count

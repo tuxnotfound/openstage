@@ -65,12 +65,16 @@ RSpec.describe SiteVisits::RecordService do
     expect(record.call).to be(false)
   end
 
-  it "counts one site on Free, the busiest set up, and drops the rest" do
+  it "takes nothing from a project paused on Free, keeps its totals, and counts the one set up first" do
     user.update!(pro: false)
-    other = create(:github_repo, user: user, homepage: "https://tidepool.dev", site_source: "script", site_token: "os_other")
-    other.site_visit_days.create!(day: Date.new(2026, 10, 1), visits: 50, visitors: 40)
+    repo.update!(site_set_up_at: 10.days.ago)
+    paused = create(:github_repo, user: user, homepage: "https://tidepool.dev", site_source: "script", site_token: "os_other", site_set_up_at: 3.days.ago)
+    paused.site_visit_days.create!(day: Date.new(2026, 10, 1), visits: 50, visitors: 40)
+    service = record(token: "os_other", url: "https://tidepool.dev/")
 
-    expect(record.call).to be(false)
-    expect(record(token: "os_other", url: "https://tidepool.dev/").call).to be(true)
+    expect(service.call).to be(false)
+    expect(service.errors[:token]).to eq([ "names no project that counts visits" ])
+    expect([ paused.site_visitors.count, paused.site_visit_days.sole.visits, paused.reload.site_first_visit_at ]).to eq([ 0, 50, nil ])
+    expect(record.call).to be(true)
   end
 end

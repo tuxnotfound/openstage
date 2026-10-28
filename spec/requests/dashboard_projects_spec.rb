@@ -67,7 +67,7 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
 
   describe "the table under Your activity" do
     before do
-      tool.update!(homepage: "https://app.example", site_source: "script", site_first_visit_at: 2.days.ago)
+      tool.update!(homepage: "https://app.example", site_source: "script", site_set_up_at: 3.days.ago, site_first_visit_at: 2.days.ago)
       tool.site_visit_days.create!(day: 1.day.ago.to_date, visits: 90, visitors: 30)
     end
 

@@ -32,6 +32,18 @@ RSpec.describe "Site visits from Openstage's script", type: :request do
     expect(SiteVisitDay.count).to eq(0)
   end
 
+  it "answers a paused project's script the same quiet way, and keeps nothing from it" do
+    user.update!(pro: false)
+    repo.update!(site_set_up_at: 3.days.ago)
+    create(:github_repo, user: user, homepage: "https://lunchbox.example", site_source: "script", site_token: "os_first", site_set_up_at: 10.days.ago)
+
+    send_view(headers: { "Origin" => "https://shipnote.app" })
+
+    expect(response).to have_http_status(:no_content)
+    expect([ response.body, response.cookies ]).to eq([ "", {} ])
+    expect([ SiteVisitDay.count, SiteVisitor.count ]).to eq([ 0, 0 ])
+  end
+
   it "serves the script that sends them" do
     script = Rails.public_path.join("v.js").read
 

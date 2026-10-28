@@ -22,22 +22,26 @@ RSpec.describe Projects::GatherService do
   end
 
   it "says where site visits stand" do
-    expect(gather.site_state).to eq(:off)
+    expect([ gather.site_state, gather.free_project ]).to eq([ :off, nil ])
 
-    repo.update!(site_source: "script")
+    repo.update!(site_source: "script", site_set_up_at: 1.day.ago)
     expect(gather.site_state).to eq(:counting)
 
     repo.update!(homepage: nil)
     expect(gather.site_state).to eq(:no_website)
   end
 
-  it "pauses a project on Free while another is the one site it counts" do
+  it "pauses a project with its script on while Free counts the one set up first, and names that one" do
     user.update!(pro: false)
-    repo.update!(site_source: "script")
-    other = create(:github_repo, user: user, site_source: "script")
-    other.site_visit_days.create!(day: Date.current, visits: 3, visitors: 1)
+    first = create(:github_repo, user: user, name: "lunchbox", homepage: "https://lunchbox.example", site_set_up_at: 10.days.ago)
+    repo.update!(site_source: "script", site_set_up_at: 3.days.ago)
+    expect([ gather.site_state, gather.free_project ]).to eq([ :paused, first ])
 
-    expect([ gather.site_state, gather.free_site ]).to eq([ :paused, other ])
+    repo.update!(site_source: nil, homepage: nil)
+    expect([ gather.site_state, gather.free_project ]).to eq([ :no_website, first ])
+
+    first.destroy!
+    expect([ gather.site_state, gather.free_project ]).to eq([ :no_website, nil ])
   end
 
   it "needs a project" do
