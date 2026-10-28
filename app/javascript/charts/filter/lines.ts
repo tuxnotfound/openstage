@@ -51,6 +51,12 @@ function freeLine(lines: Lines): number {
   return [0, 1, 2].find((line) => !used.includes(line)) ?? 0
 }
 
+// The lines of the numbers among some keys: what a page can draw of the
+// numbers asked for.
+export function within(lines: Lines, keys: string[]): Lines {
+  return Object.fromEntries(Object.entries(lines).filter(([key]) => keys.includes(key)))
+}
+
 // The numbers drawn, in line order.
 export function lineOrder(lines: Lines): string[] {
   return Object.entries(lines).sort(([, a], [, b]) => a - b).map(([key]) => key)
@@ -71,6 +77,16 @@ export function toggled(lines: Lines, key: string, word: string): { lines: Lines
   }
   if (Object.keys(lines).length >= MAX_DRAWN) return { notice: `The chart draws three numbers at most. Switch one off to draw ${word}.` }
   return { lines: { ...lines, [key]: freeLine(lines) } }
+}
+
+// The rows in view once a row's box is clicked, none for all of them; null
+// when the last one in view would go. projects: the rows in view, none for
+// all; all: every row with a box, in the table's order.
+export function boxed(repo: string, projects: string[], all: string[]): string[] | null {
+  const inView = projects.length > 0 ? projects : all
+  const after = inView.includes(repo) ? inView.filter((each) => each !== repo) : all.filter((each) => inView.includes(each) || each === repo)
+  if (after.length === 0) return null
+  return after.length === all.length ? [] : after
 }
 
 // The note under the chart; one that compares numbers names each number's

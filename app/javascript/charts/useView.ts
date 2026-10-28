@@ -4,11 +4,14 @@ import { ViewStore } from "./viewStore"
 // The view an island shows, and the way to another: the current one stays on
 // screen until the next arrives, marked busy only when that takes a moment;
 // only the latest click lands; and the page's URL follows once it shows,
-// with anything the island keeps beside the view (landed).
+// written from the view that landed (page), with anything the island keeps
+// beside the view (landed).
 const BUSY_AFTER_MS = 150
 
 // A view to show on click, and to warm when the pointer or focus reaches it.
 export type Target = { go: () => void; warm: () => void }
+
+type Ask<T> = { url: string; page: (next: T) => string; landed?: (next: T) => void }
 
 export function useView<T>(initial: T, initialUrl: string) {
   const [store] = useState(() => {
@@ -18,10 +21,10 @@ export function useView<T>(initial: T, initialUrl: string) {
   })
   const [view, setView] = useState(initial)
   const [busy, setBusy] = useState(false)
-  const [failed, setFailed] = useState<{ url: string; pageUrl: string; landed?: () => void } | null>(null)
+  const [failed, setFailed] = useState<Ask<T> | null>(null)
   const latest = useRef(0)
 
-  function show(url: string, pageUrl: string, landed?: () => void) {
+  function show(url: string, page: (next: T) => string, landed?: (next: T) => void) {
     const request = ++latest.current
     setFailed(null)
     const slow = window.setTimeout(() => { if (latest.current === request) setBusy(true) }, BUSY_AFTER_MS)
@@ -29,10 +32,10 @@ export function useView<T>(initial: T, initialUrl: string) {
       .then((next) => {
         if (latest.current !== request) return
         setView(next)
-        landed?.()
-        window.history.replaceState(window.history.state, "", pageUrl)
+        landed?.(next)
+        window.history.replaceState(window.history.state, "", page(next))
       })
-      .catch(() => { if (latest.current === request) setFailed({ url, pageUrl, landed }) })
+      .catch(() => { if (latest.current === request) setFailed({ url, page, landed }) })
       .finally(() => {
         window.clearTimeout(slow)
         if (latest.current === request) setBusy(false)
@@ -40,9 +43,9 @@ export function useView<T>(initial: T, initialUrl: string) {
   }
 
   // Ask again, past every view kept, after a change on the server.
-  function reload(url: string, pageUrl: string, landed?: () => void) {
+  function reload(url: string, page: (next: T) => string, landed?: (next: T) => void) {
     store.clear()
-    show(url, pageUrl, landed)
+    show(url, page, landed)
   }
 
   return {
@@ -51,7 +54,7 @@ export function useView<T>(initial: T, initialUrl: string) {
     failed: failed !== null,
     show,
     reload,
-    retry: () => failed && show(failed.url, failed.pageUrl, failed.landed),
+    retry: () => failed && show(failed.url, failed.page, failed.landed),
     prefetch: (url: string) => store.prefetch(url),
   }
 }

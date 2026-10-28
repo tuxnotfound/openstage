@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { apiUrl, fitting, lineOf, lineOrder, linesFrom, noteOf, pageUrl, pathTops, projectClass, reconcile, sentence, tipLeft, toggled } from "../../app/javascript/charts/filter/lines"
+import { apiUrl, boxed, fitting, lineOf, lineOrder, linesFrom, noteOf, pageUrl, pathTops, projectClass, reconcile, sentence, tipLeft, toggled, within } from "../../app/javascript/charts/filter/lines"
 import type { CompareChartView, NumberView } from "../../app/javascript/charts/types"
 
 const number = (key: string, label: string): NumberView => ({ key, label, word: label.toLowerCase(), group: "On GitHub", value: "1", split: [], change: null })
@@ -26,6 +26,10 @@ describe("the lines of the numbers drawn", () => {
   test("follow the numbers the server drew, a new one taking a free line", () => {
     expect(reconcile({ commits: 0, visits: 1 }, ["visits"])).toEqual({ visits: 1 })
     expect(reconcile({ visits: 1 }, ["commits", "visits"])).toEqual({ visits: 1, commits: 0 })
+  })
+
+  test("of the numbers asked for are those the page can draw, each keeping its own", () => {
+    expect(within({ commits: 0, visits: 1 }, ["commits", "stars"])).toEqual({ commits: 0 })
   })
 
   test("are solid for a number drawn alone on its own axis", () => {
@@ -108,6 +112,20 @@ describe("the row of number toggles", () => {
     // A row without groups wraps toggle by toggle.
     expect(fitting(row(150, 175, 160, 140), 80, 300, 8, 8, 3)).toBe(3)
     expect(fitting(row(150, 175, 160), 80, 300, 8, 8, 3)).toBe(3)
+  })
+})
+
+describe("a row's box", () => {
+  const all = ["me/a", "me/b", "me/c"]
+
+  test("takes its row out of view, or puts it back, in the table's order", () => {
+    expect(boxed("me/b", [], all)).toEqual(["me/a", "me/c"])
+    expect(boxed("me/c", ["me/a"], all)).toEqual(["me/a", "me/c"])
+  })
+
+  test("names no rows once every one is back in view, and keeps the last one", () => {
+    expect(boxed("me/b", ["me/a", "me/c"], all)).toEqual([])
+    expect(boxed("me/a", ["me/a"], all)).toBeNull()
   })
 })
 

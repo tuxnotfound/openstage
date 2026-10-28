@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import CompareChart from "../filter/CompareChart"
 import NumberToggles from "../filter/NumberToggles"
@@ -75,10 +75,13 @@ export default function ProgressIsland({ initial, endpoint, mode, defaultRange, 
 
 // The dashboard's switches: a switch answers at once, and a line switched
 // off leaves the chart at once; the save goes to the server, which then
-// draws the chart again on its new scale. A failed save puts it back.
+// draws the view on screen by then again, on its new scale. A failed save
+// puts it back.
 function useCellSwitches(view: ProgressView, redraw: () => void): { switches: CellSwitches; hidden: (path: CompareChartView["paths"][number]) => boolean; failed: boolean } {
   const [pending, setPending] = useState<Record<string, boolean>>({})
   const [failed, setFailed] = useState(false)
+  const latest = useRef(redraw)
+  useLayoutEffect(() => { latest.current = redraw })
 
   // A switch the server now agrees with is no longer pending.
   useEffect(() => {
@@ -104,7 +107,7 @@ function useCellSwitches(view: ProgressView, redraw: () => void): { switches: Ce
       headers: { "Content-Type": "application/json", Accept: "application/json", "X-CSRF-Token": csrfToken() },
       body: JSON.stringify({ number: cell.key, shown: next }),
     }).catch(() => null)
-    if (response?.ok) return redraw()
+    if (response?.ok) return latest.current()
     setPending((was) => Object.fromEntries(Object.entries(was).filter(([each]) => each !== which)))
     setFailed(true)
   }
