@@ -1,28 +1,4 @@
 module SiteVisitsHelper
-  # The numbers a page's chart can draw, as its toggles name them.
-  CHART_NUMBERS = { "commits" => "Commits", "visits" => "Site visits" }.freeze
-
-  # The numbers on: both with site visits to draw, unless ?show= names one.
-  def chart_numbers(site_view, show)
-    return [ "commits" ] unless site_view
-
-    CHART_NUMBERS.key?(show) ? [ show ] : CHART_NUMBERS.keys
-  end
-
-  # The chart for the numbers on: commits alone, visits alone, or both.
-  def numbers_chart(section, site_view, numbers)
-    return ProgressChart::Trend.new(section) if numbers == [ "commits" ]
-
-    numbers == [ "visits" ] ? site_view.visits_chart : site_view.compare_chart
-  end
-
-  # A toggle's link: the number switched, the last one on staying on.
-  def chart_numbers_show(numbers, number)
-    on = numbers.include?(number) ? numbers - [ number ] : numbers + [ number ]
-    on = numbers if on.empty?
-    on.size == CHART_NUMBERS.size ? nil : on.first
-  end
-
   # The Site visits row on a project's builder view: the line under its name,
   # and the state beside its switch. overview: a Projects::GatherService.
   def site_visits_status(repo, overview)

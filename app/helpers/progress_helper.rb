@@ -15,51 +15,12 @@ module ProgressHelper
     project_page_path(user.username, project.repo.split("/").last, **params)
   end
 
-  # A project chip's link: the selection with that project switched. With
-  # every project in view, switching one leaves the others.
-  def progress_chip_path(user, section, project)
-    repos = section.tally.projects.all.map(&:repo)
-    picked = section.filtered? ? section.selected.map(&:repo) : repos
-    picked = picked.include?(project.repo) ? picked - [ project.repo ] : picked + [ project.repo ]
-    progress_view_path(user, repo: (picked.empty? || picked.sort == repos.sort ? nil : picked))
-  end
-
   # The class that gives marks a project's colour (bg-(--project) and the
   # like): by rank, the 7th project on grey, and ink for no project.
   def project_class(rank)
     return "os-project-none" if rank.nil?
 
     rank < ProgressChart::Palette::PROJECT_COLORS[:light].size ? "os-project-#{rank + 1}" : "os-project-other"
-  end
-
-  # "all 7 projects", "openstage", "openstage + wheels-off", "3 projects".
-  def progress_scope(section)
-    return section.selection_name if section.filtered?
-
-    count = section.tally.projects.all.size
-    count == 1 ? section.tally.projects.all.first.name : "all #{count} projects"
-  end
-
-  # The headline's change: [arrow, words, up?], or [nil, words, nil] with
-  # nothing to compare against.
-  def progress_change(section)
-    now = section.tally.totals.commits
-    before = section.tally.previous_totals&.commits
-    if before&.positive?
-      change = ((100.0 * now / before) - 100).round
-      return [ nil, "same as the previous #{Progress::WindowLabels::SPANS.fetch(section.labels.range)}", nil ] if change.zero?
-
-      return [ change.positive? ? "▲" : "▼", "#{change.abs}% #{section.labels.versus}", change.positive? ]
-    end
-    [ nil, progress_since(section), nil ]
-  end
-
-  # "since the first commit, March 26"; "none in the previous 90 days".
-  def progress_since(section)
-    first = section.tally.first_commit_day
-    return "since the first commit, #{first.strftime(first.year == Date.current.year ? '%B %-d' : '%B %-d, %Y')}" if first && section.tally.previous_totals.nil?
-
-    section.tally.previous_totals ? "none in the previous #{Progress::WindowLabels::SPANS.fetch(section.labels.range)}" : ""
   end
 
   # "today", "yesterday", "3 days ago", "5 weeks ago", "4 months ago".
