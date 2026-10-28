@@ -24,6 +24,18 @@ RSpec.describe "Sitemaps", type: :request do
       expect(response.body).to include(blog_post_url(BlogPost.all.first))
     end
 
+    it "lists a project page only once the project has enough public commits" do
+      user = create(:user, username: "builder")
+      create_list(:entry, 10, user: user, repo_name: "builder/busy")
+      create_list(:entry, 9, user: user, repo_name: "builder/thin")
+      create(:entry, user: user, repo_name: "builder/thin", title: "Merge pull request #1 from builder/branch")
+
+      get "/sitemap.xml"
+
+      expect(response.body).to include(project_page_url("builder", "busy"))
+      expect(response.body).not_to include(project_page_url("builder", "thin"))
+    end
+
     it "does not include deleted users" do
       create(:user, username: "deleted_builder", deleted_at: Time.current)
 

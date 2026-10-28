@@ -3,8 +3,18 @@ module Progress
   # each project's color, so a project keeps it on every tab and card.
   # Projects with tagged entries and no commits come last.
   class Projects
+    # Below this many public commits a project's page stays out of search:
+    # the sitemap leaves it out and the page says noindex. A page with a
+    # commit or two reads as thin, and Google holds thin pages against the
+    # rest of the site. It goes in once the project fills.
+    INDEXED_COMMITS = 10
+
     # rank: 0 for the project with the most commits.
-    Project = Data.define(:repo, :name, :commits, :rank)
+    Project = Data.define(:repo, :name, :commits, :rank) do
+      def indexed?
+        commits >= INDEXED_COMMITS
+      end
+    end
 
     # entries: the builder's public entries, tooling noise left out.
     def initialize(entries)

@@ -10,6 +10,9 @@
 <%# A shared link shows the project's own picture; without one, its card. %>
 <% content_for :og_image, picture || share_card(og_project_url(@user.username, project.repo.split("/").last)) %>
 <% content_for :main_class, "os-wrap os-stack pt-1.5" %>
+<% unless project.indexed? %>
+  <% content_for :head do %><meta name="robots" content="noindex"><% end %>
+<% end %>
 
 <% if @revealed %>
   <p role="status" class="rounded-control bg-accent-soft px-4 py-3 os-sm">
