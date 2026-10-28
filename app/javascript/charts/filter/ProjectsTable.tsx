@@ -19,11 +19,11 @@ import { lineOf, projectClass, type Lines } from "./lines"
 
 export type RowTargets = {
   // A row's box; null when it is the last project in view.
-  box: (repo: string) => Target | null
-  only: (repo: string) => Target
+  box: (key: string) => Target | null
+  only: (key: string) => Target
   all: Target | null
   refuse: () => void
-  focus: (repo: string | null) => void
+  focus: (key: string | null) => void
 }
 
 // The dashboard's switches, which answer at once and save in the background.
@@ -76,7 +76,7 @@ export default function ProjectsTable({ table, drawn, lines, indexed, words, foc
         </thead>
         <tbody className="max-md:block">
           {table.rows.map((row) => (
-            <Row key={row.repo} row={row} table={table} drawn={drawn} alone={row.on && on === 1} hot={focused === row.repo} rows={rows} switches={switches} />
+            <Row key={row.key} row={row} table={table} drawn={drawn} alone={row.on && on === 1} hot={focused === row.key} rows={rows} switches={switches} />
           ))}
         </tbody>
       </table>
@@ -87,12 +87,12 @@ export default function ProjectsTable({ table, drawn, lines, indexed, words, foc
 function Row({ row, table, drawn, alone, hot, rows, switches }: {
   row: TableRow; table: TableView; drawn: string[]; alone: boolean; hot: boolean; rows: RowTargets; switches?: CellSwitches
 }) {
-  const box = row.drawable ? rows.box(row.repo) : null
-  const only = row.drawable && !alone ? rows.only(row.repo) : null
+  const box = row.drawable ? rows.box(row.key) : null
+  const only = row.drawable && !alone ? rows.only(row.key) : null
   const name = `truncate font-bold ${row.drawable ? (row.on ? "" : "text-ink-2") : "font-semibold text-ink-3"}`
   return (
     <tr className={`group border-t border-line transition-colors max-md:grid max-md:grid-cols-3 max-md:gap-x-3 max-md:gap-y-2.5 max-md:py-3 ${hot ? "bg-surface" : ""}`}
-        data-chart-row={row.repo} onPointerEnter={(event) => { if (row.drawable && event.pointerType === "mouse") rows.focus(row.repo) }}
+        data-chart-row={row.key} onPointerEnter={(event) => { if (row.drawable && event.pointerType === "mouse") rows.focus(row.key) }}
         onPointerLeave={() => rows.focus(null)}>
       <th scope="row" className="py-2.5 text-left font-normal max-md:col-span-3 max-md:py-0">
         <span className="flex min-w-0 items-center gap-2.5">
@@ -100,7 +100,7 @@ function Row({ row, table, drawn, alone, hot, rows, switches }: {
             <label className="relative inline-flex min-h-7 min-w-0 cursor-pointer items-center gap-2.5">
               <input type="checkbox" className="peer absolute left-0 m-0 size-[18px] opacity-0" checked={row.on}
                      onChange={() => (box ? box.go() : rows.refuse())} onPointerEnter={box?.warm}
-                     onFocus={() => { box?.warm(); rows.focus(row.repo) }} onBlur={() => rows.focus(null)} />
+                     onFocus={() => { box?.warm(); rows.focus(row.key) }} onBlur={() => rows.focus(null)} />
               <span aria-hidden="true"
                     className={`${projectClass(row.rank)} inline-flex size-[18px] flex-none items-center justify-center rounded-[5px] border-2 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent ${row.on ? "border-(--project) bg-(--project) text-(--on-project)" : "border-ink-3"}`}>
                 {row.on

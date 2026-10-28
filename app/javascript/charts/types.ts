@@ -8,11 +8,11 @@ export type ProgressRange = "30d" | "90d" | "12m" | "all"
 // A chart filter's chart (CompareChartSerializer): each line carries its
 // project and its number, and the browser gives it its number's line style.
 export type CompareChartView = {
-  // repo: the row's key (TableRow); number: the number's key.
-  paths: { d: string; rank: Rank; number: string; repo: string }[]
+  // key: the row's (TableRow); number: the number's.
+  paths: { d: string; rank: Rank; number: string; key: string }[]
   ticks: { value: string; top: number }[]
   // values: one per number in heads, "–" where the project counts none.
-  columns: { left: number; width: number; mark: number; title: string; rows: { repo: string; name: string; rank: Rank; values: string[] }[] }[]
+  columns: { left: number; width: number; mark: number; title: string; rows: { key: string; name: string; rank: Rank; values: string[] }[] }[]
   // The numbers with lines, in the pages' order: the tooltip's columns.
   heads: string[]
   axis: string[]
@@ -41,7 +41,7 @@ export type NumberView = {
   // Where it happens, for the toggles grouped under it: "On GitHub".
   group: string
   value: string
-  split: { repo: string; rank: Rank; value: number }[]
+  split: { key: string; rank: Rank; value: number }[]
   change: Change | null
 }
 
@@ -52,9 +52,9 @@ export type NumberView = {
 export type TableCell = { key: string; value: string | null; shown: boolean; pick: boolean | null; setup: string | null; change: Change | null }
 
 export type TableRow = {
-  // The row's key: its repo's full name, or on analytics "page" for the
-  // builder's own page, which has no rank and draws in ink.
-  repo: string
+  // Its repo's full name, or on analytics "page" for the builder's own
+  // page, which has no rank and draws in ink.
+  key: string
   name: string
   rank: Rank
   // In view on the chart; drawable: on the builder's page, so it has a box.

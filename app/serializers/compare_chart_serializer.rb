@@ -11,7 +11,7 @@ class CompareChartSerializer < ApplicationSerializer
   def attributes
     before, after = @chart.note_parts
     {
-      paths: @chart.paths.map { |d, rank, number, repo| { d: d, rank: rank, number: number, repo: repo } },
+      paths: @chart.paths.map { |d, rank, number, key| { d: d, rank: rank, number: number, key: key } },
       ticks: @chart.ticks.map { |tick| { value: tick.value, top: tick.top } },
       columns: @chart.columns.map { |column| column_of(column) }, heads: @chart.lined.map(&:key), axis: @chart.axis,
       aria_label: @chart.aria_label, note: @chart.note, note_parts: ({ before: before, after: after } if @chart.indexed?),
@@ -23,6 +23,6 @@ class CompareChartSerializer < ApplicationSerializer
 
   def column_of(column)
     { left: column.left, width: column.width, mark: column.mark, title: column.title,
-      rows: column.rows.map { |row| { repo: row.repo, name: row.name, rank: row.rank, values: row.values } } }
+      rows: column.rows.map { |row| { key: row.repo, name: row.name, rank: row.rank, values: row.values } } }
   end
 end

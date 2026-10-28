@@ -40,7 +40,7 @@ export function useFilter<V extends FilterView>(initial: V, { endpoint, defaultR
   const [notice, setNotice] = useState("")
   const [focus, setFocus] = useState<Focus | null>(null)
   const lines = reconcile(wanted.lines, view.drawn)
-  const drawable = view.table?.rows.filter((row) => row.drawable).map((row) => row.repo) ?? []
+  const drawable = view.table?.rows.filter((row) => row.drawable).map((row) => row.key) ?? []
 
   // The page's own address for the view that landed, against its defaults.
   const page = (want: Wanted) => (landed: V) =>
@@ -70,14 +70,14 @@ export function useFilter<V extends FilterView>(initial: V, { endpoint, defaultR
   }
 
   const rows: RowTargets = {
-    box: (repo) => {
-      const projects = boxed(repo, wanted.projects, drawable)
+    box: (key) => {
+      const projects = boxed(key, wanted.projects, drawable)
       return projects ? to({ projects }) : null
     },
-    only: (repo) => to({ projects: [repo] }),
+    only: (key) => to({ projects: [key] }),
     all: view.selected.length > 0 ? to({ projects: [] }) : null,
     refuse: () => setNotice("The chart keeps at least one project."),
-    focus: (repo) => setFocus(repo ? { kind: "project", key: repo } : null),
+    focus: (key) => setFocus(key ? { kind: "project", key } : null),
   }
   const numbers: NumberEvents = {
     toggle: (key) => numberTarget(key).go(),

@@ -35,7 +35,7 @@ class ChartFilterSerializer < ApplicationSerializer
   def number_of(total)
     number = total.number
     { key: number.key, label: number.label, word: number.word, group: number.group, value: total.value ? number_with_delimiter(total.value) : "–",
-      split: total.split.map { |row, count| { repo: row.key, rank: row.rank, value: count } },
+      split: total.split.map { |row, count| { key: row.key, rank: row.rank, value: count } },
       change: (Progress::Change.of(total.value, total.previous)&.to_h if @changes) }
   end
 end

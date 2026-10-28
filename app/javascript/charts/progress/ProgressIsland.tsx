@@ -83,13 +83,13 @@ function useCellSwitches(view: ProgressView, redraw: () => void): { switches: Ce
   useEffect(() => {
     setPending((was) => Object.fromEntries(Object.entries(was).filter(([key, pick]) => {
       const cut = key.lastIndexOf("|")
-      const row = view.table?.rows.find((each) => each.repo === key.slice(0, cut))
+      const row = view.table?.rows.find((each) => each.key === key.slice(0, cut))
       const cell = row?.cells.find((each) => each.key === key.slice(cut + 1))
       return cell ? cell.pick !== pick : false
     })))
   }, [view])
 
-  const key = (row: TableRow, cell: TableCell) => `${row.repo}|${cell.key}`
+  const key = (row: TableRow, cell: TableCell) => `${row.key}|${cell.key}`
   const pick = (row: TableRow, cell: TableCell) => pending[key(row, cell)] ?? cell.pick
 
   async function flip(row: TableRow, cell: TableCell) {
@@ -113,7 +113,7 @@ function useCellSwitches(view: ProgressView, redraw: () => void): { switches: Ce
 
   return {
     switches: { pick, shown: (row, cell) => pending[key(row, cell)] ?? cell.shown, flip: (row, cell) => { void flip(row, cell) } },
-    hidden: (path) => pending[`${path.repo}|${path.number}`] === false,
+    hidden: (path) => pending[`${path.key}|${path.number}`] === false,
     failed,
   }
 }

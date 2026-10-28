@@ -35,7 +35,7 @@ export default function CompareChart({ chart, numbers, lines, focus, height = ""
   const [at, setAt] = useState<number | null>(null)
   const line = (path: Path) => lineOf(lines, path.number, chart.indexed)
   const paths = chart.paths.filter((path) => !hidden?.(path)).sort((a, b) => line(b) - line(a))
-  const picked = (path: Path) => focus !== null && (focus.kind === "number" ? path.number === focus.key : path.repo === focus.key)
+  const picked = (path: Path) => focus !== null && (focus.kind === "number" ? path.number === focus.key : path.key === focus.key)
   const lit = paths.some(picked)
   const hot = (path: Path) => !lit || picked(path)
   const index = at === null || chart.columns.length === 0 ? null : Math.min(at, chart.columns.length - 1)
@@ -75,7 +75,7 @@ export default function CompareChart({ chart, numbers, lines, focus, height = ""
         <div className="os-axis" />
         <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} preserveAspectRatio="none" aria-hidden="true">
           {paths.map((path) => (
-            <path key={`${path.repo}|${path.number}`} d={path.d} className={`${projectClass(path.rank)} stroke-(--project) transition-opacity duration-150`}
+            <path key={`${path.key}|${path.number}`} d={path.d} className={`${projectClass(path.rank)} stroke-(--project) transition-opacity duration-150`}
                   fill="none" strokeWidth="4.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke"
                   strokeDasharray={LINE_DASHES[line(path)] || undefined} style={{ opacity: hot(path) ? 1 : FADED }} />
           ))}
@@ -84,7 +84,7 @@ export default function CompareChart({ chart, numbers, lines, focus, height = ""
         <div className="absolute inset-y-0 right-0 w-0.5 bg-strong" aria-hidden="true" />
         {column && <div className="pointer-events-none absolute inset-y-0 z-[1] w-px bg-ink-3" style={{ left: `${x}%` }} aria-hidden="true" />}
         {marks.map(({ path, top }) => (
-          <span key={`mark-${path.repo}|${path.number}`} aria-hidden="true"
+          <span key={`mark-${path.key}|${path.number}`} aria-hidden="true"
                 className={`${projectClass(path.rank)} pointer-events-none absolute z-[3] -mt-[5px] -ml-[5px] size-2.5 rounded-full bg-(--project) shadow-[0_0_0_2px_var(--color-fill)]`}
                 style={{ left: `${x}%`, top: `${top}%` }} />
         ))}
@@ -136,7 +136,7 @@ function Tip({ chart, column, numbers, lines, x }: { chart: CompareChartView; co
             </>
           )}
           {column.rows.map((row) => (
-            <Fragment key={row.repo}>
+            <Fragment key={row.key}>
               <span className="max-w-[150px] truncate">
                 <span className={`os-dot ${projectClass(row.rank)} mr-[7px] bg-(--project) align-[-1px] shadow-[0_0_0_1.5px_var(--color-ground)]`} />{row.name}
               </span>

@@ -24,8 +24,8 @@ RSpec.describe ChartFilterSerializer do
     expect(json).to include("range" => "30d", "words" => "last 30 days", "selected" => [ "me/app" ], "drawn" => [ "commits" ], "defaultShow" => [ "commits" ],
                             "table" => nil)
     expect(json["numbers"].sole).to include("key" => "commits", "group" => "On GitHub", "value" => "2", "change" => nil,
-                                            "split" => [ { "repo" => "me/app", "rank" => 0, "value" => 2 } ])
-    expect(json["chart"]["paths"].map { |path| path["repo"] }).to eq([ "me/app" ])
+                                            "split" => [ { "key" => "me/app", "rank" => 0, "value" => 2 } ])
+    expect(json["chart"]["paths"].map { |path| path["key"] }).to eq([ "me/app" ])
   end
 
   it "writes a dash for a number no row in view shows" do

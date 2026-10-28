@@ -32,10 +32,10 @@ module ChartFilterHelper
 
   # The projects in view once a row's box is clicked, none for all of them;
   # nil when the last one in view would go.
-  def chart_projects_toggled(view, repo)
-    all = view[:table][:rows].select { |row| row[:drawable] }.pluck(:repo)
+  def chart_projects_toggled(view, key)
+    all = view[:table][:rows].select { |row| row[:drawable] }.pluck(:key)
     in_view = view[:selected].presence || all
-    after = in_view.include?(repo) ? in_view - [ repo ] : all & (in_view + [ repo ])
+    after = in_view.include?(key) ? in_view - [ key ] : all & (in_view + [ key ])
     return if after.empty?
 
     after.size == all.size ? [] : after

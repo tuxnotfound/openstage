@@ -155,7 +155,7 @@ function Toggle({ number, line, full, changes, events }: { number: NumberView; l
       {changes && number.change?.arrow && <ChangeText change={number.change} />}
       <span className={`absolute inset-x-3 bottom-[5px] flex h-[3px] gap-0.5 ${drawn ? "" : "opacity-45"}`} aria-hidden="true">
         {number.split.map((part) => (
-          <span key={part.repo} className={`${projectClass(part.rank)} min-w-[3px] rounded-[2px] bg-(--project)`} style={{ flex: `${part.value} 1 0` }} />
+          <span key={part.key} className={`${projectClass(part.rank)} min-w-[3px] rounded-[2px] bg-(--project)`} style={{ flex: `${part.value} 1 0` }} />
         ))}
       </span>
     </button>

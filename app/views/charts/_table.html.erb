@@ -45,11 +45,11 @@
       <tbody class="max-md:block">
         <% table[:rows].each do |row| %>
           <% name_css = "truncate font-bold #{row[:drawable] ? ('text-ink-2' unless row[:on]) : 'font-semibold text-ink-3'}" %>
-          <tr class="group border-t border-line max-md:grid max-md:grid-cols-3 max-md:gap-x-3 max-md:gap-y-2.5 max-md:py-3" data-chart-row="<%= row[:repo] %>">
+          <tr class="group border-t border-line max-md:grid max-md:grid-cols-3 max-md:gap-x-3 max-md:gap-y-2.5 max-md:py-3" data-chart-row="<%= row[:key] %>">
             <th scope="row" class="py-2.5 text-left font-normal max-md:col-span-3 max-md:py-0">
               <span class="flex min-w-0 items-center gap-2.5">
                 <% if row[:drawable] %>
-                  <% after = chart_projects_toggled(view, row[:repo]) %>
+                  <% after = chart_projects_toggled(view, row[:key]) %>
                   <% box = capture do %>
                     <span class="<%= project_class(row[:rank]) %> inline-flex size-[18px] flex-none items-center justify-center rounded-[5px] border-2 <%= row[:on] ? 'border-(--project) bg-(--project) text-(--on-project)' : 'border-ink-3' %>" aria-hidden="true">
                       <% if row[:on] %>
@@ -66,7 +66,7 @@
                     <span role="link" aria-disabled="true" aria-current="true" title="The chart keeps at least one project." class="inline-flex min-h-7 min-w-0 items-center gap-2.5"><%= box %></span>
                   <% end %>
                   <% unless row[:on] && on == 1 %>
-                    <%= link_to "Only", path_for.call(projects: [ row[:repo] ]), aria: { label: "Show only #{row[:name]}" },
+                    <%= link_to "Only", path_for.call(projects: [ row[:key] ]), aria: { label: "Show only #{row[:name]}" },
                           class: "min-h-7 shrink-0 rounded-md px-1.5 py-0.5 text-[13px] font-bold text-accent-ink opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100 max-md:opacity-100 pointer-coarse:opacity-100" %>
                   <% end %>
                 <% else %>

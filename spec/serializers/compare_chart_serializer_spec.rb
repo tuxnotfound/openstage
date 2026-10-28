@@ -14,10 +14,10 @@ RSpec.describe CompareChartSerializer do
 
     json = described_class.new(chart).as_json
 
-    expect(json["paths"].map { |path| path.slice("rank", "number", "repo") }).to eq([ { "rank" => 0, "number" => "visits", "repo" => "me/app" },
-                                                                                     { "rank" => 0, "number" => "commits", "repo" => "me/app" } ])
+    expect(json["paths"].map { |path| path.slice("rank", "number", "key") }).to eq([ { "rank" => 0, "number" => "visits", "key" => "me/app" },
+                                                                                     { "rank" => 0, "number" => "commits", "key" => "me/app" } ])
     expect(json["heads"]).to eq(%w[commits visits])
-    expect(json["columns"].last["rows"]).to eq([ { "repo" => "me/app", "name" => "app", "rank" => 0, "values" => %w[1 400] } ])
+    expect(json["columns"].last["rows"]).to eq([ { "key" => "me/app", "name" => "app", "rank" => 0, "values" => %w[1 400] } ])
     expect(json["noteParts"]).to eq("before" => "", "after" => ", each against its own peak in the window; 100% is 3 commits a week and 400 site visits a week.")
     expect(json).to include("indexed" => true, "none" => "Nothing this week", "axis" => [ "Oct 19", "Today" ])
   end

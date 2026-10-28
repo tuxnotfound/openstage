@@ -82,9 +82,9 @@ export function toggled(lines: Lines, key: string, word: string): { lines: Lines
 // The rows in view once a row's box is clicked, none for all of them; null
 // when the last one in view would go. projects: the rows in view, none for
 // all; all: every row with a box, in the table's order.
-export function boxed(repo: string, projects: string[], all: string[]): string[] | null {
+export function boxed(key: string, projects: string[], all: string[]): string[] | null {
   const inView = projects.length > 0 ? projects : all
-  const after = inView.includes(repo) ? inView.filter((each) => each !== repo) : all.filter((each) => inView.includes(each) || each === repo)
+  const after = inView.includes(key) ? inView.filter((each) => each !== key) : all.filter((each) => inView.includes(each) || each === key)
   if (after.length === 0) return null
   return after.length === all.length ? [] : after
 }

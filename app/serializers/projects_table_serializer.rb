@@ -30,12 +30,12 @@ class ProjectsTableSerializer < ApplicationSerializer
   private
 
   def row_of(row)
-    { repo: row.key, name: row.name, rank: row.rank, on: row.on, drawable: true,
+    { key: row.key, name: row.name, rank: row.rank, on: row.on, drawable: true,
       cells: @chart.cells(row).map { |cell| cell_of(cell, row.repo) } }.merge(manage_parts(row.repo))
   end
 
   def off_page_row(repo)
-    { repo: repo.full_name, name: repo.name, rank: nil, on: false, drawable: false,
+    { key: repo.full_name, name: repo.name, rank: nil, on: false, drawable: false,
       cells: @chart.columns.map { |number| { key: number.key, value: nil, shown: false, pick: nil, setup: nil, change: nil } } }.merge(manage_parts(repo))
   end
 
