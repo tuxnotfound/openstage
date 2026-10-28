@@ -6,7 +6,8 @@
     row also has Edit and whether the builder's page lists it, and each cell
     the switch for what visitors see, or Set up; a project hidden from the
     page comes last, with no box. On a phone each row stacks, with only the
-    numbers it counts.
+    numbers it counts. Only shows on hover, and always on a touch screen,
+    where there is no hover to find it by.
     view: a ChartFilterSerializer's attributes; path_for: the page's address
     for some params changed; back: the view's params, for the forms; label:
     what a row is, "Projects" unless told. %>
@@ -66,7 +67,7 @@
                   <% end %>
                   <% unless row[:on] && on == 1 %>
                     <%= link_to "Only", path_for.call(projects: [ row[:repo] ]), aria: { label: "Show only #{row[:name]}" },
-                          class: "min-h-7 shrink-0 rounded-md px-1.5 py-0.5 text-[13px] font-bold text-accent-ink opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100 max-md:opacity-100" %>
+                          class: "min-h-7 shrink-0 rounded-md px-1.5 py-0.5 text-[13px] font-bold text-accent-ink opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100 max-md:opacity-100 pointer-coarse:opacity-100" %>
                   <% end %>
                 <% else %>
                   <span class="<%= name_css %>"><%= row[:name] %></span>

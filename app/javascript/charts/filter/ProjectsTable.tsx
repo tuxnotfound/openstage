@@ -13,7 +13,8 @@ import { lineOf, projectClass, type Lines } from "./lines"
 // the builder's page lists it, and each cell the switch for what visitors
 // see (its value grey while they do not), or Set up; a project hidden from
 // the page comes last, with no box. On a phone each row stacks, with only
-// the numbers it counts.
+// the numbers it counts. Only shows on hover, and always on a touch screen,
+// where there is no hover to find it by.
 
 export type RowTargets = {
   // A row's box; null when it is the last project in view.
@@ -110,7 +111,7 @@ function Row({ row, table, drawn, alone, hot, rows, switches }: {
           ) : <span className={name}>{row.name}</span>}
           {only && (
             <button type="button" aria-label={`Show only ${row.name}`} onClick={only.go} onPointerEnter={only.warm} onFocus={only.warm}
-                    className="min-h-7 shrink-0 rounded-md px-1.5 py-0.5 text-[13px] font-bold text-accent-ink opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 focus:opacity-100 max-md:opacity-100">Only</button>
+                    className="min-h-7 shrink-0 rounded-md px-1.5 py-0.5 text-[13px] font-bold text-accent-ink opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 focus:opacity-100 max-md:opacity-100 pointer-coarse:opacity-100">Only</button>
           )}
           {row.edit && <a href={row.edit} className="os-btn2 ml-auto h-[30px] shrink-0 rounded-[9px] px-3 text-[13px]" aria-label={`Edit ${row.name}`}>Edit</a>}
         </span>
