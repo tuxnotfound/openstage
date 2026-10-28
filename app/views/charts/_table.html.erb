@@ -100,7 +100,7 @@
                     <span class="inline-block">
                       <span class="os-num text-[15px] tracking-[-.02em] <%= lit ? 'text-ink' : 'text-ink-3' %> <%= 'font-medium' unless cell[:shown] %>"><%= cell[:value] || "–" %></span>
                       <% if cell[:change] %>
-                        <span class="mt-px block text-[11px] font-bold text-ink-2"><span class="<%= chart_tone(cell[:change][:up]) %>"><%= cell[:change][:arrow] %></span> <%= cell[:change][:text] %></span>
+                        <span class="mt-px block text-[11px] font-bold text-ink-2"><%= render "charts/change", change: cell[:change] %></span>
                       <% end %>
                     </span>
                   <% end %>

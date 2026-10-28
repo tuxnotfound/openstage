@@ -65,11 +65,22 @@ RSpec.describe "Analytics", type: :request do
       get "/analytics"
 
       expect(toggles.css("[role='group']").map { |group| group["aria-label"] }).to eq([ "On GitHub", "On your websites", "More numbers", "On Openstage" ])
-      expect(toggles.text.squish).to eq("On GitHub Commits 1 ± 0% On your websites + Site visits 30 ▲ 200% + 2 more On Openstage + Visitors 1 + Views 1")
+      expect(toggles.text.squish).to eq("On GitHub Commits 1 ± 0% On your websites + Site visits 30 ▲up 200% + 2 more On Openstage + Visitors 1 + Views 1")
       expect(toggles.css("[aria-current='true']").map { |drawn| [ drawn.name, drawn.text.squish ] }).to eq([ [ "span", "Commits 1 ± 0%" ] ])
       expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Commits per day by page, last 30 days")
       expect(page.at_css("nav[aria-label='Time range'] a[aria-current='page']").text).to eq("30 days")
       expect(response.body).to include("Changes compare each value with the 30 days before.")
+    end
+
+    it "says each change's direction in words to a screen reader, the arrow only to the eye" do
+      repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
+      repo.site_visit_days.create!(day: Date.new(2026, 9, 10), visits: 10, visitors: 9)
+
+      get "/analytics"
+
+      change = toggles.css("[aria-label='On your websites'] a span").find { |span| span.at_css(".sr-only") }
+      expect(change.at_css("[aria-hidden='true']").text).to eq("▲")
+      expect(change.at_css(".sr-only").text).to eq("up")
     end
 
     it "folds Openstage's own numbers behind a button that opens them in place, and shows them in a row of their own while one is drawn" do
@@ -100,7 +111,7 @@ RSpec.describe "Analytics", type: :request do
       expect(page.css("[data-chart-table] thead th").map { |head| head.text.squish })
         .to eq([ "Pages", "Commits", "Site visits", "Visitors", "Views", "New followers", "Clicks out" ])
       expect(cells("page")).to eq([ "Commits –", "Site visits –", "Visitors 2", "Views 2", "New followers –", "Clicks out –" ])
-      expect(cells("builder/app")).to eq([ "Commits 0 ▼ 100%", "Site visits 30", "Visitors 1", "Views 1", "New followers 1", "Clicks out 1" ])
+      expect(cells("builder/app")).to eq([ "Commits 0 ▼down 100%", "Site visits 30", "Visitors 1", "Views 1", "New followers 1", "Clicks out 1" ])
       expect(response.body).to include("Hacker News", "Twitter / X", "PT", "Visit app.example")
     end
 
@@ -152,8 +163,8 @@ RSpec.describe "Analytics", type: :request do
 
       get "/analytics", params: { show: "visits" }
 
-      expect(toggles.text.squish).to eq("On GitHub Commits 0 ▼ 100%")
-      expect(cells("builder/app")).to eq([ "Commits 0 ▼ 100%" ])
+      expect(toggles.text.squish).to eq("On GitHub Commits 0 ▼down 100%")
+      expect(cells("builder/app")).to eq([ "Commits 0 ▼down 100%" ])
     end
 
     it "shows where the badge and the embed were shown" do

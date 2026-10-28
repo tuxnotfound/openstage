@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react"
 import type { Change, NumberView } from "../types"
+import ChangeWords from "./ChangeWords"
 import LineKey from "./LineKey"
 import { MAX_DRAWN, fitting, lineOf, projectClass, type Lines } from "./lines"
 
@@ -161,8 +162,6 @@ function Toggle({ number, line, full, changes, events }: { number: NumberView; l
   )
 }
 
-// Only the arrow wears the change's colour.
 function ChangeText({ change }: { change: Change }) {
-  const tone = change.up === null ? "" : change.up ? "text-up" : "text-down"
-  return <span className="text-[11px] font-bold text-ink-2 max-md:hidden"><span className={tone}>{change.arrow}</span> {change.text}</span>
+  return <span className="text-[11px] font-bold text-ink-2 max-md:hidden"><ChangeWords change={change} /></span>
 }

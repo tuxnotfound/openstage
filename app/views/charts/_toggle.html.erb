@@ -18,7 +18,7 @@
   <span class="text-[13px] font-bold"><%= number[:label] %></span>
   <span class="os-num text-base tracking-[-.02em]"><%= number[:value] %></span>
   <% if changes && number[:change] %>
-    <span class="text-[11px] font-bold text-ink-2 max-md:hidden"><span class="<%= chart_tone(number[:change][:up]) %>"><%= number[:change][:arrow] %></span> <%= number[:change][:text] %></span>
+    <span class="text-[11px] font-bold text-ink-2 max-md:hidden"><%= render "charts/change", change: number[:change] %></span>
   <% end %>
   <span class="absolute inset-x-3 bottom-[5px] flex h-[3px] gap-0.5 <%= 'opacity-45' unless drawn %>" aria-hidden="true">
     <% number[:split].each do |part| %>

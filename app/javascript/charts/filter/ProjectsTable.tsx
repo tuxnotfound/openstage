@@ -1,5 +1,6 @@
 import type { Change, TableCell, TableRow, TableView } from "../types"
 import type { Target } from "../useView"
+import ChangeWords from "./ChangeWords"
 import LineKey from "./LineKey"
 import { lineOf, projectClass, type Lines } from "./lines"
 
@@ -158,10 +159,9 @@ function Cell({ row, cell, word, drawn, switches }: { row: TableRow; cell: Table
   )
 }
 
-// A cell's change, under its value; only the arrow wears the colour.
+// A cell's change, under its value.
 function ChangeLine({ change }: { change: Change }) {
-  const tone = change.up === null ? "" : change.up ? "text-up" : "text-down"
-  return <span className="mt-px block text-[11px] font-bold text-ink-2"><span className={tone}>{change.arrow}</span> {change.text}</span>
+  return <span className="mt-px block text-[11px] font-bold text-ink-2"><ChangeWords change={change} /></span>
 }
 
 // GithubReposController switches it and sends the dashboard back, as the
