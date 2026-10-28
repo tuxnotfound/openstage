@@ -66,14 +66,14 @@ export default function CompareChart({ chart, numbers, lines, focus, height = ""
 
   return (
     <div className="mt-[18px]">
-      <div ref={box} tabIndex={0} aria-label={`${chart.ariaLabel}. Arrow keys move from point to point.`}
+      <div ref={box} tabIndex={0} role="group" aria-roledescription="chart" aria-label={`${chart.ariaLabel}. Arrow keys move from point to point.`}
            className={`os-chart ${height} touch-pan-y`}
            onPointerDown={pointAt} onPointerMove={pointAt} onPointerCancel={() => setAt(null)}
            onPointerLeave={(event) => { if (event.pointerType === "mouse") setAt(null) }}
            onKeyDown={move} onFocus={() => setAt((was) => was ?? chart.columns.length - 1)} onBlur={() => setAt(null)}>
         {chart.ticks.map((tick) => <div key={`grid-${tick.value}`} className="os-gridline" style={{ top: `${tick.top}%` }} />)}
         <div className="os-axis" />
-        <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} preserveAspectRatio="none" role="img" aria-label={chart.ariaLabel}>
+        <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} preserveAspectRatio="none" aria-hidden="true">
           {paths.map((path) => (
             <path key={`${path.repo}|${path.number}`} d={path.d} className={`${projectClass(path.rank)} stroke-(--project) transition-opacity duration-150`}
                   fill="none" strokeWidth="4.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke"
