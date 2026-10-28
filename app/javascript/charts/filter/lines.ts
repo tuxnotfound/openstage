@@ -3,8 +3,9 @@ import type { CompareChartView, NumberView, Rank } from "../types"
 // The chart filter's own rules in the browser, as the canvas boards drew
 // them (chartkit.js): which line each drawn number takes and in what
 // colour, what a toggle's click does, the note's line styles, the addresses
-// of a view, where a line stands at a point, and how many toggles fit a
-// row. Every number comes from the server; this only arranges what it sent.
+// of a view, where a line stands at a point, where the tooltip sits, and
+// how many toggles fit a row. Every number comes from the server; this only
+// arranges what it sent.
 
 export const MAX_DRAWN = 3
 // A number's line by its place in the line order: solid, dotted, dashed.
@@ -93,6 +94,16 @@ export function sentence(words: string[]): string {
 // from the path the server drew: one vertex per point.
 export function pathTops(d: string, height = HEIGHT): number[] {
   return [...d.matchAll(/[ML]\s*-?[\d.]+\s+(-?[\d.]+)/g)].map((match) => (100 * Number(match[1])) / height)
+}
+
+// Where the tooltip's box starts, in pixels from the chart's left, for a
+// point at x percent of a chart span pixels wide: beside the point, on its
+// roomier side, while the box fits there; else against the chart's nearer
+// edge, so it never runs past the chart, nor off a phone's screen.
+export function tipLeft(x: number, width: number, span: number, gap = 14, edge = 4): number {
+  const at = (x / 100) * span
+  const beside = x > 50 ? at - gap - width : at + gap
+  return Math.round(Math.max(edge, Math.min(beside, span - width - edge)))
 }
 
 // A group of toggles as the row measures it: its label's width (0 for a

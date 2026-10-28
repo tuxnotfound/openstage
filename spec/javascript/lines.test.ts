@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { apiUrl, fitting, lineOf, lineOrder, linesFrom, noteOf, pageUrl, pathTops, projectClass, reconcile, sentence, toggled } from "../../app/javascript/charts/filter/lines"
+import { apiUrl, fitting, lineOf, lineOrder, linesFrom, noteOf, pageUrl, pathTops, projectClass, reconcile, sentence, tipLeft, toggled } from "../../app/javascript/charts/filter/lines"
 import type { CompareChartView, NumberView } from "../../app/javascript/charts/types"
 
 const number = (key: string, label: string): NumberView => ({ key, label, word: label.toLowerCase(), group: "On GitHub", value: "1", split: [], change: null })
@@ -61,6 +61,20 @@ describe("the note under a chart that compares numbers", () => {
 describe("a line at a point", () => {
   test("stands where the server's path put it, in percent from the top", () => {
     expect(pathTops("M0 280 L500 140 L1000 28")).toEqual([100, 50, 10])
+  })
+})
+
+describe("the tooltip's box", () => {
+  test("sits beside the point, on its roomier side, while it fits", () => {
+    expect(tipLeft(20, 200, 1000)).toBe(214)
+    expect(tipLeft(80, 200, 1000)).toBe(586)
+  })
+
+  test("stays inside the chart, against its nearer edge, when the point leaves too little room", () => {
+    // A phone's chart, 322 px wide, and a box of 300: no side has room.
+    expect(tipLeft(55, 300, 322)).toBe(4)
+    expect(tipLeft(45, 300, 322)).toBe(18)
+    expect(tipLeft(100, 120, 322)).toBe(188)
   })
 })
 

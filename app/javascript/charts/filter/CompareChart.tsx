@@ -1,7 +1,7 @@
-import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
+import { Fragment, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
 import type { CompareChartView, NumberView } from "../types"
 import LineKey from "./LineKey"
-import { LINE_DASHES, lineOf, noteOf, pathTops, projectClass, type Lines } from "./lines"
+import { LINE_DASHES, lineOf, noteOf, pathTops, projectClass, tipLeft, type Lines } from "./lines"
 
 // Draws a chart filter's chart as the server worked it out
 // (CompareChartSerializer), as charts/_chart renders the same view: a line
@@ -88,7 +88,10 @@ export default function CompareChart({ chart, numbers, lines, focus, height = ""
                 className={`${projectClass(path.rank)} pointer-events-none absolute z-[3] -mt-[5px] -ml-[5px] size-2.5 rounded-full bg-(--project) shadow-[0_0_0_2px_var(--color-fill)]`}
                 style={{ left: `${x}%`, top: `${top}%` }} />
         ))}
-        {column && <Tip chart={chart} column={column} numbers={numbers} lines={lines} x={x} />}
+        {/* Mounted before any point is, so a screen reader hears the first one too. */}
+        <div role="status" aria-live="polite" className="pointer-events-none absolute inset-0 z-[5]">
+          {column && <Tip chart={chart} column={column} numbers={numbers} lines={lines} x={x} />}
+        </div>
       </div>
       <div className="os-xlabs">
         {chart.axis.map((label, i) => <span key={`axis-${i}`} className={i === chart.axis.length - 1 ? "font-bold text-ink" : ""}>{label}</span>)}
@@ -99,39 +102,48 @@ export default function CompareChart({ chart, numbers, lines, focus, height = ""
 }
 
 // One tooltip for the point: a row per project, a column per number, each
-// column headed by its line when there are several. Its samples stay in
-// place: .os-chart stretches every svg inside it over the chart.
+// column headed by its line when there are several (on a phone the line
+// alone, so the table fits). It never runs past the chart: its names give
+// way first, and it sits beside the point while there is room, else against
+// the chart's nearer edge. Its samples stay in place: .os-chart stretches
+// every svg inside it over the chart.
 function Tip({ chart, column, numbers, lines, x }: { chart: CompareChartView; column: CompareChartView["columns"][number]; numbers: NumberView[]; lines: Lines; x: number }) {
+  const box = useRef<HTMLDivElement>(null)
+  const [left, setLeft] = useState<number | null>(null)
   const label = (key: string) => numbers.find((number) => number.key === key)?.label ?? key
+  const heads = chart.heads.length > 1 ? chart.heads : []
+
+  useLayoutEffect(() => {
+    const tip = box.current
+    const span = tip?.parentElement?.clientWidth
+    if (tip && span) setLeft(tipLeft(x, tip.offsetWidth, span))
+  })
+
   return (
-    <div role="status" aria-live="polite" style={x > 50 ? { right: `calc(${100 - x}% + 14px)` } : { left: `calc(${x}% + 14px)` }}
-         className="pointer-events-none absolute top-2 z-[5] max-w-[min(360px,72%)] rounded-[10px] bg-ink px-3 py-2.5 text-xs/snug text-ground shadow-lg">
+    <div ref={box} style={{ left: left ?? 0, visibility: left === null ? "hidden" : undefined }}
+         className="absolute top-2 w-max max-w-[min(360px,calc(100%-8px))] rounded-[10px] bg-ink px-3 py-2.5 text-xs/snug text-ground shadow-lg">
       <div className="opacity-70">{column.title}</div>
       {column.rows.length === 0 ? <div className="mt-1">{chart.none}</div> : (
-        <table className="mt-1 border-collapse">
-          {chart.heads.length > 1 && (
-            <thead>
-              <tr>
-                <th />
-                {chart.heads.map((key) => (
-                  <th key={key} scope="col" className="pt-[3px] pl-3 text-right text-[11px] font-semibold whitespace-nowrap opacity-70">
-                    <span className="inline-flex items-center gap-[5px]"><LineKey line={lineOf(lines, key, chart.indexed)} className="static h-1.5 w-4" />{label(key)}</span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
+        <div className="mt-[7px] grid items-center gap-x-3 gap-y-[3px]" style={{ gridTemplateColumns: `minmax(0, max-content) repeat(${Math.max(1, chart.heads.length)}, max-content)` }}>
+          {heads.length > 0 && (
+            <>
+              <span />
+              {heads.map((key) => (
+                <span key={key} className="inline-flex items-center justify-self-end gap-[5px] text-[11px] font-semibold whitespace-nowrap opacity-70">
+                  <LineKey line={lineOf(lines, key, chart.indexed)} className="static h-1.5 w-4" /><span className="max-md:sr-only">{label(key)}</span>
+                </span>
+              ))}
+            </>
           )}
-          <tbody>
-            {column.rows.map((row) => (
-              <tr key={row.repo}>
-                <th scope="row" className="max-w-[150px] truncate pt-[3px] text-left font-normal">
-                  <span className={`os-dot ${projectClass(row.rank)} mr-[7px] bg-(--project) align-[-1px] shadow-[0_0_0_1.5px_var(--color-ground)]`} />{row.name}
-                </th>
-                {row.values.map((value, i) => <td key={chart.heads[i] ?? i} className="pt-[3px] pl-3 text-right font-bold whitespace-nowrap tabular-nums">{value}</td>)}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+          {column.rows.map((row) => (
+            <Fragment key={row.repo}>
+              <span className="max-w-[150px] truncate">
+                <span className={`os-dot ${projectClass(row.rank)} mr-[7px] bg-(--project) align-[-1px] shadow-[0_0_0_1.5px_var(--color-ground)]`} />{row.name}
+              </span>
+              {row.values.map((value, i) => <span key={chart.heads[i] ?? i} className="text-right font-bold whitespace-nowrap tabular-nums">{value}</span>)}
+            </Fragment>
+          ))}
+        </div>
       )}
     </div>
   )
