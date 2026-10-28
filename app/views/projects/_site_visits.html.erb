@@ -17,9 +17,9 @@
     <span class="os-xs os-muted whitespace-nowrap"><%= state %></span>
     <%= form_with url: project_numbers_path(repo), method: :patch, data: { turbo: false } do %>
       <%= hidden_field_tag :number, "visits", id: nil %>
-      <%= hidden_field_tag :shown, (!repo.shows?("visits")).to_s, id: nil %>
+      <%= hidden_field_tag :shown, (!repo.picks?("visits")).to_s, id: nil %>
       <%= hidden_field_tag :back, "project", id: nil %>
-      <button type="submit" role="switch" aria-checked="<%= repo.shows?("visits") %>" aria-label="Show site visits on <%= repo.name %>'s page" class="os-switch"></button>
+      <button type="submit" role="switch" aria-checked="<%= repo.picks?("visits") %>" aria-label="Show site visits on <%= repo.name %>'s page" class="os-switch"></button>
     <% end %>
   </div>
 

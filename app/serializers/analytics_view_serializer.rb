@@ -56,6 +56,6 @@ class AnalyticsViewSerializer < ApplicationSerializer
   end
 
   def badges
-    @report.shown.map { |kind, count, sites| { label: kind == "badge" ? "README badge" : "Embed widget", count: number_with_delimiter(count), sites: pluralize(sites, "site") } }
+    @report.badges.map { |kind, count, sites| { label: kind == "badge" ? "README badge" : "Embed widget", count: number_with_delimiter(count), sites: pluralize(sites, "site") } }
   end
 end

@@ -35,7 +35,7 @@ export function useFilter<V extends FilterView>(initial: V, { endpoint, defaultR
   const order = (view: FilterView) => view.numbers.map((number) => number.key)
   const first: Wanted = { range: initial.range, lines: linesFrom(initial.drawn), projects: named ? initial.selected : [] }
   const address = (want: Wanted, numbers: string[]) => apiUrl(endpoint, { range: want.range, show: lineOrder(want.lines), projects: want.projects }, numbers)
-  const { view, busy, failed, show, reload, retry, prefetch } = useView(initial, address(first, order(initial)))
+  const { view, busy, failed, open, reload, retry, prefetch } = useView(initial, address(first, order(initial)))
   const [wanted, setWanted] = useState(first)
   const [notice, setNotice] = useState("")
   const [focus, setFocus] = useState<Focus | null>(null)
@@ -53,7 +53,7 @@ export function useFilter<V extends FilterView>(initial: V, { endpoint, defaultR
     setNotice("")
     setWanted(next)
     const landed = (arrived: V) => setWanted((was) => ({ ...was, range: arrived.range, projects: named ? arrived.selected : [] }))
-    ;(again ? reload : show)(address(next, order(view)), page(next), landed)
+    ;(again ? reload : open)(address(next, order(view)), page(next), landed)
   }
 
   function to(change: Partial<Wanted>): Target {

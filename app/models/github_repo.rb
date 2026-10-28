@@ -97,19 +97,19 @@ class GithubRepo < ApplicationRecord
 
   # Shown on its page: switched on, counting, and counted at least once.
   def site_visits_public?
-    shows?("visits") && site_first_visit_at.present? && counts_site_visits?
+    picks?("visits") && site_first_visit_at.present? && counts_site_visits?
   end
 
-  # Whether its builder lets visitors see a number on its pages: every
-  # number shows until they hide it (Progress::Numbers::PICKED).
-  def shows?(number)
+  # Whether its builder picks a number for visitors to see on its pages:
+  # every number is picked until they hide it (Progress::Numbers::PICKED).
+  def picks?(number)
     hidden_numbers.exclude?(number)
   end
 
-  # Whether its visitors see a number it counts: one its builder shows and,
+  # Whether its visitors see a number it counts: one its builder picks and,
   # for site visits, one that still counts.
   def public_number?(number)
-    number == "visits" ? site_visits_public? : shows?(number)
+    number == "visits" ? site_visits_public? : picks?(number)
   end
 
   private

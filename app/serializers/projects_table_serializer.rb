@@ -41,7 +41,7 @@ class ProjectsTableSerializer < ApplicationSerializer
     listed = row.shows?(key) || (@chart.builder && row.counts?(key))
     value = @chart.value(number, row) if listed
     { key: key, value: (number_with_delimiter(value) if listed), shown: row.shows?(key),
-      pick: (row.repo.shows?(key) if @chart.builder && row.repo && row.counts?(key)), setup: setup(row, key),
+      pick: (row.repo.picks?(key) if @chart.builder && row.repo && row.counts?(key)), setup: setup(row, key),
       change: (change(value, number, row) if @changes && row.shows?(key)) }
   end
 

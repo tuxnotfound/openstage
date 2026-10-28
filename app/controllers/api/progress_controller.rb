@@ -31,7 +31,7 @@ module Api
     private
 
     def view(user, reveal)
-      chart = Progress::ChartService.new(user: user, range: filter.range, repos: repos, show: shown, reveal: reveal, lone: lone?,
+      chart = Progress::ChartService.new(user: user, range: filter.range, repos: repos, show: asked, reveal: reveal, lone: lone?,
                                          builder: dashboard?(user))
       ProgressViewSerializer.new(chart).to_json if chart.call
     end
@@ -51,7 +51,7 @@ module Api
 
     # The numbers asked for, in the pages' order whatever order they came
     # in: the view is the same, and the browser gives each its line.
-    def shown
+    def asked
       Progress::Numbers.in_order(filter.show).map(&:key)
     end
 
@@ -75,7 +75,7 @@ module Api
       entries = user.entries.publicly_visible.pick(Arel.sql("COUNT(*)"), Arel.sql("MAX(entries.updated_at)"))
       today = Time.current.in_time_zone(user.zone).to_date
       [ "progress-view/v2", user.id, *entries, user.github_repos.maximum(:updated_at), user.pro?, user.zone.tzinfo.identifier, today,
-        site_stamp(user), filter.range, reveal, dashboard?(user), lone?, "show", *shown, "projects", *repos.sort ]
+        site_stamp(user), filter.range, reveal, dashboard?(user), lone?, "show", *asked, "projects", *repos.sort ]
     end
 
     def site_stamp(user)

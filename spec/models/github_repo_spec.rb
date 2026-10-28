@@ -37,10 +37,10 @@ RSpec.describe GithubRepo do
   end
 
   it "shows every number its builder did not hide, and hides only numbers a project shows" do
-    expect([ repo.shows?("commits"), repo.shows?("visits") ]).to eq([ true, true ])
+    expect([ repo.picks?("commits"), repo.picks?("visits") ]).to eq([ true, true ])
 
     repo.hidden_numbers = [ "commits" ]
-    expect([ repo.shows?("commits"), repo.shows?("visits") ]).to eq([ false, true ])
+    expect([ repo.picks?("commits"), repo.picks?("visits") ]).to eq([ false, true ])
 
     repo.hidden_numbers = [ "views" ]
     expect(repo).not_to be_valid

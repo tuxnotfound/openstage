@@ -53,12 +53,12 @@
         <span class="font-bold">Commits</span> <span class="os-num os-muted text-sm"><%= number_with_delimiter(overview.commits) %></span>
         <span class="os-xs os-muted block">Yours, from GitHub, merges and dependency bumps left out.</span>
       </span>
-      <span class="os-xs os-muted whitespace-nowrap"><%= @repo.shows?("commits") ? "Shown" : "Hidden" %></span>
+      <span class="os-xs os-muted whitespace-nowrap"><%= @repo.picks?("commits") ? "Shown" : "Hidden" %></span>
       <%= form_with url: project_numbers_path(@repo), method: :patch, data: { turbo: false } do %>
         <%= hidden_field_tag :number, "commits", id: nil %>
-        <%= hidden_field_tag :shown, (!@repo.shows?("commits")).to_s, id: nil %>
+        <%= hidden_field_tag :shown, (!@repo.picks?("commits")).to_s, id: nil %>
         <%= hidden_field_tag :back, "project", id: nil %>
-        <button type="submit" role="switch" aria-checked="<%= @repo.shows?("commits") %>" aria-label="Show commits on <%= @repo.name %>'s page" class="os-switch"></button>
+        <button type="submit" role="switch" aria-checked="<%= @repo.picks?("commits") %>" aria-label="Show commits on <%= @repo.name %>'s page" class="os-switch"></button>
       <% end %>
     </div>
     <%= render "projects/site_visits", repo: @repo, overview: overview %>

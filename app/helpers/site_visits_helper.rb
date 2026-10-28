@@ -6,7 +6,7 @@ module SiteVisitsHelper
     when :no_website then [ "Counted on the project's website, once it has one.", "Off" ]
     when :off then [ overview.free_site ? "Free counts one site, and #{site_name(overview.free_site)} counts now." : "Not counted.", "Off" ]
     when :paused then [ "Paused: Free counts one site, and #{site_name(overview.free_site)} counts now.", "Paused" ]
-    else [ site_visits_counting(repo, overview.last_site_visit), repo.shows?("visits") ? "Shown" : "Hidden" ]
+    else [ site_visits_counting(repo, overview.last_site_visit), repo.picks?("visits") ? "Shown" : "Hidden" ]
     end
   end
 

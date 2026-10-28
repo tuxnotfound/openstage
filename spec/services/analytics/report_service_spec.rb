@@ -87,9 +87,9 @@ RSpec.describe Analytics::ReportService do
     user.badge_impressions.create!(kind: "badge", viewed_at: 100.days.ago, referrer: "github.com", ip_hash: "x")
     recent = report
 
-    expect([ recent.sources.map(&:first), recent.countries.map(&:first), recent.shown.first ]).to eq([ [ "Hacker News" ], [ "PT" ], [ "badge", 0, 0 ] ])
+    expect([ recent.sources.map(&:first), recent.countries.map(&:first), recent.badges.first ]).to eq([ [ "Hacker News" ], [ "PT" ], [ "badge", 0, 0 ] ])
     ever = report(range: "all")
-    expect([ ever.sources.map(&:first), ever.shown.first ]).to eq([ [ "Hacker News", "Twitter / X" ], [ "badge", 1, 1 ] ])
+    expect([ ever.sources.map(&:first), ever.badges.first ]).to eq([ [ "Hacker News", "Twitter / X" ], [ "badge", 1, 1 ] ])
     expect(report(picked: %w[me/app]).sources).to eq([])
   end
 

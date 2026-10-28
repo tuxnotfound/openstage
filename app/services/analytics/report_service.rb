@@ -20,7 +20,7 @@ module Analytics
     attr_accessor :user, :range, :show, :picked
     # period: the Window the totals cover; rows: a Progress::Row per page, in
     # the pages' fixed order; drawing: the DrawService of the totals and the chart.
-    attr_reader :period, :rows, :counts, :drawing, :sources, :countries, :links, :shown
+    attr_reader :period, :rows, :counts, :drawing, :sources, :countries, :links, :badges
 
     delegate :totals, :drawn, :default_drawn, :window, :chart, :value, :previous, to: :drawing
 
@@ -61,7 +61,7 @@ module Analytics
 
       read_visits
       @links = top_links
-      @shown = badges
+      @badges = badges_seen
     end
 
     def today
@@ -94,7 +94,7 @@ module Analytics
     # shows the ones its builder picked to show, and Openstage's own always.
     def row(key, name, rank, repo, on)
       counted = Progress::Numbers::ALL.select { |number| counts.first_day(number.key, [ key ]) }
-      shown = counted.select { |number| !number.picked || repo.nil? || repo.shows?(number.key) }
+      shown = counted.select { |number| !number.picked || repo.nil? || repo.picks?(number.key) }
       Progress::Row.new(key: key, name: name, rank: rank, repo: repo, on: on, counted: counted.map(&:key), shown: shown.map(&:key))
     end
 
@@ -140,7 +140,7 @@ module Analytics
     end
 
     # [kind, times shown, sites] for the README badge and the embed.
-    def badges
+    def badges_seen
       seen = user.badge_impressions.where(viewed_at: times)
       %w[badge embed].map { |kind| [ kind, seen.where(kind: kind).count, seen.where(kind: kind).distinct.count(:referrer) ] }
     end

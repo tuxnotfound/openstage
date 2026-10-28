@@ -24,7 +24,7 @@ export function useView<T>(initial: T, initialUrl: string) {
   const [failed, setFailed] = useState<Ask<T> | null>(null)
   const latest = useRef(0)
 
-  function show(url: string, page: (next: T) => string, landed?: (next: T) => void) {
+  function open(url: string, page: (next: T) => string, landed?: (next: T) => void) {
     const request = ++latest.current
     setFailed(null)
     const slow = window.setTimeout(() => { if (latest.current === request) setBusy(true) }, BUSY_AFTER_MS)
@@ -45,16 +45,16 @@ export function useView<T>(initial: T, initialUrl: string) {
   // Ask again, past every view kept, after a change on the server.
   function reload(url: string, page: (next: T) => string, landed?: (next: T) => void) {
     store.clear()
-    show(url, page, landed)
+    open(url, page, landed)
   }
 
   return {
     view,
     busy,
     failed: failed !== null,
-    show,
+    open,
     reload,
-    retry: () => failed && show(failed.url, failed.page, failed.landed),
+    retry: () => failed && open(failed.url, failed.page, failed.landed),
     prefetch: (url: string) => store.prefetch(url),
   }
 }
