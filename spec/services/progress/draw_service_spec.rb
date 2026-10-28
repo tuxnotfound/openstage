@@ -8,8 +8,8 @@ RSpec.describe Progress::DrawService do
   let(:counts) do
     Progress::Counts.new(
       days: { "commits" => { "me/app" => { today - 1 => 3, Date.new(2026, 7, 1) => 2 }, "me/lib" => { today - 40 => 1 } },
-              "visits" => { "me/app" => { today - 2 => 40 } } },
-      firsts: { "commits" => { "me/app" => Date.new(2026, 7, 1), "me/lib" => today - 40 }, "visits" => { "me/app" => today - 2 } }
+              "visits" => { "me/app" => { today - 2 => 40 }, "me/old" => { Date.new(2026, 1, 5) => 7 } } },
+      firsts: { "commits" => { "me/app" => Date.new(2026, 7, 1), "me/lib" => today - 40 }, "visits" => { "me/app" => today - 2, "me/old" => Date.new(2026, 1, 5) } }
     )
   end
   let(:app) { row("me/app", %w[commits visits]) }
@@ -54,15 +54,27 @@ RSpec.describe Progress::DrawService do
 
   it "fills a row's cells with what visitors see, and on the builder's own table what it counts and hides, its switch, or Set up" do
     repo = build(:github_repo, hidden_numbers: [ "visits" ])
-    hiding = Progress::Row.new(key: "me/app", name: "app", rank: 0, repo: repo, on: true, counted: %w[commits visits], shown: %w[commits])
-    plain = Progress::Row.new(key: "me/lib", name: "lib", rank: 1, repo: repo, on: true, counted: %w[commits], shown: %w[commits])
+    hiding = Progress::Row.new(key: "me/app", name: "app", rank: 0, repo: repo, on: true, counted: %w[commits visits], shown: %w[commits], site: :counting)
+    plain = Progress::Row.new(key: "me/lib", name: "lib", rank: 1, repo: repo, on: true, counted: %w[commits], shown: %w[commits], site: :off)
     columns = Progress::Numbers.in_order(%w[commits visits])
     service = draw([ hiding, plain ])
-    cell = ->(cells) { cells.map { |each| [ each.number.key, each.value, each.previous, each.shown, each.pick, each.setup ] } }
+    cell = ->(cells) { cells.map { |each| [ each.number.key, each.value, each.previous, each.shown, each.pick, each.link ] } }
 
-    expect(cell.call(service.cells(hiding, columns))).to eq([ [ "commits", 3, 2, true, nil, false ], [ "visits", nil, nil, false, nil, false ] ])
-    expect(cell.call(service.cells(hiding, columns, manage: true))).to eq([ [ "commits", 3, 2, true, true, false ], [ "visits", 40, nil, false, false, false ] ])
-    expect(cell.call(service.cells(plain, columns, manage: true)).last).to eq([ "visits", nil, nil, false, nil, true ])
+    expect(cell.call(service.cells(hiding, columns))).to eq([ [ "commits", 3, 2, true, nil, nil ], [ "visits", nil, nil, false, nil, nil ] ])
+    expect(cell.call(service.cells(hiding, columns, manage: true))).to eq([ [ "commits", 3, 2, true, true, nil ], [ "visits", 40, nil, false, false, nil ] ])
+    expect(cell.call(service.cells(plain, columns, manage: true)).last).to eq([ "visits", nil, nil, false, nil, :set_up ])
+  end
+
+  it "gives site visits that do not count no switch: Paused or Set up instead, after the value only when the window has any" do
+    repo = build(:github_repo)
+    site = ->(key, state) { Progress::Row.new(key: key, name: key.split("/").last, rank: 0, repo: repo, on: true, counted: %w[visits], shown: [], site: state) }
+    service = draw
+    visits = ->(row) { service.cells(row, [ Progress::Numbers.find("visits") ], manage: true).sole.to_h.slice(:value, :shown, :pick, :link) }
+
+    expect(visits.call(site.call("me/app", :paused))).to eq(value: 40, shown: false, pick: nil, link: :paused)
+    expect(visits.call(site.call("me/app", :off))).to eq(value: 40, shown: false, pick: nil, link: :set_up)
+    expect(visits.call(site.call("me/old", :off))).to eq(value: nil, shown: false, pick: nil, link: :set_up)
+    expect(visits.call(site.call("me/old", :paused))).to eq(value: nil, shown: false, pick: nil, link: :paused)
   end
 
   it "starts the chart where the numbers drawn start, and draws each point's own count unless it averages" do

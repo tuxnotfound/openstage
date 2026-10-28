@@ -13,13 +13,21 @@ RSpec.describe Progress::Row do
     expect([ row.lists?("visits", false), row.lists?("visits", true), row.lists?("views", true) ]).to eq([ false, true, false ])
   end
 
-  it "has its builder's switch for a number it counts on a synced repo, and Set up for site visits it counts none of" do
+  it "has its builder's switch for a number it counts on a synced repo, and for site visits only while they count" do
     repo = build(:github_repo, hidden_numbers: [ "visits" ])
-    row = described_class.new(key: "me/app", name: "app", rank: 0, repo: repo, on: true, counted: %w[commits visits], shown: %w[commits])
-    bare = described_class.new(key: "me/lib", name: "lib", rank: 1, repo: repo, on: true, counted: %w[commits], shown: %w[commits])
+    row = ->(site, counted = %w[commits visits]) { described_class.new(key: "me/app", name: "app", rank: 0, repo: repo, on: true, counted: counted, shown: %w[commits], site: site) }
     unsynced = described_class.new(key: "me/gone", name: "gone", rank: 2, repo: nil, on: true, counted: %w[commits], shown: %w[commits])
 
-    expect([ row.pick("commits"), row.pick("visits"), bare.pick("visits"), unsynced.pick("commits") ]).to eq([ true, false, nil, nil ])
-    expect([ row.setup?("visits"), bare.setup?("visits"), bare.setup?("commits"), unsynced.setup?("visits") ]).to eq([ false, true, false, false ])
+    expect([ row.call(:counting).pick("commits"), row.call(:counting).pick("visits"), unsynced.pick("commits") ]).to eq([ true, false, nil ])
+    expect([ row.call(:paused).pick("visits"), row.call(:off).pick("visits"), row.call(:counting, %w[commits]).pick("visits") ]).to eq([ nil, nil, nil ])
+  end
+
+  it "puts Paused in the switch's place while Free counts another project, and Set up while its site visits count none" do
+    repo = build(:github_repo)
+    row = ->(site, counted = %w[commits visits]) { described_class.new(key: "me/app", name: "app", rank: 0, repo: repo, on: true, counted: counted, shown: %w[commits], site: site) }
+    unsynced = described_class.new(key: "me/gone", name: "gone", rank: 2, repo: nil, on: true, counted: %w[commits], shown: %w[commits])
+
+    expect(%i[counting paused off].map { |site| row.call(site).link("visits") }).to eq([ nil, :paused, :set_up ])
+    expect([ row.call(:counting, %w[commits]).link("visits"), row.call(:paused).link("commits"), unsynced.link("visits") ]).to eq([ :set_up, nil, nil ])
   end
 end

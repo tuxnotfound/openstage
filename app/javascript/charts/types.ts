@@ -47,9 +47,14 @@ export type NumberView = {
 
 // A cell of the table: the row's value over the window, or null; shown:
 // whether visitors see it; pick: the dashboard's switch for what visitors
-// see, null without one; setup: where to start counting; change: its change
-// on analytics, null elsewhere.
-export type TableCell = { key: string; value: string | null; shown: boolean; pick: boolean | null; setup: string | null; change: Change | null }
+// see, null without one; link: what stands in its place where site visits
+// do not count, to the project's Site visits row (CellLink); change: its
+// change on analytics, null elsewhere.
+export type TableCell = { key: string; value: string | null; shown: boolean; pick: boolean | null; link: CellLink | null; change: Change | null }
+
+// set_up: the project counts no site visits (the script off, or waiting for
+// its first visit); paused: Free counts another project's.
+export type CellLink = { kind: "set_up" | "paused"; path: string }
 
 export type TableRow = {
   // Its repo's full name, or on analytics "page" for the builder's own

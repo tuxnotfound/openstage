@@ -16,8 +16,8 @@ module Progress
     # A row's cell under one of the table's numbers: its value over the
     # window where the table lists it (nil otherwise), the window before's
     # where visitors see it, whether they do, and on the builder's own table
-    # its switch (pick) or whether to set it up.
-    Cell = Data.define(:number, :value, :previous, :shown, :pick, :setup)
+    # its switch (pick) or what stands in its place (link, Row#link).
+    Cell = Data.define(:number, :value, :previous, :shown, :pick, :link)
 
     # rows: Progress::Rows, in the page's order; counts: a Progress::Counts;
     # totals_window: the Window the totals cover. show: the numbers asked for, by key
@@ -35,8 +35,9 @@ module Progress
     def cells(row, columns, manage: false)
       columns.map do |number|
         key = number.key
-        Cell.new(number: number, value: (value(number, row) if row.lists?(key, manage)), previous: (previous(number, [ row ]) if row.shows?(key)),
-                 shown: row.shows?(key), pick: (row.pick(key) if manage), setup: manage && row.setup?(key))
+        link = (row.link(key) if manage)
+        Cell.new(number: number, value: listed(number, row, manage, link), previous: (previous(number, [ row ]) if row.shows?(key)),
+                 shown: row.shows?(key), pick: (row.pick(key) if manage), link: link)
       end
     end
 
@@ -80,6 +81,15 @@ module Progress
     # A row's count of a number over the window.
     def value(number, row)
       counts.sum(number.key, row.key, totals_window.span)
+    end
+
+    # Its value where the table lists it; beside a link (Paused, Set up),
+    # only when the window has any.
+    def listed(number, row, manage, link)
+      return unless row.lists?(number.key, manage)
+
+      count = value(number, row)
+      count if link.nil? || count.positive?
     end
 
     # Some rows' count of a number over the window before, only while it

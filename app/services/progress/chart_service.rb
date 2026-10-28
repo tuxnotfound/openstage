@@ -82,7 +82,7 @@ module Progress
     def row(project, repo, slot)
       counted = [ ("commits" if project.commits.positive?), ("visits" if repo&.site_first_visit_at) ].compact
       Row.new(key: project.repo, name: project.name, rank: project.rank, repo: repo, on: !section.filtered? || section.selected.include?(project),
-              counted: counted, shown: counted.select { |key| repo.nil? || repo.public_number?(key, slot: slot) })
+              counted: counted, shown: counted.select { |key| repo.nil? || repo.public_number?(key, slot: slot) }, site: (slot.state(repo) if repo))
     end
 
     def count

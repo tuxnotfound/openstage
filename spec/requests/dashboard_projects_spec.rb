@@ -71,6 +71,12 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       tool.site_visit_days.create!(day: 1.day.ago.to_date, visits: 90, visitors: 30)
     end
 
+    # The island's first view of a row's site visits cell.
+    def island_cell(repo)
+      props = JSON.parse(page.at_css("#activity-chart-props").text)
+      props["initial"]["table"]["rows"].find { |row| row["key"] == repo }["cells"].find { |cell| cell["key"] == "visits" }
+    end
+
     def cells(repo)
       page.css("[data-chart-row='#{repo}'] td").drop(1).map do |cell|
         [ cell.text.squish.sub(/\A(Commits|Site visits) ?/, ""), cell.at_css("button[role='switch']")&.[]("aria-checked") ]
@@ -105,6 +111,31 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       patch "/projects/#{tool.id}/numbers", params: { number: "visits", shown: true }, as: :json
       expect(response).to have_http_status(:no_content)
       expect(tool.reload.hidden_numbers).to eq([])
+    end
+
+    it "says Paused where Free counts another project, its value grey and no switch, and leaves its line off the chart" do
+      bare.update!(homepage: "https://bare.example", site_source: "script", site_set_up_at: 10.days.ago)
+      get "/dashboard"
+
+      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90 Paused", nil ] ])
+      paused = page.at_css("[data-chart-row='builder/app'] td:last-child")
+      expect(paused.at_css(".os-num")["class"]).to include("text-ink-3")
+      expect(paused.at_css("a").attributes.transform_values(&:value)).to include("href" => "/projects/#{tool.id}/edit?site=open#site-visits",
+                                                                                  "aria-label" => "See why app's site visits are paused")
+      expect(island_cell("builder/app")).to include("value" => "90", "pick" => nil, "link" => { "kind" => "paused", "path" => "/projects/#{tool.id}/edit?site=open#site-visits" })
+      expect(cells("builder/bare")).to eq([ [ "1", "true" ], [ "Set up", nil ] ])
+      expect(drawn).to eq(%w[commits commits])
+    end
+
+    it "says Set up where the script is off, beside the value in grey while the window has any" do
+      tool.update!(site_source: nil)
+      get "/dashboard"
+      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90 Set up", nil ] ])
+      expect(island_cell("builder/app")).to include("value" => "90", "pick" => nil, "link" => { "kind" => "set_up", "path" => "/projects/#{tool.id}/edit?site=open#site-visits" })
+
+      tool.site_visit_days.update_all(day: 60.days.ago.to_date)
+      get "/dashboard", params: { range: "30d" }
+      expect(cells("builder/app").last).to eq([ "Set up", nil ])
     end
 
     it "refuses a number a project cannot hide, a switch with no state, and someone else's project" do

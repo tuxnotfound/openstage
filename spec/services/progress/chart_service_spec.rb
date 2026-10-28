@@ -75,7 +75,7 @@ RSpec.describe Progress::ChartService do
     expect(builder.chart.lines.map { |line| line.number.key }.uniq).to eq(%w[commits])
   end
 
-  it "reads which project Free counts site visits for once, however many projects it lists" do
+  it "reads which project Free counts site visits for once, however many projects it lists, and says where each stands" do
     user.update!(pro: false)
     app.update!(site_set_up_at: 10.days.ago)
     5.times do |i|
@@ -89,7 +89,7 @@ RSpec.describe Progress::ChartService do
     service = ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { chart(builder: true) }
 
     expect(reads).to eq(1)
-    expect(service.rows.to_h { |row| [ row.name, row.shows?("visits") ] }).to include("app" => true, "side0" => false, "side4" => false)
+    expect(service.rows.to_h { |row| [ row.name, row.site ] }).to include("app" => :counting, "lib" => :off, "side0" => :paused, "side4" => :paused)
   end
 
   it "shows a project's page that project alone" do

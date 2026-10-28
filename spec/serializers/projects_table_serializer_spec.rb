@@ -18,7 +18,11 @@ RSpec.describe ProjectsTableSerializer do
   end
 
   def cells(json, name)
-    json["rows"].find { |row| row["name"] == name }["cells"].to_h { |cell| [ cell["key"], cell.slice("value", "shown", "pick", "setup") ] }
+    json["rows"].find { |row| row["name"] == name }["cells"].to_h { |cell| [ cell["key"], cell.slice("value", "shown", "pick", "link") ] }
+  end
+
+  def site_row(repo)
+    "/projects/#{repo.id}/edit?site=open#site-visits"
   end
 
   it "fills a project's cells with the numbers its visitors see, and leaves the rest empty" do
@@ -26,7 +30,7 @@ RSpec.describe ProjectsTableSerializer do
     json = table
 
     expect(json["columns"]).to eq([ { "key" => "commits", "label" => "Commits", "word" => "commits" } ])
-    expect(cells(json, "app")).to eq("commits" => { "value" => "1", "shown" => true, "pick" => nil, "setup" => nil })
+    expect(cells(json, "app")).to eq("commits" => { "value" => "1", "shown" => true, "pick" => nil, "link" => nil })
     expect(json["rows"].first).to include("edit" => nil, "page" => nil, "switch" => nil, "drawable" => true)
   end
 
@@ -46,9 +50,23 @@ RSpec.describe ProjectsTableSerializer do
     create(:entry, user: user, repo_name: "me/old", occurred_at: 2.days.ago)
     json = table(builder: true)
 
-    expect(cells(json, "app")["visits"]).to eq("value" => "1,204", "shown" => false, "pick" => false, "setup" => nil)
-    expect(cells(json, "lib")["visits"]).to eq("value" => nil, "shown" => false, "pick" => nil, "setup" => "/projects/#{lib.id}/edit?site=open#site-visits")
+    expect(cells(json, "app")["visits"]).to eq("value" => "1,204", "shown" => false, "pick" => false, "link" => nil)
+    expect(cells(json, "lib")["visits"]).to eq("value" => nil, "shown" => false, "pick" => nil, "link" => { "kind" => "set_up", "path" => site_row(lib) })
     expect(json["rows"].last).to include("name" => "old", "drawable" => false, "on" => false)
+    expect(json["rows"].last["cells"].pluck("link")).to eq([ nil, nil ])
     expect(json["rows"].last["page"]).to eq("on" => false, "path" => "/github_repos/#{user.github_repos.find_by(name: 'old').id}")
+  end
+
+  it "puts Paused where Free counts another project, and Set up where the script is off, each beside the value in grey and no switch" do
+    user.update!(pro: false)
+    app.update!(site_set_up_at: 3.days.ago)
+    lib.update!(homepage: "https://lib.example", site_source: "script", site_set_up_at: 10.days.ago)
+
+    paused = table(builder: true)
+    expect(cells(paused, "app")["visits"]).to eq("value" => "1,204", "shown" => false, "pick" => nil, "link" => { "kind" => "paused", "path" => site_row(app) })
+    expect(cells(paused, "lib")["visits"]).to eq("value" => nil, "shown" => false, "pick" => nil, "link" => { "kind" => "set_up", "path" => site_row(lib) })
+
+    app.update!(site_source: nil)
+    expect(cells(table(builder: true), "app")["visits"]).to eq("value" => "1,204", "shown" => false, "pick" => nil, "link" => { "kind" => "set_up", "path" => site_row(app) })
   end
 end

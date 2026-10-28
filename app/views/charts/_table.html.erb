@@ -4,10 +4,12 @@
     row's box draws it or not, and Only shows it alone; each is a link to its
     view, a box in view current, and the last row in view keeps its box. On the dashboard (manage) a
     row also has Edit and whether the builder's page lists it, and each cell
-    the switch for what visitors see, or Set up; a project hidden from the
-    page comes last, with no box. On a phone each row stacks, with only the
-    numbers it counts. Only shows on hover, and always on a touch screen,
-    where there is no hover to find it by.
+    the switch for what visitors see; a project hidden from the page comes
+    last, with no box. Where site visits do not count, Set up or Paused
+    stands in place of the switch, after the value when the window has any.
+    On a phone each row stacks, with only the numbers it counts.
+    Only shows on hover, and always on a touch screen, where there is no
+    hover to find it by.
     view: a ChartFilterSerializer's attributes; path_for: the page's address
     for some params changed; back: the view's params, for the forms; label:
     what a row is, "Projects" unless told. %>
@@ -90,19 +92,22 @@
             <% row[:cells].each do |cell| %>
               <% column = columns.fetch(cell[:key]) %>
               <% lit = row[:on] && cell[:shown] && view[:drawn].include?(cell[:key]) %>
-              <td class="py-2.5 pl-[18px] text-right max-md:p-0 max-md:text-left <%= 'max-md:hidden' if cell[:value].nil? && cell[:setup].nil? %>">
+              <td class="py-2.5 pl-[18px] text-right max-md:p-0 max-md:text-left <%= 'max-md:hidden' if cell[:value].nil? && cell[:link].nil? %>">
                 <span class="os-xs os-muted mb-1 block md:hidden"><%= column[:label] %></span>
                 <span class="inline-flex items-center gap-2.5">
-                  <% if cell[:setup] %>
-                    <%= link_to "Set up", cell[:setup], aria: { label: "Set up #{row[:name]}'s site visits" },
-                          class: "inline-flex min-h-6 items-center text-[13px] font-bold text-accent-ink underline underline-offset-3" %>
-                  <% else %>
+                  <% if cell[:link].nil? || cell[:value] %>
                     <span class="inline-block">
                       <span class="os-num text-[15px] tracking-[-.02em] <%= lit ? 'text-ink' : 'text-ink-3' %> <%= 'font-medium' unless cell[:shown] %>"><%= cell[:value] || "–" %></span>
                       <% if cell[:change] %>
                         <span class="mt-px block text-[11px] font-bold text-ink-2"><%= render "charts/change", change: cell[:change] %></span>
                       <% end %>
                     </span>
+                  <% end %>
+                  <% if cell[:link] %>
+                    <% paused = cell[:link][:kind] == "paused" %>
+                    <%= link_to (paused ? "Paused" : "Set up"), cell[:link][:path],
+                          aria: { label: paused ? "See why #{row[:name]}'s site visits are paused" : "Set up #{row[:name]}'s site visits" },
+                          class: "inline-flex min-h-6 items-center text-[13px] font-bold text-accent-ink underline underline-offset-3" %>
                   <% end %>
                   <% unless cell[:pick].nil? %>
                     <%= button_to "", row[:switch], method: :patch, params: back.merge(number: cell[:key], shown: (!cell[:pick]).to_s),

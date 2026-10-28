@@ -1,4 +1,4 @@
-import type { Change, TableCell, TableRow, TableView } from "../types"
+import type { CellLink, Change, TableCell, TableRow, TableView } from "../types"
 import type { Target } from "../useView"
 import ChangeWords from "./ChangeWords"
 import LineKey from "./LineKey"
@@ -12,10 +12,11 @@ import { lineOf, projectClass, type Lines } from "./lines"
 // keeps its box, and a click says so. Hovering or focusing a row brings its
 // lines forward. On the dashboard (manage) a row also has Edit and whether
 // the builder's page lists it, and each cell the switch for what visitors
-// see (its value grey while they do not), or Set up; a project hidden from
-// the page comes last, with no box. On a phone each row stacks, with only
-// the numbers it counts. Only shows on hover, and always on a touch screen,
-// where there is no hover to find it by.
+// see (its value grey while they do not), or Set up or Paused where site
+// visits do not count; a project hidden from the page comes last, with no
+// box. On a phone each row stacks, with only the numbers it counts. Only
+// shows on hover, and always on a touch screen, where there is no hover to
+// find it by.
 
 export type RowTargets = {
   // A row's box; null when it is the last project in view.
@@ -126,7 +127,7 @@ function Row({ row, table, drawn, alone, hot, rows, switches }: {
       {row.cells.map((cell) => {
         const column = table.columns.find((each) => each.key === cell.key)
         return (
-          <td key={cell.key} className={`py-2.5 pl-[18px] text-right max-md:p-0 max-md:text-left ${cell.value === null && cell.setup === null ? "max-md:hidden" : ""}`}>
+          <td key={cell.key} className={`py-2.5 pl-[18px] text-right max-md:p-0 max-md:text-left ${cell.value === null && cell.link === null ? "max-md:hidden" : ""}`}>
             <span className="os-xs os-muted mb-1 block md:hidden">{column?.label}</span>
             <Cell row={row} cell={cell} word={column?.word ?? cell.key} drawn={drawn.includes(cell.key)} switches={switches} />
           </td>
@@ -136,26 +137,34 @@ function Row({ row, table, drawn, alone, hot, rows, switches }: {
   )
 }
 
+// A cell's value, its change under it on analytics; where site visits do
+// not count, Set up or Paused in the switch's place, after the value when
+// the window has any.
 function Cell({ row, cell, word, drawn, switches }: { row: TableRow; cell: TableCell; word: string; drawn: boolean; switches?: CellSwitches }) {
-  if (cell.setup) {
-    return (
-      <a href={cell.setup} aria-label={`Set up ${row.name}'s site visits`}
-         className="inline-flex min-h-6 items-center text-[13px] font-bold text-accent-ink underline underline-offset-3">Set up</a>
-    )
-  }
   const shown = switches ? switches.shown(row, cell) : cell.shown
   const pick = switches?.pick(row, cell) ?? null
   return (
     <span className="inline-flex items-center gap-2.5">
-      <span className="inline-block">
-        <span className={`os-num text-[15px] tracking-[-.02em] ${row.on && shown && drawn ? "text-ink" : "text-ink-3"} ${shown ? "" : "font-medium"}`}>{cell.value ?? "–"}</span>
-        {cell.change?.arrow && <ChangeLine change={cell.change} />}
-      </span>
+      {(cell.link === null || cell.value !== null) && (
+        <span className="inline-block">
+          <span className={`os-num text-[15px] tracking-[-.02em] ${row.on && shown && drawn ? "text-ink" : "text-ink-3"} ${shown ? "" : "font-medium"}`}>{cell.value ?? "–"}</span>
+          {cell.change?.arrow && <ChangeLine change={cell.change} />}
+        </span>
+      )}
+      {cell.link && <SiteLink name={row.name} link={cell.link} />}
       {switches && pick !== null && (
         <button type="button" role="switch" aria-checked={pick} aria-label={`Show ${word} for ${row.name}`} className="os-switch"
                 onClick={() => switches.flip(row, cell)} />
       )}
     </span>
+  )
+}
+
+function SiteLink({ name, link }: { name: string; link: CellLink }) {
+  const paused = link.kind === "paused"
+  return (
+    <a href={link.path} aria-label={paused ? `See why ${name}'s site visits are paused` : `Set up ${name}'s site visits`}
+       className="inline-flex min-h-6 items-center text-[13px] font-bold text-accent-ink underline underline-offset-3">{paused ? "Paused" : "Set up"}</a>
   )
 }
 

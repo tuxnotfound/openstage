@@ -4,10 +4,11 @@
 # drawing it on the chart or not. On the builder's dashboard (manage) a row
 # also has Edit, whether their page lists it, and the path that saves its
 # switches: each cell's switch sets what visitors see (a value they do not
-# see stays for the builder, in grey), or Set up stands where a project
-# counts no site visits; a project hidden from the page comes last, with no
-# box. Which cells list a value, switch or set up is the chart's to say
-# (DrawService#cells); this only writes it.
+# see stays for the builder, in grey), or in its place Set up, where a
+# project counts no site visits, or Paused, where Free counts another
+# project's, each to the project's Site visits row; a project hidden from
+# the page comes last, with no box. Which cells list a value, a switch or a
+# link is the chart's to say (DrawService#cells); this only writes it.
 class ProjectsTableSerializer < ApplicationSerializer
   include ActionView::Helpers::NumberHelper
   include Rails.application.routes.url_helpers
@@ -36,13 +37,14 @@ class ProjectsTableSerializer < ApplicationSerializer
 
   def off_page_row(repo)
     { key: repo.full_name, name: repo.name, rank: nil, on: false, drawable: false,
-      cells: @chart.columns.map { |number| { key: number.key, value: nil, shown: false, pick: nil, setup: nil, change: nil } } }.merge(manage_parts(repo))
+      cells: @chart.columns.map { |number| { key: number.key, value: nil, shown: false, pick: nil, link: nil, change: nil } } }.merge(manage_parts(repo))
   end
 
-  # pick: the cell's switch, on while visitors see the number; nil without one.
+  # pick: the cell's switch, on while visitors see the number; nil without
+  # one. link: what stands in its place, "set_up" or "paused", and where it goes.
   def cell_of(cell, repo)
     { key: cell.number.key, value: (number_with_delimiter(cell.value) if cell.value), shown: cell.shown, pick: cell.pick,
-      setup: (edit_project_path(repo, site: "open", anchor: "site-visits") if cell.setup),
+      link: (cell.link && { kind: cell.link.to_s, path: edit_project_path(repo, site: "open", anchor: "site-visits") }),
       change: (Progress::Change.of(cell.value, cell.previous)&.to_h if @changes && cell.shown) }
   end
 
