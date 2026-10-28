@@ -75,8 +75,9 @@ export default function ProgressIsland({ initial, endpoint, mode, defaultRange, 
 
 // The dashboard's switches: a switch answers at once, and a line switched
 // off leaves the chart at once; the save goes to the server, which then
-// draws the view on screen by then again, on its new scale. A failed save
-// puts it back.
+// draws the view on screen by then again, on its new scale, and Back fetches
+// the page anew rather than Turbo's copy from before the switch. A failed
+// save puts it back.
 function useCellSwitches(view: ProgressView, redraw: () => void): { switches: CellSwitches; hidden: (path: CompareChartView["paths"][number]) => boolean; failed: boolean } {
   const [pending, setPending] = useState<Record<string, boolean>>({})
   const [failed, setFailed] = useState(false)
@@ -107,7 +108,10 @@ function useCellSwitches(view: ProgressView, redraw: () => void): { switches: Ce
       headers: { "Content-Type": "application/json", Accept: "application/json", "X-CSRF-Token": csrfToken() },
       body: JSON.stringify({ number: cell.key, shown: next }),
     }).catch(() => null)
-    if (response?.ok) return latest.current()
+    if (response?.ok) {
+      window.Turbo?.cache.exemptPageFromCache()
+      return latest.current()
+    }
     setPending((was) => Object.fromEntries(Object.entries(was).filter(([each]) => each !== which)))
     setFailed(true)
   }
