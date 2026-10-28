@@ -182,6 +182,27 @@ RSpec.describe "Profiles", type: :request do
         expect(cards.last).to include("secret", "private repo, commit messages only", "1 commit in 12 months · last commit 3 days ago")
       end
 
+      it "leaves a project's commits off its card when its builder hides them" do
+        user.github_repos.find_by(full_name: "builder/app").update!(hidden_numbers: [ "commits" ])
+
+        get "/builder"
+
+        app = Nokogiri::HTML(response.body).css("section[aria-labelledby='projects'] .os-card").first
+        expect(app.text.squish).to include("app", "A tool for builders.", "Project page")
+        expect(app.text).not_to include("commit")
+        expect(app.at_css("svg path")).to be_nil
+        expect(cards.last).to include("1 commit in 12 months · last commit 3 days ago")
+        expect(response.body).to include("Commits per week over the last 12 months")
+      end
+
+      it "says nothing of weekly commits when no card shows them" do
+        user.github_repos.each { |repo| repo.update!(hidden_numbers: [ "commits" ]) }
+
+        get "/builder"
+
+        expect(response.body).not_to include("Commits per week over the last 12 months")
+      end
+
       it "opens a project's page from its name, never filtering the chart above" do
         get "/builder"
 

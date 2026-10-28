@@ -24,6 +24,12 @@ module Progress
       def private_repo
         github_repo&.private_repo?
       end
+
+      # Whether visitors see its commits: its builder may hide them, and
+      # then its card shows no count, no weekly chart and no last commit.
+      def commits_shown?
+        github_repo.nil? || github_repo.public_number?("commits")
+      end
     end
 
     # projects: Progress::Projects#all, in rank order. reveal: a repo the builder hid, shown anyway (Entry.on_page).

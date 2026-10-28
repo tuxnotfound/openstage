@@ -33,6 +33,16 @@ RSpec.describe Progress::SummarizeService do
     expect(gone.private_repo).to be_nil
   end
 
+  it "says whether visitors see a card's commits, as its builder picks" do
+    create(:github_repo, user: user, full_name: "me/app", hidden_numbers: [ "commits" ])
+    create(:github_repo, user: user, full_name: "me/site", hidden_numbers: [ "visits" ])
+    %w[me/app me/site me/gone].each { |repo| commit(repo, 1.day.ago) }
+
+    cards = described_class.new(user: user, projects: projects, zone: zone).tap(&:call!).cards.index_by(&:name)
+
+    expect(cards.transform_values(&:commits_shown?)).to eq("app" => false, "site" => true, "gone" => true)
+  end
+
   it "starts a project begun inside the 52 weeks at its first commit's week" do
     commit("me/new", 3.weeks.ago)
     commit("me/new", 1.day.ago)
