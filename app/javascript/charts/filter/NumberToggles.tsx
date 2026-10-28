@@ -1,0 +1,115 @@
+import { useLayoutEffect, useRef, useState } from "react"
+import { projectClass } from "../LineChart"
+import type { AnalyticsChange, NumberView } from "../types"
+import LineKey from "./LineKey"
+import { MAX_DRAWN, fitting, lineOf, type Lines } from "./lines"
+
+// The numbers above the chart, one row of toggles: a number's line while it
+// is drawn (a plus when not), its name, its total for the projects in view,
+// a thin bar of how that splits across them in their colours, and on the
+// dashboard its change. What does not fit the row folds behind "+ n more",
+// measured as the row's width changes; it opens in a second row, which
+// stays open while one of its numbers is drawn, so no drawn number hides.
+
+const GAP = 8
+
+export type NumberEvents = {
+  toggle: (key: string) => void
+  warm: (key: string) => void
+  // A number under the pointer or focus brings its lines forward; null lets go.
+  focus: (key: string | null) => void
+}
+
+type Props = NumberEvents & {
+  numbers: NumberView[]
+  lines: Lines
+  // Whether the chart compares numbers; drawn alone, a number is solid.
+  indexed: boolean
+  changes: boolean
+}
+
+export default function NumberToggles({ numbers, lines, indexed, changes, ...events }: Props) {
+  const row = useRef<HTMLDivElement>(null)
+  const ruler = useRef<HTMLDivElement>(null)
+  const [fit, setFit] = useState(numbers.length)
+  const [more, setMore] = useState(false)
+  const full = Object.keys(lines).length >= MAX_DRAWN
+  const shape = numbers.map((number) => `${number.key}:${number.value}:${lines[number.key] ?? "-"}:${number.change?.text ?? ""}`).join("|")
+
+  // The ruler holds every toggle as it would look, out of sight, so the row
+  // knows how many fit before it shows them.
+  useLayoutEffect(() => {
+    const box = row.current
+    const sample = ruler.current
+    if (!box || !sample) return undefined
+    const place = () => {
+      const widths = [...sample.children].map((child) => (child as HTMLElement).offsetWidth)
+      const button = widths.pop() ?? 0
+      setFit(fitting(widths, button, box.clientWidth, GAP))
+    }
+    place()
+    const observer = new ResizeObserver(place)
+    observer.observe(box)
+    return () => observer.disconnect()
+  }, [shape])
+
+  const head = numbers.slice(0, fit)
+  const tail = numbers.slice(fit)
+  const tailDrawn = tail.some((number) => lines[number.key] !== undefined)
+  const open = tail.length > 0 && (more || tailDrawn)
+  const toggle = (number: NumberView) => (
+    <Toggle key={number.key} number={number} line={lines[number.key] === undefined ? null : lineOf(lines, number.key, indexed)}
+            full={full} changes={changes} events={events} />
+  )
+
+  return (
+    <div className="min-w-0 flex-[1_1_480px]">
+      <div ref={row} className="relative flex min-w-0 flex-wrap items-center gap-2" role="group" aria-label="Numbers on the chart">
+        {head.map(toggle)}
+        {tail.length > 0 && !(open && tailDrawn) && (
+          <button type="button" className="h-11 rounded-control px-3 text-[13px] font-bold text-accent-ink" aria-expanded={open} onClick={() => setMore(!open)}>
+            {open ? "Show fewer" : `+ ${tail.length} more`}
+          </button>
+        )}
+        <div ref={ruler} className="pointer-events-none invisible absolute top-0 left-0 flex gap-2" aria-hidden="true" inert>
+          {numbers.map((number) => (
+            <Toggle key={number.key} number={number} line={lines[number.key] === undefined ? null : lineOf(lines, number.key, indexed)}
+                    full={full} changes={changes} />
+          ))}
+          <span className="h-11 px-3 text-[13px] font-bold whitespace-nowrap">+ {numbers.length} more</span>
+        </div>
+      </div>
+      {open && <div className="mt-2.5 flex flex-wrap items-center gap-2" role="group" aria-label="More numbers">{tail.map(toggle)}</div>}
+    </div>
+  )
+}
+
+// line: the line it wears while drawn, null while not.
+function Toggle({ number, line, full, changes, events }: { number: NumberView; line: number | null; full: boolean; changes: boolean; events?: NumberEvents }) {
+  const drawn = line !== null
+  const look = drawn ? "border-ink bg-surface text-ink" : full ? "border-dashed border-line text-ink-3" : "border-line text-ink-2 hover:border-ink-3"
+  return (
+    <button type="button" aria-pressed={drawn} title={!drawn && full ? "Switch a number off first" : undefined}
+            className={`relative inline-flex h-11 items-center gap-[7px] whitespace-nowrap rounded-control border-[1.5px] px-[13px] max-md:gap-1.5 max-md:px-[11px] ${look}`}
+            onClick={() => events?.toggle(number.key)}
+            onPointerEnter={(event) => { events?.warm(number.key); if (event.pointerType === "mouse") events?.focus(number.key) }}
+            onPointerLeave={() => events?.focus(null)}
+            onFocus={() => { events?.warm(number.key); events?.focus(number.key) }} onBlur={() => events?.focus(null)}>
+      {drawn ? <LineKey line={line} /> : <span className="w-3 text-center font-bold text-ink-3" aria-hidden="true">+</span>}
+      <span className="text-[13px] font-bold">{number.label}</span>
+      <span className="os-num text-base tracking-[-.02em]">{number.value}</span>
+      {changes && number.change?.arrow && <Change change={number.change} />}
+      <span className={`absolute inset-x-3 bottom-[5px] flex h-[3px] gap-0.5 ${drawn ? "" : "opacity-45"}`} aria-hidden="true">
+        {number.split.map((part) => (
+          <span key={part.repo} className={`${projectClass(part.rank)} min-w-[3px] rounded-[2px] bg-(--project)`} style={{ flex: `${part.value} 1 0` }} />
+        ))}
+      </span>
+    </button>
+  )
+}
+
+// Only the arrow wears the change's colour.
+function Change({ change }: { change: AnalyticsChange }) {
+  const tone = change.up === null ? "" : change.up ? "text-up" : "text-down"
+  return <span className="text-[11px] font-bold text-ink-2 max-md:hidden"><span className={tone}>{change.arrow}</span> {change.text}</span>
+}

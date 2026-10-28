@@ -17,29 +17,32 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
   end
 
   def project_rows
-    page.css("#activity-lines [data-line-row]").to_h { |row| [ row["data-line-row"], row.text.squish ] }
+    page.css("[data-chart-table] [data-chart-row]").to_h { |row| [ row["data-chart-row"], row.text.squish ] }
   end
 
   def page_switch(repo)
-    page.at_css("[data-line-row='#{repo}'] form[action^='/github_repos/'] button[role='switch']")
+    page.at_css("[data-chart-row='#{repo}'] form[action^='/github_repos/'] button[role='switch']")
   end
 
-  it "charts the last 90 days of the builder's work, and keeps the entry filters on its window links" do
+  it "charts the last 90 days of the builder's work with no figure over it, and keeps the entry filters on its links" do
     get "/dashboard", params: { q: "work" }
 
     activity = page.at_css("section[aria-labelledby='your-activity']")
-    expect(activity.text.squish).to include("4 commits, last 90 days")
+    expect(activity.at_css("[aria-label='Numbers on the chart']").text.squish).to eq("Commits 4")
+    expect(activity.css(".os-num.leading-none, .os-big")).to be_empty
     expect(activity.at_css("svg[role='img']")["aria-label"]).to eq("Commits per week by project, last 90 days")
     month = activity.css("nav[aria-label='Time range'] a").find { |a| a.text == "30 days" }
     expect(month["href"]).to eq("/dashboard?q=work&range=30d")
+    only = activity.at_css("[data-chart-row='builder/bare'] a[aria-label='Show only bare']")
+    expect(only["href"]).to eq("/dashboard?projects=builder%2Fbare&q=work")
   end
 
-  it "lists every repo with work under the chart, each with Edit up front, and leaves out repos with none" do
+  it "lists every repo with work under the chart, each with Edit, and leaves out repos with none" do
     get "/dashboard"
 
     expect(project_rows.keys).to eq(%w[builder/app builder/bare])
-    expect(project_rows["builder/app"]).to start_with("app Edit")
-    expect(page.at_css("[data-line-row='builder/bare'] a.os-btn2")["href"]).to eq("/projects/#{bare.id}/edit")
+    expect(project_rows["builder/app"]).to start_with("app Only Edit")
+    expect(page.at_css("[data-chart-row='builder/bare'] a.os-btn2")["href"]).to eq("/projects/#{bare.id}/edit")
     expect(page.at_css("section[aria-labelledby='your-projects']")).to be_nil
     expect(page.at_css("section[aria-labelledby='your-activity'] [data-sync-status]")).to be_present
     expect(idle).to be_persisted
@@ -55,7 +58,8 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     get "/dashboard"
     expect(project_rows.keys.last).to eq("builder/app")
     expect(page_switch("builder/app")["aria-checked"]).to eq("false")
-    expect(page.css("[data-line-row='builder/app'] td").map { |cell| cell.text.squish }.last(2)).to eq([ "Commits –", "Site visits –" ])
+    expect(page.css("[data-chart-row='builder/app'] td").map { |cell| cell.text.squish }.last(2)).to eq([ "Commits –", "Site visits –" ])
+    expect(page.at_css("[data-chart-row='builder/app'] [role='checkbox']")).to be_nil
     expect(user.entries.where(repo_name: "builder/app").pluck(:hidden).uniq).to eq([ true ])
   end
 
@@ -66,9 +70,13 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     end
 
     def cells(repo)
-      page.css("[data-line-row='#{repo}'] td").drop(1).map do |cell|
+      page.css("[data-chart-row='#{repo}'] td").drop(1).map do |cell|
         [ cell.text.squish.sub(/\A(Commits|Site visits) ?/, ""), cell.at_css("button[role='switch']")&.[]("aria-checked") ]
       end
+    end
+
+    def drawn
+      page.css("section[aria-labelledby='your-activity'] svg[role='img'] path").map { |path| path["data-number"] }
     end
 
     it "lists each project with its commits and site visits, each shown to visitors, and offers to set up visits where none count" do
@@ -76,19 +84,21 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
 
       expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "true" ] ])
       expect(cells("builder/bare")).to eq([ [ "1", "true" ], [ "Set up", nil ] ])
-      expect(page.at_css("[data-line-row='builder/bare'] a[aria-label^='Set up']")["href"]).to eq("/projects/#{bare.id}/edit?site=open#site-visits")
-      expect(page.at_css("section[aria-labelledby='your-activity']").text.squish).to include("90 site visits", "and this chart follows them.")
-      expect(response.body).to include("app · site visits", "Solid: commits. Dotted: site visits.")
+      expect(page.at_css("[data-chart-row='builder/bare'] a[aria-label^='Set up']")["href"]).to eq("/projects/#{bare.id}/edit?site=open#site-visits")
+      activity = page.at_css("section[aria-labelledby='your-activity']").text.squish
+      expect(activity).to include("Site visits 90", "and this chart follows them;", "Commits solid and site visits dotted")
+      expect(drawn).to contain_exactly("commits", "commits", "visits")
     end
 
-    it "hides a number from visitors for one project, and the chart leaves its line out" do
+    it "hides a number from visitors for one project: its value stays, grey, and the chart leaves its line out" do
       patch "/projects/#{tool.id}/numbers", params: { number: "visits", shown: "false", range: "30d" }
       expect(response).to redirect_to(dashboard_path(range: "30d", anchor: "your-activity"))
       expect(tool.reload.hidden_numbers).to eq([ "visits" ])
 
       get "/dashboard"
       expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "false" ] ])
-      expect(response.body).not_to include("app · site visits")
+      expect(page.at_css("[data-chart-row='builder/app'] td:last-child .os-num")["class"]).to include("text-ink-3", "font-medium")
+      expect(drawn).to eq(%w[commits commits])
 
       patch "/projects/#{tool.id}/numbers", params: { number: "visits", shown: true }, as: :json
       expect(response).to have_http_status(:no_content)

@@ -1,75 +1,83 @@
-# The progress section for one window and the projects in view, as the page
-# shows it: the number and its change, the colour bar, the project switches, the
-# chart and What shipped. The page renders it first and the chart script asks
-# for others (Api::ProgressController); the words come from the helpers the
-# page's own partials use.
+# A chart filter's view for one window, the numbers drawn and the projects in
+# view, as a builder's page, one of their projects' pages or their dashboard
+# shows it: a toggle per number its projects show, with its total and how it
+# splits across them (and its change, on the dashboard), the one chart, the
+# table of projects under it where a page has several, and What shipped. The
+# page renders it first and the chart script asks for others
+# (Api::ProgressController); the words come from the helpers the page's own
+# partials use.
 class ProgressViewSerializer < ApplicationSerializer
   include ApplicationHelper
   include ProgressHelper
+  include AnalyticsHelper
+  include ActionView::Helpers::NumberHelper
   include ActionView::Helpers::TextHelper
 
-  # linked_id: the entry a link pointed at, shown above the page instead.
-  # site: a page's SiteVisitsViewSerializer, when it shows them; lines: the
-  # dashboard's DashboardLinesSerializer.
-  def initialize(section, linked_id: nil, site: nil, lines: nil)
-    @section = section
+  # chart: a Progress::ChartService. linked_id: the entry a link pointed at,
+  # shown above the page instead.
+  def initialize(chart, linked_id: nil)
+    @chart = chart
     @linked_id = linked_id
-    @site = site
-    @lines = lines
   end
 
+  # drawn: the numbers drawn, in line order; default_show: the page's own,
+  # which its URL leaves out.
   def attributes
-    totals = tally.totals
-    arrow, words, up = progress_change(@section)
-    {
-      range: @section.labels.range, selected: @section.selected.map(&:repo), filtered: @section.filtered?,
-      words: @section.labels.words, scope: progress_scope(@section), commits: totals.commits,
-      change: { arrow: arrow, words: words.presence, up: up }, shares: shares, kpis: kpis,
-      projects: tally.projects.all.map { |project| project_switch(project) },
-      chart: ChartSerializer.new(ProgressChart::Trend.new(@section)).attributes, shipped: shipped, site: @site&.attributes,
-      lines: @lines&.attributes
+    @attributes ||= {
+      range: labels.range, words: labels.span_words, selected: section.filtered? ? section.selected.map(&:repo) : [],
+      numbers: @chart.totals.map { |total| number_of(total) }, drawn: @chart.drawn.map(&:key), default_show: @chart.default_drawn.map(&:key),
+      chart: CompareChartSerializer.new(@chart.chart).attributes, table: (ProjectsTableSerializer.new(@chart).attributes if table?),
+      shipped: (shipped unless @chart.builder)
     }
   end
 
   private
 
+  def section
+    @chart.section
+  end
+
   def tally
-    @section.tally
+    section.tally
   end
 
-  def shares
-    totals = tally.totals
-    tally.projects.all.filter_map do |project|
-      commits = totals.counts[project.repo].to_i
-      next unless commits.positive?
-
-      { repo: project.repo, name: project.name, rank: project.rank, commits: commits, percent: (100.0 * commits / totals.commits).round }
-    end
+  def labels
+    section.labels
   end
 
-  def kpis
-    totals = tally.totals
-    "#{totals.shipped} shipped · #{totals.published} published · #{pluralize(totals.projects, 'project')} with commits · " \
-      "#{pluralize(totals.active_days, 'active day')}"
+  # The dashboard always has its table: it is where the builder picks what
+  # visitors see. A page has one with more than one project.
+  def table?
+    @chart.builder || (!@chart.lone && @chart.rows.size > 1)
   end
 
-  def project_switch(project)
-    on = !@section.filtered? || @section.selected.include?(project)
-    { repo: project.repo, name: project.name, rank: project.rank, on: on,
-      value: (pluralize(tally.totals.counts.fetch(project.repo, 0), "commit") if on) }
+  # split: the part of each project in view with any, for the toggle's bar.
+  def number_of(total)
+    number = total.number
+    { key: number.key, label: number.label, word: number.word, value: number_with_delimiter(total.value),
+      split: total.split.map { |row, count| { repo: row.key, rank: row.rank, value: count } },
+      change: (change(total) if @chart.builder) }
+  end
+
+  # arrow, text and up?, as the page writes a change; nil with nothing to compare with.
+  def change(total)
+    return unless total.previous&.positive?
+
+    arrow, text, up = analytics_change(((100.0 * total.value / total.previous) - 100).round)
+    { arrow: arrow, text: text, up: up }
   end
 
   # Newest first, in the builder's words.
   def shipped
     items = tally.items.reverse
-    empty = @section.filtered? ? @section.labels.empty_tagged(@section.selection_name(alternatives: true)) : @section.labels.empty
-    { heading: "#{items.size} #{@section.labels.word}", empty: empty, items: items.map { |item| shipped_item(item) } }
+    empty = section.filtered? ? labels.empty_tagged(section.selection_name(alternatives: true)) : labels.empty
+    { heading: "#{items.size} #{labels.word}", empty: empty, items: items.map { |item| shipped_item(item) } }
   end
 
   def shipped_item(item)
     project = item.repo_name && tally.projects.find(item.repo_name)
     { id: item.id, anchor: (item.id == @linked_id ? nil : "entry-#{item.id}"), date: item.date.strftime("%b %-d"),
-      kind: item.shipped? ? "Shipped" : "Published", title: item.title, run_in: progress_run_in(item, @section).to_s,
+      kind: item.shipped? ? "Shipped" : "Published", title: item.title, run_in: progress_run_in(item, section).to_s,
       url: safe_external_url(item.entry.url), project: project&.name }
   end
 end

@@ -1,8 +1,7 @@
 module Progress
   # Everything the public page shows below the builder's name: the window's
-  # section (ComposeService), the site visits it shows beside its commits
-  # (SiteVisits::GatherService), a card per project (SummarizeService) and
-  # the latest commits, grouped by project and day.
+  # chart filter and its section (ChartService), a card per project
+  # (SummarizeService) and the latest commits, grouped by project and day.
   class GatherService < ApplicationService
     # Groups in Recent commits, and the commits read to fill them.
     RECENT_GROUPS = 8
@@ -11,25 +10,24 @@ module Progress
     # commits: that day's, newest first, as far as RECENT_LIMIT reached.
     Group = Data.define(:project, :date, :commits)
 
-    # range: a Window range; repos: the projects in view, none for all.
-    # reveal: a repo the builder hid, shown anyway (Entry.on_page).
-    attr_accessor :user, :range, :repos, :reveal
-    # site: a SiteVisits::GatherService, nil with no site visits to show.
-    attr_reader :section, :site, :cards, :recent
+    # range: a Window range; repos: the projects in view, none for all;
+    # show: the numbers drawn, by key in line order, none for the default.
+    # reveal: a repo the builder hid, shown anyway (Entry.on_page). lone: a
+    # project's page, which shows that project alone.
+    attr_accessor :user, :range, :repos, :show, :reveal, :lone
+    # chart: the page's ChartService.
+    attr_reader :section, :chart, :cards, :recent
 
     validates :user, presence: true
 
     private
 
     def execute
-      compose = ComposeService.new(user: user, range: range, repos: Array(repos), rolling: true, reveal: reveal)
-      return unless run(compose)
+      chart = ChartService.new(user: user, range: range, repos: Array(repos), show: show, reveal: reveal, lone: lone)
+      return unless run(chart)
 
-      @section = compose.section
-      site = SiteVisits::GatherService.new(user: user, section: section)
-      return unless run(site)
-
-      @site = site if site.any?
+      @chart = chart
+      @section = chart.section
       summarize = SummarizeService.new(user: user, projects: section.tally.projects.all, zone: section.tally.zone, reveal: reveal)
       return unless run(summarize)
 
@@ -58,7 +56,7 @@ module Progress
 
     def recent_commits
       scope = user.entries.on_page(reveal: reveal).commits.chronological
-      scope = scope.where(repo_name: repos) if Array(repos).any?
+      scope = scope.where(repo_name: section.selected.map(&:repo)) if section.filtered?
       scope.limit(RECENT_LIMIT)
     end
   end

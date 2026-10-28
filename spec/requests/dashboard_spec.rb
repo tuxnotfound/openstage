@@ -68,7 +68,7 @@ RSpec.describe "Dashboard", type: :request do
 
         get "/dashboard"
 
-        rows = Nokogiri::HTML(response.body).css("#activity-lines [data-line-row] th")
+        rows = Nokogiri::HTML(response.body).css("[data-chart-table] [data-chart-row] [role='checkbox']")
         expect(rows.map { |row| row.text.squish }).to contain_exactly("app", "tool")
       end
 

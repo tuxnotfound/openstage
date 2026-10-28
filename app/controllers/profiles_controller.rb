@@ -14,7 +14,6 @@ class ProfilesController < ApplicationController
 
     @syncing = syncing?
 
-    @repo_filter = selected_repos.presence
     @linked = linked_entry
 
     @total_entries = @user.entries.publicly_visible.count
@@ -34,11 +33,6 @@ class ProfilesController < ApplicationController
 
   private
 
-  # ?repo= names one project or several (repo[]=); none means all of them.
-  def selected_repos
-    Array(params[:repo]).map(&:to_s).compact_blank.uniq
-  end
-
   # Only the owner, only until the first sync has written its log. The page
   # polls itself (see the view) so the history appears without a reload.
   def syncing?
@@ -50,10 +44,12 @@ class ProfilesController < ApplicationController
     @user.entries.publicly_visible.find_by(id: params[:entry]) if params[:entry].present?
   end
 
-  # The page opens on the last 12 months; ?range= picks another window and
-  # ?repo= scopes the whole page.
+  # The page opens on the last 12 months, commits and site visits, every
+  # project; ?range=, ?show= and ?projects= pick another view (Progress::Filter),
+  # and the projects scope the whole page.
   def gather
-    service = Progress::GatherService.new(user: @user, range: params[:range], repos: @repo_filter)
+    filter = Progress::Filter.from(params)
+    service = Progress::GatherService.new(user: @user, range: filter.range, repos: filter.projects, show: filter.show)
     service if service.call
   end
 

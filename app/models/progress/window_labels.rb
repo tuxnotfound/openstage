@@ -18,6 +18,11 @@ module Progress
       range == "all" ? "since #{first.strftime('%B %Y')}" : "last #{SPANS.fetch(range)}"
     end
 
+    # What a number's total covers: "last 90 days", or "all time".
+    def span_words
+      range == "all" ? "all time" : "last #{SPANS.fetch(range)}"
+    end
+
     # What fits after "Nothing shipped or published": "in the last 90 days".
     def word
       range == "all" ? words : "in the #{words}"

@@ -1,0 +1,32 @@
+<%# A chart filter's chart (ProgressChart::Compare, as CompareChartSerializer
+    sends it): a line per project and number, in the project's colour and
+    the number's line style by its place among the numbers drawn, with its
+    gridlines, axis and note. The chart's script adds the marks, the
+    tooltip, the emphasis and the keyboard. view: a ProgressViewSerializer's
+    attributes. %>
+<% chart = view[:chart] %>
+<div class="mt-[18px]">
+  <div class="os-chart <%= local_assigns[:height] %>">
+    <% chart[:ticks].each do |tick| %>
+      <div class="os-gridline" style="top: <%= tick[:top] %>%"></div>
+    <% end %>
+    <div class="os-axis"></div>
+    <svg viewBox="0 0 <%= ProgressChart::Compare::WIDTH %> <%= ProgressChart::Compare::HEIGHT %>" preserveAspectRatio="none" role="img" aria-label="<%= chart[:aria_label] %>">
+      <% chart[:paths].each do |path| %>
+        <% dash = ChartFilterHelper::LINE_DASHES[chart_line(view, path[:number])] %>
+        <path d="<%= path[:d] %>" class="<%= project_class(path[:rank]) %> stroke-(--project)" fill="none" stroke-width="4.5" stroke-linejoin="round"
+              stroke-linecap="round" vector-effect="non-scaling-stroke" data-number="<%= path[:number] %>"<%= %( stroke-dasharray="#{dash}").html_safe if dash %>/>
+      <% end %>
+    </svg>
+    <% chart[:ticks].each do |tick| %>
+      <div class="os-ylab -translate-y-1/2" style="top: <%= tick[:top] %>%"><%= tick[:value] %></div>
+    <% end %>
+    <div class="absolute inset-y-0 right-0 w-0.5 bg-strong" aria-hidden="true"></div>
+  </div>
+  <div class="os-xlabs">
+    <% chart[:axis].each_with_index do |label, i| %>
+      <span class="<%= 'font-bold text-ink' if i == chart[:axis].size - 1 %>"><%= label %></span>
+    <% end %>
+  </div>
+  <p class="os-note mt-2"><%= chart[:note] %></p>
+</div>

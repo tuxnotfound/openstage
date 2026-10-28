@@ -1,144 +1,135 @@
 module ProgressChart
-  # Commits and site visits on one chart, on the section's points: a line per
-  # project and number, in the project's colour, commits solid and visits
-  # dotted. A week's commits and a week's visits share no scale, so with both
-  # in view each number is drawn against its own peak in the window, its
-  # projects on one scale so they still compare; the tooltip keeps the real
-  # numbers. With one number in view, the axis is that number's. It answers
-  # what Trend answers, so the chart partial draws it.
+  # Every chart page's chart: a line per project and number on a window's
+  # points, in the project's colour and its number's line style. The browser
+  # gives a number its style by its place in its own line order (the first
+  # solid, the second dotted, the third dashed); the server's first paint, by
+  # its place among the numbers drawn. With two or three numbers that have
+  # lines, each is drawn against its own peak in the window, its projects on
+  # one scale so they still compare; with one, the axis is that number's own.
+  # The tooltip keeps the real numbers: a row per project with anything at
+  # the point, a column per number. The words are CompareNote's.
   class Compare
-    # metric: "commits" or "visits"; values: real, one per point.
-    Line = Data.define(:repo, :name, :rank, :metric, :values) do
-      def dashed?
-        metric == "visits"
-      end
-
-      # Which line a switch hides, before the chart is drawn again.
-      def key
-        "#{repo}|#{metric}"
-      end
-    end
+    WIDTH = Trend::WIDTH
+    HEIGHT = Trend::HEIGHT
     PEAK = 100.0
-    WORDS = { "commits" => "commits", "visits" => "site visits" }.freeze
 
-    # trend: the section's Trend; visits: {repo's full name => visits per
-    # point}; projects: the section's Progress::Projects; hidden: {repo's full
-    # name => the numbers switched off for it}.
-    def initialize(trend, visits:, projects:, hidden: {})
-      @trend = trend
-      @visits = visits
-      @projects = projects
-      @hidden = hidden
+    # number: a Progress::Numbers::Number; values: one per point; total: its
+    # count over the window's days, without which it draws no line.
+    Line = Data.define(:repo, :name, :rank, :number, :values, :total)
+    # values: one per number with lines; "–" where the project has none of it.
+    Row = Data.define(:repo, :name, :rank, :values)
+    Column = Data.define(:left, :width, :mark, :title, :rows)
+
+    # numbers: the numbers drawn, in line order. average: each point a 7-day
+    # average. lone: one project's page.
+    attr_reader :window, :numbers, :every_line, :lone
+
+    delegate :note, :note_parts, :aria_label, :none, to: :words
+
+    def initialize(window:, lines:, numbers:, average: false, lone: false)
+      @window = window
+      @every_line = lines
+      @numbers = numbers
+      @average = average
+      @lone = lone
     end
 
+    # The lines with anything in the window.
     def lines
-      @lines ||= commit_lines + visit_lines
+      @lines ||= every_line.select { |line| line.total.positive? }
     end
 
-    # Both numbers in view, each on its own peak.
+    # The numbers drawn that have lines, in the pages' order: the tooltip's columns.
+    def lined
+      @lined ||= Progress::Numbers::ALL.select { |number| lines.any? { |line| line.number == number } }
+    end
+
     def indexed?
-      lines.map(&:metric).uniq.size > 1
+      lined.size > 1
     end
 
     def average?
-      @trend.average?
+      @average
     end
 
-    def axis
-      @trend.axis
-    end
-
-    def none
-      "Nothing"
-    end
-
-    # The busiest line of each number drawn last; [d, rank, dashed, key].
+    # [d, rank, number's key, repo]: the later numbers in line order first,
+    # and each number's busiest line last, so it draws on top.
     def paths
-      lines.sort_by { |line| [ line.dashed? ? 0 : 1, line.values.sum ] }.map do |line|
-        d = drawn(line).each_with_index.map { |value, i| "#{i.zero? ? 'M' : 'L'}#{num(@trend.x(i))} #{num(y(value))}" }.join(" ")
-        [ d, line.rank, line.dashed?, line.key ]
+      lines.sort_by { |line| [ -numbers.index(line.number).to_i, line.values.sum ] }.map do |line|
+        d = line.values.each_with_index.map { |value, i| "#{i.zero? ? 'M' : 'L'}#{num(x(i))} #{num(y(line.number, value))}" }.join(" ")
+        [ d, line.rank, line.number.key, line.repo ]
       end
     end
 
     def ticks
       return [ PEAK / 2, PEAK ].map { |value| Trend::Tick.new(value: "#{value.to_i}%", top: top(value)) } if indexed?
 
-      scale.drop(1).map { |value| Trend::Tick.new(value: value, top: top(value)) }
+      scale.drop(1).map { |value| Trend::Tick.new(value: words.tick(lined.first, value), top: top(value)) }
     end
 
     def columns
-      @trend.columns.map.with_index { |column, i| column.with(rows: rows_at(i), notes: []) }
+      buckets = window.buckets
+      buckets.map { |bucket| column(bucket, buckets.size) }
     end
 
-    def aria_label
-      return @trend.aria_label if numbers == [ "commits" ]
+    # The first point, the middle one and today, under the chart.
+    def axis
+      buckets = window.buckets
+      return [ window.labels.axis(buckets.first), "Today" ] if buckets.size < 3
 
-      what = indexed? ? "Commits and site visits" : "Site visits"
-      "#{what} per #{labels.unit_word} by project, #{'each number against its own peak, ' if indexed?}#{labels.words}"
+      [ window.labels.axis(buckets.first), window.labels.axis(buckets[buckets.size / 2]), "Today" ]
     end
 
-    def note
-      return @trend.note if numbers == [ "commits" ]
-      return "#{'7-day averages. ' if average?}Site visits per #{labels.unit_word}, one line per project." unless indexed?
-
-      "#{'7-day averages. ' if average?}Solid: commits. Dotted: site visits. Each number is drawn against its own peak in the window; hover for the numbers."
-    end
-
-    def empty_note
-      @hidden.values.any?(&:present?) ? "Every line is switched off. Switch one on below." : @trend.empty_note
+    # A number's highest value in the window, over every project: its 100%.
+    def peak(number)
+      lines.select { |line| line.number == number }.flat_map(&:values).max.to_f
     end
 
     private
 
-    def numbers
-      lines.map(&:metric).uniq
+    def words
+      @words ||= CompareNote.new(self)
     end
 
-    def labels
-      @trend.section.labels
+    def column(bucket, count)
+      i = bucket.index
+      from = i.zero? ? 0 : (x(i - 1) + x(i)) / 2
+      to = i == count - 1 ? WIDTH : (x(i) + x(i + 1)) / 2
+      Column.new(left: pct(from), width: pct(to - from), mark: (100.0 * (x(i) - from) / (to - from)).round(1),
+                 title: "#{window.labels.bucket_title(bucket)}#{' · 7-day average' if average?}", rows: rows_at(i))
     end
 
-    def commit_lines
-      @trend.lines.reject { |line| off?(line.repo, "commits") }.map do |line|
-        Line.new(repo: line.repo, name: line.name, rank: line.rank, metric: "commits", values: line.values)
+    # A row per project with anything at the point, in the projects' order.
+    def rows_at(index)
+      projects = lines.select { |line| line.values[index].positive? }.map { |line| [ line.repo, line.name, line.rank ] }.uniq
+      projects.sort_by { |_, name, rank| [ rank || Float::INFINITY, name ] }.map do |repo, name, rank|
+        Row.new(repo: repo, name: name, rank: rank, values: lined.map { |number| value_at(repo, number, index) })
       end
     end
 
-    def visit_lines
-      @visits.filter_map do |repo, values|
-        project = @projects.find(repo)
-        next unless project && values.sum.positive? && !off?(repo, "visits")
-
-        Line.new(repo: repo, name: project.name, rank: project.rank, metric: "visits", values: values)
-      end
+    def value_at(repo, number, index)
+      line = every_line.find { |each| each.repo == repo && each.number == number }
+      line ? words.amount(number, line.values[index]) : "–"
     end
 
-    def off?(repo, number)
-      Array(@hidden[repo]).include?(number)
+    def x(index)
+      count = window.buckets.size
+      count == 1 ? WIDTH / 2.0 : index * WIDTH.to_f / (count - 1)
     end
 
-    # Each value as a share of its number's peak over every project when
-    # both numbers are in view; else as it is.
-    def drawn(line)
-      return line.values unless indexed?
+    # A value's height: against its number's peak when the chart compares numbers.
+    def y(number, value)
+      return HEIGHT * (1 - (value / ceiling)) unless indexed?
 
-      peak = peaks.fetch(line.metric)
-      line.values.map { |value| peak.positive? ? PEAK * value / peak : 0 }
+      peak = peaks.fetch(number)
+      HEIGHT * (1 - ((peak.positive? ? PEAK * value / peak : 0) / ceiling))
     end
 
     def peaks
-      @peaks ||= lines.group_by(&:metric).transform_values { |each| each.flat_map(&:values).max.to_f }
+      @peaks ||= lined.to_h { |number| [ number, peak(number) ] }
     end
 
-    # With both numbers in view, each row names its number.
-    def rows_at(index)
-      lines.select { |line| line.values[index].positive? }.sort_by { |line| [ line.name, line.metric ] }.map do |line|
-        value = line.values[index]
-        name = indexed? ? "#{line.name} · #{WORDS.fetch(line.metric)}" : line.name
-        Trend::Row.new(name: name, rank: line.rank, value: average? ? format("%.1f", value) : value.round)
-      end
-    end
-
+    # Nice steps over the busiest point; whole counts unless averaged.
     def scale
       @scale ||= Scale.ticks([ lines.flat_map(&:values).max.to_f, average? ? 1 : 4 ].max)
     end
@@ -147,14 +138,15 @@ module ProgressChart
       (indexed? ? PEAK : scale.last) * Trend::HEADROOM
     end
 
-    def y(value)
-      Trend::HEIGHT * (1 - (value / ceiling))
-    end
-
     def top(value)
       (100.0 - (100.0 * value / ceiling)).round(2)
     end
 
+    def pct(value)
+      (100.0 * value / WIDTH).round(2)
+    end
+
+    # 12.5 or 12, never 12.0, so the paths stay short.
     def num(value)
       rounded = value.to_f.round(2)
       rounded == rounded.to_i ? rounded.to_i.to_s : rounded.to_s

@@ -14,9 +14,9 @@ module Entries
 
     private
 
-    # Back to the window and projects the click came from, with the panel open.
+    # Back to the chart's view the click came from, with the panel open.
     def back_params
-      params.permit(:range, :repo, repo: []).to_h.symbolize_keys.merge(tag: "1").compact_blank
+      params.permit(*ProgressHelper::PROGRESS_PARAMS).to_h.symbolize_keys.merge(tag: "1").compact_blank
     end
   end
 end

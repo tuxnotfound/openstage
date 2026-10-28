@@ -1,0 +1,111 @@
+<%# The projects under the chart, its key: a row per project, a column per
+    number, each cell the project's value over the window, drawn cells in
+    ink. A row's box draws it or not, and Only shows it alone; each is a link
+    to its view, and the last project in view keeps its box. On the
+    dashboard (manage) a row also has Edit and whether the builder's page
+    lists it, and each cell the switch for what visitors see, or Set up; a
+    project hidden from the page comes last, with no box. On a phone each row
+    stacks, with only the numbers it counts.
+    view: a ProgressViewSerializer's attributes; path_for: the page's address
+    for some params changed; back: the view's params, for the forms. %>
+<% table = view[:table] %>
+<% back = local_assigns.fetch(:back, {}) %>
+<% columns = table[:columns].index_by { |column| column[:key] } %>
+<% on = table[:rows].count { |row| row[:on] } %>
+<div class="mt-5" data-chart-table>
+  <% if table[:rows].empty? %>
+    <p class="os-sm os-ink2">No repo has commits here yet. Your public repos appear once the first sync is done.</p>
+  <% else %>
+    <table class="w-full border-collapse text-sm max-md:block">
+      <caption class="sr-only">Projects: what the chart draws, and each number over the <%= view[:words] %></caption>
+      <thead class="max-md:block">
+        <tr class="text-xs text-ink-3 max-md:flex">
+          <th scope="col" class="w-full pt-1.5 pb-2 text-left font-bold">
+            <span class="flex items-center gap-3">Projects
+              <%= link_to "Show all", path_for.call(projects: []), class: "os-link rounded-md px-1.5 text-[13px] no-underline" if view[:selected].any? %>
+            </span>
+          </th>
+          <% if local_assigns[:manage] %>
+            <th scope="col" class="w-px whitespace-nowrap pt-1.5 pb-2 pl-[18px] text-right font-bold max-md:hidden">Your page</th>
+          <% end %>
+          <% table[:columns].each do |column| %>
+            <% drawn = view[:drawn].include?(column[:key]) %>
+            <th scope="col" class="whitespace-nowrap pt-1.5 pb-2 pl-[18px] text-right font-bold max-md:hidden <%= 'text-ink' if drawn %>">
+              <span class="inline-flex items-center gap-[7px]">
+                <span class="<%= 'invisible' unless drawn %>"><%= render "charts/key", line: chart_line(view, column[:key]) %></span><%= column[:label] %>
+              </span>
+            </th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody class="max-md:block">
+        <% table[:rows].each do |row| %>
+          <% name_css = "truncate font-bold #{row[:drawable] ? ('text-ink-2' unless row[:on]) : 'font-semibold text-ink-3'}" %>
+          <tr class="group border-t border-line max-md:grid max-md:grid-cols-3 max-md:gap-x-3 max-md:gap-y-2.5 max-md:py-3" data-chart-row="<%= row[:repo] %>">
+            <th scope="row" class="py-2.5 text-left font-normal max-md:col-span-3 max-md:py-0">
+              <span class="flex min-w-0 items-center gap-2.5">
+                <% if row[:drawable] %>
+                  <% after = chart_projects_toggled(view, row[:repo]) %>
+                  <% box = capture do %>
+                    <span class="<%= project_class(row[:rank]) %> inline-flex size-[18px] flex-none items-center justify-center rounded-[5px] border-2 <%= row[:on] ? 'border-(--project) bg-(--project) text-(--on-project)' : 'border-ink-3' %>" aria-hidden="true">
+                      <% if row[:on] %>
+                        <svg viewBox="0 0 12 12" class="size-3"><path d="M2.4 6.3l2.4 2.4 4.8-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      <% else %>
+                        <span class="size-2 rounded-[2px] bg-(--project)"></span>
+                      <% end %>
+                    </span>
+                    <span class="<%= name_css %>"><%= row[:name] %></span>
+                  <% end %>
+                  <% if after %>
+                    <%= link_to box, path_for.call(projects: after), role: "checkbox", aria: { checked: row[:on].to_s }, class: "inline-flex min-h-7 min-w-0 items-center gap-2.5" %>
+                  <% else %>
+                    <span role="checkbox" aria-checked="true" aria-disabled="true" title="The chart keeps at least one project." class="inline-flex min-h-7 min-w-0 items-center gap-2.5"><%= box %></span>
+                  <% end %>
+                  <% unless row[:on] && on == 1 %>
+                    <%= link_to "Only", path_for.call(projects: [ row[:repo] ]), aria: { label: "Show only #{row[:name]}" },
+                          class: "min-h-7 shrink-0 rounded-md px-1.5 py-0.5 text-[13px] font-bold text-accent-ink opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100 max-md:opacity-100" %>
+                  <% end %>
+                <% else %>
+                  <span class="<%= name_css %>"><%= row[:name] %></span>
+                <% end %>
+                <%= link_to "Edit", row[:edit], class: "os-btn2 ml-auto h-[30px] shrink-0 rounded-[9px] px-3 text-[13px]", aria: { label: "Edit #{row[:name]}" } if row[:edit] %>
+              </span>
+            </th>
+            <% if local_assigns[:manage] %>
+              <td class="py-2.5 pl-[18px] text-right max-md:p-0 max-md:text-left">
+                <span class="os-xs os-muted mb-1 block md:hidden">Your page</span>
+                <% if row[:page] %>
+                  <%= form_with url: row[:page][:path], method: :patch, class: "inline-flex", data: { turbo: false } do %>
+                    <%= hidden_field_tag :included, (!row[:page][:on]).to_s, id: nil %>
+                    <% back.each do |key, value| %><%= hidden_field_tag key, value, id: nil %><% end %>
+                    <button type="submit" role="switch" aria-checked="<%= row[:page][:on] %>" aria-label="Show <%= row[:name] %> on your page" class="os-switch"></button>
+                  <% end %>
+                <% end %>
+              </td>
+            <% end %>
+            <% row[:cells].each do |cell| %>
+              <% column = columns.fetch(cell[:key]) %>
+              <% lit = row[:on] && cell[:shown] && view[:drawn].include?(cell[:key]) %>
+              <td class="py-2.5 pl-[18px] text-right max-md:p-0 max-md:text-left <%= 'max-md:hidden' if cell[:value].nil? && cell[:setup].nil? %>">
+                <span class="os-xs os-muted mb-1 block md:hidden"><%= column[:label] %></span>
+                <span class="inline-flex items-center gap-2.5">
+                  <% if cell[:setup] %>
+                    <%= link_to "Set up", cell[:setup], aria: { label: "Set up #{row[:name]}'s site visits" },
+                          class: "inline-flex min-h-6 items-center text-[13px] font-bold text-accent-ink underline underline-offset-3" %>
+                  <% else %>
+                    <span class="os-num text-[15px] tracking-[-.02em] <%= lit ? 'text-ink' : 'text-ink-3' %> <%= 'font-medium' unless cell[:shown] %>"><%= cell[:value] || "–" %></span>
+                  <% end %>
+                  <% unless cell[:pick].nil? %>
+                    <%= button_to "", row[:switch], method: :patch, params: back.merge(number: cell[:key], shown: (!cell[:pick]).to_s),
+                          role: "switch", aria: { checked: cell[:pick], label: "Show #{column[:word]} for #{row[:name]}" }, class: "os-switch",
+                          form: { data: { turbo: false } } %>
+                  <% end %>
+                </span>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</div>

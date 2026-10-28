@@ -101,6 +101,12 @@ class GithubRepo < ApplicationRecord
     hidden_numbers.exclude?(number)
   end
 
+  # Whether its visitors see a number it counts: one its builder shows and,
+  # for site visits, one that still counts.
+  def public_number?(number)
+    number == "visits" ? site_visits_public? : shows?(number)
+  end
+
   private
 
   def hidden_numbers_known

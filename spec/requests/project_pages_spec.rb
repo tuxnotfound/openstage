@@ -60,10 +60,13 @@ RSpec.describe "Project pages", type: :request do
     expect(response.body).to include(%(rel="canonical" href="http://www.example.com/builder/side.app"))
   end
 
-  it "opens on another window from the pills" do
+  it "opens on another window from the pills, with no figure over the chart" do
     get "/builder/side.app", params: { range: "30d" }
 
-    expect(response.body).to include("Commits · last 30 days")
+    page = Nokogiri::HTML(response.body)
+    expect(page.at_css("nav[aria-label='Time range'] a[aria-current='page']").text).to eq("30 days")
+    expect(page.at_css("[data-react='progress'] svg[role='img']")["aria-label"]).to eq("7-day average of commits per day by project, last 30 days")
+    expect(page.css("[data-react='progress'] .os-big, [data-chart-table]")).to be_empty
   end
 
   describe "a project the builder hid" do
@@ -91,14 +94,14 @@ RSpec.describe "Project pages", type: :request do
     end
 
     it "answers the chart's other windows for the builder alone, and never into a shared cache" do
-      params = { range: "30d", repo: [ "builder/side.app" ], reveal: "builder/side.app" }
+      params = { range: "30d", project: "builder/side.app", reveal: "builder/side.app" }
       get "/api/progress/builder", params: params
-      expect(response.parsed_body["commits"]).to eq(0)
+      expect(response.parsed_body["numbers"]).to eq([])
       expect(response.headers["Cache-Control"]).to include("public")
 
       sign_in_as(user)
       get "/api/progress/builder", params: params
-      expect(response.parsed_body["commits"]).to eq(1)
+      expect(response.parsed_body["numbers"].map { |number| number["value"] }).to eq([ "1" ])
       expect(response.headers["Cache-Control"]).to include("private")
     end
   end
@@ -149,42 +152,50 @@ RSpec.describe "Project pages", type: :request do
     end
 
     def toggles
-      Nokogiri::HTML(response.body).css("nav[aria-label='Numbers'] a").map { |toggle| [ toggle.text.squish, toggle["aria-current"] == "true" ] }
+      Nokogiri::HTML(response.body).css("[aria-label='Numbers on the chart'] > *").map { |toggle| [ toggle.text.squish, toggle["aria-current"] == "true" ] }
     end
 
-    it "puts a toggle per number above the chart, both on, the chart comparing them" do
+    it "puts a toggle per number above the chart, both drawn, the chart comparing them" do
       get "/builder/side.app"
       expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ] ])
-      expect(response.body).to include("Commits and site visits · last 12 months", "Solid: commits. Dotted: site visits.")
+      expect(response.body).to include("Commits solid and site visits dotted, each against its own peak in the window")
 
       get "/builder/side.app", params: { show: "visits", range: "30d" }
       page = Nokogiri::HTML(response.body)
-      expect(toggles).to eq([ [ "Commits 1", false ], [ "Site visits 1,204", true ] ])
-      expect(page.at_css(".os-big").text).to eq("1,204")
-      expect(response.body).to include("800 visitors", "Visits to side.example per day, counted by Openstage&#39;s script")
+      expect(toggles).to eq([ [ "+ Commits 1", false ], [ "Site visits 1,204", true ] ])
+      expect(page.css(".os-big")).to be_empty
+      expect(response.body).to include("A 7-day average of site visits per day.")
       props = JSON.parse(page.at_css("#progress-props").text)
-      expect(props).to include("numbers" => [ "visits" ], "endpoint" => "/api/progress/builder?site=1")
-      expect(props.dig("initial", "site")).to include("value" => "1,204", "compare" => a_hash_including("ticks"))
+      expect(props).to include("mode" => "project", "endpoint" => "/api/progress/builder?project=builder%2Fside.app")
+      expect(props["initial"]).to include("drawn" => [ "visits" ], "defaultShow" => %w[commits visits])
+    end
+
+    it "lets the builder hide its commits from visitors, which leaves site visits alone on the chart" do
+      repo.update!(hidden_numbers: [ "commits" ])
+      get "/builder/side.app"
+
+      expect(toggles).to eq([ [ "Site visits 1,204", true ] ])
     end
 
     it "keeps them off the page while switched off, or before Pro on a second site" do
       repo.update!(hidden_numbers: [ "visits" ])
       get "/builder/side.app"
-      expect(toggles).to be_empty
+      expect(toggles).to eq([ [ "Commits 1", true ] ])
 
       repo.update!(hidden_numbers: [])
       user.update!(pro: false)
       other = create(:github_repo, user: user, site_source: "script")
       other.site_visit_days.create!(day: Date.current, visits: 5000, visitors: 10)
       get "/builder/side.app"
-      expect(toggles).to be_empty
+      expect(toggles).to eq([ [ "Commits 1", true ] ])
     end
 
     it "shows them on the builder's page too, beside every project's commits" do
       get "/builder"
 
       expect(toggles).to eq([ [ "Commits 2", true ], [ "Site visits 1,204", true ] ])
-      expect(response.body).to include("side.app · site visits")
+      row = Nokogiri::HTML(response.body).at_css("[data-chart-row='builder/side.app']")
+      expect(row.css("td").map { |cell| cell.text.squish }).to eq([ "Commits 1", "Site visits 1,204" ])
     end
   end
 

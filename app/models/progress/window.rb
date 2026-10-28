@@ -56,6 +56,17 @@ module Progress
       back(first)..back(today)
     end
 
+    # The whole range, wherever the activity in view begins: the days a
+    # number's total for the window counts. nil for all time.
+    def span
+      range_start..today unless range == "all"
+    end
+
+    # The same stretch just before the whole range; nil for all time.
+    def span_before
+      back(range_start)..back(today) unless range == "all"
+    end
+
     def buckets
       @buckets ||= spans.each_with_index.map do |(from, to, monday), index|
         Period::Bucket.new(index: index, first: from, last: to, monday: monday, current: (from..to).cover?(today))

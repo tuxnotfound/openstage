@@ -1,0 +1,7 @@
+<%# The window, at the top right of what it scopes: the same four on every
+    chart page, each a link to its view. css: the pills' place in their row. %>
+<nav class="os-pills <%= local_assigns[:css] %>" aria-label="Time range">
+  <% ProgressHelper::RANGES.each do |range, label| %>
+    <%= link_to label, path_for.call(range: range), class: "os-pill max-md:px-2.5", aria: { current: ("page" if view[:range] == range) } %>
+  <% end %>
+</nav>

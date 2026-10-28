@@ -1,14 +1,14 @@
 <%# The owner's backlog: entries with no project never show in a project
     view, and nothing is inferred from their text. One click tags a row and
-    the page redraws with the panel still open. %>
+    the page redraws with the panel still open. back: the chart filter's
+    params, so the view comes back as it was. %>
 <% untagged = section.tally.untagged %>
 <% open = params[:tag] == "1" %>
-<% back = params.permit(:range, :repo, repo: []).to_h %>
 <% if untagged.any? || open %>
   <% if untagged.any? %>
     <p class="os-xs os-muted mt-[18px]">
       <%= progress_untagged_line(section) %>
-      <%= link_to (open ? "Close" : "Tag them"), progress_view_path(user, tag: (open ? nil : "1")), class: "os-link text-[13px]" %>
+      <%= link_to (open ? "Close" : "Tag them"), progress_view_path(user, **back, tag: (open ? nil : "1")), class: "os-link text-[13px]" %>
     </p>
   <% end %>
 
@@ -29,9 +29,7 @@
               <% end %>
             <% end %>
             <%= form_with url: entry_project_path(item.id), method: :patch, data: { controller: "autosubmit" } do %>
-              <% back.each do |key, value| %>
-                <% Array(value).each do |one| %><%= hidden_field_tag(value.is_a?(Array) ? "#{key}[]" : key, one, id: nil) %><% end %>
-              <% end %>
+              <% back.each do |key, value| %><%= hidden_field_tag key, value, id: nil %><% end %>
               <select name="repo_name" aria-label="Other project" data-action="change->autosubmit#submit"
                       class="h-[30px] cursor-pointer rounded-[10px] border border-line bg-surface px-1.5 text-xs text-ink-2">
                 <option value="">Other…</option>

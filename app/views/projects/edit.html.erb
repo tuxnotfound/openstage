@@ -51,14 +51,19 @@
     <div class="os-row flex items-center gap-3.5 py-3">
       <span class="min-w-0 flex-auto">
         <span class="font-bold">Commits</span> <span class="os-num os-muted text-sm"><%= number_with_delimiter(overview.commits) %></span>
-        <span class="os-xs os-muted block">Yours, from GitHub. Always shown: the page is built on them.</span>
+        <span class="os-xs os-muted block">Yours, from GitHub, merges and dependency bumps left out.</span>
       </span>
-      <span class="os-xs os-muted whitespace-nowrap">Always shown</span>
-      <button type="button" role="switch" aria-checked="true" aria-disabled="true" aria-label="Show commits on <%= @repo.name %>'s page" class="os-switch cursor-not-allowed opacity-50"></button>
+      <span class="os-xs os-muted whitespace-nowrap"><%= @repo.shows?("commits") ? "Shown" : "Hidden" %></span>
+      <%= form_with url: project_numbers_path(@repo), method: :patch, data: { turbo: false } do %>
+        <%= hidden_field_tag :number, "commits", id: nil %>
+        <%= hidden_field_tag :shown, (!@repo.shows?("commits")).to_s, id: nil %>
+        <%= hidden_field_tag :back, "project", id: nil %>
+        <button type="submit" role="switch" aria-checked="<%= @repo.shows?("commits") %>" aria-label="Show commits on <%= @repo.name %>'s page" class="os-switch"></button>
+      <% end %>
     </div>
     <%= render "projects/site_visits", repo: @repo, overview: overview %>
 
-    <p class="os-note mt-2">Values are the last 30 days. A number with nothing to show stays off the page whatever its switch says.</p>
+    <p class="os-note mt-2">Values are the last 30 days. A number with nothing to show stays off the page whatever its switch says. The same switches sit beside each value in your dashboard's table.</p>
   </section>
 
   <section class="os-panel min-w-0 flex-[1_1_320px]" aria-labelledby="what-it-is">

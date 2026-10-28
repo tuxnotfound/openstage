@@ -46,8 +46,8 @@ class DashboardController < ApplicationController
     load_sync
     load_badge
     load_week
-    @activity = activity
-    @activity_lines = activity_lines if @activity
+    @chart = activity_chart
+    @activity = @chart&.section
     @show_pro_activated = params[:pro] == "activated"
   end
 
@@ -78,16 +78,13 @@ class DashboardController < ApplicationController
     @logged_today = current_user.entries.visible.where(occurred_at: Date.current.all_day).exists?
   end
 
-  # What the chart draws for each project, and the table that switches it.
-  def activity_lines
-    lines = Progress::LinesService.new(user: current_user, section: @activity)
-    DashboardLinesSerializer.new(lines, @activity) if lines.call
-  end
-
-  # The public page's chart of the builder's own work, every project in view.
-  def activity
-    service = Progress::ComposeService.new(user: current_user, rolling: true,
-                                           range: params[:range].presence_in(Progress::Window::RANGES) || ACTIVITY_RANGE)
-    service.section if service.call
+  # The public page's chart of the builder's own work, as their visitors see
+  # it, over the table of projects where they pick what visitors see. Its
+  # projects param is the chart's (Progress::Filter); repo filters the entries.
+  def activity_chart
+    filter = Progress::Filter.from(params, repo: false)
+    service = Progress::ChartService.new(user: current_user, range: filter.range || ACTIVITY_RANGE, repos: filter.projects,
+                                         show: filter.show, builder: true)
+    service if service.call
   end
 end

@@ -23,57 +23,77 @@ export type ChartView = {
 
 export type ProgressRange = "30d" | "90d" | "12m" | "all"
 
-export type ProgressView = {
-  range: ProgressRange
-  selected: string[]
-  filtered: boolean
-  words: string
-  scope: string
-  commits: number
-  change: { arrow: string | null; words: string | null; up: boolean | null }
-  shares: { repo: string; name: string; rank: number; commits: number; percent: number }[]
-  kpis: string
-  // value: the project's commits in the window, while it is in view.
-  projects: { repo: string; name: string; rank: number; on: boolean; value: string | null }[]
-  chart: ChartView
-  shipped: { heading: string; empty: string; items: ShippedItem[] }
-  // The site visits the chart can draw beside the commits, for the same window.
-  site: SiteView | null
-  // The dashboard's chart, with the lines switched off left out, and its table.
-  lines: LinesView | null
+// A chart filter's chart (CompareChartSerializer): each line carries its
+// project and its number, and the browser gives it its number's line style.
+export type CompareChartView = {
+  // repo: the project's repo; number: the number's key.
+  paths: { d: string; rank: Rank; number: string; repo: string }[]
+  ticks: { value: string; top: number }[]
+  // values: one per number in heads, "–" where the project counts none.
+  columns: { left: number; width: number; mark: number; title: string; rows: { repo: string; name: string; rank: Rank; values: string[] }[] }[]
+  // The numbers with lines, in the pages' order: the tooltip's columns.
+  heads: string[]
+  axis: string[]
+  ariaLabel: string
+  // As the server's first paint writes it; when the chart compares numbers,
+  // the browser names the line styles between noteParts' before and after.
+  note: string
+  noteParts: { before: string; after: string } | null
+  none: string
+  empty: boolean
+  indexed: boolean
 }
 
-// A cell of the dashboard's table: the window's value and its switch; setup:
-// where to start counting a number the project has none of.
-export type LineCell = { value: string | null; on: boolean; setup: string | null }
+// A number the page's projects show: its total for the projects in view,
+// each one's part of it for the toggle's bar, and its change on the dashboard.
+export type NumberView = {
+  key: string
+  label: string
+  // Its name inside a sentence: "site visits", "MRR".
+  word: string
+  value: string
+  split: { repo: string; rank: Rank; value: number }[]
+  change: AnalyticsChange | null
+}
 
-export type LinesRow = {
+// A cell of the projects' table: the project's value over the window, or
+// null; shown: whether visitors see it; pick: the dashboard's switch for
+// what visitors see, null without one; setup: where to start counting.
+export type TableCell = { key: string; value: string | null; shown: boolean; pick: boolean | null; setup: string | null }
+
+export type TableRow = {
   repo: string
   name: string
   rank: Rank
-  // The project's own view; null without a synced repo behind it.
+  // In view on the chart; drawable: on the builder's page, so it has a box.
+  on: boolean
+  drawable: boolean
+  cells: TableCell[]
+  // The dashboard's: the project's own view, whether the builder's page
+  // lists it (GithubReposController's path to switch it), and
+  // Projects::NumbersController's path for its switches.
   edit: string | null
-  // Whether the builder's page shows it, and GithubReposController's path to switch it.
   page: { on: boolean; path: string } | null
-  // Projects::NumbersController's path for this project; null without a
-  // synced repo behind it, so nothing to save.
   switch: string | null
-  commits: LineCell
-  visits: LineCell
 }
 
-export type LinesView = { chart: ChartView; rows: LinesRow[]; visits: string | null }
+// columns: a number each, with its names, whether a project here shows it or not.
+export type TableView = { columns: { key: string; label: string; word: string }[]; rows: TableRow[] }
 
-// chart: the visits alone; compare: commits and visits, each line against its own peak.
-export type SiteView = {
-  value: string
-  visitors: string
-  chart: ChartView
-  compare: ChartView
+export type ProgressView = {
+  range: ProgressRange
+  // What a number's total covers: "last 90 days", "all time".
+  words: string
+  // The projects in view; none for all of them.
+  selected: string[]
+  numbers: NumberView[]
+  // The numbers drawn, in line order; defaultShow: the page's own.
+  drawn: string[]
+  defaultShow: string[]
+  chart: CompareChartView
+  table: TableView | null
+  shipped: { heading: string; empty: string; items: ShippedItem[] } | null
 }
-
-// The numbers a chart can draw.
-export type ChartNumber = "commits" | "visits"
 
 export type ShippedItem = {
   id: number
