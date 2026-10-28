@@ -47,18 +47,6 @@ module ChartFilterHelper
     view[:chart][:indexed] ? view[:drawn].index(key).to_i : 0
   end
 
-  # A value against the window before, as the pages write a change: the
-  # arrow, the percent and whether it went up ("±" and "0%", uncoloured, for
-  # none); nil with nothing before to compare with.
-  def chart_change(value, previous)
-    return unless previous&.positive?
-
-    percent = ((100.0 * value / previous) - 100).round
-    return { arrow: "±", text: "0%", up: nil } if percent.zero?
-
-    { arrow: percent.negative? ? "▼" : "▲", text: "#{percent.abs}%", up: percent.positive? }
-  end
-
   # The colour of a change's arrow; only the arrow wears it.
   def chart_tone(up)
     { true => "text-up", false => "text-down" }[up]

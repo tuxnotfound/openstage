@@ -5,7 +5,6 @@
 # drawn; the one chart; and the table of rows under it. filter: a
 # Progress::ChartService or an Analytics::ReportService.
 class ChartFilterSerializer < ApplicationSerializer
-  include ChartFilterHelper
   include ActionView::Helpers::NumberHelper
 
   # changes: whether the toggles carry their change; table: whether the view
@@ -38,6 +37,6 @@ class ChartFilterSerializer < ApplicationSerializer
     number = total.number
     { key: number.key, label: number.label, word: number.word, group: number.group, value: total.value ? number_with_delimiter(total.value) : "–",
       split: total.split.map { |row, count| { repo: row.key, rank: row.rank, value: count } },
-      change: (chart_change(total.value, total.previous) if @changes) }
+      change: (Progress::Change.of(total.value, total.previous)&.to_h if @changes) }
   end
 end

@@ -7,7 +7,6 @@
 # for the builder, in grey), or Set up stands where a project counts no site
 # visits; a project hidden from the page comes last, with no box.
 class ProjectsTableSerializer < ApplicationSerializer
-  include ChartFilterHelper
   include ActionView::Helpers::NumberHelper
   include Rails.application.routes.url_helpers
 
@@ -43,7 +42,11 @@ class ProjectsTableSerializer < ApplicationSerializer
     value = @chart.value(number, row) if listed
     { key: key, value: (number_with_delimiter(value) if listed), shown: row.shows?(key),
       pick: (row.repo.shows?(key) if @chart.builder && row.repo && row.counts?(key)), setup: setup(row, key),
-      change: (chart_change(value, @chart.previous(number, [ row ])) if @changes && row.shows?(key)) }
+      change: (change(value, number, row) if @changes && row.shows?(key)) }
+  end
+
+  def change(value, number, row)
+    Progress::Change.of(value, @chart.previous(number, [ row ]))&.to_h
   end
 
   def setup(row, key)
