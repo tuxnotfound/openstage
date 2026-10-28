@@ -46,7 +46,8 @@ export default function NumberToggles({ numbers, lines, indexed, changes, groups
   const all = grouped(numbers, groups)
 
   // The ruler holds every group's label and toggle as they would look, out
-  // of sight, so the row knows how many fit before it shows them.
+  // of sight and clipped, so the row knows how many fit before it shows
+  // them, and the page never scrolls sideways to a row it does not show.
   useLayoutEffect(() => {
     const box = row.current
     const sample = ruler.current
@@ -81,12 +82,14 @@ export default function NumberToggles({ numbers, lines, indexed, changes, groups
             {open ? "Show fewer" : `+ ${tail.length} more`}
           </button>
         )}
-        <div ref={ruler} className="pointer-events-none invisible absolute top-0 left-0 flex gap-2" aria-hidden="true" inert>
-          {all.flatMap((group) => [
-            ...(group.label ? [<Label key={`label-${group.label}`} label={group.label} />] : []),
-            ...group.numbers.map((number) => <Toggle key={number.key} number={number} line={line(number)} full={full} changes={changes} />),
-          ])}
-          <span className="h-11 px-3 text-[13px] font-bold whitespace-nowrap">+ {numbers.length} more</span>
+        <div className="pointer-events-none invisible absolute inset-x-0 top-0 h-0 overflow-hidden" aria-hidden="true" inert>
+          <div ref={ruler} className="flex w-max gap-2">
+            {all.flatMap((group) => [
+              ...(group.label ? [<Label key={`label-${group.label}`} label={group.label} />] : []),
+              ...group.numbers.map((number) => <Toggle key={number.key} number={number} line={line(number)} full={full} changes={changes} />),
+            ])}
+            <span className="h-11 px-3 text-[13px] font-bold whitespace-nowrap">+ {numbers.length} more</span>
+          </div>
         </div>
       </div>
       {open && (
