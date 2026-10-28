@@ -1,11 +1,11 @@
-import type { CompareChartView, NumberView, Rank } from "../types"
+import type { CompareChartView, NumberView } from "../types"
 
 // The chart filter's own rules in the browser, as the canvas boards drew
-// them (chartkit.js): which line each drawn number takes and in what
-// colour, what a toggle's click does, the note's line styles, the addresses
-// of a view, where a line stands at a point, where the tooltip sits, and
-// how many toggles fit a row. Every number comes from the server; this only
-// arranges what it sent.
+// them (chartkit.js): which line each drawn number takes, what a toggle's
+// click does, the note's line styles, the addresses of a view, where a line
+// stands at a point, where the tooltip sits, and how many toggles fit a
+// row. Every number and colour comes from the server; this only arranges
+// what it sent.
 
 export const MAX_DRAWN = 3
 // A number's line by its place in the line order: solid, dotted, dashed.
@@ -18,14 +18,6 @@ const HEIGHT = 280
 
 // The line each drawn number takes, 0 to 2, by its key.
 export type Lines = Record<string, number>
-
-// The class that gives a line, a box or a dot its row's colour, as
-// ProgressHelper#project_class: by rank, the seventh project on grey, and
-// ink for none (the builder's own page, on analytics).
-export function projectClass(rank: Rank): string {
-  if (rank === null) return "os-project-none"
-  return rank < 6 ? `os-project-${rank + 1}` : "os-project-other"
-}
 
 // The lines of the numbers drawn, in line order.
 export function linesFrom(drawn: string[]): Lines {

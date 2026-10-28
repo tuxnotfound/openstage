@@ -19,6 +19,7 @@ RSpec.describe AnalyticsViewSerializer do
     expect(json["numbers"].sole).to include("key" => "commits", "group" => "On GitHub", "change" => { "arrow" => "±", "text" => "0%", "up" => nil })
     expect(json["table"]["rows"].map { |row| [ row["name"], row["cells"].sole.slice("value", "change") ] })
       .to eq([ [ "Your page", { "value" => nil, "change" => nil } ], [ "app", { "value" => "1", "change" => { "arrow" => "±", "text" => "0%", "up" => nil } } ] ])
+    expect(json["table"]["rows"].pluck("colorClass")).to eq(%w[os-project-none os-project-1])
     expect(json).to include("changesNote" => "Changes compare each value with the 30 days before.", "quiet" => "in the last 30 days")
   end
 

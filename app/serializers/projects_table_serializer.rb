@@ -30,13 +30,14 @@ class ProjectsTableSerializer < ApplicationSerializer
 
   private
 
+  # color_class: the class its box wears; nil for a row with no box.
   def row_of(row)
-    { key: row.key, name: row.name, rank: row.rank, on: row.on, drawable: true,
+    { key: row.key, name: row.name, color_class: row.color_class, on: row.on, drawable: true,
       cells: @chart.cells(row).map { |cell| cell_of(cell, row.repo) } }.merge(manage_parts(row.repo))
   end
 
   def off_page_row(repo)
-    { key: repo.full_name, name: repo.name, rank: nil, on: false, drawable: false,
+    { key: repo.full_name, name: repo.name, color_class: nil, on: false, drawable: false,
       cells: @chart.columns.map { |number| { key: number.key, value: nil, shown: false, pick: nil, link: nil, change: nil } } }.merge(manage_parts(repo))
   end
 

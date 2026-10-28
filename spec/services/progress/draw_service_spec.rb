@@ -16,7 +16,7 @@ RSpec.describe Progress::DrawService do
   let(:lib) { row("me/lib", %w[commits], rank: 1) }
 
   def row(key, shown, on: true, rank: 0)
-    Progress::Row.new(key: key, name: key.split("/").last, rank: rank, repo: nil, on: on, counted: shown, shown: shown)
+    Progress::Row.new(key: key, name: key.split("/").last, rank: rank, color_class: "os-project-#{rank + 1}", repo: nil, on: on, counted: shown, shown: shown)
   end
 
   def draw(rows = [ app, lib ], **options)

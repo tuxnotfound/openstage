@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { apiUrl, boxed, fitting, lineOf, lineOrder, linesFrom, noteOf, pageUrl, pathTops, projectClass, reconcile, sentence, tipLeft, toggled, within } from "../../app/javascript/charts/filter/lines"
+import { apiUrl, boxed, fitting, lineOf, lineOrder, linesFrom, noteOf, pageUrl, pathTops, reconcile, sentence, tipLeft, toggled, within } from "../../app/javascript/charts/filter/lines"
 import type { CompareChartView, NumberView } from "../../app/javascript/charts/types"
 
 const number = (key: string, label: string): NumberView => ({ key, label, word: label.toLowerCase(), group: "On GitHub", value: "1", split: [], change: null })
@@ -35,10 +35,6 @@ describe("the lines of the numbers drawn", () => {
   test("are solid for a number drawn alone on its own axis", () => {
     expect(lineOf({ visits: 1 }, "visits", false)).toBe(0)
     expect(lineOf({ visits: 1 }, "visits", true)).toBe(1)
-  })
-
-  test("wear their row's colour, the seventh on grey, and ink for the builder's own page", () => {
-    expect([projectClass(0), projectClass(5), projectClass(6), projectClass(null)]).toEqual(["os-project-1", "os-project-6", "os-project-other", "os-project-none"])
   })
 })
 

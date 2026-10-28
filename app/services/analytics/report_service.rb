@@ -92,7 +92,8 @@ module Analytics
     def row(key, name, rank, repo, on)
       counted = Progress::Numbers::ALL.select { |number| counts.first_day(number.key, [ key ]) }
       shown = counted.select { |number| !number.pickable || repo.nil? || repo.picks?(number.key) }
-      Progress::Row.new(key: key, name: name, rank: rank, repo: repo, on: on, counted: counted.map(&:key), shown: shown.map(&:key))
+      Progress::Row.new(key: key, name: name, rank: rank, color_class: ProgressChart::Palette.project_class(rank), repo: repo, on: on,
+                        counted: counted.map(&:key), shown: shown.map(&:key))
     end
 
     def draw

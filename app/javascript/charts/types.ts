@@ -1,18 +1,19 @@
 // The views the API sends (app/serializers), camelCased: every number in
-// them is the server's, and the pages only arrange them (filter/lines.ts).
-
-export type Rank = number | null
+// them is the server's, and so is every colour (a class that sets
+// --project, ProgressChart::Palette): the pages only arrange them
+// (filter/lines.ts).
 
 export type ProgressRange = "30d" | "90d" | "12m" | "all"
 
 // A chart filter's chart (CompareChartSerializer): each line carries its
-// project and its number, and the browser gives it its number's line style.
+// project, its colour and its number, and the browser gives it its number's
+// line style.
 export type CompareChartView = {
   // key: the row's (TableRow); number: the number's.
-  paths: { d: string; rank: Rank; number: string; key: string }[]
+  paths: { d: string; colorClass: string; number: string; key: string }[]
   ticks: { value: string; top: number }[]
   // values: one per number in heads, "–" where the project counts none.
-  columns: { left: number; width: number; mark: number; title: string; rows: { key: string; name: string; rank: Rank; values: string[] }[] }[]
+  columns: { left: number; width: number; mark: number; title: string; rows: { key: string; name: string; colorClass: string; values: string[] }[] }[]
   // The numbers with lines, in the pages' order: the tooltip's columns.
   heads: string[]
   axis: string[]
@@ -31,8 +32,8 @@ export type CompareChartView = {
 export type Change = { arrow: string | null; text: string | null; up: boolean | null }
 
 // A number the page's rows show: its total for the rows in view, each one's
-// part of it for the toggle's bar, and its change on the dashboard and
-// analytics.
+// part of it for the toggle's bar, in its colour, and its change on the
+// dashboard and analytics.
 export type NumberView = {
   key: string
   label: string
@@ -41,7 +42,7 @@ export type NumberView = {
   // Where it happens, for the toggles grouped under it: "On GitHub".
   group: string
   value: string
-  split: { key: string; rank: Rank; value: number }[]
+  split: { key: string; colorClass: string; value: number }[]
   change: Change | null
 }
 
@@ -58,10 +59,11 @@ export type CellLink = { kind: "set_up" | "paused"; path: string }
 
 export type TableRow = {
   // Its repo's full name, or on analytics "page" for the builder's own
-  // page, which has no rank and draws in ink.
+  // page, which draws in ink.
   key: string
   name: string
-  rank: Rank
+  // The colour its box wears; null for a row with no box.
+  colorClass: string | null
   // In view on the chart; drawable: on the builder's page, so it has a box.
   on: boolean
   drawable: boolean

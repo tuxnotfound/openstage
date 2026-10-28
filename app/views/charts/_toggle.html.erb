@@ -22,7 +22,7 @@
   <% end %>
   <span class="absolute inset-x-3 bottom-[5px] flex h-[3px] gap-0.5 <%= 'opacity-45' unless drawn %>" aria-hidden="true">
     <% number[:split].each do |part| %>
-      <span class="<%= project_class(part[:rank]) %> min-w-[3px] rounded-[2px] bg-(--project)" style="flex: <%= part[:value] %> 1 0"></span>
+      <span class="<%= part[:color_class] %> min-w-[3px] rounded-[2px] bg-(--project)" style="flex: <%= part[:value] %> 1 0"></span>
     <% end %>
   </span>
 <% end %>

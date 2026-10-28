@@ -13,11 +13,12 @@ module ProgressChart
     HEIGHT = Trend::HEIGHT
     PEAK = 100.0
 
-    # number: a Progress::Numbers::Number; values: one per point; total: its
-    # count over the window's days, without which it draws no line.
-    Line = Data.define(:repo, :name, :rank, :number, :values, :total)
+    # rank: its row's place in the table; color_class: the class it wears
+    # (Palette); number: a Progress::Numbers::Number; values: one per point;
+    # total: its count over the window's days, without which it draws no line.
+    Line = Data.define(:repo, :name, :rank, :color_class, :number, :values, :total)
     # values: one per number with lines; "–" where the project has none of it.
-    Row = Data.define(:repo, :name, :rank, :values)
+    Row = Data.define(:repo, :name, :color_class, :values)
     Column = Data.define(:left, :width, :mark, :title, :rows)
 
     # numbers: the numbers drawn, in line order. average: each point a 7-day
@@ -54,12 +55,12 @@ module ProgressChart
       @average
     end
 
-    # [d, rank, number's key, repo]: the later numbers in line order first,
-    # and each number's busiest line last, so it draws on top.
+    # [d, color class, number's key, repo]: the later numbers in line order
+    # first, and each number's busiest line last, so it draws on top.
     def paths
       lines.sort_by { |line| [ -numbers.index(line.number).to_i, line.values.sum ] }.map do |line|
         d = line.values.each_with_index.map { |value, i| "#{i.zero? ? 'M' : 'L'}#{num(x(i))} #{num(y(line.number, value))}" }.join(" ")
-        [ d, line.rank, line.number.key, line.repo ]
+        [ d, line.color_class, line.number.key, line.repo ]
       end
     end
 
@@ -106,9 +107,9 @@ module ProgressChart
     # A row per project with anything at the point, in the table's order:
     # by rank, after the builder's own page (analytics' one row with none).
     def rows_at(index)
-      projects = lines.select { |line| line.values[index].positive? }.map { |line| [ line.repo, line.name, line.rank ] }.uniq
-      projects.sort_by { |_, name, rank| [ rank || -1, name ] }.map do |repo, name, rank|
-        Row.new(repo: repo, name: name, rank: rank, values: lined.map { |number| value_at(repo, number, index) })
+      projects = lines.select { |line| line.values[index].positive? }.map { |line| [ line.repo, line.name, line.rank, line.color_class ] }.uniq
+      projects.sort_by { |_, name, rank| [ rank || -1, name ] }.map do |repo, name, _rank, color_class|
+        Row.new(repo: repo, name: name, color_class: color_class, values: lined.map { |number| value_at(repo, number, index) })
       end
     end
 

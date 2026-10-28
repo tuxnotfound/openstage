@@ -8,7 +8,7 @@ import type { TableCell, TableRow } from "../../app/javascript/charts/types"
 const siteRow = (id: number) => `/projects/${id}/edit?site=open#site-visits`
 const visits = (cell: Partial<TableCell>): TableCell => ({ key: "visits", value: null, shown: false, pick: null, link: null, change: null, ...cell })
 const row = (name: string, cell: TableCell): TableRow =>
-  ({ key: `me/${name}`, name, rank: 0, on: true, drawable: true, cells: [cell], edit: null, page: null, switch: "/projects/1/numbers" })
+  ({ key: `me/${name}`, name, colorClass: "os-project-1", on: true, drawable: true, cells: [cell], edit: null, page: null, switch: "/projects/1/numbers" })
 
 const target = { go: () => {}, warm: () => {} }
 const rows: RowTargets = { box: () => target, only: () => target, all: null, refuse: () => {}, focus: () => {} }

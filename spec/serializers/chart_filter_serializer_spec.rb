@@ -24,7 +24,7 @@ RSpec.describe ChartFilterSerializer do
     expect(json).to include("range" => "30d", "words" => "last 30 days", "selected" => [ "me/app" ], "drawn" => [ "commits" ], "defaultShow" => [ "commits" ],
                             "table" => nil)
     expect(json["numbers"].sole).to include("key" => "commits", "group" => "On GitHub", "value" => "2", "change" => nil,
-                                            "split" => [ { "key" => "me/app", "rank" => 0, "value" => 2 } ])
+                                            "split" => [ { "key" => "me/app", "colorClass" => "os-project-1", "value" => 2 } ])
     expect(json["chart"]["paths"].map { |path| path["key"] }).to eq([ "me/app" ])
   end
 

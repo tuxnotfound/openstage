@@ -11,7 +11,8 @@ RSpec.describe ProgressChart::Compare do
   end
 
   def line(repo, number, values, rank: 0)
-    described_class::Line.new(repo: "builder/#{repo}", name: repo, rank: rank, number: number, values: values, total: values.sum)
+    described_class::Line.new(repo: "builder/#{repo}", name: repo, rank: rank, color_class: "os-project-#{rank + 1}", number: number, values: values,
+                              total: values.sum)
   end
 
   def chart(lines, numbers: [ commits, visits ], range: "90d", **options)
@@ -22,10 +23,10 @@ RSpec.describe ProgressChart::Compare do
     paths.map { |d, *| d.scan(/[ML][\d.]+ ([\d.]+)/).flatten.map(&:to_f).min }
   end
 
-  it "draws a line per project and number, each carrying its number, every number against its own peak" do
+  it "draws a line per project and number, each carrying its colour and its number, every number against its own peak" do
     compare = chart([ line("app", commits, [ 3, 1 ]), line("app", visits, [ 0, 400 ]) ])
 
-    expect(compare.paths.map { |path| path.drop(1) }).to eq([ [ 0, "visits", "builder/app" ], [ 0, "commits", "builder/app" ] ])
+    expect(compare.paths.map { |path| path.drop(1) }).to eq([ [ "os-project-1", "visits", "builder/app" ], [ "os-project-1", "commits", "builder/app" ] ])
     expect(compare.ticks.map(&:value)).to eq(%w[50% 100%])
     expect(tops(compare.paths).uniq.size).to eq(1)
   end
@@ -83,7 +84,7 @@ RSpec.describe ProgressChart::Compare do
 
   it "words a chart of pages by page, as analytics draws it, the builder's own page first in the tooltip" do
     views = Progress::Numbers.find("views")
-    own = described_class::Line.new(repo: "page", name: "Your page", rank: nil, number: views, values: [ 0, 5 ], total: 5)
+    own = described_class::Line.new(repo: "page", name: "Your page", rank: nil, color_class: "os-project-none", number: views, values: [ 0, 5 ], total: 5)
     expect(chart([ line("app", views, [ 0, 2 ]), own ], numbers: [ views ], per: "page").columns.last.rows.map(&:name)).to eq([ "Your page", "app" ])
 
     compare = chart([ line("app", commits, [ 3, 1 ]) ], per: "page")

@@ -37,7 +37,8 @@ RSpec.describe ProgressViewSerializer do
       json = view
 
       expect(json["numbers"]).to eq([ { "key" => "commits", "label" => "Commits", "word" => "commits", "group" => "On GitHub", "value" => "3", "change" => nil,
-                                        "split" => [ { "key" => "me/app", "rank" => 0, "value" => 2 }, { "key" => "me/lib", "rank" => 1, "value" => 1 } ] } ])
+                                        "split" => [ { "key" => "me/app", "colorClass" => "os-project-1", "value" => 2 },
+                                                    { "key" => "me/lib", "colorClass" => "os-project-2", "value" => 1 } ] } ])
       expect(json).to include("range" => "30d", "words" => "last 30 days", "selected" => [], "drawn" => [ "commits" ], "defaultShow" => [ "commits" ])
       expect(json["table"]["rows"].map { |row| [ row["name"], row["on"], row["cells"].map { |cell| cell["value"] } ] })
         .to eq([ [ "app", true, [ "2" ] ], [ "lib", true, [ "1" ] ] ])

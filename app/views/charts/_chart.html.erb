@@ -14,7 +14,7 @@
     <svg viewBox="0 0 <%= ProgressChart::Compare::WIDTH %> <%= ProgressChart::Compare::HEIGHT %>" preserveAspectRatio="none" role="img" aria-label="<%= chart[:aria_label] %>">
       <% chart[:paths].each do |path| %>
         <% dash = ChartFilterHelper::LINE_DASHES[chart_line(view, path[:number])] %>
-        <path d="<%= path[:d] %>" class="<%= project_class(path[:rank]) %> stroke-(--project)" fill="none" stroke-width="4.5" stroke-linejoin="round"
+        <path d="<%= path[:d] %>" class="<%= path[:color_class] %> stroke-(--project)" fill="none" stroke-width="4.5" stroke-linejoin="round"
               stroke-linecap="round" vector-effect="non-scaling-stroke" data-number="<%= path[:number] %>"<%= %( stroke-dasharray="#{dash}").html_safe if dash %>/>
       <% end %>
     </svg>

@@ -73,7 +73,7 @@ module Progress
     end
 
     def line(number, row)
-      ProgressChart::Compare::Line.new(repo: row.key, name: row.name, rank: row.rank, number: number,
+      ProgressChart::Compare::Line.new(repo: row.key, name: row.name, rank: row.rank, color_class: row.color_class, number: number,
                                        values: counts.per_point(number.key, row.key, window.buckets, average: average.present?),
                                        total: counts.sum(number.key, row.key, window.days))
     end

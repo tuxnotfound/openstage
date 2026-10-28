@@ -10,8 +10,20 @@ module ProgressChart
       dark: %w[#3987e5 #d95926 #199e70 #c98500 #d55181 #008300]
     }.freeze
     GRAY = { page: "#8A8F98", light: "#8A8E86", dark: "#6B7378" }.freeze
+    # The class of marks with no project, which wear ink: the builder's own
+    # page on analytics.
+    INK = "os-project-none".freeze
 
     module_function
+
+    # The class that gives a project's marks its colour on the pages
+    # (bg-(--project), stroke-(--project), text-(--on-project)): by rank, the
+    # 7th project on grey, and ink for no project.
+    def project_class(rank)
+      return INK if rank.nil?
+
+      rank < PROJECT_COLORS[:light].size ? "os-project-#{rank + 1}" : "os-project-other"
+    end
 
     # Text on a colour: dark when its luminance is over 0.2, as the page's
     # --color-on-project tokens are.

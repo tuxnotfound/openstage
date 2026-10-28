@@ -1,7 +1,7 @@
 import { Fragment, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
 import type { CompareChartView, NumberView } from "../types"
 import LineKey from "./LineKey"
-import { LINE_DASHES, lineOf, noteOf, pathTops, projectClass, tipLeft, type Lines } from "./lines"
+import { LINE_DASHES, lineOf, noteOf, pathTops, tipLeft, type Lines } from "./lines"
 
 // Draws a chart filter's chart as the server worked it out
 // (CompareChartSerializer), as charts/_chart renders the same view: a line
@@ -75,7 +75,7 @@ export default function CompareChart({ chart, numbers, lines, focus, height = ""
         <div className="os-axis" />
         <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} preserveAspectRatio="none" aria-hidden="true">
           {paths.map((path) => (
-            <path key={`${path.key}|${path.number}`} d={path.d} className={`${projectClass(path.rank)} stroke-(--project) transition-opacity duration-150`}
+            <path key={`${path.key}|${path.number}`} d={path.d} className={`${path.colorClass} stroke-(--project) transition-opacity duration-150`}
                   fill="none" strokeWidth="4.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke"
                   strokeDasharray={LINE_DASHES[line(path)] || undefined} style={{ opacity: hot(path) ? 1 : FADED }} />
           ))}
@@ -85,7 +85,7 @@ export default function CompareChart({ chart, numbers, lines, focus, height = ""
         {column && <div className="pointer-events-none absolute inset-y-0 z-[1] w-px bg-ink-3" style={{ left: `${x}%` }} aria-hidden="true" />}
         {marks.map(({ path, top }) => (
           <span key={`mark-${path.key}|${path.number}`} aria-hidden="true"
-                className={`${projectClass(path.rank)} pointer-events-none absolute z-[3] -mt-[5px] -ml-[5px] size-2.5 rounded-full bg-(--project) shadow-[0_0_0_2px_var(--color-fill)]`}
+                className={`${path.colorClass} pointer-events-none absolute z-[3] -mt-[5px] -ml-[5px] size-2.5 rounded-full bg-(--project) shadow-[0_0_0_2px_var(--color-fill)]`}
                 style={{ left: `${x}%`, top: `${top}%` }} />
         ))}
         {/* Mounted before any point is, so a screen reader hears the first one too. */}
@@ -138,7 +138,7 @@ function Tip({ chart, column, numbers, lines, x }: { chart: CompareChartView; co
           {column.rows.map((row) => (
             <Fragment key={row.key}>
               <span className="max-w-[150px] truncate">
-                <span className={`os-dot ${projectClass(row.rank)} mr-[7px] bg-(--project) align-[-1px] shadow-[0_0_0_1.5px_var(--color-ground)]`} />{row.name}
+                <span className={`os-dot ${row.colorClass} mr-[7px] bg-(--project) align-[-1px] shadow-[0_0_0_1.5px_var(--color-ground)]`} />{row.name}
               </span>
               {row.values.map((value, i) => <span key={chart.heads[i] ?? i} className="text-right font-bold whitespace-nowrap tabular-nums">{value}</span>)}
             </Fragment>

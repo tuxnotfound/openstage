@@ -15,12 +15,9 @@ module ProgressHelper
     project_page_path(user.username, project.repo.split("/").last, **params)
   end
 
-  # The class that gives marks a project's colour (bg-(--project) and the
-  # like): by rank, the 7th project on grey, and ink for no project.
+  # The class that gives marks a project's colour (ProgressChart::Palette).
   def project_class(rank)
-    return "os-project-none" if rank.nil?
-
-    rank < ProgressChart::Palette::PROJECT_COLORS[:light].size ? "os-project-#{rank + 1}" : "os-project-other"
+    ProgressChart::Palette.project_class(rank)
   end
 
   # "today", "yesterday", "3 days ago", "5 weeks ago", "4 months ago".

@@ -52,6 +52,7 @@ RSpec.describe ProjectsTableSerializer do
 
     expect(cells(json, "app")["visits"]).to eq("value" => "1,204", "shown" => false, "pick" => false, "link" => nil)
     expect(cells(json, "lib")["visits"]).to eq("value" => nil, "shown" => false, "pick" => nil, "link" => { "kind" => "set_up", "path" => site_row(lib) })
+    expect(json["rows"].map { |row| [ row["name"], row["colorClass"] ] }).to eq([ [ "app", "os-project-1" ], [ "lib", "os-project-2" ], [ "old", nil ] ])
     expect(json["rows"].last).to include("name" => "old", "drawable" => false, "on" => false)
     expect(json["rows"].last["cells"].pluck("link")).to eq([ nil, nil ])
     expect(json["rows"].last["page"]).to eq("on" => false, "path" => "/github_repos/#{user.github_repos.find_by(name: 'old').id}")

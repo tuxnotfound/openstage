@@ -74,7 +74,7 @@ module Api
     def cache_key(user, reveal)
       entries = user.entries.publicly_visible.pick(Arel.sql("COUNT(*)"), Arel.sql("MAX(entries.updated_at)"))
       today = Time.current.in_time_zone(user.zone).to_date
-      [ "progress-view/v2", user.id, *entries, user.github_repos.maximum(:updated_at), user.pro?, user.zone.tzinfo.identifier, today,
+      [ "progress-view/v3", user.id, *entries, user.github_repos.maximum(:updated_at), user.pro?, user.zone.tzinfo.identifier, today,
         site_stamp(user), filter.range, reveal, dashboard?(user), lone?, "show", *asked, "projects", *repos.sort ]
     end
 

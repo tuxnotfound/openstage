@@ -2,7 +2,7 @@ import type { CellLink, Change, TableCell, TableRow, TableView } from "../types"
 import type { Target } from "../useView"
 import ChangeWords from "./ChangeWords"
 import LineKey from "./LineKey"
-import { lineOf, projectClass, type Lines } from "./lines"
+import { lineOf, type Lines } from "./lines"
 
 // The rows under the chart, its key, as charts/_table renders them: a row
 // per project (per page on analytics), a column per number, each cell the
@@ -103,7 +103,7 @@ function Row({ row, table, drawn, alone, hot, rows, switches }: {
                      onChange={() => (box ? box.go() : rows.refuse())} onPointerEnter={box?.warm}
                      onFocus={() => { box?.warm(); rows.focus(row.key) }} onBlur={() => rows.focus(null)} />
               <span aria-hidden="true"
-                    className={`${projectClass(row.rank)} inline-flex size-[18px] flex-none items-center justify-center rounded-[5px] border-2 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent ${row.on ? "border-(--project) bg-(--project) text-(--on-project)" : "border-ink-3"}`}>
+                    className={`${row.colorClass ?? ""} inline-flex size-[18px] flex-none items-center justify-center rounded-[5px] border-2 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent ${row.on ? "border-(--project) bg-(--project) text-(--on-project)" : "border-ink-3"}`}>
                 {row.on
                   ? <svg viewBox="0 0 12 12" className="size-3"><path d="M2.4 6.3l2.4 2.4 4.8-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   : <span className="size-2 rounded-[2px] bg-(--project)" />}

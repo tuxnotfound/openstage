@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState, type ReactNode } from "react"
 import type { Change, NumberView } from "../types"
 import ChangeWords from "./ChangeWords"
 import LineKey from "./LineKey"
-import { MAX_DRAWN, fitting, lineOf, projectClass, type Lines } from "./lines"
+import { MAX_DRAWN, fitting, lineOf, type Lines } from "./lines"
 
 // The numbers above the chart, one row of toggles: a number's line while it
 // is drawn (a plus when not), its name, its total for the rows in view, a
@@ -155,7 +155,7 @@ function Toggle({ number, line, full, changes, events }: { number: NumberView; l
       {changes && number.change?.arrow && <ChangeText change={number.change} />}
       <span className={`absolute inset-x-3 bottom-[5px] flex h-[3px] gap-0.5 ${drawn ? "" : "opacity-45"}`} aria-hidden="true">
         {number.split.map((part) => (
-          <span key={part.key} className={`${projectClass(part.rank)} min-w-[3px] rounded-[2px] bg-(--project)`} style={{ flex: `${part.value} 1 0` }} />
+          <span key={part.key} className={`${part.colorClass} min-w-[3px] rounded-[2px] bg-(--project)`} style={{ flex: `${part.value} 1 0` }} />
         ))}
       </span>
     </button>
