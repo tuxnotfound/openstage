@@ -14,7 +14,7 @@ RSpec.describe ProgressChart::Palette do
     (high + 0.05) / (low + 0.05)
   end
 
-  it "colors the ten busiest projects, and no project and the rest not at all" do
+  it "colours the ten busiest projects, and no project and the rest not at all" do
     expect((0..11).map { |rank| described_class.project_color(rank) })
       .to eq(%w[#2f6ee0 #eb6834 #1baf7a #eda100 #e87ba4 #008300 #6250d6 #e34948 #9e8eff #7c3856] + [ nil, nil ])
     expect(described_class.project_color(nil)).to be_nil
@@ -22,6 +22,11 @@ RSpec.describe ProgressChart::Palette do
 
   it "gives the marks of the ten busiest projects their colour's class, no project ink, and the rest none" do
     expect([ 0, 9, 10, 25, nil ].map { |rank| described_class.project_class(rank) }).to eq([ "os-project-1", "os-project-10", nil, nil, "os-project-none" ])
+    expect([ 0, 9, 10, 25, nil ].map { |rank| described_class.colored?(rank) }).to eq([ true, true, false, false, true ])
+  end
+
+  it "draws a project standing alone in its colour, and in ink past the palette" do
+    expect([ 0, 9, 10 ].map { |rank| described_class.alone_class(rank) }).to eq([ "os-project-1", "os-project-10", "os-project-none" ])
   end
 
   it "sets the page's tokens to the same ten colours in each mode, and none past them" do

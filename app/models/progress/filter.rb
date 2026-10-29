@@ -30,6 +30,15 @@ module Progress
       new(range: params[:range], show: params[:show].presence || OLD_METRICS.fetch(metric, metric), projects: params[:projects].presence || params[:pages])
     end
 
+    # The projects a list keeps in view, by key; none for all of them. A list
+    # that names none of those with a colour, or every one, shows them all, as
+    # no list does, and a project past the palette never comes into view, as
+    # it draws no line. colored: the keys of the page's rows with a colour.
+    def self.in_view(named, colored)
+      kept = colored & Array(named)
+      kept.size == colored.size ? [] : kept
+    end
+
     def initialize(range: nil, show: nil, projects: nil)
       @range = range.to_s.presence_in(Window::RANGES)
       @show = items(show).select { |key| Numbers.find(key) }.uniq

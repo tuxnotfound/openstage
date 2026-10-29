@@ -27,7 +27,7 @@
 
 <%# A project past the palette has no colour: no dot by its name, and ink behind its picture. %>
 <% color = project_class(project.rank) %>
-<section class="os-panel <%= color || ProgressChart::Palette::INK %>" aria-label="<%= project.name %>">
+<section class="os-panel <%= ProgressChart::Palette.alone_class(project.rank) %>" aria-label="<%= project.name %>">
   <div class="flex flex-wrap items-start gap-x-9 gap-y-6">
     <div class="min-w-0 flex-[999_1_520px]">
       <div class="flex flex-wrap gap-2">

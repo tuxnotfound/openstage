@@ -12,8 +12,9 @@ module ProgressChart
     # Room over the top gridline, so a peak and the disc on it stay inside.
     HEADROOM = 1.1
 
-    # rank: the project's colour (Palette), none past the palette, which
-    # draws in ink; values: one per point, in the window's order.
+    # rank: what gives the project its colour (Palette); past the palette it
+    # has no colour, and draws in ink where it stands alone (lines). values:
+    # one per point, in the window's order.
     Line = Data.define(:repo, :name, :rank, :total, :values)
     Tick = Data.define(:value, :top)
     # rank: the project's colour; nil for an entry with no project. Without
@@ -143,7 +144,7 @@ module ProgressChart
     end
 
     def lined?(project)
-      Palette.project_class(project.rank) || section.project == project
+      Palette.colored?(project.rank) || section.project == project
     end
 
     def values_for(repo)

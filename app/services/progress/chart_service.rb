@@ -61,21 +61,18 @@ module Progress
       @section = named.sort == Array(repos).uniq.sort ? service.section : composed(named)&.section
     end
 
-    def composed(in_view)
-      service = ComposeService.new(user: user, range: range, repos: Array(in_view), rolling: true, reveal: reveal)
+    def composed(keys)
+      service = ComposeService.new(user: user, range: range, repos: Array(keys), rolling: true, reveal: reveal)
       service if run(service)
     end
 
-    # A list that names no project of theirs with a colour, or every one,
-    # shows them all, as no list does: a project past the palette draws no
-    # line, so a list never puts it in view. A project's page keeps its one
-    # project.
+    # The projects a list keeps in view (Filter.in_view); a project's page
+    # keeps its one project.
     def in_view(section)
       return section.selected.map(&:repo) if lone && section.selected.any?
 
-      colored = section.tally.projects.all.select { |project| ProgressChart::Palette.project_class(project.rank) }
-      named = section.selected & colored
-      named.size == colored.size ? [] : named.map(&:repo)
+      colored = section.tally.projects.all.select { |project| ProgressChart::Palette.colored?(project.rank) }
+      Filter.in_view(section.selected.map(&:repo), colored.map(&:repo))
     end
 
     # The page's projects, and on the builder's own view the ones hidden from
@@ -96,10 +93,9 @@ module Progress
     end
 
     # A project's colour by rank. Past the palette it has none, so no box
-    # and no line, except on its own page, which draws it in ink, as its
-    # card draws its chart.
+    # and no line, except on its own page, where it stands alone.
     def color_class(project)
-      ProgressChart::Palette.project_class(project.rank) || (ProgressChart::Palette::INK if lone)
+      lone ? ProgressChart::Palette.alone_class(project.rank) : ProgressChart::Palette.project_class(project.rank)
     end
 
     def count

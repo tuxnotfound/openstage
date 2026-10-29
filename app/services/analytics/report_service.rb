@@ -74,16 +74,13 @@ module Analytics
       @counts = Progress::Counts.new(days: service.counts, firsts: start.firsts) if run(service)
     end
 
-    # The builder's page first, then each project, every page in view when
-    # the pages asked for name none of theirs with a colour, or every one: a
-    # project's page past the palette draws no line, so a list never puts it
-    # in view.
+    # The builder's page first, then each project, as far as the pages asked
+    # for keep them in view (Progress::Filter.in_view).
     def page_rows
       synced = user.github_repos.by_full_name(projects.map(&:repo))
       all = [ [ CountService::PAGE, "Your page", nil ] ] + projects.map { |project| [ project.repo, project.name, project.rank ] }
-      colored = all.select { |_key, _name, rank| ProgressChart::Palette.project_class(rank) }.map(&:first)
-      in_view = Array(pages) & colored
-      all.map { |key, name, rank| row(key, name, rank, synced[key], in_view.empty? || in_view.size == colored.size || in_view.include?(key)) }
+      in_view = Progress::Filter.in_view(pages, all.select { |_key, _name, rank| ProgressChart::Palette.colored?(rank) }.map(&:first))
+      all.map { |key, name, rank| row(key, name, rank, synced[key], in_view.empty? || in_view.include?(key)) }
     end
 
     def projects

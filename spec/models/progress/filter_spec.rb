@@ -39,4 +39,12 @@ RSpec.describe Progress::Filter do
   it "takes fifty projects at most" do
     expect(filter(projects: (1..60).map { |i| "me/#{i}" }.join(",")).projects.size).to eq(50)
   end
+
+  it "keeps in view the coloured projects a list names, and all of them for none, every one, or only ones past the palette" do
+    colored = %w[me/a me/b me/c]
+
+    expect(described_class.in_view(%w[me/c me/a], colored)).to eq(%w[me/a me/c])
+    expect([ [], colored, %w[me/k me/l], nil ].map { |named| described_class.in_view(named, colored) }).to eq([ [], [], [], [] ])
+    expect(described_class.in_view(%w[me/b me/k], colored)).to eq(%w[me/b])
+  end
 end
