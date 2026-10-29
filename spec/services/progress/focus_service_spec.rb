@@ -24,14 +24,20 @@ RSpec.describe Progress::FocusService do
     expect(service.first_commit).to eq(user.entries.commits.where(repo_name: progress_repo(4)).minimum(:occurred_at))
   end
 
-  it "says whether visitors see its commits, as its builder picks" do
-    repo = create(:github_repo, user: user, full_name: progress_repo(4), name: "trained-on")
+  it "lists its Details for visitors, with no count of its commits and no time taken from them while its builder hides them" do
+    repo = create(:github_repo, user: user, full_name: progress_repo(4), name: "trained-on", homepage: "https://trained.example", stars_count: 12)
     service = described_class.new(user: user, slug: "trained-on").tap(&:call!)
-    expect(service.commits_shown?).to be(true)
+    first = service.first_commit.to_date.strftime("%b %-d, %Y")
+    expect(service.facts.map(&:to_h)).to eq([ { label: "Commits, all time", value: service.project.commits }, { label: "First commit", value: first },
+                                              { label: "Shipped and published", value: service.highlights }, { label: "Stars on GitHub", value: 12 },
+                                              { label: "Website", value: "trained.example" } ])
+    expect(service.last_commit).to eq(service.card.last_commit)
 
     repo.update!(hidden_numbers: [ "commits" ])
     service = described_class.new(user: user, slug: "trained-on").tap(&:call!)
-    expect(service.commits_shown?).to be(false)
+    expect(service.facts.map(&:label)).to eq([ "Shipped and published", "Stars on GitHub", "Website" ])
+    expect(service.last_commit).to be_nil
+    # Its share card still reads it: share cards keep their commits for now.
     expect(service.first_commit).to be_present
   end
 

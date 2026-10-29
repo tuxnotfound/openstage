@@ -8,6 +8,8 @@ module Progress
     # Another builder with public commits on the same repo, and how many;
     # nil while they hide its commits on their own page for it.
     CoBuilder = Data.define(:user, :commits)
+    # A line of its Details: what it is, and its value as the page writes it.
+    Fact = Data.define(:label, :value)
 
     # slug: the repo's name without its owner; range: a Window range; show:
     # the numbers its chart draws, by key in line order, none for the
@@ -15,18 +17,13 @@ module Progress
     attr_accessor :user, :slug, :range, :show, :reveal
     # page: the GatherService run for this project; others: the rest of the
     # builder's cards; news: the latest highlight; highlights: how many there
-    # are, ever; first_commit: a time; co_builders: CoBuilders, busiest first,
-    # the ones with no count shown last.
-    attr_reader :project, :page, :card, :others, :news, :highlights, :first_commit, :co_builders
+    # are, ever; first_commit: a time, which its share card reads; facts: its
+    # Details as visitors see them, Facts; last_commit: the day of its latest
+    # commit, nil while its builder hides its commits; co_builders:
+    # CoBuilders, busiest first, the ones with no count shown last.
+    attr_reader :project, :page, :card, :others, :news, :highlights, :first_commit, :facts, :last_commit, :co_builders
 
     validates :user, :slug, presence: true
-
-    # Whether visitors see its commits (SummarizeService::Card): while its
-    # builder hides them, its page shows no count of them and no time taken
-    # from them.
-    def commits_shown?
-      card.nil? || card.commits_shown?
-    end
 
     private
 
@@ -46,6 +43,8 @@ module Progress
       @news = entries.highlights.where(repo_name: project.repo).chronological.first
       @highlights = entries.highlights.where(repo_name: project.repo).count
       @first_commit = entries.commits.where(repo_name: project.repo).minimum(:occurred_at)
+      @facts = details
+      @last_commit = card&.last_commit if commits_shown?
       @co_builders = co_builders_on(project.repo)
     end
 
@@ -56,6 +55,29 @@ module Progress
 
     def entries
       user.entries.on_page(reveal: reveal)
+    end
+
+    # Its count of commits and its first one while visitors see its commits,
+    # then what it shipped and published, its stars and its website, each
+    # where it has any.
+    def details
+      repo = card&.github_repo
+      [ *(commit_facts if commits_shown?),
+        (Fact.new(label: "Shipped and published", value: highlights) if highlights.positive?),
+        (Fact.new(label: "Stars on GitHub", value: repo.stars_count) if repo&.stars_count.to_i.positive?),
+        (Fact.new(label: "Website", value: repo.site_host) if repo&.site_host) ].compact
+    end
+
+    # Whether visitors see its commits (SummarizeService::Card): while its
+    # builder hides them, its page shows no count of them and no time taken
+    # from them.
+    def commits_shown?
+      card.nil? || card.commits_shown?
+    end
+
+    def commit_facts
+      [ Fact.new(label: "Commits, all time", value: project.commits),
+        (Fact.new(label: "First commit", value: first_commit.to_date.strftime("%b %-d, %Y")) if first_commit) ]
     end
 
     # Teammates who show the same repo on their own pages: only what their

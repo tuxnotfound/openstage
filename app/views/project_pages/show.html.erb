@@ -36,7 +36,7 @@
         <% unless card.nil? || card.private_repo.nil? %>
           <span class="os-tag"><%= card.private_repo ? "Private repo, commit messages only" : "Public repo" %></span>
         <% end %>
-        <% if card&.last_commit && @focus.commits_shown? %><span class="os-tag">Last commit <%= progress_ago(card.last_commit) %></span><% end %>
+        <% if (last_commit = @focus.last_commit) %><span class="os-tag">Last commit <%= progress_ago(last_commit) %></span><% end %>
       </div>
       <h1 class="os-h1 mt-3.5 flex items-center gap-4 text-[clamp(36px,5vw,56px)] [overflow-wrap:anywhere]">
         <% if color %><span class="os-dot size-4 shrink-0 bg-(--project)" aria-hidden="true"></span><% end %><%= project.name %>
@@ -100,28 +100,21 @@
     <%= render "profiles/page/shipped", section: section %>
   </div>
 
-  <%# Its facts, with no count of its commits and no time taken from them
-      while its builder hides them; then its other builders and the builder's
-      other projects, each without what its own builder hides. The first of
-      them names the panel, and with none there is no panel. %>
-  <% facts = [] %>
-  <% if @focus.commits_shown? %>
-    <% facts << [ "Commits, all time", project.commits ] %>
-    <% facts << [ "First commit", @focus.first_commit.to_date.strftime("%b %-d, %Y") ] if @focus.first_commit %>
-  <% end %>
-  <% facts << [ "Shipped and published", @focus.highlights ] if @focus.highlights.positive? %>
-  <% facts << [ "Stars on GitHub", card.github_repo.stars_count ] if card&.github_repo&.stars_count.to_i.positive? %>
-  <% facts << [ "Website", URI(website).host ] if website %>
-  <% heading = { "details" => facts.any?, "co-builders" => @focus.co_builders.any?, "more-from" => @focus.others.any? }.key(true) %>
+  <%# Its facts as visitors see them (FocusService#facts); then its other
+      builders and the builder's other projects, each without what its own
+      builder hides. The first of them names the panel, and with none there
+      is no panel. %>
+  <% facts = @focus.facts %>
+  <% heading = [ ("details" if facts.any?), ("co-builders" if @focus.co_builders.any?), ("more-from" if @focus.others.any?) ].compact.first %>
   <% if heading %>
     <aside class="os-panel min-w-0 flex-[1_1_300px]" aria-labelledby="<%= heading %>">
       <% if facts.any? %>
         <h2 id="details" class="os-h3">Details</h2>
         <dl class="mt-2.5">
-          <% facts.each do |label, value| %>
+          <% facts.each do |fact| %>
             <div class="os-row flex justify-between gap-4 py-2.5">
-              <dt class="os-sm os-muted"><%= label %></dt>
-              <dd class="os-sm m-0 min-w-0 text-right font-semibold [overflow-wrap:anywhere]"><%= value %></dd>
+              <dt class="os-sm os-muted"><%= fact.label %></dt>
+              <dd class="os-sm m-0 min-w-0 text-right font-semibold [overflow-wrap:anywhere]"><%= fact.value %></dd>
             </div>
           <% end %>
         </dl>
