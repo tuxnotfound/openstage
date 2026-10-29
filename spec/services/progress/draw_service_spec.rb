@@ -99,6 +99,16 @@ RSpec.describe Progress::DrawService do
     expect(service.window.first).to eq(Date.new(2026, 10, 26))
   end
 
+  it "starts the chart where rows with no colour start when no row with one counts the numbers drawn, so its note says why it has no line" do
+    old = Progress::Row.new(key: "me/old", name: "old", rank: 10, color_class: nil, repo: nil, on: true, counted: %w[visits], shown: %w[visits])
+    all_time = Progress::Window.new(range: "all", today: today, first_activity: Date.new(2026, 1, 5))
+    service = described_class.new(rows: [ row("me/app", %w[commits]), old ], counts: counts, totals_window: all_time, show: %w[visits]).tap(&:call!)
+
+    expect(service.chart.lines).to be_empty
+    expect(service.window.first).to eq(Date.new(2026, 1, 1))
+    expect(service.chart.note).to eq("Only projects without a colour count site visits, and those draw no line.")
+  end
+
   it "words its chart by what its rows are" do
     expect(draw(per: "page").chart.note).to eq("Commits per week, one line per page.")
     expect(draw.chart.note).to eq("Commits per week, one line per project.")
