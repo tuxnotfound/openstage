@@ -69,12 +69,15 @@ module Api
 
     # What changes the view: the builder's public entries (their number, as
     # hiding a repo hides its entries in bulk, and their last edit), their
-    # repos (which numbers each shows), their plan, their zone and today in
-    # it, their site visits every few minutes, and the view asked for.
+    # repos (which numbers each shows, and their number, as deleting the one
+    # Free counts site visits for hands its slot to the next), their plan,
+    # their zone and today in it, their site visits every few minutes, and
+    # the view asked for.
     def cache_key(user, reveal)
       entries = user.entries.publicly_visible.pick(Arel.sql("COUNT(*)"), Arel.sql("MAX(entries.updated_at)"))
+      repos_now = user.github_repos.pick(Arel.sql("COUNT(*)"), Arel.sql("MAX(github_repos.updated_at)"))
       today = Time.current.in_time_zone(user.zone).to_date
-      [ "progress-view/v3", user.id, *entries, user.github_repos.maximum(:updated_at), user.pro?, user.zone.tzinfo.identifier, today,
+      [ "progress-view/v3", user.id, *entries, *repos_now, user.pro?, user.zone.tzinfo.identifier, today,
         site_stamp(user), filter.range, reveal, dashboard?(user), lone?, "show", *asked, "projects", *repos.sort ]
     end
 

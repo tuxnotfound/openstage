@@ -134,6 +134,21 @@ RSpec.describe "Api::Progress", type: :request do
       expect(response.headers["Cache-Control"]).to include("private")
     end
 
+    it "answers afresh once a project goes, as deleting the one Free counts hands its slot to the next" do
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+      user.update!(pro: false)
+      repo.update!(site_set_up_at: 3.days.ago)
+      lib = create(:github_repo, user: user, full_name: "builder/lib", name: "lib", homepage: "https://lib.example",
+                                 site_source: "script", site_token: "os_l", site_set_up_at: 2.days.ago, site_first_visit_at: 2.days.ago)
+      lib.site_visit_days.create!(day: Date.new(2026, 10, 23), visits: 90, visitors: 30)
+      get "/api/progress/builder", params: { range: "30d" }
+      expect(totals["visits"]).to eq("40")
+
+      repo.destroy!
+      get "/api/progress/builder", params: { range: "30d" }
+      expect(totals["visits"]).to eq("90")
+    end
+
     it "answers a project's page for its project alone, with no table" do
       get "/api/progress/builder", params: { range: "30d", project: "builder/lib" }
 
