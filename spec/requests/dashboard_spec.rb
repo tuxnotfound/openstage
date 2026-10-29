@@ -22,6 +22,13 @@ RSpec.describe "Dashboard", type: :request do
         expect(response.body).to include("data-badge-nudge")
       end
 
+      it "keeps the badge's line of code inside a phone's width, in a column that never grows past the page" do
+        get "/dashboard"
+
+        grid = Nokogiri::HTML(response.body).at_css("[data-badge-nudge]").parent
+        expect(grid["class"].split).to include("grid", "grid-cols-1", "lg:grid-cols-2")
+      end
+
       it "keeps sync status and Sync now beside the projects, and no page card" do
         get "/dashboard"
 

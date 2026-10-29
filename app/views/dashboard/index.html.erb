@@ -18,8 +18,10 @@
 <div id="activity" class="scroll-mt-4">
   <%= render "dashboard/activity", chart: @chart if @chart %>
 </div>
+<%# One column on a phone, which never grows past the page: the badge's
+    line of code truncates instead of widening it. %>
 <% if @badge_nudge || !current_user.pro? %>
-  <div class="grid items-start gap-4 lg:grid-cols-2">
+  <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
     <%= render "dashboard/badge" if @badge_nudge %>
     <%= render "dashboard/upgrade" unless current_user.pro? %>
   </div>
