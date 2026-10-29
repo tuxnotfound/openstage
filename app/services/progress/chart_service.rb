@@ -98,8 +98,10 @@ module Progress
       lone ? ProgressChart::Palette.alone_class(project.rank) : ProgressChart::Palette.project_class(project.rank)
     end
 
+    # Each project's first commit comes from the section's projects, which
+    # read it with their ranks.
     def count
-      service = CountService.new(user: user, reveal: reveal, from: count_from,
+      service = CountService.new(user: user, reveal: reveal, from: count_from, first_commits: section.tally.projects.first_commits,
                                  commit_repos: rows.select { |row| row.counts?("commits") }.map(&:key),
                                  visit_repos: rows.select { |row| builder ? row.counts?("visits") : row.shows?("visits") }.map(&:repo))
       @counts = service.counts if run(service)

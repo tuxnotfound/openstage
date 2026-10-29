@@ -101,6 +101,16 @@ RSpec.describe Progress::TallyService do
     expect([ page.period.first_activity, email.period.first_activity ]).to eq([ Date.new(2026, 10, 13), Date.new(2025, 3, 3) ])
   end
 
+  it "starts a page's window at the first commit or entry in view: one with no project, or an entry before its project's commits" do
+    quiet = create(:user)
+    create(:entry, user: quiet, occurred_at: Time.utc(2026, 2, 3))
+    create(:entry, user: quiet, repo_name: "quiet/app", occurred_at: Time.utc(2026, 5, 1))
+    create(:entry, user: quiet, source: "manual", entry_type: "milestone", title: "Began", repo_name: "quiet/app", occurred_at: Time.utc(2026, 4, 1))
+    first = ->(repos) { described_class.new(user: quiet, range: "all", rolling: true, repos: repos).tap(&:call!).period.first_activity }
+
+    expect([ first.call([]), first.call([ "quiet/app" ]) ]).to eq([ Date.new(2026, 2, 3), Date.new(2026, 4, 1) ])
+  end
+
   it "counts several projects together" do
     both = tally("year", repo: [ progress_repo(0), progress_repo(1) ])
 

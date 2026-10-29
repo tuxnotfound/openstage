@@ -3,12 +3,15 @@ module Progress
   # days a chart needs: their public commits, as their pages count them, and
   # the visits to each project's website. Also the first day each project
   # counted each one, ever, since a chart starts where its numbers start.
+  # Each project's first commit comes read with its rank (Projects), so a
+  # page reads it once.
   class CountService < ApplicationService
     # commit_repos: the full names of the repos whose commits count;
     # visit_repos: the GithubRepos whose visits count; from: the first day
     # needed, nil for every day. reveal: a repo the builder hid, counted
-    # anyway (Entry.on_page).
-    attr_accessor :user, :reveal, :commit_repos, :visit_repos, :from
+    # anyway (Entry.on_page). first_commits: the time of each project's
+    # first commit, ever (Projects#first_commits).
+    attr_accessor :user, :reveal, :commit_repos, :visit_repos, :from, :first_commits
     # counts: a Progress::Counts.
     attr_reader :counts
 
@@ -27,7 +30,7 @@ module Progress
     end
 
     def commit_firsts
-      commits.group(:repo_name).minimum(:occurred_at).transform_values { |time| time.in_time_zone(zone).to_date }
+      first_commits.slice(*Array(commit_repos)).transform_values { |time| time.in_time_zone(zone).to_date }
     end
 
     def visit_days

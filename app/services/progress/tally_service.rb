@@ -44,7 +44,7 @@ module Progress
     def execute
       @zone = user.zone
       @projects = Projects.new(public_entries)
-      @period = period_for(Time.current.in_time_zone(zone).to_date, first_day_of(public_entries))
+      @period = period_for(Time.current.in_time_zone(zone).to_date, first_day_of(projects))
       @items = items_on(period.first..period.last_day)
       @buckets = period.buckets.map { |bucket| tally_bucket(bucket) }
       @totals = totals_on(period.first..period.last_day)
@@ -76,11 +76,10 @@ module Progress
     # The first commit or entry in view: of the projects picked, when picked.
     # A page leaves out the commits of projects that hide them, so its window
     # never starts at one; the emails, which still count them, keep them.
-    def first_day_of(entries)
-      commits = rolling ? entries.commits.of_projects_showing_commits : entries.commits
-      scope = commits.or(entries.highlights)
-      scope = scope.where(repo_name: repos) if selected?
-      scope.minimum(:occurred_at)&.in_time_zone(zone)&.to_date
+    def first_day_of(projects)
+      firsts = [ projects.first_commits(shown: rolling), projects.first_highlights ]
+      times = firsts.flat_map { |by_repo| selected? ? by_repo.values_at(*repos) : by_repo.values }
+      times.compact.min&.in_time_zone(zone)&.to_date
     end
 
     def tally_bucket(bucket)
