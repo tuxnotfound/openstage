@@ -54,8 +54,10 @@ RSpec.describe Progress::DrawService do
 
   it "fills a row's cells with what visitors see, and on the builder's own table what it counts and hides, its switch, or Set up" do
     repo = build(:github_repo, hidden_numbers: [ "visits" ])
-    hiding = Progress::Row.new(key: "me/app", name: "app", rank: 0, repo: repo, on: true, counted: %w[commits visits], shown: %w[commits], site: :counting)
-    plain = Progress::Row.new(key: "me/lib", name: "lib", rank: 1, repo: repo, on: true, counted: %w[commits], shown: %w[commits], site: :off)
+    hiding = Progress::Row.new(key: "me/app", name: "app", rank: 0, color_class: "os-project-1", repo: repo, on: true,
+                               counted: %w[commits visits], shown: %w[commits], site: :counting)
+    plain = Progress::Row.new(key: "me/lib", name: "lib", rank: 1, color_class: "os-project-2", repo: repo, on: true,
+                              counted: %w[commits], shown: %w[commits], site: :off)
     columns = Progress::Numbers.in_order(%w[commits visits])
     service = draw([ hiding, plain ])
     cell = ->(cells) { cells.map { |each| [ each.number.key, each.value, each.previous, each.shown, each.pick, each.link ] } }
@@ -67,7 +69,9 @@ RSpec.describe Progress::DrawService do
 
   it "gives site visits that do not count no switch: Paused or Set up instead, after the value only when the window has any" do
     repo = build(:github_repo)
-    site = ->(key, state) { Progress::Row.new(key: key, name: key.split("/").last, rank: 0, repo: repo, on: true, counted: %w[visits], shown: [], site: state) }
+    site = lambda do |key, state|
+      Progress::Row.new(key: key, name: key.split("/").last, rank: 0, color_class: "os-project-1", repo: repo, on: true, counted: %w[visits], shown: [], site: state)
+    end
     service = draw
     visits = ->(row) { service.cells(row, [ Progress::Numbers.find("visits") ], manage: true).sole.to_h.slice(:value, :shown, :pick, :link) }
 
@@ -86,7 +90,7 @@ RSpec.describe Progress::DrawService do
   end
 
   it "counts a row with no colour in the totals, with its part, and draws no line for it, nor starts the chart at its data" do
-    old = Progress::Row.new(key: "me/old", name: "old", rank: 10, repo: nil, on: true, counted: %w[visits], shown: %w[visits])
+    old = Progress::Row.new(key: "me/old", name: "old", rank: 10, color_class: nil, repo: nil, on: true, counted: %w[visits], shown: %w[visits])
     all_time = Progress::Window.new(range: "all", today: today, first_activity: Date.new(2026, 1, 5))
     service = described_class.new(rows: [ app, old ], counts: counts, totals_window: all_time, show: %w[visits]).tap(&:call!)
 

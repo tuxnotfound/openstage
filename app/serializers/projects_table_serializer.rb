@@ -9,8 +9,9 @@
 # project's, each to the project's Site visits row; a project hidden from
 # the page comes last, with no box. A project past the palette has no
 # colour, so no box: it keeps its values, in grey, as it draws no line.
-# Which cells list a value, a switch or a link is the chart's to say
-# (DrawService#cells); this only writes it.
+# Which rows the chart draws (Row#drawn?) and which cells list a value, a
+# switch or a link (DrawService#cells) is the chart's to say; this only
+# writes it.
 class ProjectsTableSerializer < ApplicationSerializer
   include ActionView::Helpers::NumberHelper
   include Rails.application.routes.url_helpers
@@ -32,11 +33,10 @@ class ProjectsTableSerializer < ApplicationSerializer
 
   private
 
-  # color_class: the class its box wears; nil for a row with no box.
-  # drawable: whether it has one; on: whether the chart draws it.
+  # color_class: the class its box wears; drawable: whether it has one; on:
+  # whether the chart draws it.
   def row_of(row)
-    drawable = row.color_class.present?
-    { key: row.key, name: row.name, color_class: row.color_class, on: drawable && row.on, drawable: drawable,
+    { key: row.key, name: row.name, color_class: row.color_class, on: row.drawn?, drawable: row.boxed?,
       cells: @chart.cells(row).map { |cell| cell_of(cell, row.repo) } }.merge(manage_parts(row.repo))
   end
 

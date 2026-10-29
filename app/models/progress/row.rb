@@ -4,13 +4,25 @@ module Progress
   # key: a repo's full name, or Analytics::CountService::PAGE for their own
   # page; rank: its place in the table, nil for their own page, which comes
   # first; color_class: the class its marks wear (ProgressChart::Palette),
-  # nil for none; repo: its synced GithubRepo, nil with none; on: in view on
-  # the chart; counted and shown: the numbers it counts and the ones it
-  # shows, by key; site: where its site visits stand (SiteVisits::Slot#state),
-  # nil without a synced repo and on analytics, which only reads its cells.
+  # nil past the palette; repo: its synced GithubRepo, nil with none; on: in
+  # view, so in the totals; counted and shown: the numbers it counts and the
+  # ones it shows, by key; site: where its site visits stand
+  # (SiteVisits::Slot#state), nil without a synced repo and on analytics,
+  # which only reads its cells.
   Row = Data.define(:key, :name, :rank, :color_class, :repo, :on, :counted, :shown, :site) do
-    def initialize(color_class: nil, site: nil, **fields)
+    def initialize(site: nil, **fields)
       super
+    end
+
+    # Whether it has a colour, so a box in the table and lines to draw: a
+    # project past the palette has none.
+    def boxed?
+      color_class.present?
+    end
+
+    # Whether the chart draws it: in view, and with a colour to draw in.
+    def drawn?
+      boxed? && on
     end
 
     def counts?(number)
