@@ -46,6 +46,7 @@ RSpec.describe "Setting up a project's site visits", type: :request do
 
     patch "/projects/#{repo.id}/site_visits", params: { source: "script" }
 
+    expect(response).to redirect_to(edit_project_path(repo, site: "open"))
     expect(flash[:alert]).to include("website first")
     expect(repo.reload.site_source).to be_nil
   end
@@ -67,6 +68,7 @@ RSpec.describe "Setting up a project's site visits", type: :request do
       expect(state).to eq("Off")
 
       patch "/projects/#{repo.id}/site_visits", params: { source: "script" }
+      expect(response).to redirect_to(edit_project_path(repo, site: "open"))
       expect(flash[:alert]).to eq("Free counts site visits for one project, tidepool. Go Pro to count them for every project.")
       expect(repo.reload).to have_attributes(site_source: nil, site_set_up_at: nil)
       expect(view.text).not_to include("Count this one instead")

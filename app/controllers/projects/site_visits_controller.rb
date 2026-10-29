@@ -8,10 +8,12 @@ module Projects
     def update
       repo = current_user.github_repos.find(params[:project_id])
       service = SiteVisits::ConfigureService.new(repo: repo, source: params[:source].presence)
-      flash_message = service.call ? { notice: "Site visits saved." } : { alert: service.errors.full_messages.to_sentence }
+      saved = service.call
+      flash_message = saved ? { notice: "Site visits saved." } : { alert: service.errors.full_messages.to_sentence }
 
-      # Back with the setup open, so a script just picked shows its line.
-      redirect_to edit_project_path(repo, site: ("open" if params[:source].present?), anchor: "site-visits"),
+      # Back with the setup open, so a script just picked shows its line. A
+      # refusal lands at the top of the page, where its alert says why.
+      redirect_to edit_project_path(repo, site: ("open" if params[:source].present?), anchor: ("site-visits" if saved)),
                   status: :see_other, **flash_message
     end
   end
