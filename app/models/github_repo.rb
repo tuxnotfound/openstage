@@ -85,10 +85,10 @@ class GithubRepo < ApplicationRecord
     nil
   end
 
-  # Whether visits to its website count now: on Pro, every project set up;
-  # on Free, only the one set up first (SiteVisits::Slot). slot: its
-  # builder's, passed in where a list of their projects asks, so the list
-  # reads it once.
+  # Whether visits to its website count now: on Pro, every project with its
+  # script on; on Free, only the one set up first, while its script is on
+  # (SiteVisits::Slot). slot: its builder's, passed in where a list of their
+  # projects asks, so the list reads it once.
   def counts_site_visits?(slot: nil)
     (slot || SiteVisits::Slot.new(user)).counts?(self)
   end

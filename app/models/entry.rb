@@ -57,8 +57,8 @@ class Entry < ApplicationRecord
                     "AND github_repos.full_name = entries.repo_name AND NOT github_repos.included)".freeze
 
   # A project whose builder hides its commits from visitors
-  # (GithubRepo#hidden_numbers) leaves them out of any count of commits
-  # visitors see; its commit messages still list.
+  # (GithubRepo#hidden_numbers) leaves them out of the badge's count and of
+  # where a page's window starts; its commit messages still list.
   HIDDEN_COMMITS_SQL = "NOT EXISTS (SELECT 1 FROM github_repos WHERE github_repos.user_id = entries.user_id " \
                        "AND github_repos.full_name = entries.repo_name AND github_repos.hidden_numbers @> '[\"commits\"]')".freeze
 

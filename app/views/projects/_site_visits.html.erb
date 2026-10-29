@@ -11,7 +11,7 @@
       <span class="os-num os-muted text-sm"><%= overview.site_visits.positive? ? number_with_delimiter(overview.site_visits) : "–" %></span>
       <span class="os-xs os-muted block"><%= line %></span>
     </span>
-    <% if overview.free_project %>
+    <% if overview.slot_project %>
       <%= link_to "Go Pro", pricing_path, class: "os-link whitespace-nowrap text-[13px]" %>
     <% else %>
       <button type="button" class="os-link whitespace-nowrap text-[13px]" aria-controls="site-source" aria-expanded="false"
@@ -28,7 +28,7 @@
     <% end %>
   </div>
 
-  <% unless overview.free_project %>
+  <% unless overview.slot_project %>
     <div id="site-source" data-toggle-target="content" class="os-card mb-3 hidden">
       <% if overview.site_state == :no_website %>
         <p class="os-sm m-0">Add <%= repo.name %>'s website under What it is first: the script counts only there.</p>

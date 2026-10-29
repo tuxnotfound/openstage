@@ -44,8 +44,8 @@ module SiteVisits
     end
 
     def one_project_on_free
-      counted = Slot.new(repo.user).instead_of(repo) if script?
-      errors.add(:base, "Free counts site visits for one project, #{counted.name}. Go Pro to count them for every project.") if counted
+      slot_project = Slot.new(repo.user).instead_of(repo) if script?
+      errors.add(:base, "Free counts site visits for one project, #{slot_project.name}. Go Pro to count them for every project.") if slot_project
     end
 
     def script?

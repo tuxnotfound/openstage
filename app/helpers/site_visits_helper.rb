@@ -2,7 +2,7 @@ module SiteVisitsHelper
   # The Site visits row on a project's builder view: the line under its name,
   # and the state beside its switch. overview: a Projects::GatherService.
   def site_visits_status(repo, overview)
-    return free_project_status(overview) if overview.free_project
+    return slot_project_status(overview) if overview.slot_project
 
     case overview.site_state
     when :no_website then [ "Counted on the project's website, once it has one.", "Off" ]
@@ -27,8 +27,8 @@ module SiteVisitsHelper
 
   # While Free counts another project, this one is paused with its script
   # on, and off without it.
-  def free_project_status(overview)
-    line = "Free counts site visits for one project, #{overview.free_project.name}."
+  def slot_project_status(overview)
+    line = "Free counts site visits for one project, #{overview.slot_project.name}."
     return [ line, "Off" ] unless overview.site_state == :paused
 
     [ "#{line} Visits here are not counted, and the totals so far stay.", "Paused" ]

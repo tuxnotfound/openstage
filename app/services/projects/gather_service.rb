@@ -10,9 +10,9 @@ module Projects
     attr_accessor :repo
     # project: its Progress::Projects entry, nil with nothing public yet;
     # last_site_visit: when the latest counted; site_state: :counting,
-    # :paused, :off or :no_website; free_project: the project Free counts
-    # instead of this one, nil when this one can count.
-    attr_reader :project, :commits, :last_commit, :site_visits, :last_site_visit, :site_state, :free_project
+    # :paused, :off or :no_website; slot_project: the project that holds
+    # Free's slot instead of this one, nil when this one can count.
+    attr_reader :project, :commits, :last_commit, :site_visits, :last_site_visit, :site_state, :slot_project
 
     validates :repo, presence: true
 
@@ -27,7 +27,7 @@ module Projects
       @site_visits = repo.site_visit_days.where(day: (today - (DAYS - 1))..today).sum(:visits)
       @last_site_visit = repo.site_visit_days.maximum(:updated_at)
       slot = SiteVisits::Slot.new(user)
-      @free_project = slot.instead_of(repo)
+      @slot_project = slot.instead_of(repo)
       @site_state = site_state_now(slot.state(repo))
     end
 

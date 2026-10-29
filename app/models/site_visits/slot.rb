@@ -2,10 +2,11 @@ module SiteVisits
   # The one project whose site visits a builder's Free plan counts: the one
   # set up first (GithubRepo#site_set_up_at), its script on or off. It is
   # theirs for life, and only deleting it frees it. Pro counts every project
-  # set up. When Pro ends nothing runs: the slot counts on, and every other
-  # project with its script on pauses, its script still on its site, nothing
-  # it sends kept, its totals kept. Read once, on the first question that
-  # needs it, so a list of a builder's projects asks the database once.
+  # with its script on. When Pro ends nothing runs: the slot counts on, and
+  # every other project with its script on pauses, its script still on its
+  # site, nothing it sends kept, its totals kept. Read once, on the first
+  # question that needs it, so a list of a builder's projects asks the
+  # database once.
   class Slot
     def initialize(user)
       @user = user

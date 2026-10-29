@@ -22,7 +22,7 @@ RSpec.describe Projects::GatherService do
   end
 
   it "says where site visits stand" do
-    expect([ gather.site_state, gather.free_project ]).to eq([ :off, nil ])
+    expect([ gather.site_state, gather.slot_project ]).to eq([ :off, nil ])
 
     repo.update!(site_source: "script", site_set_up_at: 1.day.ago)
     expect(gather.site_state).to eq(:counting)
@@ -35,13 +35,13 @@ RSpec.describe Projects::GatherService do
     user.update!(pro: false)
     first = create(:github_repo, user: user, name: "lunchbox", homepage: "https://lunchbox.example", site_set_up_at: 10.days.ago)
     repo.update!(site_source: "script", site_set_up_at: 3.days.ago)
-    expect([ gather.site_state, gather.free_project ]).to eq([ :paused, first ])
+    expect([ gather.site_state, gather.slot_project ]).to eq([ :paused, first ])
 
     repo.update!(site_source: nil, homepage: nil)
-    expect([ gather.site_state, gather.free_project ]).to eq([ :no_website, first ])
+    expect([ gather.site_state, gather.slot_project ]).to eq([ :no_website, first ])
 
     first.destroy!
-    expect([ gather.site_state, gather.free_project ]).to eq([ :no_website, nil ])
+    expect([ gather.site_state, gather.slot_project ]).to eq([ :no_website, nil ])
   end
 
   it "needs a project" do
