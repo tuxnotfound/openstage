@@ -37,9 +37,11 @@ module Progress
 
     private
 
+    # The section ranks the projects, so the tally takes where the work began
+    # from the reads that rank them.
     def execute
       tally = TallyService.new(user: user, range: range, offset: offset, repos: Array(repos), rolling: rolling, reveal: reveal,
-                               counting: counting)
+                               counting: counting, ranked: true)
       return unless run(tally)
 
       pick = PickService.new(items: tally.items, first_day: tally.first_active_day, last_day: tally.period.last_day,

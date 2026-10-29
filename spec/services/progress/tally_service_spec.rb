@@ -89,16 +89,21 @@ RSpec.describe Progress::TallyService do
     expect(tally("week").buckets.map(&:total)[2, 2]).to eq([ 8, 1 ])
   end
 
+  # Ranked or not, a tally starts where the same work began: one takes it
+  # from the reads that rank the projects, the other from a MIN of its own.
   it "starts a page's window past a project's hidden commits, and the emails' period at them, as the emails still count them" do
     quiet = create(:user)
     create(:github_repo, user: quiet, full_name: "quiet/hush", name: "hush", hidden_numbers: [ "commits" ])
     create(:entry, user: quiet, repo_name: "quiet/hush", occurred_at: Time.utc(2025, 3, 3))
     create(:entry, user: quiet, repo_name: "quiet/loud", occurred_at: Time.utc(2026, 10, 13))
 
-    page = described_class.new(user: quiet, range: "all", rolling: true).tap(&:call!)
-    email = described_class.new(user: quiet, range: "all").tap(&:call!)
+    firsts = [ false, true ].map do |ranked|
+      page = described_class.new(user: quiet, range: "all", rolling: true, ranked: ranked).tap(&:call!)
+      email = described_class.new(user: quiet, range: "all", ranked: ranked).tap(&:call!)
+      [ page.period.first_activity, email.period.first_activity ]
+    end
 
-    expect([ page.period.first_activity, email.period.first_activity ]).to eq([ Date.new(2026, 10, 13), Date.new(2025, 3, 3) ])
+    expect(firsts).to eq([ [ Date.new(2026, 10, 13), Date.new(2025, 3, 3) ] ] * 2)
   end
 
   it "starts a page's window at the first commit or entry in view: one with no project, or an entry before its project's commits" do
@@ -106,9 +111,12 @@ RSpec.describe Progress::TallyService do
     create(:entry, user: quiet, occurred_at: Time.utc(2026, 2, 3))
     create(:entry, user: quiet, repo_name: "quiet/app", occurred_at: Time.utc(2026, 5, 1))
     create(:entry, user: quiet, source: "manual", entry_type: "milestone", title: "Began", repo_name: "quiet/app", occurred_at: Time.utc(2026, 4, 1))
-    first = ->(repos) { described_class.new(user: quiet, range: "all", rolling: true, repos: repos).tap(&:call!).period.first_activity }
+    first = lambda do |repos, ranked|
+      described_class.new(user: quiet, range: "all", rolling: true, repos: repos, ranked: ranked).tap(&:call!).period.first_activity
+    end
 
-    expect([ first.call([]), first.call([ "quiet/app" ]) ]).to eq([ Date.new(2026, 2, 3), Date.new(2026, 4, 1) ])
+    expect([ false, true ].map { |ranked| [ first.call([], ranked), first.call([ "quiet/app" ], ranked) ] })
+      .to eq([ [ Date.new(2026, 2, 3), Date.new(2026, 4, 1) ] ] * 2)
   end
 
   it "reads the commits a page's chart also counts with its own, in one statement, and keeps its numbers to the period" do

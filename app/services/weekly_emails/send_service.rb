@@ -28,7 +28,8 @@ module WeeklyEmails
 
     # Judged on the week the emails show, the Week view so far, so neither
     # ever arrives with an empty chart. project: a repo's full name, for its
-    # followers.
+    # followers. A tally, not a section: a section ranks the builder's
+    # projects, a read of their whole history for every project followed.
     def quiet?(project = nil)
       week = Progress::TallyService.new(user: user, range: "week", repos: Array(project))
       week.call

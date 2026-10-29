@@ -36,7 +36,8 @@ module Progress
 
     # repos: the projects in view; none for all of them. reveal: a repo the builder hid, shown anyway (Entry.on_page).
     # counting: what the page's chart also counts (Counting); none for the period alone.
-    attr_accessor :user, :range, :offset, :repos, :rolling, :reveal, :counting
+    # ranked: the caller ranks the projects too (Projects#all), as a section does.
+    attr_accessor :user, :range, :offset, :repos, :rolling, :reveal, :counting, :ranked
     attr_reader :zone, :period, :projects, :items, :buckets, :totals, :previous_totals, :first_active_day
     # The period's entries with no project that the builder has not marked as
     # having none, newest first; whatever the filter, so they can be tagged.
@@ -88,9 +89,24 @@ module Progress
     # A page leaves out the commits of projects that hide them, so its window
     # never starts at one; the emails, which still count them, keep them.
     def first_day_of(projects)
+      first = ranked ? first_ranked(projects) : first_in_view
+      first&.in_time_zone(zone)&.to_date
+    end
+
+    # Taken from the reads that rank the projects, which the caller makes anyway.
+    def first_ranked(projects)
       firsts = [ projects.first_commits(shown: rolling), projects.first_highlights ]
-      times = firsts.flat_map { |by_repo| selected? ? by_repo.values_at(*repos) : by_repo.values }
-      times.compact.min&.in_time_zone(zone)&.to_date
+      firsts.flat_map { |by_repo| selected? ? by_repo.values_at(*repos) : by_repo.values }.compact.min
+    end
+
+    # One MIN, by the index on a project's entries when picked: a tally whose
+    # projects nobody ranks (the weekly emails' quiet check) would otherwise
+    # read the builder's whole history for every project.
+    def first_in_view
+      commits = rolling ? public_entries.commits.of_projects_showing_commits : public_entries.commits
+      scope = commits.or(public_entries.highlights)
+      scope = scope.where(repo_name: repos) if selected?
+      scope.minimum(:occurred_at)
     end
 
     # {[date, repo] => count} for every public commit the tally and the

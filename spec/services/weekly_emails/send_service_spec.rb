@@ -64,6 +64,23 @@ RSpec.describe WeeklyEmails::SendService do
       service.call!
       expect(service.digests_sent).to eq(0)
     end
+
+    # Each quiet check reads three times: when the work in view began, in one
+    # MIN, the week's commits by day and its shipped and published entries.
+    # Ranking the builder's projects would read their whole history again
+    # for every project followed.
+    it "are judged without ranking the builder's projects" do
+      ship(3)
+      create(:entry, user: builder, repo_name: "me/other", occurred_at: 1.year.ago)
+      follower("fan@example.com")
+      reads = []
+      counter = ->(*, payload) { reads << payload[:sql] if payload[:sql].include?('FROM "entries"') && !payload[:cached] }
+
+      ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { described_class.new(user: builder).call! }
+
+      expect(reads.grep(/GROUP BY "entries"\."repo_name"/)).to be_empty
+      expect(reads.size).to eq(6), reads.join("\n")
+    end
   end
 
   it "sends nothing on a quiet week" do
