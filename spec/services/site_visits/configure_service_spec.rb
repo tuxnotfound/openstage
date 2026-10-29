@@ -76,6 +76,20 @@ RSpec.describe SiteVisits::ConfigureService do
       expect(other.reload).to have_attributes(site_source: nil, site_set_up_at: be_present)
     end
 
+    it "reads the slot again once it holds the builder, so a setup sent at the same time cannot take it too" do
+      shipnote = repo
+      service = configure(other, "script")
+      # The other setup commits while this one waits for the builder's row.
+      allow(other.user).to receive(:lock!).and_wrap_original do |lock|
+        shipnote.update!(site_source: "script", site_token: "os_s", site_set_up_at: Time.current)
+        lock.call
+      end
+
+      expect(service.call).to be(false)
+      expect(service.errors.full_messages).to eq([ "Free counts site visits for one project, shipnote. Go Pro to count them for every project." ])
+      expect(other.reload).to have_attributes(site_source: nil, site_set_up_at: nil)
+    end
+
     it "frees the slot when its project is deleted" do
       configure(repo, "script").call!
       repo.destroy!

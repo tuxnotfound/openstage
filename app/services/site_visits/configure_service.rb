@@ -15,6 +15,21 @@ module SiteVisits
     private
 
     def execute
+      transaction do
+        hold_builder if script?
+        save_source if errors.none?
+      end
+    end
+
+    # Two setups sent at once both pass the check above, and Free would count
+    # both. With its builder's row locked, the later one reads the slot the
+    # first took, and is refused.
+    def hold_builder
+      repo.user.lock!
+      one_project_on_free
+    end
+
+    def save_source
       repo.site_source = source == "off" ? nil : source if source
       if script?
         repo.site_token ||= "os_#{SecureRandom.alphanumeric(12).downcase}"
