@@ -79,7 +79,7 @@ RSpec.describe ProgressChart::Compare do
     quiet = described_class::Line.new(repo: "builder/quiet", name: "quiet", rank: 10, color_class: nil, number: visits, values: [ 0, 90 ], total: 90)
 
     expect(chart([ line("app", commits, [ 3, 1 ]), quiet ]).note)
-      .to eq("Commits per week, one line per project. Only projects without a colour count site visits, and those draw no line.")
+      .to eq("Commits per week, one line per project. Only projects past the tenth count site visits, and the chart draws ten projects at most.")
   end
 
   it "gives a peak of one in the singular" do

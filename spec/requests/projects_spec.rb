@@ -17,6 +17,8 @@ RSpec.describe "Editing a project", type: :request do
     expect(form.at_css("input[name='github_repo[website_edit]']")["placeholder"]).to eq("https://gh.example")
     expect(page.at_css("h2#numbers").text).to eq("Numbers on its page")
     expect(page.at_css("a[href='/builder/app']").text).to include("View its page")
+    expect(page.at_css("h2#numbers ~ p.os-note").text.squish)
+      .to end_with("Your dashboard's table has the same switches, except where flipping one would change nothing visitors see.")
   end
 
   it "switches the project on and off the builder's page from its view, and comes back to it" do

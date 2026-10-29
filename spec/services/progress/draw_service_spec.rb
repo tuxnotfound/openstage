@@ -106,7 +106,7 @@ RSpec.describe Progress::DrawService do
 
     expect(service.chart.lines).to be_empty
     expect(service.window.first).to eq(Date.new(2026, 1, 1))
-    expect(service.chart.note).to eq("Only projects without a colour count site visits, and those draw no line.")
+    expect(service.chart.note).to eq("Only projects past the tenth count site visits, and the chart draws ten projects at most.")
   end
 
   it "words its chart by what its rows are" do

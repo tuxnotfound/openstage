@@ -31,7 +31,7 @@ module SiteVisitsHelper
     line = "Free counts site visits for one project, #{overview.slot_project.name}."
     return [ line, "Off" ] unless overview.site_state == :paused
 
-    [ "#{line} Visits here are not counted, and the totals so far stay.", "Paused" ]
+    [ "#{line} This project's visits are not counted, and its page shows none. The totals so far are kept.", "Paused" ]
   end
 
   # The latest visit says the script works without opening the setup.

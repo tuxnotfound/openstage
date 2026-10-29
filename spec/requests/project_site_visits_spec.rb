@@ -90,7 +90,7 @@ RSpec.describe "Setting up a project's site visits", type: :request do
       repo.update!(site_source: "script", site_token: "os_s", site_set_up_at: 3.days.ago, site_first_visit_at: 3.days.ago)
       repo.site_visit_days.create!(day: Date.current, visits: 9, visitors: 3)
 
-      expect(view.text.squish).to include("Site visits 9", "Free counts site visits for one project, tidepool. Visits here are not counted, and the totals so far stay.")
+      expect(view.text.squish).to include("Site visits 9", "Free counts site visits for one project, tidepool. This project's visits are not counted, and its page shows none. The totals so far are kept.")
       expect(state).to eq("Paused")
       expect(view.at_css("a[href='/pricing']").text).to eq("Go Pro")
     end

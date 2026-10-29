@@ -85,7 +85,7 @@ module ProgressChart
     # The numbers drawn with no line, and why.
     def rest
       colorless, quiet, missing = unlined
-      [ (" Only #{chart.per}s without a colour count #{sentence(colorless.map(&:word), 'or')}, and those draw no line." if colorless.any?),
+      [ (" Only projects past the tenth count #{sentence(colorless.map(&:word), 'or')}, and the chart draws ten projects at most." if colorless.any?),
         (" No #{sentence(quiet.map(&:word), 'or')} #{labels.word}." if quiet.any?),
         (" None of the #{chart.per}s in view counts #{sentence(missing.map(&:word), 'or')}." if missing.any?) ].join
     end

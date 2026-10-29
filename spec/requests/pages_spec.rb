@@ -17,6 +17,9 @@ RSpec.describe "Marketing pages", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("On a builder's website", "deletes it within two days")
+      expect(Nokogiri::HTML(response.body).text.squish).to include(
+        "Openstage does not count views from bots, from sites other than the project's own, or on a project's site while its counting is off or paused."
+      )
       expect(response.body).to include(%(href="/privacy"))
     end
   end

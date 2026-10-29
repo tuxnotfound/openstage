@@ -151,7 +151,7 @@
       <div class="os-row flex items-center gap-3 py-3">
         <span class="min-w-0 flex-auto">
           <span class="font-bold">Openstage's script</span>
-          <span class="os-xs os-muted block">One line in your site's code. Free counts the first project you set up, and Pro counts every project.</span>
+          <span class="os-xs os-muted block">One line in your site's code. Free counts site visits for the first project you set up, and Pro for every project.</span>
         </span>
         <% if @counted_sites.any? %>
           <span class="os-sm font-bold text-up"><%= @counted_sites.one? ? "Counting #{@counted_sites.first}" : "Counting #{@counted_sites.size} sites" %></span>

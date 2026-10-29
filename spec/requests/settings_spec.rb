@@ -105,7 +105,7 @@ RSpec.describe "Settings", type: :request do
         get settings_path
 
         section = Nokogiri::HTML(response.body).at_css("section[aria-labelledby='site-analytics']").text.squish
-        expect(section).to include("Free counts the first project you set up, and Pro counts every project.", "Counting shipnote.app")
+        expect(section).to include("Free counts site visits for the first project you set up, and Pro for every project.", "Counting shipnote.app")
         expect(section).not_to include("tidepool.dev")
       end
 
