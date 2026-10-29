@@ -121,8 +121,10 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       paused = page.at_css("[data-chart-row='builder/app'] td:last-child")
       expect(paused.at_css(".os-num")["class"]).to include("text-ink-3")
       expect(paused.at_css("a").attributes.transform_values(&:value)).to include("href" => "/projects/#{tool.id}/edit?site=open#site-visits",
-                                                                                  "aria-label" => "See why app's site visits are paused")
-      expect(island_cell("builder/app")).to include("value" => "90", "pick" => nil, "link" => { "kind" => "paused", "path" => "/projects/#{tool.id}/edit?site=open#site-visits" })
+                                                                                  "aria-label" => "Paused: see why app's site visits do not count")
+      expect(island_cell("builder/app")).to include("value" => "90", "pick" => nil)
+      expect(island_cell("builder/app")["link"]).to eq("text" => "Paused", "label" => "Paused: see why app's site visits do not count",
+                                                       "path" => "/projects/#{tool.id}/edit?site=open#site-visits")
       expect(cells("builder/bare")).to eq([ [ "1", "true" ], [ "Set up", nil ] ])
       expect(drawn).to eq(%w[commits commits])
     end
@@ -131,7 +133,8 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       tool.update!(site_source: nil)
       get "/dashboard"
       expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90 Set up", nil ] ])
-      expect(island_cell("builder/app")).to include("value" => "90", "pick" => nil, "link" => { "kind" => "set_up", "path" => "/projects/#{tool.id}/edit?site=open#site-visits" })
+      expect(island_cell("builder/app")).to include("value" => "90", "pick" => nil)
+      expect(island_cell("builder/app")["link"]).to eq("text" => "Set up", "label" => "Set up app's site visits", "path" => "/projects/#{tool.id}/edit?site=open#site-visits")
 
       tool.site_visit_days.update_all(day: 60.days.ago.to_date)
       get "/dashboard", params: { range: "30d" }

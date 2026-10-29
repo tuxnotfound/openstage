@@ -37,7 +37,7 @@ class ProjectsTableSerializer < ApplicationSerializer
   # whether the chart draws it.
   def row_of(row)
     { key: row.key, name: row.name, color_class: row.color_class, on: row.drawn?, drawable: row.boxed?,
-      cells: @chart.cells(row).map { |cell| cell_of(cell, row.repo) } }.merge(manage_parts(row.repo))
+      cells: @chart.cells(row).map { |cell| cell_of(cell, row) } }.merge(manage_parts(row.repo))
   end
 
   def off_page_row(repo)
@@ -46,11 +46,20 @@ class ProjectsTableSerializer < ApplicationSerializer
   end
 
   # pick: the cell's switch, on while visitors see the number; nil without
-  # one. link: what stands in its place, "set_up" or "paused", and where it goes.
-  def cell_of(cell, repo)
+  # one. link: what stands in its place (link_of).
+  def cell_of(cell, row)
     { key: cell.number.key, value: (number_with_delimiter(cell.value) if cell.value), shown: cell.shown, pick: cell.pick,
-      link: (cell.link && { kind: cell.link.to_s, path: edit_project_path(repo, site: "open", anchor: "site-visits") }),
+      link: (link_of(cell.link, row) if cell.link),
       change: (Progress::Change.of(cell.value, cell.previous)&.to_h if @changes && cell.shown) }
+  end
+
+  # Paused or Set up (Row#link), with its name for a screen reader, which
+  # starts with the word on screen, and the project's Site visits row it
+  # leads to, which says why and what to do. Both the island and the first
+  # paint write these words.
+  def link_of(link, row)
+    text, label = link == :paused ? [ "Paused", "Paused: see why #{row.name}'s site visits do not count" ] : [ "Set up", "Set up #{row.name}'s site visits" ]
+    { text: text, label: label, path: edit_project_path(row.repo, site: "open", anchor: "site-visits") }
   end
 
   # A project with no synced repo behind it has nothing to edit or save.

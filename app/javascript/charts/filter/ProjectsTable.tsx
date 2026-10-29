@@ -10,14 +10,15 @@ import { lineOf, type Lines } from "./lines"
 // drawn cells in ink. A row's box, in its colour, draws it or not, Only
 // shows it alone and Show all brings the rest back; the last row in view
 // keeps its box, and a click says so. A project past the palette has no
-// colour, so no box, and keeps its values in grey. Hovering or focusing a
-// row brings its lines forward. On the dashboard (manage) a row also has
-// Edit and whether the builder's page lists it, and each cell the switch
-// for what visitors see (its value grey while they do not), or Set up or
-// Paused where site visits do not count; a project hidden from the page
-// comes last, with no box. On a phone each row stacks, with only the
-// numbers it counts. Only shows on hover, and always on a touch screen,
-// where there is no hover to find it by.
+// colour, so no box, and keeps its values in grey; a row with no box tells
+// a screen reader it draws no line. Hovering or focusing a row brings its
+// lines forward. On the dashboard (manage) a row also has Edit and whether
+// the builder's page lists it, and each cell the switch for what visitors
+// see (its value grey while they do not), or Set up or Paused where site
+// visits do not count; a project hidden from the page comes last, with no
+// box. On a phone each row stacks, with only the numbers it counts. Only
+// shows on hover, and always on a touch screen, where there is no hover to
+// find it by.
 
 export type RowTargets = {
   // A row's box; null when it is the last project in view.
@@ -111,7 +112,7 @@ function Row({ row, table, drawn, alone, hot, rows, switches }: {
               </span>
               <span className={name}>{row.name}</span>
             </label>
-          ) : <span className={name}>{row.name}</span>}
+          ) : <><span className={name}>{row.name}</span><span className="sr-only">, draws no line</span></>}
           {only && (
             <button type="button" aria-label={`Show only ${row.name}`} onClick={only.go} onPointerEnter={only.warm} onFocus={only.warm}
                     className="min-h-7 shrink-0 rounded-md px-1.5 py-0.5 text-[13px] font-bold text-accent-ink opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 focus:opacity-100 max-md:opacity-100 pointer-coarse:opacity-100">Only</button>
@@ -152,7 +153,7 @@ function Cell({ row, cell, word, drawn, switches }: { row: TableRow; cell: Table
           {cell.change?.arrow && <ChangeLine change={cell.change} />}
         </span>
       )}
-      {cell.link && <SiteLink name={row.name} link={cell.link} />}
+      {cell.link && <SiteLink link={cell.link} />}
       {switches && pick !== null && (
         <button type="button" role="switch" aria-checked={pick} aria-label={`Show ${word} for ${row.name}`} className="os-switch"
                 onClick={() => switches.flip(row, cell)} />
@@ -161,11 +162,11 @@ function Cell({ row, cell, word, drawn, switches }: { row: TableRow; cell: Table
   )
 }
 
-function SiteLink({ name, link }: { name: string; link: CellLink }) {
-  const paused = link.kind === "paused"
+// Its words are the server's, as charts/_table writes them.
+function SiteLink({ link }: { link: CellLink }) {
   return (
-    <a href={link.path} aria-label={paused ? `See why ${name}'s site visits are paused` : `Set up ${name}'s site visits`}
-       className="inline-flex min-h-6 items-center text-[13px] font-bold text-accent-ink underline underline-offset-3">{paused ? "Paused" : "Set up"}</a>
+    <a href={link.path} aria-label={link.label}
+       className="inline-flex min-h-6 items-center text-[13px] font-bold text-accent-ink underline underline-offset-3">{link.text}</a>
   )
 }
 

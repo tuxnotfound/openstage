@@ -208,7 +208,8 @@ RSpec.describe "Profiles", type: :request do
         expect([ card.at_css(".os-dot"), card.css("svg path").size ]).to eq([ nil, 2 ])
         expect(all.count { |each| each.at_css(".os-h3 .os-dot") }).to eq(10)
         expect(page.at_css("[data-chart-row='builder/zz'] a")).to be_nil
-        expect(page.at_css("[data-chart-row='builder/zz']").text.squish).to eq("zz Commits 1")
+        expect(page.at_css("[data-chart-row='builder/zz']").text.squish).to eq("zz, draws no line Commits 1")
+        expect(page.at_css("[data-chart-row='builder/zz'] .sr-only").text).to eq(", draws no line")
         expect(page.css("svg path[data-number='commits']").size).to eq(10)
       end
 

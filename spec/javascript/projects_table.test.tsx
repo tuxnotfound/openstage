@@ -37,17 +37,18 @@ describe("the dashboard's site visits cell", () => {
   })
 
   test("says Paused, with the value in grey and no switch, where Free counts another project", () => {
-    const { tidepool } = cells(row("tidepool", visits({ value: "90", link: { kind: "paused", path: siteRow(2) } })))
+    const link = { text: "Paused", label: "Paused: see why tidepool's site visits do not count", path: siteRow(2) }
+    const { tidepool } = cells(row("tidepool", visits({ value: "90", link })))
 
     expect(tidepool).toMatch(/text-ink-3 font-medium">90<\/span>/)
-    expect(tidepool).toContain(`<a href="${siteRow(2)}" aria-label="See why tidepool's site visits are paused"`)
+    expect(tidepool).toContain(`<a href="${siteRow(2)}" aria-label="Paused: see why tidepool's site visits do not count"`)
     expect(tidepool).toContain(">Paused</a>")
     expect(tidepool).not.toContain('role="switch"')
   })
 
   test("says Set up where they count none, after the value only while the window has any", () => {
-    const { quiet, fresh } = cells(row("quiet", visits({ value: "12", link: { kind: "set_up", path: siteRow(3) } })),
-                                   row("fresh", visits({ link: { kind: "set_up", path: siteRow(4) } })))
+    const setUp = (name: string, id: number) => ({ text: "Set up", label: `Set up ${name}'s site visits`, path: siteRow(id) })
+    const { quiet, fresh } = cells(row("quiet", visits({ value: "12", link: setUp("quiet", 3) })), row("fresh", visits({ link: setUp("fresh", 4) })))
 
     expect(quiet).toContain(">12</span>")
     expect(quiet).toContain(`<a href="${siteRow(3)}" aria-label="Set up quiet's site visits"`)
@@ -58,7 +59,7 @@ describe("the dashboard's site visits cell", () => {
 })
 
 describe("a project past the tenth", () => {
-  test("has no box and no colour, and keeps its value in grey", () => {
+  test("has no box and no colour, keeps its value in grey, and tells a screen reader it draws no line", () => {
     const commits: TableCell = { key: "commits", value: "4", shown: true, pick: null, link: null, change: null }
     const quiet: TableRow = { key: "me/quiet", name: "quiet", colorClass: null, on: false, drawable: false, cells: [commits], edit: null, page: null, switch: null }
     const html = renderToStaticMarkup(
@@ -70,6 +71,8 @@ describe("a project past the tenth", () => {
     expect(html.match(/type="checkbox"/g)).toHaveLength(1)
     expect(row).not.toContain("os-project")
     expect(row).not.toContain('type="checkbox"')
+    expect(row).toContain('quiet</span><span class="sr-only">, draws no line</span>')
     expect(row).toMatch(/text-ink-3 ">4<\/span>/)
+    expect(html.match(/draws no line/g)).toHaveLength(1)
   })
 })

@@ -54,9 +54,11 @@ export type NumberView = {
 // change on analytics, null elsewhere.
 export type TableCell = { key: string; value: string | null; shown: boolean; pick: boolean | null; link: CellLink | null; change: Change | null }
 
-// set_up: the project counts no site visits (the script off, or waiting for
-// its first visit); paused: Free counts another project's.
-export type CellLink = { kind: "set_up" | "paused"; path: string }
+// Set up where the project counts no site visits (the script off, or waiting
+// for its first visit), Paused where Free counts another project's: its
+// words on screen (text) and for a screen reader (label), and the project's
+// Site visits row it leads to (path).
+export type CellLink = { text: string; label: string; path: string }
 
 export type TableRow = {
   // Its repo's full name, or on analytics "page" for the builder's own

@@ -4,11 +4,12 @@
     row's box draws it or not, and Only shows it alone; each is a link to its
     view, a box in view current, and the last row in view keeps its box. A
     project past the palette has no colour, so no box, and keeps its values
-    in grey. On the dashboard (manage) a row also has Edit and whether the
-    builder's page lists it, and each cell the switch for what visitors see;
-    a project hidden from the page comes last, with no box. Where site visits
-    do not count, Set up or Paused stands in place of the switch, after the
-    value when the window has any. On a phone each row stacks, with only the
+    in grey; a row with no box tells a screen reader it draws no line. On
+    the dashboard (manage) a row also has Edit and whether the builder's page
+    lists it, and each cell the switch for what visitors see; a project
+    hidden from the page comes last, with no box. Where site visits do not
+    count, Set up or Paused stands in place of the switch, after the value
+    when the window has any. On a phone each row stacks, with only the
     numbers it counts. Only shows on hover, and always on a touch screen,
     where there is no hover to find it by.
     view: a ChartFilterSerializer's attributes; path_for: the page's address
@@ -73,7 +74,7 @@
                           class: "min-h-7 shrink-0 rounded-md px-1.5 py-0.5 text-[13px] font-bold text-accent-ink opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100 max-md:opacity-100 pointer-coarse:opacity-100" %>
                   <% end %>
                 <% else %>
-                  <span class="<%= name_css %>"><%= row[:name] %></span>
+                  <span class="<%= name_css %>"><%= row[:name] %></span><span class="sr-only">, draws no line</span>
                 <% end %>
                 <%= link_to "Edit", row[:edit], class: "os-btn2 ml-auto h-[30px] shrink-0 rounded-[9px] px-3 text-[13px]", aria: { label: "Edit #{row[:name]}" } if row[:edit] %>
               </span>
@@ -105,9 +106,7 @@
                     </span>
                   <% end %>
                   <% if cell[:link] %>
-                    <% paused = cell[:link][:kind] == "paused" %>
-                    <%= link_to (paused ? "Paused" : "Set up"), cell[:link][:path],
-                          aria: { label: paused ? "See why #{row[:name]}'s site visits are paused" : "Set up #{row[:name]}'s site visits" },
+                    <%= link_to cell[:link][:text], cell[:link][:path], aria: { label: cell[:link][:label] },
                           class: "inline-flex min-h-6 items-center text-[13px] font-bold text-accent-ink underline underline-offset-3" %>
                   <% end %>
                   <% unless cell[:pick].nil? %>

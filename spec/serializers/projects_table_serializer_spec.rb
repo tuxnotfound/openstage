@@ -25,6 +25,15 @@ RSpec.describe ProjectsTableSerializer do
     "/projects/#{repo.id}/edit?site=open#site-visits"
   end
 
+  # The words in a switch's place, each named for a screen reader from the word on screen.
+  def set_up(name, repo)
+    { "text" => "Set up", "label" => "Set up #{name}'s site visits", "path" => site_row(repo) }
+  end
+
+  def paused(name, repo)
+    { "text" => "Paused", "label" => "Paused: see why #{name}'s site visits do not count", "path" => site_row(repo) }
+  end
+
   it "fills a project's cells with the numbers its visitors see, and leaves the rest empty" do
     app.update!(hidden_numbers: [ "visits" ])
     json = table
@@ -61,7 +70,7 @@ RSpec.describe ProjectsTableSerializer do
     json = table(builder: true)
 
     expect(cells(json, "app")["visits"]).to eq("value" => "1,204", "shown" => false, "pick" => false, "link" => nil)
-    expect(cells(json, "lib")["visits"]).to eq("value" => nil, "shown" => false, "pick" => nil, "link" => { "kind" => "set_up", "path" => site_row(lib) })
+    expect(cells(json, "lib")["visits"]).to eq("value" => nil, "shown" => false, "pick" => nil, "link" => set_up("lib", lib))
     expect(json["rows"].map { |row| [ row["name"], row["colorClass"] ] }).to eq([ [ "app", "os-project-1" ], [ "lib", "os-project-2" ], [ "old", nil ] ])
     expect(json["rows"].last).to include("name" => "old", "drawable" => false, "on" => false)
     expect(json["rows"].last["cells"].pluck("link")).to eq([ nil, nil ])
@@ -74,10 +83,10 @@ RSpec.describe ProjectsTableSerializer do
     lib.update!(homepage: "https://lib.example", site_source: "script", site_set_up_at: 10.days.ago)
 
     paused = table(builder: true)
-    expect(cells(paused, "app")["visits"]).to eq("value" => "1,204", "shown" => false, "pick" => nil, "link" => { "kind" => "paused", "path" => site_row(app) })
-    expect(cells(paused, "lib")["visits"]).to eq("value" => nil, "shown" => false, "pick" => nil, "link" => { "kind" => "set_up", "path" => site_row(lib) })
+    expect(cells(paused, "app")["visits"]).to eq("value" => "1,204", "shown" => false, "pick" => nil, "link" => paused("app", app))
+    expect(cells(paused, "lib")["visits"]).to eq("value" => nil, "shown" => false, "pick" => nil, "link" => set_up("lib", lib))
 
     app.update!(site_source: nil)
-    expect(cells(table(builder: true), "app")["visits"]).to eq("value" => "1,204", "shown" => false, "pick" => nil, "link" => { "kind" => "set_up", "path" => site_row(app) })
+    expect(cells(table(builder: true), "app")["visits"]).to eq("value" => "1,204", "shown" => false, "pick" => nil, "link" => set_up("app", app))
   end
 end
