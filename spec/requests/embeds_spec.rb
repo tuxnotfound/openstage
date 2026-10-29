@@ -34,6 +34,17 @@ RSpec.describe "Embeds", type: :request do
       expect(response.body).to include("/builder")
     end
 
+    it "shows the latest entry visitors see: no commit of a project whose builder hides them" do
+      create(:github_repo, user: user, full_name: "builder/app", hidden_numbers: [ "commits" ])
+      create(:entry, user: user, entry_type: "milestone", source: "manual", title: "Launched app", repo_name: "builder/app", occurred_at: 2.hours.ago)
+      create(:entry, user: user, title: "Hidden commit", repo_name: "builder/app", occurred_at: 1.hour.ago)
+
+      get "/embed/builder.js"
+
+      expect(response.body).to include("Launched app")
+      expect(response.body).not_to include("Hidden commit")
+    end
+
     it "returns 404 for missing users" do
       get "/embed/ghost.js"
       expect(response).to have_http_status(:not_found)
