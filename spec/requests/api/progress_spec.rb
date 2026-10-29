@@ -59,6 +59,22 @@ RSpec.describe "Api::Progress", type: :request do
     expect(totals).to eq("commits" => "3")
   end
 
+  # Each read here goes through the builder's whole history: the cache key,
+  # the projects' ranks with when each began, the period's shipped and
+  # published entries, and the commits by day for the section and the chart.
+  it "reads the builder's commits by day once, and their first commits with the ranks, whichever view it answers" do
+    sign_in_as(user)
+    [ { range: "30d" }, { range: "all", projects: "builder/lib" }, { range: "12m", project: "builder/app" }, { range: "90d", dashboard: 1 } ].each do |params|
+      reads = []
+      counter = ->(*, payload) { reads << payload[:sql] if payload[:sql].include?('FROM "entries"') && !payload[:cached] }
+
+      ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { get "/api/progress/builder", params: params }
+
+      by_day = reads.grep(/DATE\(\(entries\.occurred_at/)
+      expect([ response.status, reads.size, by_day.size ]).to eq([ 200, 5, 1 ]), "#{params}:\n#{reads.join("\n")}"
+    end
+  end
+
   it "lets a browser revalidate a view it has" do
     get "/api/progress/builder", params: { range: "12m" }
     etag = response.headers["ETag"]

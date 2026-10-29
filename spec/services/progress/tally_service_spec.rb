@@ -111,6 +111,38 @@ RSpec.describe Progress::TallyService do
     expect([ first.call([]), first.call([ "quiet/app" ]) ]).to eq([ Date.new(2026, 2, 3), Date.new(2026, 4, 1) ])
   end
 
+  it "reads the commits a page's chart also counts with its own, in one statement, and keeps its numbers to the period" do
+    plain = described_class.new(user: user, range: "30d", rolling: true).tap(&:call!)
+    counting = described_class::Counting.new(from: Date.new(2026, 1, 1), repos: nil)
+    reads = 0
+    counter = ->(*, payload) { reads += 1 if payload[:sql].include?("DATE((entries.occurred_at") }
+
+    page = ActiveSupport::Notifications.subscribed(counter, "sql.active_record") do
+      described_class.new(user: user, range: "30d", rolling: true, counting: counting).tap(&:call!)
+    end
+
+    expect(reads).to eq(1)
+    expect([ page.totals, page.previous_totals, page.buckets, page.day_counts ]).to eq([ plain.totals, plain.previous_totals, plain.buckets, plain.day_counts ])
+    expect(page.commit_days).to include(plain.commit_days)
+    expect(page.commit_days.keys.map(&:first).min).to be < plain.commit_days.keys.map(&:first).min
+  end
+
+  it "reads for a project's page the earlier commits of that project alone" do
+    quiet = create(:user)
+    create(:github_repo, user: quiet, full_name: "quiet/hush", name: "hush", hidden_numbers: [ "commits" ])
+    create(:entry, user: quiet, repo_name: "quiet/hush", occurred_at: Time.utc(2026, 3, 3))
+    create(:entry, user: quiet, repo_name: "quiet/loud", occurred_at: Time.utc(2026, 3, 4))
+    create(:entry, user: quiet, source: "manual", entry_type: "milestone", title: "Live", repo_name: "quiet/hush", occurred_at: Time.utc(2026, 10, 13))
+    page = lambda do |counting|
+      described_class.new(user: quiet, range: "12m", rolling: true, repos: [ "quiet/hush" ], counting: counting).tap(&:call!)
+    end
+
+    counted = page.call(described_class::Counting.new(from: Date.new(2025, 10, 1), repos: [ "quiet/hush" ]))
+
+    expect(counted.commit_days).to eq([ Date.new(2026, 3, 3), "quiet/hush" ] => 1)
+    expect(page.call(nil).commit_days).to eq({})
+  end
+
   it "counts several projects together" do
     both = tally("year", repo: [ progress_repo(0), progress_repo(1) ])
 

@@ -5,7 +5,9 @@ module Progress
   # With repos, only those projects' commits and the entries tagged with them
   # count; nothing is inferred from text. Days are in the builder's zone
   # (User#zone), else UTC. Rolling, the period is a Window that ends today
-  # (the public page); otherwise a calendar Period (the weekly emails).
+  # (the public page); otherwise a calendar Period (the weekly emails). A
+  # page's chart counts more commits than the period's; asked to (counting),
+  # the tally reads those too, so the page reads its commits once.
   class TallyService < ApplicationService
     # A shipped or published entry on its day in the builder's zone.
     Item = Data.define(:entry, :date, :kind) do
@@ -28,14 +30,22 @@ module Progress
       end
     end
 
+    # What a page's chart counts besides the period: every commit of these
+    # projects (of every one for none) from a day on (on every day for none).
+    Counting = Data.define(:from, :repos)
+
     # repos: the projects in view; none for all of them. reveal: a repo the builder hid, shown anyway (Entry.on_page).
-    attr_accessor :user, :range, :offset, :repos, :rolling, :reveal
+    # counting: what the page's chart also counts (Counting); none for the period alone.
+    attr_accessor :user, :range, :offset, :repos, :rolling, :reveal, :counting
     attr_reader :zone, :period, :projects, :items, :buckets, :totals, :previous_totals, :first_active_day
     # The period's entries with no project that the builder has not marked as
     # having none, newest first; whatever the filter, so they can be tagged.
     attr_reader :untagged
     # Each day's commits by repo, every project's, to order the tag buttons.
     attr_reader :day_counts
+    # Each day's commits by project, {[date, repo] => count}: every public
+    # commit over the period and its comparison, and what counting adds.
+    attr_reader :commit_days
 
     validates :user, presence: true
 
@@ -45,6 +55,7 @@ module Progress
       @zone = user.zone
       @projects = Projects.new(public_entries)
       @period = period_for(Time.current.in_time_zone(zone).to_date, first_day_of(projects))
+      @commit_days = commits_by_day
       @items = items_on(period.first..period.last_day)
       @buckets = period.buckets.map { |bucket| tally_bucket(bucket) }
       @totals = totals_on(period.first..period.last_day)
@@ -80,6 +91,24 @@ module Progress
       firsts = [ projects.first_commits(shown: rolling), projects.first_highlights ]
       times = firsts.flat_map { |by_repo| selected? ? by_repo.values_at(*repos) : by_repo.values }
       times.compact.min&.in_time_zone(zone)&.to_date
+    end
+
+    # {[date, repo] => count} for every public commit the tally and the
+    # page's chart count, counted by day in SQL: a row per day and project,
+    # however many commits there are.
+    def commits_by_day
+      commit_scope.group(Arel.sql(LocalDay.of("entries.occurred_at", zone)), :repo_name).count
+                  .transform_keys { |(date, commit_repo)| [ date.to_date, commit_repo ] }
+    end
+
+    # The window's commits, and with counting the ones the chart also counts.
+    def commit_scope
+      commits = public_entries.commits
+      scope = commits.where(occurred_at: window)
+      return scope unless counting
+
+      counted = counting.from ? commits.where(occurred_at: counting.from.in_time_zone(zone)..) : commits
+      scope.or(counting.repos ? counted.where(repo_name: counting.repos) : counted)
     end
 
     def tally_bucket(bucket)
@@ -119,12 +148,9 @@ module Progress
     end
 
     # {[date, repo] => count} for every public commit from the comparison's
-    # start to today, counted by day in SQL: a row per day and project, however
-    # many commits there are.
+    # start to today.
     def window_commits
-      @window_commits ||= public_entries.commits.where(occurred_at: window)
-                                        .group(Arel.sql(LocalDay.of("entries.occurred_at", zone)), :repo_name).count
-                                        .transform_keys { |(date, commit_repo)| [ date.to_date, commit_repo ] }
+      @window_commits ||= commit_days.select { |(date, _repo), _count| window_days.cover?(date) }
     end
 
     def window_items
@@ -135,8 +161,12 @@ module Progress
     end
 
     def window
-      from = [ period.first, period.comparison&.first ].compact.min
-      from.in_time_zone(zone)...(period.last_day + 1).in_time_zone(zone)
+      window_days.first.in_time_zone(zone)...(window_days.last + 1).in_time_zone(zone)
+    end
+
+    # The period's days and its comparison's.
+    def window_days
+      [ period.first, period.comparison&.first ].compact.min..period.last_day
     end
   end
 end

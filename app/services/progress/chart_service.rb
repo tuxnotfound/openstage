@@ -62,8 +62,25 @@ module Progress
     end
 
     def composed(keys)
-      service = ComposeService.new(user: user, range: range, repos: Array(keys), rolling: true, reveal: reveal)
+      service = ComposeService.new(user: user, range: range, repos: Array(keys), rolling: true, reveal: reveal, counting: counting)
       service if run(service)
+    end
+
+    # What the table and the chart count besides the section's period, read
+    # with the section's commits: every project's from count_from on, or on
+    # a project's page its own.
+    def counting
+      TallyService::Counting.new(from: count_from, repos: (Array(repos) if lone))
+    end
+
+    # The window before the range, and the six days before it that the
+    # 30-day view's first average reads; every day for all time. Known before
+    # the section is, as no window's span hangs on where the work began.
+    def count_from
+      return @count_from if defined?(@count_from)
+
+      window = Window.new(range: range, today: Time.current.in_time_zone(user.zone).to_date, first_activity: nil)
+      @count_from = [ window.span_before&.first, window.span && (window.span.first - (Window::AVERAGE - 1)) ].compact.min
     end
 
     # The projects a list keeps in view (Filter.in_view); a project's page
@@ -98,19 +115,14 @@ module Progress
       lone ? ProgressChart::Palette.alone_class(project.rank) : ProgressChart::Palette.project_class(project.rank)
     end
 
-    # Each project's first commit comes from the section's projects, which
-    # read it with their ranks.
+    # The commits counted come from the section's tally and its projects,
+    # which read them already.
     def count
-      service = CountService.new(user: user, reveal: reveal, from: count_from, first_commits: section.tally.projects.first_commits,
+      tally = section.tally
+      service = CountService.new(user: user, from: count_from, commit_days: tally.commit_days, first_commits: tally.projects.first_commits,
                                  commit_repos: rows.select { |row| row.counts?("commits") }.map(&:key),
                                  visit_repos: rows.select { |row| builder ? row.counts?("visits") : row.shows?("visits") }.map(&:repo))
       @counts = service.counts if run(service)
-    end
-
-    # The window before the range, and the six days before it that the
-    # 30-day view's first average reads; every day for all time.
-    def count_from
-      [ totals_window.span_before&.first, totals_window.span && (totals_window.span.first - (Window::AVERAGE - 1)) ].compact.min
     end
 
     # Each number its projects show visitors, the numbers drawn and the chart.
