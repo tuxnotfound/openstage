@@ -106,6 +106,20 @@ RSpec.describe Progress::TallyService do
     expect(firsts).to eq([ [ Date.new(2026, 10, 13), Date.new(2025, 3, 3) ] ] * 2)
   end
 
+  it "counts the commits of a project whose builder hides them unless asked for only the ones visitors see" do
+    quiet = create(:user)
+    create(:github_repo, user: quiet, full_name: "quiet/hush", name: "hush", hidden_numbers: [ "commits" ])
+    2.times { create(:entry, user: quiet, repo_name: "quiet/hush", occurred_at: Time.utc(2026, 10, 14)) }
+    create(:entry, user: quiet, repo_name: "quiet/loud", occurred_at: Time.utc(2026, 10, 13))
+
+    counts = [ false, true ].map do |shown_only|
+      page = described_class.new(user: quiet, range: "30d", rolling: true, shown_only: shown_only).tap(&:call!)
+      [ page.totals.commits, page.totals.counts, page.buckets.sum(&:total), page.day_counts.values.sum { |day| day.values.sum } ]
+    end
+
+    expect(counts).to eq([ [ 3, { "quiet/hush" => 2, "quiet/loud" => 1 }, 3, 3 ], [ 1, { "quiet/loud" => 1 }, 1, 1 ] ])
+  end
+
   it "starts a page's window at the first commit or entry in view: one with no project, or an entry before its project's commits" do
     quiet = create(:user)
     create(:entry, user: quiet, occurred_at: Time.utc(2026, 2, 3))

@@ -125,6 +125,20 @@ RSpec.describe "Share cards", type: :request do
       expect(drawn.last).to include(*HomeHelper::TAGLINE, "<polyline")
     end
 
+    it "draws no line for a project whose builder hides its commits, and none at all with only those" do
+      demo = create(:user, username: "tuxnotfound")
+      create(:github_repo, user: demo, full_name: "tuxnotfound/app", hidden_numbers: [ "commits" ])
+      create(:entry, user: demo, repo_name: "tuxnotfound/app", occurred_at: 2.days.ago)
+      site = create(:entry, user: demo, repo_name: "tuxnotfound/site", occurred_at: 3.days.ago)
+
+      get "/og"
+      expect(drawn.last.scan("<polyline").size).to eq(1)
+
+      site.destroy!
+      get "/og"
+      expect(drawn.last).not_to include("<polyline")
+    end
+
     it "draws the headline alone without a demo page" do
       get "/og"
 

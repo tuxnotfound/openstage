@@ -13,9 +13,10 @@ module DemoPage
     User.active.find_by(username: ENV.fetch("DEMO_USERNAME", "tuxnotfound"))
   end
 
-  # Nothing to show without a commit in the window.
+  # Nothing to show without a commit in the window. The demo draws its
+  # tally as it is, so it counts only the commits visitors see.
   def demo_section(user)
-    service = Progress::ComposeService.new(user: user, range: RANGE, rolling: true)
+    service = Progress::ComposeService.new(user: user, range: RANGE, rolling: true, shown_only: true)
     return unless service.call
 
     service.section if service.section.tally.totals.commits.positive?

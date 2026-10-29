@@ -30,7 +30,8 @@ module Progress
     # that ends today, as the public page shows; else a calendar Period.
     # reveal: a repo the builder hid, shown anyway (Entry.on_page).
     # counting: what the page's chart also counts (TallyService::Counting).
-    attr_accessor :user, :range, :offset, :repos, :cap, :swapped_ids, :rolling, :reveal, :counting
+    # shown_only: only the commits visitors see count (TallyService).
+    attr_accessor :user, :range, :offset, :repos, :cap, :swapped_ids, :rolling, :reveal, :counting, :shown_only
     attr_reader :section
 
     validates :user, presence: true
@@ -41,7 +42,7 @@ module Progress
     # from the reads that rank them.
     def execute
       tally = TallyService.new(user: user, range: range, offset: offset, repos: Array(repos), rolling: rolling, reveal: reveal,
-                               counting: counting, ranked: true)
+                               counting: counting, ranked: true, shown_only: shown_only)
       return unless run(tally)
 
       pick = PickService.new(items: tally.items, first_day: tally.first_active_day, last_day: tally.period.last_day,

@@ -54,6 +54,20 @@ RSpec.describe "Home", type: :request do
       expect(response.body).not_to include("Lately on Openstage")
     end
 
+    it "counts no commit of a project whose builder hides them in the demo's number, share bar or chart" do
+      demo = create(:user, username: "tuxnotfound")
+      create(:github_repo, user: demo, full_name: "tuxnotfound/app", name: "app", hidden_numbers: [ "commits" ])
+      2.times { create(:entry, user: demo, repo_name: "tuxnotfound/app", occurred_at: 2.days.ago) }
+      create(:entry, user: demo, repo_name: "tuxnotfound/site", occurred_at: 2.days.ago)
+
+      get "/"
+
+      page = Nokogiri::HTML(response.body)
+      expect(response.body).to match(%r{<span class="os-num[^"]*">1</span>\s*<span[^>]*>commits, last 12 months})
+      expect(page.css("[aria-label='Share of commits by project'] > div").map { |part| part["title"] }).to eq([ "site: 1 commit" ])
+      expect(page.css(".os-chart svg path").size).to eq(1)
+    end
+
     it "counts only the demo page's public commits" do
       demo = create(:user, username: "tuxnotfound")
       create(:entry, user: demo)

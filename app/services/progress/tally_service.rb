@@ -37,7 +37,11 @@ module Progress
     # repos: the projects in view; none for all of them. reveal: a repo the builder hid, shown anyway (Entry.on_page).
     # counting: what the page's chart also counts (Counting); none for the period alone.
     # ranked: the caller ranks the projects too (Projects#all), as a section does.
-    attr_accessor :user, :range, :offset, :repos, :rolling, :reveal, :counting, :ranked
+    # shown_only: count only the commits visitors see (Entry.without_hidden_commits),
+    # for a page that draws the tally as it is (the landing's demo); a chart
+    # filter keeps them, as its builder's own view counts them, and leaves
+    # them out of what visitors see by its rows (ChartService).
+    attr_accessor :user, :range, :offset, :repos, :rolling, :reveal, :counting, :ranked, :shown_only
     attr_reader :zone, :period, :projects, :items, :buckets, :totals, :previous_totals, :first_active_day
     # The period's entries with no project that the builder has not marked as
     # having none, newest first; whatever the filter, so they can be tagged.
@@ -119,7 +123,7 @@ module Progress
 
     # The window's commits, and with counting the ones the chart also counts.
     def commit_scope
-      commits = public_entries.commits
+      commits = shown_only ? public_entries.commits.without_hidden_commits : public_entries.commits
       scope = commits.where(occurred_at: window)
       return scope unless counting
 
