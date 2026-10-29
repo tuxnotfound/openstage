@@ -24,6 +24,29 @@ RSpec.describe Progress::FocusService do
     expect(service.first_commit).to eq(user.entries.commits.where(repo_name: progress_repo(4)).minimum(:occurred_at))
   end
 
+  it "says whether visitors see its commits, as its builder picks" do
+    repo = create(:github_repo, user: user, full_name: progress_repo(4), name: "trained-on")
+    service = described_class.new(user: user, slug: "trained-on").tap(&:call!)
+    expect(service.commits_shown?).to be(true)
+
+    repo.update!(hidden_numbers: [ "commits" ])
+    service = described_class.new(user: user, slug: "trained-on").tap(&:call!)
+    expect(service.commits_shown?).to be(false)
+    expect(service.first_commit).to be_present
+  end
+
+  it "counts the commits of each other builder on the repo who shows them, the ones who hide them last" do
+    ada = create(:user, username: "ada")
+    create(:github_repo, user: ada, full_name: progress_repo(4), name: "trained-on", hidden_numbers: [ "commits" ])
+    3.times { create(:entry, user: ada, repo_name: progress_repo(4)) }
+    zed = create(:user, username: "zed")
+    create(:entry, user: zed, repo_name: progress_repo(4))
+
+    co_builders = described_class.new(user: user, slug: "trained-on").tap(&:call!).co_builders
+
+    expect(co_builders.map { |co| [ co.user.username, co.commits ] }).to eq([ [ "zed", 1 ], [ "ada", nil ] ])
+  end
+
   it "refuses a name that is no project on the page" do
     service = described_class.new(user: user, slug: "nope")
 

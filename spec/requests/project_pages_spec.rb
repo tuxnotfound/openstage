@@ -33,6 +33,74 @@ RSpec.describe "Project pages", type: :request do
     expect(rows.map { |row| [ row.text.squish, row["href"] ] }).to eq([ [ "@ada 2 commits", "/ada/side.app" ], [ "@cy 1 commit", "/cy/side.app" ] ])
   end
 
+  describe "a project whose builder hides its commits" do
+    def html
+      Nokogiri::HTML(response.body)
+    end
+
+    def tags
+      html.css("section[aria-label='side.app'] .os-tag").map { |tag| tag.text.squish }
+    end
+
+    def details
+      html.css("aside dl > div").map { |row| row.text.squish }
+    end
+
+    def more_from
+      html.xpath("//h2[starts-with(text(), 'More from')]/following-sibling::ul[1]//a").map { |row| row.text.squish }
+    end
+
+    it "shows no last commit, no count of them and no first commit, and keeps its commit messages" do
+      get "/builder/side.app"
+      expect(tags).to include("Last commit today")
+      expect(details).to eq([ "Commits, all time 1", "First commit #{Time.current.strftime('%b %-d, %Y')}", "Shipped and published 1", "Website side.example" ])
+
+      user.github_repos.find_by!(full_name: "builder/side.app").update!(hidden_numbers: [ "commits" ])
+      get "/builder/side.app"
+
+      expect(tags).to eq([ "Live", "Public repo" ])
+      expect(details).to eq([ "Shipped and published 1", "Website side.example" ])
+      expect(response.body).to include("Recent commits", "Ship the form")
+    end
+
+    it "lists it under More from on another project's page with no last-commit time" do
+      create(:github_repo, user: user, full_name: "builder/other", name: "other", hidden_numbers: [ "commits" ])
+      create(:entry, user: user, repo_name: "builder/third", occurred_at: 3.days.ago)
+
+      get "/builder/side.app"
+
+      expect(more_from).to eq([ "other", "third 3 days ago" ])
+    end
+
+    it "leaves out the Details it had nothing else for, the panel named by what stays" do
+      user.github_repos.find_by!(full_name: "builder/side.app").update!(hidden_numbers: [ "commits" ], homepage: nil)
+      user.entries.where(entry_type: "milestone").destroy_all
+
+      get "/builder/side.app"
+
+      expect(html.at_css("h2#details")).to be_nil
+      expect(html.at_css("aside")["aria-labelledby"]).to eq("more-from")
+      expect(more_from).to eq([ "other today" ])
+
+      user.entries.where(repo_name: "builder/other").destroy_all
+      get "/builder/side.app"
+
+      expect(html.at_css("aside")).to be_nil
+    end
+
+    it "counts no commits of a builder who hides them on their own page for it, listing them after the others" do
+      ada = create(:user, username: "ada")
+      2.times { create(:entry, user: ada, repo_name: "builder/side.app") }
+      create(:github_repo, user: ada, full_name: "builder/side.app", name: "side.app", hidden_numbers: [ "commits" ])
+      create(:entry, user: create(:user, username: "cy"), repo_name: "builder/side.app")
+
+      get "/builder/side.app"
+
+      rows = html.xpath("//h2[text()='Also building this']/following-sibling::ul[1]//a")
+      expect(rows.map { |row| [ row.text.squish, row["href"] ] }).to eq([ [ "@cy 1 commit", "/cy/side.app" ], [ "@ada", "/ada/side.app" ] ])
+    end
+  end
+
   it "shows the project's picture beside what it is" do
     user.github_repos.find_by(full_name: "builder/side.app").update!(image_edit: "https://side.example/cover.png")
 

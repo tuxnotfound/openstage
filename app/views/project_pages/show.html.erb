@@ -36,7 +36,7 @@
         <% unless card.nil? || card.private_repo.nil? %>
           <span class="os-tag"><%= card.private_repo ? "Private repo, commit messages only" : "Public repo" %></span>
         <% end %>
-        <% if card&.last_commit %><span class="os-tag">Last commit <%= progress_ago(card.last_commit) %></span><% end %>
+        <% if card&.last_commit && @focus.commits_shown? %><span class="os-tag">Last commit <%= progress_ago(card.last_commit) %></span><% end %>
       </div>
       <h1 class="os-h1 mt-3.5 flex items-center gap-4 text-[clamp(36px,5vw,56px)] [overflow-wrap:anywhere]">
         <% if color %><span class="os-dot size-4 shrink-0 bg-(--project)" aria-hidden="true"></span><% end %><%= project.name %>
@@ -100,56 +100,68 @@
     <%= render "profiles/page/shipped", section: section %>
   </div>
 
-  <aside class="os-panel min-w-0 flex-[1_1_300px]" aria-labelledby="details">
-    <h2 id="details" class="os-h3">Details</h2>
-    <dl class="mt-2.5">
-      <% facts = [ [ "Commits, all time", project.commits ] ] %>
-      <% facts << [ "First commit", @focus.first_commit.to_date.strftime("%b %-d, %Y") ] if @focus.first_commit %>
-      <% facts << [ "Shipped and published", @focus.highlights ] if @focus.highlights.positive? %>
-      <% facts << [ "Stars on GitHub", card.github_repo.stars_count ] if card&.github_repo&.stars_count.to_i.positive? %>
-      <% facts << [ "Website", URI(website).host ] if website %>
-      <% facts.each do |label, value| %>
-        <div class="os-row flex justify-between gap-4 py-2.5">
-          <dt class="os-sm os-muted"><%= label %></dt>
-          <dd class="os-sm m-0 min-w-0 text-right font-semibold [overflow-wrap:anywhere]"><%= value %></dd>
-        </div>
+  <%# Its facts, with no count of its commits and no time taken from them
+      while its builder hides them; then its other builders and the builder's
+      other projects, each without what its own builder hides. The first of
+      them names the panel, and with none there is no panel. %>
+  <% facts = [] %>
+  <% if @focus.commits_shown? %>
+    <% facts << [ "Commits, all time", project.commits ] %>
+    <% facts << [ "First commit", @focus.first_commit.to_date.strftime("%b %-d, %Y") ] if @focus.first_commit %>
+  <% end %>
+  <% facts << [ "Shipped and published", @focus.highlights ] if @focus.highlights.positive? %>
+  <% facts << [ "Stars on GitHub", card.github_repo.stars_count ] if card&.github_repo&.stars_count.to_i.positive? %>
+  <% facts << [ "Website", URI(website).host ] if website %>
+  <% heading = { "details" => facts.any?, "co-builders" => @focus.co_builders.any?, "more-from" => @focus.others.any? }.key(true) %>
+  <% if heading %>
+    <aside class="os-panel min-w-0 flex-[1_1_300px]" aria-labelledby="<%= heading %>">
+      <% if facts.any? %>
+        <h2 id="details" class="os-h3">Details</h2>
+        <dl class="mt-2.5">
+          <% facts.each do |label, value| %>
+            <div class="os-row flex justify-between gap-4 py-2.5">
+              <dt class="os-sm os-muted"><%= label %></dt>
+              <dd class="os-sm m-0 min-w-0 text-right font-semibold [overflow-wrap:anywhere]"><%= value %></dd>
+            </div>
+          <% end %>
+        </dl>
       <% end %>
-    </dl>
 
-    <%# The eight busiest; a big team's page says how many more. %>
-    <% if @focus.co_builders.any? %>
-      <h2 class="os-h3 mt-6.5">Also building this</h2>
-      <ul class="mt-1.5">
-        <% @focus.co_builders.first(8).each do |co| %>
-          <li class="os-row py-0">
-            <%= link_to project_page_path(co.user.username, project.repo.split("/").last), class: "flex items-center justify-between gap-3 py-2.5 hover:underline" do %>
-              <span class="inline-flex min-w-0 items-center gap-2.5 font-bold">
-                <img src="<%= co.user.avatar_url %>" alt="" class="os-avatar size-6 shrink-0"><span class="truncate">@<%= co.user.username %></span>
-              </span>
-              <span class="os-xs os-muted shrink-0"><%= pluralize(co.commits, "commit") %></span>
-            <% end %>
-          </li>
+      <%# The eight busiest; a big team's page says how many more. %>
+      <% if @focus.co_builders.any? %>
+        <h2 id="co-builders" class="os-h3 mt-6.5 first:mt-0">Also building this</h2>
+        <ul class="mt-1.5">
+          <% @focus.co_builders.first(8).each do |co| %>
+            <li class="os-row py-0">
+              <%= link_to project_page_path(co.user.username, project.repo.split("/").last), class: "flex items-center justify-between gap-3 py-2.5 hover:underline" do %>
+                <span class="inline-flex min-w-0 items-center gap-2.5 font-bold">
+                  <img src="<%= co.user.avatar_url %>" alt="" class="os-avatar size-6 shrink-0"><span class="truncate">@<%= co.user.username %></span>
+                </span>
+                <% if co.commits %><span class="os-xs os-muted shrink-0"><%= pluralize(co.commits, "commit") %></span><% end %>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+        <% if (more = @focus.co_builders.size - 8).positive? %>
+          <p class="os-note mt-1"><%= "and #{pluralize(more, 'more builder')}" %></p>
         <% end %>
-      </ul>
-      <% if (more = @focus.co_builders.size - 8).positive? %>
-        <p class="os-note mt-1"><%= "and #{pluralize(more, 'more builder')}" %></p>
       <% end %>
-    <% end %>
 
-    <% if @focus.others.any? %>
-      <h2 class="os-h3 mt-6.5">More from <%= @user.display_name %></h2>
-      <ul class="mt-1.5">
-        <% @focus.others.each do |other| %>
-          <li class="os-row py-0">
-            <%= link_to project_page_for(@user, other), class: "flex items-center justify-between gap-3 py-2.5 hover:underline" do %>
-              <span class="inline-flex min-w-0 items-center gap-2.5 font-bold">
-                <% if (other_color = project_class(other.rank)) %><span class="os-dot <%= other_color %> bg-(--project)" aria-hidden="true"></span><% end %><span class="truncate"><%= other.name %></span>
-              </span>
-              <% if other.last_commit %><span class="os-xs os-muted shrink-0"><%= progress_ago(other.last_commit) %></span><% end %>
-            <% end %>
-          </li>
-        <% end %>
-      </ul>
-    <% end %>
-  </aside>
+      <% if @focus.others.any? %>
+        <h2 id="more-from" class="os-h3 mt-6.5 first:mt-0">More from <%= @user.display_name %></h2>
+        <ul class="mt-1.5">
+          <% @focus.others.each do |other| %>
+            <li class="os-row py-0">
+              <%= link_to project_page_for(@user, other), class: "flex items-center justify-between gap-3 py-2.5 hover:underline" do %>
+                <span class="inline-flex min-w-0 items-center gap-2.5 font-bold">
+                  <% if (other_color = project_class(other.rank)) %><span class="os-dot <%= other_color %> bg-(--project)" aria-hidden="true"></span><% end %><span class="truncate"><%= other.name %></span>
+                </span>
+                <% if other.last_commit && other.commits_shown? %><span class="os-xs os-muted shrink-0"><%= progress_ago(other.last_commit) %></span><% end %>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </aside>
+  <% end %>
 </div>
