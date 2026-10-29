@@ -39,7 +39,6 @@ Lint/SuppressedException:
 # Configuration parameters: CountComments, Max, CountAsOne.
 Metrics/ClassLength:
   Exclude:
-    - 'app/models/user.rb'
     - 'app/services/og_image_generator.rb'
 
 # Offense count: 5
