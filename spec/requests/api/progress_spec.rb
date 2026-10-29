@@ -59,9 +59,11 @@ RSpec.describe "Api::Progress", type: :request do
     expect(totals).to eq("commits" => "3")
   end
 
-  # Each read here goes through the builder's whole history: the cache key,
-  # the projects' ranks with when each began, the period's shipped and
-  # published entries, and the commits by day for the section and the chart.
+  # A view reads entries five times: the cache key, the projects' commits
+  # with when each began, when their entries began, the period's shipped and
+  # published entries, and the commits by day, which the section and the
+  # chart share. A read of its own for the chart's commits by day or first
+  # commits would scan the builder's whole history a second time.
   it "reads the builder's commits by day once, and their first commits with the ranks, whichever view it answers" do
     sign_in_as(user)
     [ { range: "30d" }, { range: "all", projects: "builder/lib" }, { range: "12m", project: "builder/app" }, { range: "90d", dashboard: 1 } ].each do |params|
