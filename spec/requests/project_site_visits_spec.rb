@@ -19,6 +19,7 @@ RSpec.describe "Setting up a project's site visits", type: :request do
     expect(token).to start_with("os_")
     expect(view.at_css(".os-code").text).to eq(%(<script defer src="http://www.example.com/v.js" data-project="#{token}"></script>))
     expect(view.text).to include("Waiting for the first visit")
+    expect(view.text).not_to include("one project only")
   end
 
   it "says when the first visit came, and counts the last 30 days" do
@@ -72,6 +73,20 @@ RSpec.describe "Setting up a project's site visits", type: :request do
       expect(flash[:alert]).to eq("Free counts site visits for one project, tidepool. Go Pro to count them for every project.")
       expect(repo.reload).to have_attributes(site_source: nil, site_set_up_at: nil)
       expect(view.text).not_to include("Count this one instead")
+    end
+
+    it "says at setup, before the sources, that Free counts one project for life, with Pro a link away" do
+      other.destroy!
+      setup = view.at_css("#site-source")
+      notice = setup.at_css("[data-free-notice]")
+
+      expect(notice.text.squish).to eq("Free counts site visits for one project only, the first you set up. Go Pro to count them for every project.")
+      expect(notice.at_css("a")["href"]).to eq("/pricing")
+      expect(setup.element_children.first).to eq(notice)
+      expect(setup.at_css("[role='group'][aria-label='Source']")).to be_present
+
+      repo.update!(homepage: nil)
+      expect(view.at_css("#site-source [data-free-notice]")).to be_present
     end
 
     it "keeps the slot with that project while its script is off, so it can count again" do
