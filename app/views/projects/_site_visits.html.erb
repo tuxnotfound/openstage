@@ -1,8 +1,9 @@
 <%# A project's Site visits row: the last 30 days, where they stand, and the
-    switch that shows them on its page. Change source opens the setup under
-    it: Openstage's script and its line to paste, and on Free, first, that
-    Free counts one project. While Free counts another project, Go Pro stands
-    in its place. %>
+    switch that shows them on its page, except while they are paused, when
+    flipping it would change nothing visitors see. Change source opens the
+    setup under it: Openstage's script and its line to paste, and on Free,
+    first, that Free counts one project. While Free counts another project,
+    Go Pro stands in its place. %>
 <% host = repo.site_host %>
 <% line, state = site_visits_status(repo, overview) %>
 <div id="site-visits" class="scroll-mt-6" data-controller="toggle" data-toggle-open-value="<%= params[:site] == "open" %>">
@@ -21,11 +22,13 @@
       </button>
     <% end %>
     <span class="os-xs os-muted whitespace-nowrap"><%= state %></span>
-    <%= form_with url: project_numbers_path(repo), method: :patch, data: { turbo: false } do %>
-      <%= hidden_field_tag :number, "visits", id: nil %>
-      <%= hidden_field_tag :shown, (!repo.picks?("visits")).to_s, id: nil %>
-      <%= hidden_field_tag :back, "project", id: nil %>
-      <button type="submit" role="switch" aria-checked="<%= repo.picks?("visits") %>" aria-label="Show site visits on <%= repo.name %>'s page" class="os-switch"></button>
+    <% unless overview.site_state == :paused %>
+      <%= form_with url: project_numbers_path(repo), method: :patch, data: { turbo: false } do %>
+        <%= hidden_field_tag :number, "visits", id: nil %>
+        <%= hidden_field_tag :shown, (!repo.picks?("visits")).to_s, id: nil %>
+        <%= hidden_field_tag :back, "project", id: nil %>
+        <button type="submit" role="switch" aria-checked="<%= repo.picks?("visits") %>" aria-label="Show site visits on <%= repo.name %>'s page" class="os-switch"></button>
+      <% end %>
     <% end %>
   </div>
 

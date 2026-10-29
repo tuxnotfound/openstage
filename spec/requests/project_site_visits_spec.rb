@@ -62,11 +62,12 @@ RSpec.describe "Setting up a project's site visits", type: :request do
       view.at_css(".os-row > .os-muted.whitespace-nowrap").text
     end
 
-    it "sets up one project for life: any other is refused with the Pro prompt, and offers no setup" do
-      expect(view.text.squish).to include("Free counts site visits for one project, tidepool.")
+    it "sets up one project for life: any other names the one already set up, offers Go Pro and no setup, and is refused" do
+      expect(view.text.squish).to include("You already set up site visits on tidepool, the one project Free counts.")
       expect(view.at_css("a[href='/pricing']").text).to eq("Go Pro")
       expect(view.at_css("#site-source, [data-toggle-target='trigger']")).to be_nil
       expect(state).to eq("Off")
+      expect(view.at_css("button[role='switch']")).to be_present
 
       patch "/projects/#{repo.id}/site_visits", params: { source: "script" }
       expect(response).to redirect_to(edit_project_path(repo, site: "open"))
@@ -101,13 +102,14 @@ RSpec.describe "Setting up a project's site visits", type: :request do
       expect(response.body).to include("Free counts site visits for one project, and this is it.")
     end
 
-    it "pauses a project set up on Pro after the one set up first, and keeps its totals" do
+    it "pauses a project set up on Pro after the one set up first, keeps its totals, and hides its switch" do
       repo.update!(site_source: "script", site_token: "os_s", site_set_up_at: 3.days.ago, site_first_visit_at: 3.days.ago)
       repo.site_visit_days.create!(day: Date.current, visits: 9, visitors: 3)
 
-      expect(view.text.squish).to include("Site visits 9", "Free counts site visits for one project, tidepool. This project's visits are not counted, and its page shows none. The totals so far are kept.")
+      expect(view.text.squish).to include("Site visits 9", "You already set up site visits on tidepool, the one project Free counts. This project's visits are not counted, and its page shows none. The totals so far are kept.")
       expect(state).to eq("Paused")
       expect(view.at_css("a[href='/pricing']").text).to eq("Go Pro")
+      expect(view.at_css("button[role='switch']")).to be_nil
     end
   end
 

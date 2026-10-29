@@ -26,9 +26,10 @@ module SiteVisitsHelper
   private
 
   # While Free counts another project, this one is paused with its script
-  # on, and off without it.
+  # on, and off without it. Either way the builder has used Free's one
+  # project, so the line says which.
   def slot_project_status(overview)
-    line = "Free counts site visits for one project, #{overview.slot_project.name}."
+    line = "You already set up site visits on #{overview.slot_project.name}, the one project Free counts."
     return [ line, "Off" ] unless overview.site_state == :paused
 
     [ "#{line} This project's visits are not counted, and its page shows none. The totals so far are kept.", "Paused" ]
