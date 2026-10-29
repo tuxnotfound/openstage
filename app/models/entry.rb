@@ -97,8 +97,9 @@ class Entry < ApplicationRecord
   }
 
   # The feed: every builder's public work but the owner's, so it shows the
-  # others; merges and dependency bumps left out, as on every page.
-  scope :on_feed, -> { publicly_visible.without_tooling_noise.joins(:user).merge(User.active.not_owner) }
+  # others; merges and dependency bumps left out, and the commits each
+  # builder hides, as on every page.
+  scope :on_feed, -> { publicly_visible.without_tooling_noise.without_hidden_commits.joins(:user).merge(User.active.not_owner) }
 
   # A few of the latest feed entries, newest first, at most per_builder from
   # any one builder, so one busy day does not fill them all.

@@ -36,6 +36,18 @@ RSpec.describe "Home", type: :request do
       expect(lately.text).not_to include("owner's own", "Merge pull request")
     end
 
+    it "leaves out of the strip the commits of a project whose builder hides them, keeping its milestones" do
+      alice = create(:user, username: "alice")
+      create(:github_repo, user: alice, full_name: "alice/app", hidden_numbers: [ "commits" ])
+      create(:entry, user: alice, title: "Alice's hidden commit", repo_name: "alice/app", occurred_at: 1.hour.ago)
+      create(:entry, user: alice, entry_type: "milestone", source: "manual", title: "Alice's launch", repo_name: "alice/app", occurred_at: 2.hours.ago)
+
+      get "/"
+
+      lately = Nokogiri::HTML(response.body).at_css("section[aria-labelledby='lately']")
+      expect(lately.css("[data-rotate-target='item'] .font-semibold").map(&:text)).to eq([ "Alice's launch" ])
+    end
+
     it "leaves the strip out while nobody else has public work" do
       get "/"
 

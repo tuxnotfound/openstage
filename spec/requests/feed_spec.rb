@@ -39,6 +39,22 @@ RSpec.describe "Feed", type: :request do
       expect(response.body).not_to include("Merge pull request", "Bump rack", "The owner's own commit")
     end
 
+    it "leaves out the commits of a project whose builder hides them, from its entries and its day's count, keeping its milestones" do
+      builder = create(:user, username: "builder")
+      create(:github_repo, user: builder, full_name: "builder/app", hidden_numbers: [ "commits" ])
+      day = 1.day.ago.beginning_of_day + 10.hours
+      2.times { |i| create(:entry, user: builder, title: "Hidden step #{i}", repo_name: "builder/app", occurred_at: day + i.minutes) }
+      create(:entry, user: builder, title: "Shown step", repo_name: "builder/site", occurred_at: day + 5.minutes)
+      create(:entry, user: builder, entry_type: "milestone", source: "manual", title: "Launched app", repo_name: "builder/app", occurred_at: day + 6.minutes)
+
+      get "/feed"
+
+      cards = Nokogiri::HTML(response.body).css("#feed-groups article").map { |card| card.text.squish }
+      expect(cards).to eq([ cards.first ])
+      expect(cards.first).to include("1 commit · 1 shipped · yesterday", "Launched app", "Shown step")
+      expect(response.body).not_to include("Hidden step")
+    end
+
     it "shows only what shipped, or only posts, and never a commit under either" do
       builder = create(:user, username: "builder")
       create(:entry, user: builder, title: "A commit")
