@@ -143,7 +143,7 @@ class User < ApplicationRecord
   end
 
   def public_github_commits_count
-    entries.publicly_visible.commits.of_projects_showing_commits.count
+    entries.publicly_visible.commits.count
   end
 
   def public_activity_streak
