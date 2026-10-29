@@ -39,6 +39,11 @@ module SiteVisits
       repo unless @user.pro? || repo.nil? || holds?(project)
     end
 
+    # The websites whose visits count now.
+    def counting_hosts
+      @user.github_repos.site_script_on.select { |project| counts?(project) }.filter_map(&:site_host)
+    end
+
     private
 
     def holds?(project)

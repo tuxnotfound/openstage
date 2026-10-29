@@ -49,15 +49,9 @@ class SettingsController < ApplicationController
     @github_repos_section = github_repos_section
     @badge_markdown       = "[![openstage](#{profile_badge_url(current_user.username)})](#{profile_url(current_user.username)}?ref=badge)"
     @embed_script_tag     = "<script src=\"#{profile_embed_url(current_user.username)}\"></script>"
-    @counted_sites        = counted_sites
+    @counted_sites        = SiteVisits::Slot.new(current_user).counting_hosts
     # Free sees how many; Pro sees who, and for which page.
     @subscribers          = current_user.subscriptions.confirmed.includes(:github_repo).order(confirmed_at: :desc)
-  end
-
-  # The websites whose visits count now, the builder's slot read once.
-  def counted_sites
-    slot = SiteVisits::Slot.new(current_user)
-    current_user.github_repos.site_script_on.select { |repo| repo.counts_site_visits?(slot: slot) }.filter_map(&:site_host)
   end
 
   def profile_params

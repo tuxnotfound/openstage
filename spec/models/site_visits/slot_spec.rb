@@ -66,6 +66,16 @@ RSpec.describe SiteVisits::Slot do
     expect(projects.map { |each| slot.instead_of(each) }).to eq([ nil, nil, nil ])
   end
 
+  it "names the websites whose visits count now: the slot's on Free, every one with its script on, on Pro" do
+    project("lunchbox", set_up: 10.days.ago)
+    project("tidepool", set_up: 3.days.ago)
+    project("quiet", script: false)
+    expect(slot.counting_hosts).to eq([ "lunchbox.example" ])
+
+    user.update!(pro: true)
+    expect(slot.counting_hosts).to contain_exactly("lunchbox.example", "tidepool.example")
+  end
+
   it "reads the slot once for a list of projects" do
     projects = [ project("lunchbox", set_up: 10.days.ago), project("tidepool", set_up: 3.days.ago), project("quiet") ]
     each = slot
