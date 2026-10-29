@@ -16,7 +16,9 @@ class ProfilesController < ApplicationController
 
     @linked = linked_entry
 
-    @total_entries = @user.entries.publicly_visible.count
+    # Counted as visitors see the page: a project whose builder hides its
+    # commits adds none to the entries, nor to the streak below.
+    @total_entries = @user.entries.publicly_visible.without_hidden_commits.count
     # Public repos only: counting private ones would disclose that they exist.
     @repos_synced  = @user.github_repos.included_repos.public_repos.count
     @milestones    = @user.entries.publicly_visible.where(entry_type: :milestone).count
@@ -27,7 +29,7 @@ class ProfilesController < ApplicationController
     respond_to do |format|
       format.html { @page = gather }
       # The same de-noised public list the page reads, newest 50, no counts.
-      format.rss { @rss_entries = @user.entries.publicly_visible.without_tooling_noise.chronological.limit(50) }
+      format.rss { @rss_entries = @user.entries.publicly_visible.without_tooling_noise.without_hidden_commits.chronological.limit(50) }
     end
   end
 
@@ -41,7 +43,7 @@ class ProfilesController < ApplicationController
 
   # A link to one entry shows it at the top, wherever the page would put it.
   def linked_entry
-    @user.entries.publicly_visible.find_by(id: params[:entry]) if params[:entry].present?
+    @user.entries.publicly_visible.without_hidden_commits.find_by(id: params[:entry]) if params[:entry].present?
   end
 
   # The page opens on the last 12 months, commits and site visits, every

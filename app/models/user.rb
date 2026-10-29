@@ -147,7 +147,7 @@ class User < ApplicationRecord
   end
 
   def public_activity_streak
-    activity_days = entries.publicly_visible
+    activity_days = entries.publicly_visible.without_hidden_commits
                          .where.not(occurred_at: nil)
                          .group("DATE(occurred_at AT TIME ZONE 'UTC')")
                          .count

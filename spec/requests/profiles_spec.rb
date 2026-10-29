@@ -126,6 +126,35 @@ RSpec.describe "Profiles", type: :request do
       end
     end
 
+    context "its entries and streak" do
+      let!(:user) { create(:user, username: "builder") }
+
+      before do
+        2.times { |i| create(:entry, user: user, repo_name: "builder/app", occurred_at: (i + 1).days.ago) }
+        create(:entry, user: user, repo_name: "builder/app", entry_type: "milestone", source: "manual", occurred_at: Time.current)
+      end
+
+      def facts
+        Nokogiri::HTML(response.body).at_css("section[aria-label='Profile'] p.os-xs").text.squish
+      end
+
+      def description
+        Nokogiri::HTML(response.body).at_css("meta[name='description']")["content"]
+      end
+
+      it "counts no commit of a project whose builder hides them, in either" do
+        get "/builder"
+        expect(facts).to include("3 entries", "3-day streak")
+        expect(description).to include("3 entries")
+
+        create(:github_repo, user: user, full_name: "builder/app", hidden_numbers: [ "commits" ])
+        get "/builder"
+
+        expect(facts).to include("1 entry", "1-day streak")
+        expect(description).to include("1 entries")
+      end
+    end
+
     context "a link to one entry" do
       let!(:user) { create(:user, username: "builder") }
       let!(:old) { create(:entry, user: user, repo_name: "builder/app", title: "An old commit", occurred_at: 40.days.ago) }
@@ -147,6 +176,20 @@ RSpec.describe "Profiles", type: :request do
         get "/builder", params: { entry: recent.id }
         expect(response.body.scan(%(id="entry-#{recent.id}")).size).to eq(1)
         expect(linked["id"]).to eq("entry-#{recent.id}")
+      end
+
+      it "shows nothing for a commit of a project whose builder hides them, and still shows its milestone" do
+        launch = create(:entry, user: user, repo_name: "builder/app", entry_type: "milestone", source: "manual", title: "Launched app", occurred_at: 50.days.ago)
+        get "/builder", params: { entry: old.id }
+        expect(linked).to be_present
+
+        create(:github_repo, user: user, full_name: "builder/app", hidden_numbers: [ "commits" ])
+        get "/builder", params: { entry: old.id }
+        expect(linked).to be_nil
+        expect(response.body).not_to include("An old commit")
+
+        get "/builder", params: { entry: launch.id }
+        expect(linked.text.squish).to include("Launched app")
       end
 
       it "shows nothing for an entry that is hidden, private or someone else's" do

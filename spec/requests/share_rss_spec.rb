@@ -29,6 +29,16 @@ RSpec.describe "Share and RSS", type: :request do
     expect(response.body).not_to include("Bump rack")
   end
 
+  it "leaves out the commits of a project whose builder hides them, keeping its other entries" do
+    create(:github_repo, user: user, full_name: "builder/app", hidden_numbers: [ "commits" ])
+    create(:entry, user: user, entry_type: "milestone", source: "manual", title: "Launched app", repo_name: "builder/app", occurred_at: 3.days.ago)
+
+    get "/builder.rss"
+
+    expect(response.body).not_to include("Ship it", "builder/app/commit/abc")
+    expect(response.body).to include("<title>Launched app</title>", "<title>A thought</title>")
+  end
+
   it "404s the feed for an unknown builder" do
     get "/nobody-here.rss"
     expect(response).to have_http_status(:not_found)
