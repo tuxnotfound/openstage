@@ -16,6 +16,18 @@ RSpec.describe "Badges", type: :request do
       expect(response.body).to include("1 commits | 2 entries")
     end
 
+    it "leaves out the commits of a project whose builder hides them, as the page does" do
+      create(:github_repo, user: user, full_name: "builder/app", hidden_numbers: [ "commits" ])
+      create(:github_repo, user: user, full_name: "builder/site", hidden_numbers: [ "visits" ])
+      2.times { create(:entry, user: user, repo_name: "builder/app") }
+      create(:entry, user: user, repo_name: "builder/site")
+      create(:entry, user: user)
+
+      get "/badge/builder"
+
+      expect(response.body).to include("2 commits | 4 entries")
+    end
+
     it "still supports the .svg path" do
       get "/badge/builder.svg"
 
