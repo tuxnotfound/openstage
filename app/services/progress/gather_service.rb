@@ -1,7 +1,8 @@
 module Progress
   # Everything the public page shows below the builder's name: the window's
   # chart filter and its section (ChartService), a card per project
-  # (SummarizeService) and the latest commits, grouped by project and day.
+  # (SummarizeService) and the latest commits, grouped by project and day,
+  # none of a project whose builder hides its commits (Entry.without_hidden_commits).
   class GatherService < ApplicationService
     # Groups in Recent commits, and the commits read to fill them.
     RECENT_GROUPS = 8
@@ -55,7 +56,7 @@ module Progress
     end
 
     def recent_commits
-      scope = user.entries.on_page(reveal: reveal).commits.chronological
+      scope = user.entries.on_page(reveal: reveal).commits.without_hidden_commits.chronological
       scope = scope.where(repo_name: section.selected.map(&:repo)) if section.filtered?
       scope.limit(RECENT_LIMIT)
     end

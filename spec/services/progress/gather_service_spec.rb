@@ -23,6 +23,18 @@ RSpec.describe Progress::GatherService do
     expect(service.recent.map(&:date)).to eq(service.recent.map(&:date).sort.reverse)
   end
 
+  it "lists no commit of a project whose builder hides them, and keeps its card" do
+    shown = described_class.new(user: user).tap(&:call!)
+    expect(shown.recent.map { |group| group.project.repo }).to include(progress_repo(0))
+
+    create(:github_repo, user: user, full_name: progress_repo(0), name: "openstage", hidden_numbers: [ "commits" ])
+    hiding = described_class.new(user: user).tap(&:call!)
+
+    expect(hiding.recent.size).to eq(8)
+    expect(hiding.recent.map { |group| group.project.repo }).not_to include(progress_repo(0))
+    expect(hiding.cards.map(&:repo)).to include(progress_repo(0))
+  end
+
   it "opens on the last 12 months" do
     expect(described_class.new(user: user).tap(&:call!).section.labels.range).to eq("12m")
   end

@@ -50,17 +50,19 @@ RSpec.describe "Project pages", type: :request do
       html.xpath("//h2[starts-with(text(), 'More from')]/following-sibling::ul[1]//a").map { |row| row.text.squish }
     end
 
-    it "shows no last commit, no count of them and no first commit, and keeps its commit messages" do
+    it "shows no last commit, no count of them, no first commit and none of their messages, and keeps its milestones" do
       get "/builder/side.app"
       expect(tags).to include("Last commit today")
       expect(details).to eq([ "Commits, all time 1", "First commit #{Time.current.strftime('%b %-d, %Y')}", "Shipped and published 1", "Website side.example" ])
+      expect(response.body).to include("Recent commits", "Ship the form")
 
       user.github_repos.find_by!(full_name: "builder/side.app").update!(hidden_numbers: [ "commits" ])
       get "/builder/side.app"
 
       expect(tags).to eq([ "Live", "Public repo" ])
       expect(details).to eq([ "Shipped and published 1", "Website side.example" ])
-      expect(response.body).to include("Recent commits", "Ship the form")
+      expect(response.body).not_to include("Recent commits", "Ship the form")
+      expect(response.body).to include("Launched it", "In my words.")
     end
 
     it "dates nothing from them: All time starts where what visitors see starts, on its page and the builder's" do

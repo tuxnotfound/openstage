@@ -56,10 +56,8 @@ class Entry < ApplicationRecord
   HIDDEN_REPO_SQL = "NOT EXISTS (SELECT 1 FROM github_repos WHERE github_repos.user_id = entries.user_id " \
                     "AND github_repos.full_name = entries.repo_name AND NOT github_repos.included)".freeze
 
-  # A project whose builder hides its commits from visitors
-  # (GithubRepo#hidden_numbers) leaves them out of where a page's window
-  # starts. Hiding keeps the number off its pages only: its commit messages
-  # still list, and the badge still counts them.
+  # True unless the entry's project is one whose builder hides its commits
+  # from visitors (GithubRepo#hidden_numbers).
   HIDDEN_COMMITS_SQL = "NOT EXISTS (SELECT 1 FROM github_repos WHERE github_repos.user_id = entries.user_id " \
                        "AND github_repos.full_name = entries.repo_name AND github_repos.hidden_numbers @> '[\"commits\"]')".freeze
 
@@ -68,7 +66,13 @@ class Entry < ApplicationRecord
   scope :chronological, -> { order(occurred_at: :desc) }
   scope :pinned_entries, -> { where(pinned: true) }
   scope :commits, -> { where(source: :github, entry_type: :shipped) }
-  scope :of_projects_showing_commits, -> { where(HIDDEN_COMMITS_SQL) }
+  # A project whose builder hides its commits shows visitors none of them:
+  # no message, no count, no time taken from them. Its other entries stay
+  # listed. Every commit is still synced and stored; the builder's own
+  # views, the emails and the badge still count them.
+  scope :without_hidden_commits, -> {
+    where("NOT (entries.source = ? AND entries.entry_type = ?) OR #{HIDDEN_COMMITS_SQL}", sources[:github], entry_types[:shipped])
+  }
   # where.not on two keys leaves out only the rows that match both: commits.
   scope :highlights, -> { where(entry_type: SHIPPED_TYPES + PUBLISHED_TYPES).where.not(source: :github, entry_type: :shipped) }
 

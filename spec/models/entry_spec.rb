@@ -83,17 +83,20 @@ RSpec.describe Entry, type: :model do
     end
   end
 
-  describe ".of_projects_showing_commits" do
-    it "leaves out the entries of a project whose builder hides its commits, and only that builder's" do
+  describe ".without_hidden_commits" do
+    it "leaves out the commits of a project whose builder hides them, and only that builder's, keeping its other entries" do
       create(:github_repo, user: user, full_name: "user/app", hidden_numbers: [ "commits" ])
       create(:github_repo, user: user, full_name: "user/site", hidden_numbers: [ "visits" ])
       create(:entry, user: user, repo_name: "user/app")
+      launch = create(:entry, user: user, repo_name: "user/app", entry_type: "milestone", source: "manual")
+      release = create(:entry, user: user, repo_name: "user/app", entry_type: "released")
       shown = create(:entry, user: user, repo_name: "user/site")
       unsynced = create(:entry, user: user, repo_name: "user/gone")
       untagged = create(:entry, user: user, repo_name: nil)
       teammate = create(:entry, repo_name: "user/app")
 
-      expect(Entry.of_projects_showing_commits).to contain_exactly(shown, unsynced, untagged, teammate)
+      expect(Entry.without_hidden_commits).to contain_exactly(launch, release, shown, unsynced, untagged, teammate)
+      expect(Entry.where(user: user).without_hidden_commits.commits).to contain_exactly(shown, unsynced, untagged)
     end
   end
 

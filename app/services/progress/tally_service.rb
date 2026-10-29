@@ -103,7 +103,7 @@ module Progress
     # projects nobody ranks (the weekly emails' quiet check) would otherwise
     # read the builder's whole history for every project.
     def first_in_view
-      commits = rolling ? public_entries.commits.of_projects_showing_commits : public_entries.commits
+      commits = rolling ? public_entries.commits.without_hidden_commits : public_entries.commits
       scope = commits.or(public_entries.highlights)
       scope = scope.where(repo_name: repos) if selected?
       scope.minimum(:occurred_at)

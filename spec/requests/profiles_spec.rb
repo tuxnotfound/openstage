@@ -213,6 +213,20 @@ RSpec.describe "Profiles", type: :request do
         expect(page.css("svg path[data-number='commits']").size).to eq(10)
       end
 
+      it "lists no commit of a project whose builder hides them under Recent commits, and keeps its milestones" do
+        create(:entry, user: user, repo_name: "builder/app", title: "Fix the login", occurred_at: 1.hour.ago)
+        create(:entry, user: user, repo_name: "builder/app", entry_type: "milestone", source: "manual", title: "Launched app", occurred_at: 2.hours.ago)
+        user.github_repos.find_by(full_name: "builder/app").update!(hidden_numbers: [ "commits" ])
+
+        get "/builder"
+
+        recent = Nokogiri::HTML(response.body).at_css("section[aria-labelledby='recent-commits']").text.squish
+        expect(recent).to include("secret", "1 commit")
+        expect(recent).not_to include("app", "Fix the login")
+        expect(response.body).not_to include("Fix the login")
+        expect(response.body).to include("Launched app")
+      end
+
       it "says nothing of weekly commits when no card shows them" do
         user.github_repos.each { |repo| repo.update!(hidden_numbers: [ "commits" ]) }
 
