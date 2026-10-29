@@ -63,6 +63,18 @@ RSpec.describe "Project pages", type: :request do
       expect(response.body).to include("Recent commits", "Ship the form")
     end
 
+    it "dates nothing from them: All time starts where what visitors see starts, on its page and the builder's" do
+      user.github_repos.find_by!(full_name: "builder/side.app").update!(hidden_numbers: [ "commits" ])
+      create(:entry, user: user, repo_name: "builder/side.app", occurred_at: Time.utc(2025, 3, 3))
+
+      [ "/builder/side.app", "/builder" ].each do |page|
+        get page, params: { range: "all" }
+        expect(response.body).not_to include("2025")
+      end
+      get "/api/progress/builder", params: { project: "builder/side.app", range: "all" }
+      expect(response.body).not_to include("2025")
+    end
+
     it "lists it under More from on another project's page with no last-commit time" do
       create(:github_repo, user: user, full_name: "builder/other", name: "other", hidden_numbers: [ "commits" ])
       create(:entry, user: user, repo_name: "builder/third", occurred_at: 3.days.ago)

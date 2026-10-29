@@ -89,6 +89,18 @@ RSpec.describe Progress::TallyService do
     expect(tally("week").buckets.map(&:total)[2, 2]).to eq([ 8, 1 ])
   end
 
+  it "starts a page's window past a project's hidden commits, and the emails' period at them, as the emails still count them" do
+    quiet = create(:user)
+    create(:github_repo, user: quiet, full_name: "quiet/hush", name: "hush", hidden_numbers: [ "commits" ])
+    create(:entry, user: quiet, repo_name: "quiet/hush", occurred_at: Time.utc(2025, 3, 3))
+    create(:entry, user: quiet, repo_name: "quiet/loud", occurred_at: Time.utc(2026, 10, 13))
+
+    page = described_class.new(user: quiet, range: "all", rolling: true).tap(&:call!)
+    email = described_class.new(user: quiet, range: "all").tap(&:call!)
+
+    expect([ page.period.first_activity, email.period.first_activity ]).to eq([ Date.new(2026, 10, 13), Date.new(2025, 3, 3) ])
+  end
+
   it "counts several projects together" do
     both = tally("year", repo: [ progress_repo(0), progress_repo(1) ])
 

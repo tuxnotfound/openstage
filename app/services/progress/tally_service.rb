@@ -74,8 +74,11 @@ module Progress
     end
 
     # The first commit or entry in view: of the projects picked, when picked.
+    # A page leaves out the commits of projects that hide them, so its window
+    # never starts at one; the emails, which still count them, keep them.
     def first_day_of(entries)
-      scope = entries.commits.or(entries.highlights)
+      commits = rolling ? entries.commits.of_projects_showing_commits : entries.commits
+      scope = commits.or(entries.highlights)
       scope = scope.where(repo_name: repos) if selected?
       scope.minimum(:occurred_at)&.in_time_zone(zone)&.to_date
     end
