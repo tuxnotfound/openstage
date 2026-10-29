@@ -2,6 +2,8 @@
     in the app's panels: the counters and the chart, then the shipped and
     published list and the link, so nothing comes between the chart and the
     list its discs number. No commit titles: the chart carries the commits.
+    With none of them on a project the chart draws (the ten busiest of all
+    time, ProgressChart::Trend#lines), it says why it has no chart.
     log_url: the builder's own email offers to log an entry when the list is
     empty. %>
 <% labels = section.labels %>
@@ -39,6 +41,8 @@
     <% end %>
   </p>
   <img src="<%= image.url %>" width="552" alt="Commits per day by project <%= labels.word %>: <%= ProgressChart::EmailImage.new(chart).summary %>" style="display: block; width: 100%; max-width: 552px; height: auto; margin-top: 10px; border: 0; border-radius: 14px;">
+<% elsif now.commits.positive? %>
+  <p style="margin: 16px 0 0; font-size: 13px; color: #666A73;">Only projects past the tenth have commits <%= labels.word %>, and the chart draws ten projects at most.</p>
 <% else %>
   <p style="margin: 16px 0 0; font-size: 13px; color: #666A73;">No commits <%= labels.word %><%= " yet" if labels.running? %>.</p>
 <% end %>

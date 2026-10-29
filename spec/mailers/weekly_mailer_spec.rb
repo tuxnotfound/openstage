@@ -82,6 +82,25 @@ RSpec.describe WeeklyMailer do
     end
   end
 
+  describe "#week_ready on a week whose commits are all on projects past the tenth" do
+    it "says why it has no chart, never that the week had no commits" do
+      10.times { |i| 4.times { create(:entry, user: builder, repo_name: "maker/old#{i}", occurred_at: 40.days.ago) } }
+      3.times { create(:entry, user: builder, repo_name: "maker/new", occurred_at: 1.day.ago) }
+      html = described_class.week_ready(builder).html_part.body.to_s
+
+      expect(html).to include("Only projects past the tenth have commits this week, and the chart draws ten projects at most.")
+      expect(html).not_to include("No commits", "<img")
+    end
+  end
+
+  describe "#week_ready on a week with no commits" do
+    it "says so where the chart would be" do
+      3.times { create(:entry, user: builder, entry_type: "milestone", source: "manual", title: "Launched", occurred_at: 1.day.ago) }
+
+      expect(described_class.week_ready(builder).html_part.body.to_s).to include("No commits this week yet.")
+    end
+  end
+
   describe "#digest" do
     let(:subscription) { builder.subscriptions.create!(email: "reader@example.com", confirmed_at: 1.week.ago) }
     let(:mail) { described_class.digest(subscription) }
