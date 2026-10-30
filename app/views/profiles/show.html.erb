@@ -50,7 +50,7 @@
     <% end %>
     <section class="os-panel" aria-label="Profile">
       <%= render "profiles/page/identity", user: @user %>
-      <% if @total_entries.zero? %>
+      <% if @empty %>
         <%= render "profiles/page/empty", user: @user %>
       <% elsif (chart = @page&.chart) %>
         <% section = chart.section %>
@@ -72,7 +72,7 @@
       <%= render "profiles/page/projects", user: @user, cards: @page.cards if @page.cards.any? %>
       <div class="os-grid2 items-start">
         <%= render "profiles/page/recent", user: @user, groups: @page.recent, linked: @linked if @page.recent.any? %>
-        <%= render "profiles/page/shipped", section: @page.section, linked: @linked unless @total_entries.zero? %>
+        <%= render "profiles/page/shipped", section: @page.section, linked: @linked unless @empty %>
       </div>
     <% end %>
 

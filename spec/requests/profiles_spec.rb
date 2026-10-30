@@ -153,6 +153,18 @@ RSpec.describe "Profiles", type: :request do
         expect(facts).to include("1 entry", "1-day streak")
         expect(description).to include("1 entries")
       end
+
+      it "keeps the page of a builder whose public work is all hidden commits, its project and its chart, and counts none" do
+        user.entries.where(source: "manual").destroy_all
+        create(:github_repo, user: user, full_name: "builder/app", hidden_numbers: [ "commits" ])
+
+        get "/builder"
+
+        expect(facts).to include("0 entries")
+        expect(response.body).not_to include("Nothing here yet")
+        expect(Nokogiri::HTML(response.body).at_css("[data-react='progress']")).to be_present
+        expect(Nokogiri::HTML(response.body).css("section[aria-labelledby='projects'] .os-h3").map { |name| name.text.squish }).to eq([ "app" ])
+      end
     end
 
     context "a link to one entry" do

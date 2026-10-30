@@ -17,8 +17,11 @@ class ProfilesController < ApplicationController
     @linked = linked_entry
 
     # Counted as visitors see the page: a project whose builder hides its
-    # commits adds none to the entries, nor to the streak below.
+    # commits adds none to the entries, nor to the streak below. The page is
+    # empty only with no public entry at all, as such a project still has its
+    # card and its other numbers.
     @total_entries = @user.entries.publicly_visible.without_hidden_commits.count
+    @empty = @total_entries.zero? && @user.entries.publicly_visible.none?
     # Public repos only: counting private ones would disclose that they exist.
     @repos_synced  = @user.github_repos.included_repos.public_repos.count
     @milestones    = @user.entries.publicly_visible.where(entry_type: :milestone).count
