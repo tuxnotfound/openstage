@@ -139,14 +139,15 @@ export type AnalyticsView = FilterView & {
 }
 
 // The panels of the builder's websites, each value with its count, the
-// busiest first and Other last, what the list leaves out; with none of them, what shows
+// busiest first and Other last, what the list leaves out, a page with its
+// project while pages of several projects count; with none of them, what shows
 // instead (empty) and, while none of the projects in view counts site
 // visits, the link that sets up the first one's (setup).
 export type WebsitesView = {
   sources: { label: string; count: string; width: number }[]
   refs: { label: string; count: string }[]
   countries: { label: string; count: string }[]
-  pages: { label: string; count: string }[]
+  pages: { label: string; count: string; project: string | null }[]
   empty: string | null
   setup: { text: string; path: string } | null
 }

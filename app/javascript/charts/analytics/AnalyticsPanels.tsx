@@ -31,8 +31,9 @@ export default function AnalyticsPanels({ view, panels, flip }: Props) {
 }
 
 // As analytics/websites: where visitors came from and their countries, their
-// ref tags and the busiest pages, each with Other last, what it leaves out; with
-// none of them, one line says why.
+// ref tags and the busiest pages, each page with its project while pages of
+// several count, each list with Other last, what it leaves out; with none of
+// them, one line says why. One path can show twice, once per project.
 function WebsitePanels({ site, words, quiet }: { site: WebsitesView; words: string; quiet: string }) {
   if (site.empty) {
     return (
@@ -71,7 +72,7 @@ function WebsitePanels({ site, words, quiet }: { site: WebsitesView; words: stri
       <section className="os-panel" aria-labelledby="site-pages">
         <h2 id="site-pages" className="os-h3">Top pages</h2>
         <p className="os-xs os-muted mt-1 mb-2">Page views on your websites, by path, {words}.</p>
-        {site.pages.map((page) => <div key={page.label} className="os-row py-2"><Count {...page} /></div>)}
+        {site.pages.map((page) => <div key={`${page.project ?? ""} ${page.label}`} className="os-row py-2"><Count {...page} /></div>)}
         {site.pages.length === 0 && <p className="os-note">No page views {quiet}.</p>}
       </section>
     </div>
@@ -79,11 +80,12 @@ function WebsitePanels({ site, words, quiet }: { site: WebsitesView; words: stri
 }
 
 // As analytics/count: a long host, tag or path wraps rather than pushing the
-// page sideways.
-function Count({ label, count, css = "" }: { label: string; count: string; css?: string }) {
+// page sideways, and a page has its project under it, when the server names
+// one.
+function Count({ label, count, project, css = "" }: { label: string; count: string; project?: string | null; css?: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <span className={`os-sm min-w-0 wrap-anywhere ${css}`}>{label}</span>
+      <span className={`os-sm min-w-0 wrap-anywhere ${css}`}>{label}{project && <span className="os-xs os-muted block">{project}</span>}</span>
       <span className="os-sm os-num font-bold">{count}</span>
     </div>
   )

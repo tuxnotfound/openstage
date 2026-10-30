@@ -152,9 +152,9 @@ RSpec.describe Analytics::ReportService do
     app.site_visit_counts.create!(kind: "page", value: "/before", count: 5, day: 40.days.ago.to_date)
 
     expect(report.rows.map(&:key)).not_to include("me/hidden")
-    expect(report.websites.ranks["page"]).to eq([ [ "/app", 2 ], [ "/hidden", 1 ] ])
-    expect(report(range: "90d").websites.ranks["page"]).to eq([ [ "/before", 5 ], [ "/app", 2 ], [ "/hidden", 1 ] ])
-    expect(report(pages: %w[me/app]).websites.ranks["page"]).to eq([ [ "/app", 2 ] ])
+    expect(report.websites.ranks["page"]).to eq([ [ "/app", 2, "app" ], [ "/hidden", 1, "hidden" ] ])
+    expect(report(range: "90d").websites.ranks["page"]).to eq([ [ "/before", 5, "app" ], [ "/app", 2, "app" ], [ "/hidden", 1, "hidden" ] ])
+    expect(report(pages: %w[me/app]).websites.ranks["page"]).to eq([ [ "/app", 2, nil ] ])
     expect([ report(pages: %w[page]).websites.state, report(pages: %w[page]).setup_row ]).to eq([ :off, nil ])
     expect(report(pages: %w[page me/lib]).setup_row).to be_nil
     expect(report(pages: %w[page me/app]).setup_row.name).to eq("app")

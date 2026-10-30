@@ -56,7 +56,8 @@ RSpec.describe "Api::Analytics", type: :request do
     expect(json["sources"]).to eq([ { "label" => "Hacker News", "count" => "1", "width" => 100 } ])
     expect(json["websites"]).to eq("sources" => [ { "label" => "Direct", "count" => "4", "width" => 50 }, { "label" => "Other", "count" => "8", "width" => 100 } ],
                                    "refs" => [], "countries" => [],
-                                   "pages" => (0..5).map { |i| { "label" => "/p#{i}", "count" => (10 - i).to_s } } + [ { "label" => "Other", "count" => "6" } ],
+                                   "pages" => (0..5).map { |i| { "label" => "/p#{i}", "count" => (10 - i).to_s, "project" => nil } } +
+                                              [ { "label" => "Other", "count" => "6", "project" => nil } ],
                                    "empty" => nil, "setup" => nil)
     get "/api/analytics"
     expect(json["websites"]["pages"].size).to eq(7)

@@ -23,7 +23,7 @@ RSpec.describe Analytics::GatherWebsitesService do
 
     service = gather
     expect(service.ranks["country"]).to eq([ [ "AA", 10 ], [ "AB", 9 ], [ "AC", 8 ], [ "AD", 7 ], [ "AE", 6 ], [ "Other", 5 + 4 + 3 ] ])
-    expect(service.ranks["page"]).to eq((0..5).map { |i| [ "/p#{i}", 10 - i ] } + [ [ "Other", 4 + 3 + 20 ] ])
+    expect(service.ranks["page"]).to eq((0..5).map { |i| [ "/p#{i}", 10 - i, lib.name ] } + [ [ "Other", 4 + 3 + 20 ] ])
     expect([ service.ranks["source"], service.ranks["ref"], service.state ]).to eq([ [ [ "Twitter / X", 2 ] ], [], :shown ])
   end
 
@@ -32,8 +32,8 @@ RSpec.describe Analytics::GatherWebsitesService do
     count(app, "page", "/old", 5, on: day - 30)
     count(lib, "page", "/lib", 1)
 
-    expect(gather(repos: [ lib ]).ranks["page"]).to eq([ [ "/lib", 1 ] ])
-    expect(gather(repos: user.github_repos, days: nil).ranks["page"]).to eq([ [ "/old", 5 ], [ "/", 3 ], [ "/lib", 1 ] ])
+    expect(gather(repos: [ lib ]).ranks["page"]).to eq([ [ "/lib", 1, nil ] ])
+    expect(gather(repos: user.github_repos, days: nil).ranks["page"]).to eq([ [ "/old", 5, app.name ], [ "/", 3, app.name ], [ "/lib", 1, lib.name ] ])
   end
 
   it "says why it has nothing: none of the projects counts site visits, or none came in those days" do

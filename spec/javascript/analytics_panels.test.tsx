@@ -9,7 +9,7 @@ const websites: WebsitesView = {
   sources: [{ label: "Hacker News", count: "5", width: 100 }, { label: "Other", count: "2", width: 40 }],
   refs: [],
   countries: [{ label: "PT", count: "3" }],
-  pages: [{ label: "/docs/*", count: "9" }],
+  pages: [{ label: "/docs/*", count: "9", project: null }],
   empty: null,
   setup: null,
 }
@@ -61,6 +61,14 @@ describe("the switch above analytics' panels", () => {
       "Where visitors came from Views of your Openstage pages, by the site they came from, last 30 days. Reddit 1")
     expect(words(openstage)).toContain("Clicks from your Openstage pages, last 30 days. No clicks out in the last 30 days.")
     expect(openstage).not.toContain("Top pages")
+  })
+
+  test("names each page's project when the server sends one, so one path can show twice", () => {
+    const two = { ...websites, pages: [{ label: "/", count: "5", project: "app" }, { label: "/", count: "3", project: "lib" }, { label: "Other", count: "2", project: null }] }
+    const html = renderToStaticMarkup(<AnalyticsPanels view={viewWith(two)} panels="websites" flip={() => {}} />)
+
+    expect(words(html)).toMatch(/by path, last 30 days\. \/ app 5 \/ lib 3 Other 2$/)
+    expect(html).toContain('<span class="os-xs os-muted block">lib</span>')
   })
 
   test("says why the website panels are empty, with the link that sets up site visits where the server sends one", () => {

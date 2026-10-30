@@ -72,8 +72,14 @@ class AnalyticsViewSerializer < ApplicationSerializer
   def websites
     site = @report.websites
     ranks = site.ranks
-    { sources: bars(ranks["source"]), refs: counts(ranks["ref"]), countries: counts(ranks["country"]), pages: counts(ranks["page"]),
+    { sources: bars(ranks["source"]), refs: counts(ranks["ref"]), countries: counts(ranks["country"]), pages: pages(ranks["page"]),
       empty: empty_words(site.state), setup: (setup if site.state == :off) }
+  end
+
+  # Each with its project while pages of several projects count
+  # (SiteVisits::RankService), nil otherwise and for Other.
+  def pages(rows)
+    rows.map { |label, count, project| { label: label, count: number_with_delimiter(count), project: project } }
   end
 
   def empty_words(state)

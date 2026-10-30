@@ -284,10 +284,10 @@ RSpec.describe "Analytics", type: :request do
 
         get "/analytics"
         expect(page.css("[data-chart-row]").map { |row| row["data-chart-row"] }).to eq([ "page", "builder/app", "builder/lib" ])
-        expect(panel("site-pages")).to end_with("/quiet 5 / 3 /early 2 /lib 1")
+        expect(panel("site-pages")).to end_with("/quiet quiet 5 / app 3 /early app 2 /lib lib 1")
 
         get "/analytics", params: { range: "90d" }
-        expect(panel("site-pages")).to end_with("/old 8 /quiet 5 / 3 /early 2 /lib 1")
+        expect(panel("site-pages")).to end_with("/old app 8 /quiet quiet 5 / app 3 /early app 2 /lib lib 1")
 
         get "/analytics", params: { range: "2026-10-01..2026-10-10" }
         expect(panel("site-pages")).to eq("Top pages Page views on your websites, by path, 1 Oct – 10 Oct. /early 2")

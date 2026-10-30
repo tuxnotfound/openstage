@@ -44,8 +44,8 @@ RSpec.describe SiteVisits::RankService do
 
     expect([ rank("source").ranked, rank("source").other ]).to eq([ [ [ "GitHub", 2 ], [ "Dev.to", 1 ] ], 7 ])
     expect([ rank("source", top: 1).ranked, rank("source", top: 1).other ]).to eq([ [ [ "GitHub", 2 ] ], 8 ])
-    expect([ rank("page").ranked, rank("page").other ]).to eq([ [ [ "/", 9 ], [ "/a", 3 ] ], 5 ])
-    expect([ rank("page", top: 1).ranked, rank("page", top: 1).other ]).to eq([ [ [ "/", 9 ] ], 8 ])
+    expect([ rank("page").ranked, rank("page").other ]).to eq([ [ [ "/", 9, app.name ], [ "/a", 3, app.name ] ], 5 ])
+    expect([ rank("page", top: 1).ranked, rank("page", top: 1).other ]).to eq([ [ [ "/", 9, app.name ] ], 8 ])
     expect([ rank("ref").ranked, rank("ref").other ]).to eq([ [], 0 ])
   end
 
@@ -58,9 +58,18 @@ RSpec.describe SiteVisits::RankService do
     count(lib, "country", "PT", 1)
     count(lib, "country", "US", 2)
 
-    expect([ rank("page", top: 3).ranked, rank("page", top: 3).other ]).to eq([ [ [ "/pricing", 9 ], [ "/blog", 5 ], [ "/", 4 ] ], 4 ])
+    expect([ rank("page", top: 3).ranked, rank("page", top: 3).other ]).to eq([ [ [ "/pricing", 9, app.name ], [ "/", 4, app.name ], [ "/blog", 4, lib.name ] ], 4 + 1 ])
     expect(rank("ref").ranked).to eq([ [ "hn", 3 ], [ "newsletter", 1 ] ])
     expect(rank("country").ranked).to eq([ [ "PT", 3 ], [ "US", 2 ] ])
+  end
+
+  it "ranks a page per project, naming its project only while pages of several projects count" do
+    count(app, "page", "/", 5)
+    count(app, "page", "/pricing", 2)
+    count(lib, "page", "/", 3)
+
+    expect(rank("page").ranked).to eq([ [ "/", 5, app.name ], [ "/", 3, lib.name ], [ "/pricing", 2, app.name ] ])
+    expect(rank("page", repos: [ app ]).ranked).to eq([ [ "/", 5, nil ], [ "/pricing", 2, nil ] ])
   end
 
   it "reads only the days and projects asked for, every day without days" do
@@ -70,10 +79,10 @@ RSpec.describe SiteVisits::RankService do
     count(lib, "page", "/", 4, on: day + 7)
     count(other, "page", "/", 8)
 
-    expect(rank("page").ranked).to eq([ [ "/", 2 ] ])
-    expect(rank("page", days: ..(day + 6)).ranked).to eq([ [ "/", 3 ] ])
-    expect(rank("page", days: nil).ranked).to eq([ [ "/", 7 ] ])
-    expect(rank("page", repos: user.github_repos, days: nil).ranked).to eq([ [ "/", 7 ] ])
+    expect(rank("page").ranked).to eq([ [ "/", 2, nil ] ])
+    expect(rank("page", days: ..(day + 6)).ranked).to eq([ [ "/", 3, nil ] ])
+    expect(rank("page", days: nil).ranked).to eq([ [ "/", 4, lib.name ], [ "/", 3, app.name ] ])
+    expect(rank("page", repos: user.github_repos, days: nil).ranked).to eq([ [ "/", 4, lib.name ], [ "/", 3, app.name ] ])
     expect(rank("page", repos: []).ranked).to eq([])
   end
 
