@@ -34,6 +34,11 @@ RSpec.describe "Signup attribution", type: :request do
       end
     end
 
+    it "attributes Reddit links to their own tag" do
+      get "/", params: { ref: "reddit" }
+      expect(session[:signup_ref]).to eq("reddit")
+    end
+
     it "attributes the X bio link separately from recap posts" do
       get "/", params: { ref: "bio" }
       expect(session[:signup_ref]).to eq("bio")

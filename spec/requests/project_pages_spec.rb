@@ -301,10 +301,21 @@ RSpec.describe "Project pages", type: :request do
   end
 
   it "is linked from the builder's page and listed in the sitemap" do
+    create_list(:entry, 9, user: user, repo_name: "builder/side.app")
+
     get "/builder"
     expect(response.body).to include(%(href="/builder/side.app"))
 
     get "/sitemap.xml"
     expect(response.body).to include("http://www.example.com/builder/side.app")
+  end
+
+  it "stays out of search until the project has enough commits" do
+    get "/builder/side.app"
+    expect(response.body).to include(%(<meta name="robots" content="noindex">))
+
+    create_list(:entry, 9, user: user, repo_name: "builder/side.app")
+    get "/builder/side.app"
+    expect(response.body).not_to include(%(name="robots"))
   end
 end

@@ -61,9 +61,10 @@ class User < ApplicationRecord
   # with a gate read of its own gets its own tag: "peerlist" (the Gate 1
   # retry) and "producthunt" (the card). The free boards listed in the
   # Product Hunt week get one each, so a listing's signups never land as
-  # "direct". "digest" is the subscriber digest.
+  # "direct". "digest" is the subscriber digest. "reddit" is every link
+  # posted on Reddit.
   REFS = %w[recap badge footer feed claim bio launch peerlist producthunt
-            devhunt saashub alternativeto digest].freeze
+            devhunt saashub alternativeto digest reddit].freeze
   DEFAULT_REF = "direct".freeze
 
   def self.normalize_ref(value)

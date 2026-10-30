@@ -27,8 +27,8 @@ RSpec.describe "Sitemaps", type: :request do
     it "dates no page from the commits a builder hides, and still lists the project's page" do
       user = create(:user, username: "builder")
       create(:entry, user: user, entry_type: "note", source: "manual", occurred_at: Time.utc(2026, 1, 5, 9))
-      create(:entry, user: user, repo_name: "builder/app", occurred_at: Time.utc(2026, 2, 6, 9))
-      create(:entry, user: user, repo_name: "builder/site", occurred_at: Time.utc(2026, 1, 7, 9))
+      create_list(:entry, Progress::Projects::INDEXED_COMMITS, user: user, repo_name: "builder/app", occurred_at: Time.utc(2026, 2, 6, 9))
+      create_list(:entry, Progress::Projects::INDEXED_COMMITS, user: user, repo_name: "builder/site", occurred_at: Time.utc(2026, 1, 7, 9))
       create(:github_repo, user: user, full_name: "builder/app", hidden_numbers: [ "commits" ])
 
       get "/sitemap.xml"
@@ -37,6 +37,18 @@ RSpec.describe "Sitemaps", type: :request do
       expect(urls.values_at(profile_url("builder"), project_page_url("builder", "app"), project_page_url("builder", "site")))
         .to eq([ "2026-01-07T09:00:00Z", nil, "2026-01-07T09:00:00Z" ])
       expect(response.body).not_to include("2026-02-06")
+    end
+
+    it "lists a project page only once the project has enough public commits" do
+      user = create(:user, username: "builder")
+      create_list(:entry, 10, user: user, repo_name: "builder/busy")
+      create_list(:entry, 9, user: user, repo_name: "builder/thin")
+      create(:entry, user: user, repo_name: "builder/thin", title: "Merge pull request #1 from builder/branch")
+
+      get "/sitemap.xml"
+
+      expect(response.body).to include(project_page_url("builder", "busy"))
+      expect(response.body).not_to include(project_page_url("builder", "thin"))
     end
 
     it "does not include deleted users" do
