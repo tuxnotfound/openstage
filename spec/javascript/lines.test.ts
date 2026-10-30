@@ -140,6 +140,12 @@ describe("a view's addresses", () => {
       .toBe("/dashboard?q=work&repo=me/app&range=30d&show=visits,commits&projects=me/app,me/lib")
   })
 
+  test("drop the days the window's form sent, as the range names them now", () => {
+    const place = { range: "2026-10-03..2026-10-28", show: ["commits", "visits"], projects: [] }
+    expect(pageUrl("http://x.test/me?from=2026-10-03&to=2026-10-28&entry=4", place, { range: "30d", show: ["commits", "visits"] }, { projects: true, dropped: [] }))
+      .toBe("/me?entry=4&range=2026-10-03..2026-10-28")
+  })
+
   test("drop analytics' old params once a view names the same", () => {
     const place = { range: "90d", show: ["views"], projects: ["page", "me/app"] }
     expect(pageUrl("http://x.test/analytics?metric=site&pages%5B%5D=me%2Fapp", place, { range: "30d", show: ["commits"] }, { projects: true, dropped: ["pages", "pages[]", "metric"] }))

@@ -34,7 +34,7 @@ export default function ProgressIsland({ initial, endpoint, mode, defaultRange, 
   const cells = useCellSwitches(view, filter.reload)
 
   const toggles = <NumberToggles numbers={view.numbers} lines={lines} indexed={view.chart.indexed} changes={mode === "dashboard"} {...filter.numbers} />
-  const pills = <WindowPills range={view.range} target={filter.window} className={mode === "dashboard" ? "" : "max-md:flex max-md:w-full max-md:justify-between"} />
+  const pills = <WindowPills range={view.range} calendar={view.calendar} target={filter.window} className={mode === "dashboard" ? "" : "max-md:flex max-md:w-full max-md:justify-between"} />
   const shipped = shippedTarget ? document.getElementById(shippedTarget) : null
 
   return (

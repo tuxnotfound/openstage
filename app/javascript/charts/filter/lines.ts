@@ -172,6 +172,10 @@ function sum(values: number[]): number {
 // A view as the page's URL and the API's name it.
 export type Place = { range: string; show: string[]; projects: string[] }
 
+// The params a page's URL names its view by: the window (or the days its
+// form sent without the script, from and to), the numbers and the projects.
+export const OWN_PARAMS = ["range", "show", "projects", "from", "to"]
+
 // The API's address for a view: the endpoint's own params, then the window,
 // the numbers (in the pages' order, since the view is the same in any) and
 // the projects in view.
@@ -191,14 +195,15 @@ function rank(order: string[], key: string): number {
 
 // The page's own address for a view: its other params stay (the
 // dashboard's entry filters, a linked entry), and the window, the numbers in
-// line order and the projects stay out at the page's defaults. projects:
+// line order and the projects stay out at the page's defaults; the days the
+// form sent go, as the range names them now. projects:
 // whether the page's URL names the rows in view; dropped: the old params it
 // drops, as the view's own now name what they named (a builder's page's
 // repo[], analytics' pages[] and metric).
 export function pageUrl(href: string, place: Place, defaults: { range: string; show: string[] }, own: { projects: boolean; dropped: string[] }): string {
   const url = new URL(href)
   const query = url.searchParams
-  ;["range", "show", "projects", ...own.dropped].forEach((key) => query.delete(key))
+  ;[...OWN_PARAMS, ...own.dropped].forEach((key) => query.delete(key))
   if (place.range !== defaults.range) query.set("range", place.range)
   if (place.show.join(",") !== defaults.show.join(",")) query.set("show", place.show.join(","))
   if (own.projects && place.projects.length) query.set("projects", place.projects.join(","))

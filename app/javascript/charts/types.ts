@@ -3,7 +3,14 @@
 // --project, ProgressChart::Palette): the pages only arrange them
 // (filter/lines.ts).
 
-export type ProgressRange = "30d" | "90d" | "12m" | "all"
+// One of the four windows, or days picked: "2026-10-03..2026-10-28".
+export type ProgressRange = "30d" | "90d" | "12m" | "all" | `${string}..${string}`
+
+// What the window's calendar offers (ChartFilterSerializer): today in the
+// builder's zone, the first day anything here counted (null with none), and
+// the days picked on screen with their name for the pill, null for the
+// other windows.
+export type CalendarView = { today: string; earliest: string | null; picked: { from: string; to: string; name: string } | null }
 
 // A chart filter's chart (CompareChartSerializer): each line carries its
 // project, its colour and its number, and the browser gives it its number's
@@ -85,8 +92,9 @@ export type TableView = { columns: { key: string; label: string; word: string }[
 // A chart filter's view, the same on every chart page (ChartFilterSerializer).
 export type FilterView = {
   range: ProgressRange
-  // What a number's total covers: "last 90 days", "all time".
+  // What a number's total covers: "last 90 days", "all time", "3 Oct – 28 Oct".
   words: string
+  calendar: CalendarView
   // The rows in view; none for all of them.
   selected: string[]
   numbers: NumberView[]

@@ -58,7 +58,7 @@ export default function ProjectsTable({ table, drawn, lines, indexed, words, foc
   return (
     <div className="mt-5" data-chart-table>
       <table className="w-full border-collapse text-sm max-md:block">
-        <caption className="sr-only">{label}: what the chart draws, and each number over the {words}</caption>
+        <caption className="sr-only">{label}: what the chart draws, and each number, {words}</caption>
         <thead className="max-md:block">
           <tr className="text-xs text-ink-3 max-md:flex">
             <th scope="col" className="w-full pt-1.5 pb-2 text-left font-bold">

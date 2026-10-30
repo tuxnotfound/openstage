@@ -32,7 +32,7 @@ export default function AnalyticsIsland({ initial, endpoint, defaultRange }: Ana
           <h1 className="os-h2 text-[30px]">Analytics</h1>
           <span className="os-tag pro">✦ Pro</span>
         </div>
-        <WindowPills range={view.range} target={filter.window} className="max-md:flex max-md:w-full max-md:justify-between" />
+        <WindowPills range={view.range} calendar={view.calendar} target={filter.window} className="max-md:flex max-md:w-full max-md:justify-between" />
       </div>
 
       <div aria-busy={busy} className={`os-stack transition-opacity ${busy ? "opacity-60" : ""}`}>
