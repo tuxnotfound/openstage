@@ -29,10 +29,12 @@
   </url>
   <% end %>
   <% usernames = @users.index_by(&:id) %>
-  <% @projects.each do |(user_id, repo), last_commit| %>
+  <% @projects.each do |user_id, repo, last_commit| %>
   <url>
     <loc><%= project_page_url(usernames.fetch(user_id).username, repo.split("/").last) %></loc>
+    <% if last_commit %>
     <lastmod><%= last_commit.utc.iso8601 %></lastmod>
+    <% end %>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
