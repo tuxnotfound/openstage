@@ -6,11 +6,11 @@ import { rangeParam } from "./days"
 
 // The window, at the top right of what it scopes, the same on every chart
 // page: four ranges, each asking for its view on click and warming it when
-// the pointer or focus reaches it, and Custom, which opens the calendar
+// the pointer or focus reaches it, and Pick dates, which opens the calendar
 // (Calendar) and names the days picked while they are on screen. On a
-// phone, Custom is its calendar icon alone until days are picked, and the
+// phone, Pick dates is its calendar icon alone until days are picked, and the
 // pills sit a little closer, so all five fit a 390 px screen; with days
-// picked, Custom takes a row of its own, so their dates stay whole.
+// picked, the pill takes a row of its own, so their dates stay whole.
 
 const RANGES: [ProgressRange, string][] = [["30d", "30 days"], ["90d", "90 days"], ["12m", "12 months"], ["all", "All time"]]
 
@@ -41,7 +41,7 @@ export default function WindowPills({ range, calendar, target, className = "" }:
         <button ref={pill} type="button" className={`os-pill gap-1.5 max-md:px-2 ${picked ? "max-md:w-full max-md:justify-center" : ""}`}
                 aria-pressed={picked !== null} aria-haspopup="dialog" aria-expanded={open} onClick={() => (open ? close(false) : setOpen(true))}>
           <CalendarIcon />
-          <span className={picked ? "" : "max-md:sr-only"}>{picked ? picked.name : "Custom"}</span>
+          <span className={picked ? "" : "max-md:sr-only"}>{picked ? picked.name : "Pick dates"}</span>
         </button>
         {open && (
           <Calendar calendar={calendar} pill={pill} close={close}

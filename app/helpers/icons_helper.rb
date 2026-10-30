@@ -1,4 +1,4 @@
-# Marks drawn inline beside a builder's accounts and in the window's Custom
+# Marks drawn inline beside a builder's accounts and in the window's Pick dates
 # pill, so they take the text's colour in light and dark. Each is hidden from
 # screen readers; the link or button beside it says what it is.
 module IconsHelper

@@ -5,7 +5,7 @@ import {
   weeksOf, within, type Day, type Month, type Picked,
 } from "./days"
 
-// The window's calendar: a dialog under the Custom pill. Two months side by
+// The window's calendar: a dialog under the Pick dates pill. Two months side by
 // side from 768 px, one below that, opening on the days picked, else on
 // today's month with the month before it on its left. A click or Enter on a
 // day picks the first day, a second the last, in either order, and that
@@ -95,7 +95,7 @@ export default function Calendar({ calendar, pill, pick, close }: Props) {
   const firstShown = months[0] ?? max
   const lastShown = months[months.length - 1] ?? max
   return (
-    <div ref={box} role="dialog" aria-modal="true" aria-label="Custom range" onKeyDown={key} style={{ left: left ?? 0, visibility: left === null ? "hidden" : undefined }}
+    <div ref={box} role="dialog" aria-modal="true" aria-label="Pick dates" onKeyDown={key} style={{ left: left ?? 0, visibility: left === null ? "hidden" : undefined }}
          className="absolute top-full z-30 mt-2 w-max rounded-card border border-line bg-surface p-4 text-ink shadow-lg">
       <div className="relative">
         <MonthButton label="Previous month" disabled={firstShown <= monthOf(min)} onClick={() => page(-1)} side="left" />

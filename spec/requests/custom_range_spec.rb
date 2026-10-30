@@ -52,7 +52,7 @@ RSpec.describe "Days picked for a chart's window", type: :request do
 
   # label: the chart's, for the days picked; commits: the toggle's count.
   shared_examples "a window of days picked" do |path, label, commits|
-    it "draws them, names them on the Custom pill and keeps them on every link" do
+    it "draws them, names them on the Pick dates pill and keeps them on every link" do
       get path, params: { range: range }
 
       expect(chart_label).to eq(label)
@@ -88,7 +88,7 @@ RSpec.describe "Days picked for a chart's window", type: :request do
       get path, params: { range: "2026-09-31..2026-10-02" }
 
       expect(chart_label).to end_with("last 30 days")
-      expect(custom.at_css("summary").text.squish).to eq("Custom")
+      expect(custom.at_css("summary").text.squish).to eq("Pick dates")
     end
   end
 
