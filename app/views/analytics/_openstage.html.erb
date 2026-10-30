@@ -1,10 +1,12 @@
 <%# The panels of the builder's pages on Openstage (analytics/panels): where
-    visitors to them came from, the links they followed, and where the badge
-    and embed showed, as the page's script draws them (AnalyticsPanels).
+    views of them came from, and so their countries, the links followed, and
+    where the badge and embed showed, as the page's script draws them
+    (AnalyticsPanels). Its sources count views, not visitors, so its title
+    says so.
     view: an AnalyticsViewSerializer's attributes. %>
 <div class="grid items-start gap-4 lg:grid-cols-3">
   <section class="os-panel" aria-labelledby="visitors-from">
-    <h2 id="visitors-from" class="os-h3">Where visitors came from</h2>
+    <h2 id="visitors-from" class="os-h3">Where views came from</h2>
     <p class="os-xs os-muted mt-1 mb-2">Views of your Openstage pages, by the site they came from, <%= view[:words] %>.</p>
     <% if view[:sources].empty? %>
       <p class="os-note">No visits <%= view[:quiet] %>.</p>

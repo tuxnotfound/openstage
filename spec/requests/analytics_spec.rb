@@ -250,7 +250,7 @@ RSpec.describe "Analytics", type: :request do
 
         expect(switch.css("a").map { |option| [ option.text, option["aria-current"] ] }).to eq([ [ "On your websites", nil ], [ "On Openstage", "page" ] ])
         expect(switch.parent.text.squish).to end_with("Views and clicks out on your stage and your project pages, and where your badge and embed were shown.")
-        expect(panel("visitors-from")).to eq("Where visitors came from Views of your Openstage pages, by the site they came from, last 30 days. Reddit 1 Countries ES 1")
+        expect(panel("visitors-from")).to eq("Where views came from Views of your Openstage pages, by the site they came from, last 30 days. Reddit 1 Countries ES 1")
         expect(panel("links-followed")).to eq("Links they followed Clicks from your Openstage pages, last 30 days. View on GitHub app 1")
         expect(page.at_css("section[aria-labelledby='site-sources']")).to be_nil
 

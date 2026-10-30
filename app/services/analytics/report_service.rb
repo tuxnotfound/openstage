@@ -6,7 +6,7 @@ module Analytics
   # project also its commits, site visits and site visitors, as its builder
   # shows them; what Progress::DrawService makes of their counts, each
   # number's total and change for the pages in view and the one chart of the
-  # numbers drawn; where visitors to those pages came from, the links they
+  # numbers drawn; where views of those pages came from, the links
   # followed and where the badge and embed showed; and the panels of the
   # builder's websites (GatherWebsitesService).
   class ReportService < ApplicationService

@@ -123,8 +123,8 @@ export type ShippedItem = {
 }
 
 // The analytics page (AnalyticsViewSerializer): the chart filter, then both
-// sets of panels: where visitors to the builder's pages on Openstage came
-// from, the links they followed and the badge and embed; and the panels of
+// sets of panels: where views of the builder's pages on Openstage came
+// from, the links followed and the badge and embed; and the panels of
 // their websites.
 export type AnalyticsView = FilterView & {
   // What the changes compare with; null for all time.

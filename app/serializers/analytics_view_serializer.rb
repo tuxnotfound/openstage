@@ -2,8 +2,8 @@
 # view: the chart filter every chart page shows (ChartFilterSerializer), its
 # toggles and its table's cells each with its change against the window
 # before, and under it both sets of panels, so the switch between them
-# fetches nothing: where visitors to the builder's pages on Openstage came
-# from, the links they followed and where the badge and embed showed; and
+# fetches nothing: where views of the builder's pages on Openstage came
+# from, the links followed and where the badge and embed showed; and
 # the panels of their websites. The page renders it first and its script
 # asks for others (Api::AnalyticsController).
 class AnalyticsViewSerializer < ApplicationSerializer

@@ -91,13 +91,14 @@ function Count({ label, count, project, css = "" }: { label: string; count: stri
   )
 }
 
-// As analytics/openstage: where visitors to the builder's pages came from,
-// the links they followed, and where the badge and embed showed.
+// As analytics/openstage: where views of the builder's pages came from, and
+// so their countries, the links followed, and where the badge and embed
+// showed. Its sources count views, not visitors, so its title says so.
 function OpenstagePanels({ view }: { view: AnalyticsView }) {
   return (
     <div className="grid items-start gap-4 lg:grid-cols-3">
       <section className="os-panel" aria-labelledby="visitors-from">
-        <h2 id="visitors-from" className="os-h3">Where visitors came from</h2>
+        <h2 id="visitors-from" className="os-h3">Where views came from</h2>
         <p className="os-xs os-muted mt-1 mb-2">Views of your Openstage pages, by the site they came from, {view.words}.</p>
         {view.sources.length === 0 && <p className="os-note">No visits {view.quiet}.</p>}
         {view.sources.map((source) => (

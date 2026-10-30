@@ -58,7 +58,7 @@ describe("the switch above analytics' panels", () => {
 
     const openstage = renderToStaticMarkup(<AnalyticsPanels view={viewWith(websites)} panels="openstage" flip={() => {}} />)
     expect(words(openstage)).toContain("Views and clicks out on your stage and your project pages, and where your badge and embed were shown. " +
-      "Where visitors came from Views of your Openstage pages, by the site they came from, last 30 days. Reddit 1")
+      "Where views came from Views of your Openstage pages, by the site they came from, last 30 days. Reddit 1")
     expect(words(openstage)).toContain("Clicks from your Openstage pages, last 30 days. No clicks out in the last 30 days.")
     expect(openstage).not.toContain("Top pages")
   })
