@@ -1,6 +1,6 @@
 class EntryClicksController < ApplicationController
   def show
-    entry = Entry.publicly_visible.find_by(id: params[:id])
+    entry = Entry.publicly_listed.find_by(id: params[:id])
 
     if entry.nil? || entry.url.blank?
       redirect_to root_path

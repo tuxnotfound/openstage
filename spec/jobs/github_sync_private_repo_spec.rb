@@ -15,7 +15,7 @@ RSpec.describe GithubSyncJob, "private repository handling", type: :job do
       described_class.new.send(:hide_excluded_private_entries, user)
 
       expect(entry.reload).to have_attributes(hidden: false, visibility: "public_entry")
-      expect(user.entries.publicly_visible).to include(entry)
+      expect(user.entries.publicly_listed).to include(entry)
     end
   end
 
@@ -29,7 +29,8 @@ RSpec.describe GithubSyncJob, "private repository handling", type: :job do
       described_class.new.send(:hide_excluded_private_entries, user)
 
       expect(leaked.reload).to have_attributes(hidden: true, url: nil)
-      expect(user.entries.publicly_visible).not_to include(leaked)
+      expect(user.entries.publicly_listed).not_to include(leaked)
+      expect(user.entries.counted).not_to include(leaked)
     end
 
     it "still works after the repo scope is revoked and GitHub stops listing it" do

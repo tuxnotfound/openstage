@@ -68,15 +68,16 @@ RSpec.describe "Home", type: :request do
       expect(page.css(".os-chart svg path").size).to eq(1)
     end
 
-    it "counts only the demo page's public commits" do
+    it "counts the demo page's public commits, the ones its builder hid from the lists too" do
       demo = create(:user, username: "tuxnotfound")
-      create(:entry, user: demo)
-      create(:entry, user: demo, hidden: true)
-      create(:entry, user: demo, visibility: "private")
+      create(:github_repo, user: demo, full_name: "tuxnotfound/app")
+      create(:entry, user: demo, repo_name: "tuxnotfound/app")
+      create(:entry, user: demo, repo_name: "tuxnotfound/app", hidden: true)
+      create(:entry, user: demo, repo_name: "tuxnotfound/app", visibility: "private")
 
       get "/"
 
-      expect(response.body).to match(%r{<span class="os-num[^"]*">1</span>\s*<span[^>]*>commits, last 12 months})
+      expect(response.body).to match(%r{<span class="os-num[^"]*">2</span>\s*<span[^>]*>commits, last 12 months})
     end
   end
 end

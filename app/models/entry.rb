@@ -61,8 +61,22 @@ class Entry < ApplicationRecord
   HIDDEN_COMMITS_SQL = "NOT EXISTS (SELECT 1 FROM github_repos WHERE github_repos.user_id = entries.user_id " \
                        "AND github_repos.full_name = entries.repo_name AND github_repos.hidden_numbers @> '[\"commits\"]')".freeze
 
-  scope :visible, -> { where(hidden: false).where(BRANCH_SWITCH_SQL) }
-  scope :publicly_visible, -> { visible.where(visibility: :public_entry).where(HIDDEN_REPO_SQL) }
+  # Hiding an entry on the dashboard takes it off every list and out of no
+  # number. The repo switch and the sync mark hidden too, the synced entries
+  # of a repo off the record: excluded, or dropped as unreadable, its row
+  # deleted (GithubRepos::DropUnreadableService). Those count nowhere, so a
+  # hidden synced entry counts only while its repo is listed and included.
+  COUNTED_SQL = "entries.hidden = false OR entries.source <> 'github' OR EXISTS (SELECT 1 FROM github_repos " \
+                "WHERE github_repos.user_id = entries.user_id AND github_repos.full_name = entries.repo_name " \
+                "AND github_repos.included)".freeze
+
+  # Numbers count through the counted scopes and lists read the listed ones:
+  # the same entries less the ones the builder hid. The builder's own views
+  # read counted and listed; visitors', publicly_counted and publicly_listed.
+  scope :counted, -> { where(COUNTED_SQL).where(BRANCH_SWITCH_SQL) }
+  scope :listed, -> { counted.where(hidden: false) }
+  scope :publicly_counted, -> { counted.where(visibility: :public_entry).where(HIDDEN_REPO_SQL) }
+  scope :publicly_listed, -> { publicly_counted.where(hidden: false) }
   scope :chronological, -> { order(occurred_at: :desc) }
   scope :pinned_entries, -> { where(pinned: true) }
   scope :commits, -> { where(source: :github, entry_type: :shipped) }
@@ -99,7 +113,7 @@ class Entry < ApplicationRecord
   # The feed: every builder's public work but the owner's, so it shows the
   # others; merges and dependency bumps left out, and the commits each
   # builder hides, as on every page.
-  scope :on_feed, -> { publicly_visible.without_tooling_noise.without_hidden_commits.joins(:user).merge(User.active.not_owner) }
+  scope :on_feed, -> { publicly_listed.without_tooling_noise.without_hidden_commits.joins(:user).merge(User.active.not_owner) }
 
   # A few of the latest feed entries, newest first, at most per_builder from
   # any one builder, so one busy day does not fill them all.
@@ -108,17 +122,26 @@ class Entry < ApplicationRecord
            .flat_map { |entries| entries.first(per_builder) }.sort_by(&:occurred_at).reverse.first(count)
   end
 
-  # What a builder's pages read: their public entries, tooling noise left
-  # out. reveal: one repo they hid, shown anyway as its project page would
-  # show it, for the builder's own look at that page; its synced entries
-  # count though the switch marked them hidden.
-  def self.on_page(reveal: nil)
-    shown = publicly_visible
-    if reveal
-      shown = shown.or(where(repo_name: reveal, visibility: :public_entry).where(BRANCH_SWITCH_SQL)
-                         .where("entries.hidden = false OR entries.source = ?", sources[:github]))
-    end
-    shown.without_tooling_noise
+  # What a builder's pages count: their public entries, tooling noise left
+  # out. reveal: one repo they hid, counted anyway as its project page would
+  # count it, for the builder's own look at that page.
+  def self.counted_on_page(reveal: nil)
+    counted = publicly_counted
+    counted = counted.or(where(repo_name: reveal, visibility: :public_entry).where(BRANCH_SWITCH_SQL)) if reveal
+    counted.without_tooling_noise
+  end
+
+  # What a builder's pages list: what they count, less what the builder hid.
+  def self.listed_on_page(reveal: nil)
+    counted_on_page(reveal: reveal).where(listed_sql(reveal))
+  end
+
+  # True for the entries a page lists of the ones it counts. A revealed
+  # repo's synced entries all list: the switch marked them hidden.
+  def self.listed_sql(reveal = nil)
+    return "entries.hidden = false" unless reveal
+
+    sanitize_sql([ "entries.hidden = false OR (entries.source = ? AND entries.repo_name = ?)", sources[:github], reveal ])
   end
 
   # The repos these entries came from, for a repo filter.

@@ -67,7 +67,7 @@ class RecapDraft
   # the picker, the dashboard prompt and the landing page example.
   def self.for_user(user, days: 7, include_noise: false)
     entries = user.entries
-                  .publicly_visible
+                  .publicly_counted
                   .where(occurred_at: days.days.ago..)
                   .chronological
 

@@ -19,7 +19,7 @@ module Projects
     private
 
     def execute
-      entries = user.entries.publicly_visible.without_tooling_noise
+      entries = user.entries.publicly_counted.without_tooling_noise
       @project = Progress::Projects.new(entries).find(repo.full_name)
       commits = entries.commits.where(repo_name: repo.full_name)
       @commits = commits.where(occurred_at: (today - (DAYS - 1)).in_time_zone(user.zone)..).count

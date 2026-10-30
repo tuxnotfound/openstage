@@ -127,7 +127,7 @@ RSpec.describe GithubSyncJob, type: :job do
       expect(entry.title).to eq("Add feature X")
       expect(entry.url).to be_nil
       expect(entry.visibility).to eq("public_entry")
-      expect(user.entries.publicly_visible).to include(entry)
+      expect(user.entries.publicly_listed).to include(entry)
     end
 
     it "creates a SyncLog with success status" do

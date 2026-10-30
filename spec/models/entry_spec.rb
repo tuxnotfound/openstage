@@ -47,10 +47,36 @@ RSpec.describe Entry, type: :model do
   end
 
   describe "scopes" do
-    it "visible excludes hidden entries" do
-      create(:entry, user: user, hidden: false)
-      create(:entry, user: user, hidden: true)
-      expect(Entry.visible.count).to eq(1)
+    it "counts an entry the builder hid but lists it nowhere" do
+      create(:github_repo, user: user, full_name: "me/app")
+      shown = create(:entry, user: user, repo_name: "me/app")
+      hidden_commit = create(:entry, user: user, repo_name: "me/app", hidden: true)
+      hidden_note = create(:entry, user: user, source: "manual", entry_type: "note", hidden: true)
+
+      expect(Entry.counted).to contain_exactly(shown, hidden_commit, hidden_note)
+      expect(Entry.publicly_counted).to contain_exactly(shown, hidden_commit, hidden_note)
+      expect(Entry.listed).to contain_exactly(shown)
+      expect(Entry.publicly_listed).to contain_exactly(shown)
+    end
+
+    # The repo switch and the sync mark a repo's synced entries hidden when
+    # it leaves the record; those count nowhere, as before.
+    it "counts no synced entry hidden with a repo that is excluded or gone" do
+      create(:github_repo, user: user, full_name: "me/off", included: false)
+      off = create(:entry, user: user, repo_name: "me/off", hidden: true)
+      logged_on_off = create(:entry, user: user, source: "manual", entry_type: "note", repo_name: "me/off")
+      gone = create(:entry, user: user, repo_name: "me/gone", hidden: true)
+
+      expect(Entry.counted).to contain_exactly(logged_on_off)
+      expect(Entry.publicly_counted).to be_empty
+      expect([ off, gone ]).to all(satisfy { |entry| Entry.publicly_listed.exclude?(entry) })
+    end
+
+    it "keeps private entries off what visitors count and list, but in the builder's own" do
+      private_note = create(:entry, user: user, source: "manual", entry_type: "note", visibility: :private_entry, hidden: true)
+
+      expect(Entry.counted).to contain_exactly(private_note)
+      expect([ Entry.publicly_counted, Entry.listed, Entry.publicly_listed ]).to all(be_empty)
     end
 
     it "chronological orders by occurred_at descending" do
@@ -59,15 +85,16 @@ RSpec.describe Entry, type: :model do
       expect(Entry.chronological.to_a).to eq([ newer, older ])
     end
 
-    it "visible hides branch commits while their builder has branch commits off" do
+    it "leaves branch commits out of counts and lists while their builder has branch commits off" do
       on_branch = create(:entry, user: user, branch: "feature")
       on_main = create(:entry, user: user)
       other_builder = create(:entry, branch: "feature")
-      expect(Entry.visible).to contain_exactly(on_branch, on_main, other_builder)
+      expect(Entry.listed).to contain_exactly(on_branch, on_main, other_builder)
 
       user.update!(branch_commits: false)
-      expect(Entry.visible).to contain_exactly(on_main, other_builder)
-      expect(Entry.publicly_visible).to contain_exactly(on_main, other_builder)
+      expect(Entry.listed).to contain_exactly(on_main, other_builder)
+      expect(Entry.counted).to contain_exactly(on_main, other_builder)
+      expect(Entry.publicly_counted).to contain_exactly(on_main, other_builder)
     end
 
     it "highlights count a logged Shipped entry but never a commit, also stored as shipped" do
@@ -97,6 +124,22 @@ RSpec.describe Entry, type: :model do
 
       expect(Entry.without_hidden_commits).to contain_exactly(launch, release, shown, unsynced, untagged, teammate)
       expect(Entry.where(user: user).without_hidden_commits.commits).to contain_exactly(shown, unsynced, untagged)
+    end
+  end
+
+  describe ".counted_on_page and .listed_on_page" do
+    it "counts what the builder hid and lists the rest, a revealed repo's synced entries listed though its switch hid them" do
+      create(:github_repo, user: user, full_name: "me/app")
+      create(:github_repo, user: user, full_name: "me/off", included: false)
+      shown = create(:entry, user: user, repo_name: "me/app")
+      hidden = create(:entry, user: user, repo_name: "me/app", hidden: true)
+      off_commit = create(:entry, user: user, repo_name: "me/off", hidden: true)
+      off_note = create(:entry, user: user, source: "manual", entry_type: "note", repo_name: "me/off", hidden: true)
+
+      expect(user.entries.counted_on_page).to contain_exactly(shown, hidden)
+      expect(user.entries.listed_on_page).to contain_exactly(shown)
+      expect(user.entries.counted_on_page(reveal: "me/off")).to contain_exactly(shown, hidden, off_commit, off_note)
+      expect(user.entries.listed_on_page(reveal: "me/off")).to contain_exactly(shown, off_commit)
     end
   end
 

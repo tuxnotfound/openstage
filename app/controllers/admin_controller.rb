@@ -16,7 +16,7 @@ class AdminController < ApplicationController
     @posted_recaps  = posted_recaps.count
     @posted_by_user = posted_recaps.distinct.count(:user_id)
     @total_users    = User.counted.count
-    @total_entries  = Entry.publicly_visible.where(user_id: counted_ids).count
+    @total_entries  = Entry.publicly_counted.where(user_id: counted_ids).count
     @pro_users      = User.counted.where(pro: true).count
     @subscribes     = Subscription.confirmed.where(confirmed_at: @since.., user_id: counted_ids).count
     @ref_visits     = Event.named("ref_visit").since(@since).group(:detail).count.sort_by { |_ref, count| -count }

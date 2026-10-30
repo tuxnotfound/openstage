@@ -32,7 +32,7 @@ module Progress
       end
     end
 
-    # projects: Progress::Projects#all, in rank order. reveal: a repo the builder hid, shown anyway (Entry.on_page).
+    # projects: Progress::Projects#all, in rank order. reveal: a repo the builder hid, shown anyway (Entry.counted_on_page).
     attr_accessor :user, :projects, :zone, :reveal
     attr_reader :cards
 
@@ -57,7 +57,7 @@ module Progress
     end
 
     def commits
-      user.entries.on_page(reveal: reveal).commits
+      user.entries.counted_on_page(reveal: reveal).commits
     end
 
     # Commits per week, counted by day in SQL: a row per day and project.

@@ -28,7 +28,7 @@ module Progress
 
     # repos: the projects in view; none for all of them. rolling: a Window
     # that ends today, as the public page shows; else a calendar Period.
-    # reveal: a repo the builder hid, shown anyway (Entry.on_page).
+    # reveal: a repo the builder hid, shown anyway (Entry.counted_on_page).
     # counting: what the page's chart also counts (TallyService::Counting).
     # shown_only: only the commits visitors see count (TallyService).
     attr_accessor :user, :range, :offset, :repos, :cap, :swapped_ids, :rolling, :reveal, :counting, :shown_only

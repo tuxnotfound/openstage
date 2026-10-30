@@ -72,6 +72,20 @@ RSpec.describe WeeklyMailer do
     end
   end
 
+  describe "#week_ready with entries the builder hid from the lists" do
+    it "counts them in the counters and the chart, and lists none of them" do
+      week_of_work
+      create(:github_repo, user: builder, full_name: "maker/app", name: "app")
+      create(:entry, user: builder, title: "Hidden fix", repo_name: "maker/app", occurred_at: 1.day.ago, hidden: true)
+      create(:entry, user: builder, entry_type: "note", source: "manual", title: "Hidden note", occurred_at: 1.day.ago, hidden: true)
+      mail = described_class.week_ready(builder)
+
+      expect(mail.text_part.body.to_s).to include("1 shipped · 2 published · 3 commits · 2 active days · 1 project")
+      expect(mail.html_part.body.to_s).to include("alt=\"Commits per day by project this week: app 3\"")
+      [ mail.text_part.body.to_s, mail.html_part.body.to_s ].each { |body| expect(body).not_to include("Hidden note") }
+    end
+  end
+
   describe "#week_ready on a week of commits only" do
     it "says nothing was shipped or published yet and offers to log an entry" do
       3.times { |i| create(:entry, user: builder, title: "Commit #{i}", repo_name: "maker/app", occurred_at: 1.day.ago) }

@@ -65,12 +65,16 @@ RSpec.describe Progress::TallyService do
       .to eq(%w[openstage wheels-off goal_atlas story_time_v1 trained-on watchtower trained-on-dataset])
   end
 
-  it "leaves out private entries, hidden ones and tooling noise" do
+  it "leaves out private entries and tooling noise, and counts what the builder hid without listing it" do
+    create(:github_repo, user: user, full_name: progress_repo(0))
     create(:entry, user: user, repo_name: progress_repo(0), title: "Merge pull request #4 from me/x", occurred_at: 1.hour.ago)
     create(:entry, user: user, repo_name: progress_repo(0), visibility: :private_entry, occurred_at: 1.hour.ago)
     create(:entry, user: user, repo_name: progress_repo(0), hidden: true, occurred_at: 1.hour.ago)
+    create(:entry, user: user, source: "manual", entry_type: "milestone", title: "Quiet launch", hidden: true, occurred_at: 1.hour.ago)
+    week = tally("week")
 
-    expect(tally("week").totals.commits).to eq(79)
+    expect(numbers(week.totals).first(3)).to eq([ 1, 0, 80 ])
+    expect([ week.items, week.buckets.flat_map(&:items), week.untagged ]).to all(be_empty)
   end
 
   it "counts an entry logged as Shipped as shipped, not as a commit" do

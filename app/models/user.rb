@@ -133,7 +133,7 @@ class User < ApplicationRecord
   end
 
   def public_entries_count
-    entries.publicly_visible.count
+    entries.publicly_counted.count
   end
 
   # Suggestions for tagging an entry with a project: synced repos plus any
@@ -144,11 +144,11 @@ class User < ApplicationRecord
   end
 
   def public_github_commits_count
-    entries.publicly_visible.commits.count
+    entries.publicly_counted.commits.count
   end
 
   def public_activity_streak
-    activity_days = entries.publicly_visible.without_hidden_commits
+    activity_days = entries.publicly_counted.without_hidden_commits
                          .where.not(occurred_at: nil)
                          .group("DATE(occurred_at AT TIME ZONE 'UTC')")
                          .count
@@ -171,13 +171,13 @@ class User < ApplicationRecord
     streak
   end
 
-  # Consecutive calendar days (UTC) with at least one non-hidden entry.
+  # Consecutive calendar days (UTC) with at least one entry, hidden or not.
   # Includes private entries — counts all activity, any type, any source.
   # Returns 0 if today *and* yesterday both have no entries.
   def current_streak
     today = Date.current
 
-    dated = entries.visible
+    dated = entries.counted
                    .where.not(occurred_at: nil)
                    .group("DATE(occurred_at AT TIME ZONE 'UTC')")
                    .count

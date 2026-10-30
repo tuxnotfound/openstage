@@ -50,13 +50,14 @@ RSpec.describe "Api::Progress", type: :request do
     expect(totals).to eq("commits" => "4")
   end
 
-  it "never counts a hidden or private entry" do
+  it "counts an entry the builder hid from the lists, never a private one" do
+    create(:github_repo, user: user, full_name: "builder/app", name: "app")
     create(:entry, user: user, repo_name: "builder/app", occurred_at: 1.day.ago, hidden: true)
     create(:entry, user: user, repo_name: "builder/app", occurred_at: 1.day.ago, visibility: :private_entry)
 
     get "/api/progress/builder", params: { range: "30d" }
 
-    expect(totals).to eq("commits" => "3")
+    expect(totals).to eq("commits" => "4")
   end
 
   # A view reads entries five times: the cache key, the projects' commits
@@ -94,7 +95,7 @@ RSpec.describe "Api::Progress", type: :request do
     get "/api/progress/builder", params: { range: "30d", show: "visits,commits" }
     expect(Progress::ChartService).not_to have_received(:new)
 
-    user.entries.where(source: "github").first.update_columns(hidden: true)
+    user.entries.where(source: "github").first.update_columns(visibility: "private")
     get "/api/progress/builder", params: { range: "30d" }
     expect(totals).to eq("commits" => "2")
   end

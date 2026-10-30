@@ -43,7 +43,7 @@ module GithubCommits
     end
 
     def pending
-      user.entries.visible.where(source: :github, entry_type: :shipped, stats_fetched_at: nil, occurred_at: WINDOW.ago..)
+      user.entries.listed.where(source: :github, entry_type: :shipped, stats_fetched_at: nil, occurred_at: WINDOW.ago..)
           .where(repo_name: user.github_repos.included_repos.select(:full_name)).where.not(external_id: nil)
           .order(occurred_at: :desc).limit(BATCH)
     end

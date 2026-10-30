@@ -4,7 +4,7 @@ RSpec.describe Progress::Projects do
   let(:user) { create(:user) }
 
   def projects
-    described_class.new(user.entries.publicly_visible.without_tooling_noise)
+    described_class.new(user.entries.publicly_counted.without_tooling_noise)
   end
 
   it "ranks repos by all-time commits, then tagged-only repos by name" do

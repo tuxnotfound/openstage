@@ -9,8 +9,9 @@ module Progress
   # page's chart counts more commits than the period's; asked to (counting),
   # the tally reads those too, so the page reads its commits once.
   class TallyService < ApplicationService
-    # A shipped or published entry on its day in the builder's zone.
-    Item = Data.define(:entry, :date, :kind) do
+    # A shipped or published entry on its day in the builder's zone. listed:
+    # the page lists it; one the builder hid counts but stays off the lists.
+    Item = Data.define(:entry, :date, :kind, :listed) do
       delegate :id, :title, :body, :repo_name, :pinned?, to: :entry
 
       def shipped?
@@ -34,7 +35,7 @@ module Progress
     # projects (of every one for none) from a day on (on every day for none).
     Counting = Data.define(:from, :repos)
 
-    # repos: the projects in view; none for all of them. reveal: a repo the builder hid, shown anyway (Entry.on_page).
+    # repos: the projects in view; none for all of them. reveal: a repo the builder hid, shown anyway (Entry.counted_on_page).
     # counting: what the page's chart also counts (Counting); none for the period alone.
     # ranked: the caller ranks the projects too (Projects#all), as a section does.
     # shown_only: count only the commits visitors see (Entry.without_hidden_commits),
@@ -42,9 +43,10 @@ module Progress
     # filter keeps them, as its builder's own view counts them, and leaves
     # them out of what visitors see by its rows (ChartService).
     attr_accessor :user, :range, :offset, :repos, :rolling, :reveal, :counting, :ranked, :shown_only
+    # items: the period's listed Items; the totals count the hidden ones too.
     attr_reader :zone, :period, :projects, :items, :buckets, :totals, :previous_totals, :first_active_day
-    # The period's entries with no project that the builder has not marked as
-    # having none, newest first; whatever the filter, so they can be tagged.
+    # The period's listed entries with no project that the builder has not
+    # marked as having none, newest first; whatever the filter, so they can be tagged.
     attr_reader :untagged
     # Each day's commits by repo, every project's, to order the tag buttons.
     attr_reader :day_counts
@@ -58,15 +60,15 @@ module Progress
 
     def execute
       @zone = user.zone
-      @projects = Projects.new(public_entries)
+      @projects = Projects.new(counted_entries)
       @period = period_for(Time.current.in_time_zone(zone).to_date, first_day_of(projects))
       @commit_days = commits_by_day
-      @items = items_on(period.first..period.last_day)
+      @items = items_on(period.first..period.last_day).select(&:listed)
       @buckets = period.buckets.map { |bucket| tally_bucket(bucket) }
       @totals = totals_on(period.first..period.last_day)
       @previous_totals = totals_on(period.comparison) if period.comparison
       first_commit_day = selected_commits_on(period.first..period.last_day).keys.map(&:first).min
-      @first_active_day = [ first_commit_day, *items.map(&:date) ].compact.min
+      @first_active_day = [ first_commit_day, *items_on(period.first..period.last_day).map(&:date) ].compact.min
       @untagged = untagged_on(period.first..period.last_day)
       @day_counts = window_commits.group_by { |(date, _repo), _count| date }.transform_values { |commits| tally(commits) }
     end
@@ -85,8 +87,8 @@ module Progress
       !selected? || repos.include?(repo)
     end
 
-    def public_entries
-      @public_entries ||= user.entries.on_page(reveal: reveal)
+    def counted_entries
+      @counted_entries ||= user.entries.counted_on_page(reveal: reveal)
     end
 
     # The first commit or entry in view: of the projects picked, when picked.
@@ -107,8 +109,8 @@ module Progress
     # projects nobody ranks (the weekly emails' quiet check) would otherwise
     # read the builder's whole history for every project.
     def first_in_view
-      commits = rolling ? public_entries.commits.without_hidden_commits : public_entries.commits
-      scope = commits.or(public_entries.highlights)
+      commits = rolling ? counted_entries.commits.without_hidden_commits : counted_entries.commits
+      scope = commits.or(counted_entries.highlights)
       scope = scope.where(repo_name: repos) if selected?
       scope.minimum(:occurred_at)
     end
@@ -123,7 +125,7 @@ module Progress
 
     # The window's commits, and with counting the ones the chart also counts.
     def commit_scope
-      commits = shown_only ? public_entries.commits.without_hidden_commits : public_entries.commits
+      commits = shown_only ? counted_entries.commits.without_hidden_commits : counted_entries.commits
       scope = commits.where(occurred_at: window)
       return scope unless counting
 
@@ -163,7 +165,7 @@ module Progress
     end
 
     def untagged_on(days)
-      window_items.select { |item| days.cover?(item.date) && item.repo_name.nil? && !item.entry.no_project? }
+      window_items.select { |item| item.listed && days.cover?(item.date) && item.repo_name.nil? && !item.entry.no_project? }
                   .sort_by { |item| [ -item.date.jd, -item.id ] }
     end
 
@@ -173,10 +175,12 @@ module Progress
       @window_commits ||= commit_days.select { |(date, _repo), _count| window_days.cover?(date) }
     end
 
+    # Each counted entry says in the same read whether the page lists it.
     def window_items
-      @window_items ||= public_entries.highlights.where(occurred_at: window).order(:occurred_at, :id).map do |entry|
+      @window_items ||= counted_entries.highlights.where(occurred_at: window).order(:occurred_at, :id)
+                                       .select("entries.*", "(#{Entry.listed_sql(reveal)}) AS listed").map do |entry|
         Item.new(entry: entry, date: entry.occurred_at.in_time_zone(zone).to_date,
-                 kind: Entry::SHIPPED_TYPES.include?(entry.entry_type) ? :shipped : :published)
+                 kind: Entry::SHIPPED_TYPES.include?(entry.entry_type) ? :shipped : :published, listed: entry[:listed])
       end
     end
 

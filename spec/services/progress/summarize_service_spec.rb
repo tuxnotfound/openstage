@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe Progress::SummarizeService do
   let(:user) { create(:user) }
   let(:zone) { ActiveSupport::TimeZone["UTC"] }
-  let(:projects) { Progress::Projects.new(user.entries.publicly_visible.without_tooling_noise).all }
+  let(:projects) { Progress::Projects.new(user.entries.publicly_counted.without_tooling_noise).all }
 
   before { travel_to Time.utc(2026, 10, 15, 12) }
 

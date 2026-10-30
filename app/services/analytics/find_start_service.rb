@@ -21,7 +21,7 @@ module Analytics
 
     # As the public page counts them: public, merges and dependency bumps left out.
     def commits
-      days(user.entries.publicly_visible.without_tooling_noise.commits.where.not(repo_name: nil).group(:repo_name).minimum(:occurred_at))
+      days(user.entries.publicly_counted.without_tooling_noise.commits.where.not(repo_name: nil).group(:repo_name).minimum(:occurred_at))
     end
 
     # Counted on the builder's day already.

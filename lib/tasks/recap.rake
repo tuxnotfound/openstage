@@ -5,7 +5,7 @@ namespace :recap do
     days     = (args[:days].presence || 7).to_i
 
     user = User.active.find_by(username: username) || abort("No active user '#{username}'")
-    entries = user.entries.publicly_visible
+    entries = user.entries.publicly_listed
                   .where(occurred_at: days.days.ago..)
                   .chronological
 

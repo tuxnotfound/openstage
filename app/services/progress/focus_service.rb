@@ -13,7 +13,7 @@ module Progress
 
     # slug: the repo's name without its owner; range: a Window range; show:
     # the numbers its chart draws, by key in line order, none for the
-    # default. reveal: a repo the builder hid, shown anyway (Entry.on_page).
+    # default. reveal: a repo the builder hid, shown anyway (Entry.counted_on_page).
     attr_accessor :user, :slug, :range, :show, :reveal
     # page: the GatherService run for this project; others: the rest of the
     # builder's cards; news: the latest highlight; highlights: how many there
@@ -40,9 +40,9 @@ module Progress
 
       @page = gather
       @card, @others = split_cards(gather.cards)
-      @news = entries.highlights.where(repo_name: project.repo).chronological.first
-      @highlights = entries.highlights.where(repo_name: project.repo).count
-      @first_commit = entries.commits.where(repo_name: project.repo).minimum(:occurred_at)
+      @news = user.entries.listed_on_page(reveal: reveal).highlights.where(repo_name: project.repo).chronological.first
+      @highlights = counted.highlights.where(repo_name: project.repo).count
+      @first_commit = counted.commits.where(repo_name: project.repo).minimum(:occurred_at)
       @facts = details
       @last_commit = card&.last_commit if commits_shown?
       @co_builders = co_builders_on(project.repo)
@@ -50,11 +50,12 @@ module Progress
 
     # Two repos may share a name under different owners; the busier one wins.
     def find_project
-      Projects.new(entries).all.find { |project| project.repo.split("/").last.casecmp?(slug) }
+      Projects.new(counted).all.find { |project| project.repo.split("/").last.casecmp?(slug) }
     end
 
-    def entries
-      user.entries.on_page(reveal: reveal)
+    # What its numbers count; news, the one entry it lists, reads the listed ones.
+    def counted
+      user.entries.counted_on_page(reveal: reveal)
     end
 
     # Its count of commits and its first one while visitors see its commits,
@@ -84,7 +85,7 @@ module Progress
     # pages already make public, so no count from one who hides its commits
     # there, and those come after the ones who show theirs.
     def co_builders_on(repo)
-      counts = Entry.publicly_visible.without_tooling_noise.commits.where(repo_name: repo).where.not(user_id: user.id)
+      counts = Entry.publicly_counted.without_tooling_noise.commits.where(repo_name: repo).where.not(user_id: user.id)
                     .joins(:user).merge(User.active).group(:user_id).count
       hiding = GithubRepo.where(user_id: counts.keys, full_name: repo).reject { |copy| copy.public_number?("commits") }.map(&:user_id)
       User.where(id: counts.keys).map { |builder| CoBuilder.new(user: builder, commits: (counts[builder.id] unless hiding.include?(builder.id))) }

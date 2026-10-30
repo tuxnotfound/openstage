@@ -14,7 +14,7 @@ module Progress
 
     # repos: the projects in view, none for all of them; show: the numbers
     # asked for, by key in line order, none for the default. reveal: a repo
-    # the builder hid, shown anyway (Entry.on_page). lone: a project's page,
+    # the builder hid, shown anyway (Entry.counted_on_page). lone: a project's page,
     # whose one project in view is all it shows. builder: the builder's own view.
     attr_accessor :user, :range, :repos, :show, :reveal, :lone, :builder
     # rows (Progress::Rows) and off_page (GithubRepos) are the table's;

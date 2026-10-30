@@ -30,11 +30,11 @@ class DashboardController < ApplicationController
   def filtered_entries
     @query        = params[:q].to_s.strip
     @type_filter  = params[:type].presence_in(Entry.entry_types.keys)
-    @repo_options = current_user.entries.visible.repo_names
+    @repo_options = current_user.entries.listed.repo_names
     @repo_filter  = params[:repo].presence_in(@repo_options)
     @filtering    = @query.present? || @type_filter.present? || @repo_filter.present?
 
-    scope = current_user.entries.visible.chronological
+    scope = current_user.entries.listed.chronological
     scope = scope.where(entry_type: @type_filter) if @type_filter
     scope = scope.where(repo_name: @repo_filter) if @repo_filter
     scope = scope.search(@query) if @query.present?
@@ -52,9 +52,9 @@ class DashboardController < ApplicationController
   end
 
   def load_entry_tabs
-    @timeline_count  = current_user.entries.visible.count
+    @timeline_count  = current_user.entries.listed.count
     @hidden_entries  = current_user.entries.where(hidden: true).chronological
-    @private_entries = current_user.entries.visible.where(visibility: :private_entry).chronological
+    @private_entries = current_user.entries.listed.where(visibility: :private_entry).chronological
   end
 
   def load_sync
@@ -75,7 +75,7 @@ class DashboardController < ApplicationController
     recap = RecapDraft.for_user(current_user)
     @recap_prompt = recap unless recap.quiet?
     @streak       = current_user.current_streak
-    @logged_today = current_user.entries.visible.where(occurred_at: Date.current.all_day).exists?
+    @logged_today = current_user.entries.counted.where(occurred_at: Date.current.all_day).exists?
   end
 
   # The public page's chart of the builder's own work, as their visitors see

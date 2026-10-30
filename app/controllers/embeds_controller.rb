@@ -15,7 +15,7 @@ class EmbedsController < ApplicationController
 
     track_impression(user)
 
-    latest_entry = user.entries.publicly_visible.without_hidden_commits.chronological.first
+    latest_entry = user.entries.publicly_listed.without_hidden_commits.chronological.first
 
     @embed_payload = {
       username: user.username,

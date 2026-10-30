@@ -84,7 +84,7 @@ module Analytics
     end
 
     def projects
-      @projects ||= Progress::Projects.new(user.entries.publicly_visible.without_tooling_noise).all
+      @projects ||= Progress::Projects.new(user.entries.publicly_counted.without_tooling_noise).all
     end
 
     # A page counts a number once it has counted it on any day; a project

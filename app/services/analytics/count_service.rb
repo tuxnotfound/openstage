@@ -32,7 +32,7 @@ module Analytics
 
     # As the public page counts them: public, merges and dependency bumps left out.
     def commits
-      merge(daily(user.entries.publicly_visible.without_tooling_noise.commits, "entries.occurred_at", "entries.repo_name"))
+      merge(daily(user.entries.publicly_counted.without_tooling_noise.commits, "entries.occurred_at", "entries.repo_name"))
     end
 
     # Counted on the builder's day already, so read as they are.
