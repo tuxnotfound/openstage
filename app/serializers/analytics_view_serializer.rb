@@ -1,12 +1,15 @@
 # The Pro analytics page for one window, the numbers drawn and the pages in
 # view: the chart filter every chart page shows (ChartFilterSerializer), its
 # toggles and its table's cells each with its change against the window
-# before, and under it where visitors came from, the links they followed and
-# where the badge and embed showed. The page renders it first and its script
+# before, and under it both sets of panels, so the switch between them
+# fetches nothing: where visitors to the builder's pages on Openstage came
+# from, the links they followed and where the badge and embed showed; and
+# the panels of their websites. The page renders it first and its script
 # asks for others (Api::AnalyticsController).
 class AnalyticsViewSerializer < ApplicationSerializer
   include ActionView::Helpers::NumberHelper
   include ActionView::Helpers::TextHelper
+  include Rails.application.routes.url_helpers
 
   # report: an Analytics::ReportService.
   def initialize(report)
@@ -20,7 +23,8 @@ class AnalyticsViewSerializer < ApplicationSerializer
   def attributes
     @attributes ||= begin
       view = ChartFilterSerializer.new(@report, changes: true, table: ProjectsTableSerializer.new(@report, changes: true)).attributes
-      view.merge(changes_note: (changes_note if compared?(view)), quiet: quiet, sources: sources, countries: countries, links: links, badges: badges)
+      view.merge(changes_note: (changes_note if compared?(view)), quiet: quiet, sources: bars(@report.sources), countries: counts(@report.countries),
+                 links: links, badges: badges, websites: websites)
     end
   end
 
@@ -43,13 +47,14 @@ class AnalyticsViewSerializer < ApplicationSerializer
     labels.range == "all" ? "yet" : labels.word
   end
 
-  def sources
-    most = @report.sources.first&.last.to_i
-    @report.sources.map { |label, count| { label: label, count: number_with_delimiter(count), width: (100.0 * count / most).round } }
+  # Each with a bar as wide as its share of the busiest.
+  def bars(pairs)
+    most = pairs.map(&:last).max.to_i
+    pairs.map { |label, count| { label: label, count: number_with_delimiter(count), width: (100.0 * count / most).round } }
   end
 
-  def countries
-    @report.countries.map { |label, count| { label: label, count: number_with_delimiter(count) } }
+  def counts(pairs)
+    pairs.map { |label, count| { label: label, count: number_with_delimiter(count) } }
   end
 
   def links
@@ -58,5 +63,28 @@ class AnalyticsViewSerializer < ApplicationSerializer
 
   def badges
     @report.badges.map { |kind, count, sites| { label: kind == "badge" ? "README badge" : "Embed widget", count: number_with_delimiter(count), sites: pluralize(sites, "site") } }
+  end
+
+  # The panels of the builder's websites (Analytics::GatherWebsitesService),
+  # sources with bars as Openstage's own; with none of them, what shows
+  # instead (empty) and, while none of the projects in view counts site
+  # visits, the first one's Site visits row, which sets them up (setup).
+  def websites
+    site = @report.websites
+    ranks = site.ranks
+    { sources: bars(ranks["source"]), refs: counts(ranks["ref"]), countries: counts(ranks["country"]), pages: counts(ranks["page"]),
+      empty: empty_words(site.state), setup: (setup if site.state == :off) }
+  end
+
+  def empty_words(state)
+    case state
+    when :quiet then "No site visits #{quiet}."
+    when :off then "None of the projects in view counts site visits."
+    end
+  end
+
+  def setup
+    row = @report.setup_row
+    { text: "Set up #{row.name}'s site visits", path: edit_project_path(row.repo, site: "open", anchor: "site-visits") } if row
   end
 end

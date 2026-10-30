@@ -3,13 +3,13 @@
 <% serializer = AnalyticsViewSerializer.new(@report) %>
 <% view = serializer.attributes %>
 <% default_range = Progress::Window::DEFAULT %>
-<% path_for = ->(changes) { analytics_path(chart_params(view, default_range: default_range, **changes).compact) } %>
+<% path_for = ->(changes) { analytics_view_path(view, panels: @panels, **changes) } %>
 
 <%# The chart filter every chart page shares, as the page's script draws it
     (AnalyticsIsland) and as it reads without the script: the window beside
     the title; the numbers in their groups, each with its change; the chart;
-    and the pages under it, each value with its change. Then where visitors
-    came from, the links they followed and the badge and embed, for the same
+    and the pages under it, each value with its change. Then the panels of
+    the builder's websites or of their pages on Openstage, for the same
     window and pages. %>
 <%= react_island("analytics", { initial: serializer.as_json, endpoint: api_analytics_path, defaultRange: default_range }, id: "analytics", class: "os-stack") do %>
   <div class="os-between">
@@ -27,8 +27,8 @@
       <p class="os-xs os-muted mt-5.5"><%= view[:changes_note] %></p>
     <% end %>
     <%= render "charts/table", view: view, path_for: path_for, label: "Pages" %>
-    <p class="os-note mt-0 border-t border-line pt-2.5">Commits: yours, public, merges and dependency bumps left out. On a project's own website, counted by Openstage's script: site visits are page views; a site visitor is one browser on one day. On Openstage, your stage and your project pages: a visitor is one browser on one day; views count every page load; new followers confirmed by email, for your stage or one project; clicks out are a project's Visit and View on GitHub buttons and the links in your entries. Your own visits and bots are left out.</p>
+    <p class="os-note mt-0 border-t border-line pt-2.5">Commits: yours, public, merges and dependency bumps left out. On a project's own website, counted by Openstage's script: site visits are page views; a site visitor is one browser on one day. On Openstage, your stage and your project pages: a visitor is one browser on one day; views count every page load; new followers confirmed by email, for your stage or one project; clicks out are a project's Visit and View on GitHub buttons and the links in your entries. Bots are left out, and on Openstage your own visits too.</p>
   </section>
 
-  <%= render "analytics/panels", view: view %>
+  <%= render "analytics/panels", view: view, panels: @panels, path_for: path_for %>
 <% end %>

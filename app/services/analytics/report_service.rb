@@ -6,13 +6,15 @@ module Analytics
   # project also its commits, site visits and site visitors, as its builder
   # shows them; what Progress::DrawService makes of their counts, each
   # number's total and change for the pages in view and the one chart of the
-  # numbers drawn; and where visitors came from, the links they followed and
-  # where the badge and embed showed.
+  # numbers drawn; where visitors to those pages came from, the links they
+  # followed and where the badge and embed showed; and the panels of the
+  # builder's websites (GatherWebsitesService).
   class ReportService < ApplicationService
     # It opens on commits alone, over the window every chart page opens on.
     DEFAULT_SHOW = %w[commits].freeze
     Link = Data.define(:title, :page, :count)
     TOP = 6
+    TOP_COUNTRIES = 5
 
     # range: a Progress::Window range, nil for the default; show: the numbers
     # asked for, by key in line order; pages: the pages in view, by key, none
@@ -20,7 +22,8 @@ module Analytics
     attr_accessor :user, :range, :show, :pages
     # totals_window: the Window the totals cover; rows: a Progress::Row per page, in
     # the pages' fixed order; drawing: the DrawService of the totals and the chart.
-    attr_reader :totals_window, :rows, :counts, :drawing, :sources, :countries, :links, :badges
+    # websites: the GatherWebsitesService of the website panels.
+    attr_reader :totals_window, :rows, :counts, :drawing, :sources, :countries, :links, :badges, :websites
 
     delegate :totals, :drawn, :default_drawn, :window, :chart, :earliest, to: :drawing
 
@@ -46,6 +49,13 @@ module Analytics
       drawing.cells(row, columns)
     end
 
+    # The first project in view, whose site visits the website panels offer
+    # to set up while none of the projects in view counts them; nil when only
+    # the builder's stage is.
+    def setup_row
+      selected.find(&:repo)
+    end
+
     private
 
     def execute
@@ -58,6 +68,7 @@ module Analytics
       read_visits
       @links = top_links
       @badges = badges_seen
+      read_websites
     end
 
     def today
@@ -106,7 +117,7 @@ module Analytics
       views = [ (user.profile_views if page_for(CountService::PAGE)), user.project_views.where(repo_name: selected.map(&:key)) ].compact
       views = views.map { |scope| scope.where(viewed_at: times) }
       @sources = tally(views.flat_map { |scope| scope.group(:referrer).count.to_a }) { |host| ReferrerClassifier.classify(host) }
-      @countries = tally(views.flat_map { |scope| scope.where.not(country: [ nil, "" ]).group(:country).count.to_a }, &:itself).first(5)
+      @countries = tally(views.flat_map { |scope| scope.where.not(country: [ nil, "" ]).group(:country).count.to_a }, &:itself).first(TOP_COUNTRIES)
     end
 
     def tally(pairs)
@@ -140,6 +151,14 @@ module Analytics
     def badges_seen
       seen = user.badge_impressions.where(viewed_at: times)
       %w[badge embed].map { |kind| [ kind, seen.where(kind: kind).count, seen.where(kind: kind).distinct.count(:referrer) ] }
+    end
+
+    # Every project of the builder's while all are in view, those with no row
+    # too, else the projects in view; their stage is not a website.
+    def read_websites
+      repos = selected_keys.empty? ? user.github_repos : selected.filter_map(&:repo)
+      service = GatherWebsitesService.new(user: user, repos: repos, days: totals_window.span)
+      @websites = service if run(service)
     end
 
     def host_of(url)

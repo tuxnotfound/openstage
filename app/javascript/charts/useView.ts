@@ -109,5 +109,9 @@ export function useView<T>(initial: T, initialUrl: string, { own, restored }: Vi
     reload,
     retry: () => failed && open(failed.url, failed.page, failed.landed, failed.write),
     prefetch: (url: string) => store.prefetch(url),
+    // The page's address once something the island shows beside the view
+    // changes, as analytics' panels do: a new entry in the browser's
+    // history for the view on screen, so Back shows the one before again.
+    step: (address: string) => remember(shown.current, address, true),
   }
 }

@@ -26,6 +26,15 @@ RSpec.describe "Analytics", type: :request do
     Rack::Utils.parse_query(URI(link["href"]).query)
   end
 
+  # A panel's words, a space between each element's.
+  def panel(id)
+    page.at_css("section[aria-labelledby='#{id}']").xpath(".//text()").map(&:text).join(" ").squish
+  end
+
+  def count(repo, kind, value, count, day: Date.new(2026, 10, 20))
+    repo.site_visit_counts.create!(kind: kind, value: value, count: count, day: day)
+  end
+
   it "sends a visitor who is not signed in home" do
     get "/analytics"
     expect(response).to redirect_to(root_path)
@@ -50,8 +59,8 @@ RSpec.describe "Analytics", type: :request do
       sign_in_as(user)
     end
 
-    it "says so when nothing happened" do
-      get "/analytics"
+    it "says so when nothing happened on Openstage" do
+      get "/analytics", params: { panels: "openstage" }
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("No visits in the last 30 days.", "No clicks out in the last 30 days.")
@@ -193,9 +202,123 @@ RSpec.describe "Analytics", type: :request do
       user.badge_impressions.create!(kind: "badge", viewed_at: 1.day.ago, referrer: "github.com", ip_hash: "x")
       user.badge_impressions.create!(kind: "badge", viewed_at: 1.day.ago, referrer: "example.com", ip_hash: "y")
 
-      get "/analytics"
+      get "/analytics", params: { panels: "openstage" }
 
-      expect(page.at_css("section[aria-labelledby='badge-embed']").text.squish).to include("README badge 2 · 2 sites", "Embed widget 0 · 0 sites")
+      expect(panel("badge-embed")).to include("README badge 2 · 2 sites", "Embed widget 0 · 0 sites")
+    end
+
+    describe "the panels under the chart" do
+      def switch
+        page.at_css("[role='group'][aria-label='Panels']")
+      end
+
+      before { repo.update!(site_source: "script", site_token: "os_a", site_set_up_at: 50.days.ago, site_first_visit_at: 50.days.ago) }
+
+      it "opens on the builder's websites, each panel saying what it counts and where, the sources named and the cap's Other rows last" do
+        count(repo, "source", "news.ycombinator.com", 5)
+        count(repo, "source", "t.co", 2)
+        count(repo, "source", "x.com", 2)
+        count(repo, "source", "openstage.dev", 3)
+        count(repo, "source", SiteVisitCount::DIRECT, 4)
+        count(repo, "source", "indiehackers.com", 1)
+        count(repo, "source", SiteVisitCount::OTHER, 2)
+        count(repo, "ref", "hn", 3)
+        count(repo, "country", "PT", 6)
+        count(repo, "page", "/pricing", 9)
+        count(repo, "page", "/docs/*", 4)
+        count(repo, "page", SiteVisitCount::OTHER, 7)
+        create(:profile_view, user: user, viewed_at: 2.days.ago, referrer: "reddit.com")
+
+        get "/analytics"
+
+        expect(switch.css("a").map { |option| [ option.text, option["aria-current"] ] }).to eq([ [ "On your websites", "page" ], [ "On Openstage", nil ] ])
+        expect(switch.parent.text.squish).to end_with("Visitors and page views on your websites, counted by Openstage's script.")
+        expect(panel("site-sources")).to eq("Where visitors came from Visitors to your websites, by the site they came from, last 30 days. " \
+                                            "Hacker News 5 Direct 4 Twitter / X 4 Openstage 3 indiehackers.com 1 Other 2 Countries PT 6")
+        expect(panel("site-refs")).to eq("Ref tags Visitors by the ref or utm_source tag in their link, last 30 days. hn 3")
+        expect(panel("site-pages")).to eq("Top pages Page views on your websites, by path, last 30 days. /pricing 9 /docs/* 4 Other 7")
+        expect(page.css("section[aria-labelledby='site-sources'] [style]").map { |bar| bar["style"] }.first(2)).to eq([ "width: 100%", "width: 80%" ])
+        expect(page.at_css("section[aria-labelledby='visitors-from']")).to be_nil
+      end
+
+      it "shows Openstage's own panels as before when the URL names them, and the websites' for a name it does not know" do
+        count(repo, "source", "news.ycombinator.com", 5)
+        create(:profile_view, user: user, viewed_at: 2.days.ago, referrer: "reddit.com", country: "ES")
+        user.project_clicks.create!(repo_name: "builder/app", kind: "github", clicked_at: 1.day.ago)
+
+        get "/analytics", params: { panels: "openstage" }
+
+        expect(switch.css("a").map { |option| [ option.text, option["aria-current"] ] }).to eq([ [ "On your websites", nil ], [ "On Openstage", "page" ] ])
+        expect(switch.parent.text.squish).to end_with("Views and clicks out on your stage and your project pages, and where your badge and embed were shown.")
+        expect(panel("visitors-from")).to eq("Where visitors came from Views of your Openstage pages, by the site they came from, last 30 days. Reddit 1 Countries ES 1")
+        expect(panel("links-followed")).to eq("Links they followed Clicks from your Openstage pages, last 30 days. View on GitHub app 1")
+        expect(page.at_css("section[aria-labelledby='site-sources']")).to be_nil
+
+        get "/analytics", params: { panels: "github" }
+        expect(panel("site-sources")).to include("Hacker News 5")
+      end
+
+      it "links each option to its view without the script, and keeps the panels on every other link and the days form" do
+        create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a")
+
+        get "/analytics", params: { range: "90d", show: "commits,views", projects: "builder/app" }
+        expect(switch.css("a").map { |option| query(option) }).to eq([ { "range" => "90d", "show" => "commits,views", "projects" => "builder/app" },
+                                                                       { "range" => "90d", "show" => "commits,views", "projects" => "builder/app", "panels" => "openstage" } ])
+
+        get "/analytics", params: { panels: "openstage" }
+        expect(query(page.css("[aria-label='Time range'] a").find { |link| link.text == "90 days" })).to eq("range" => "90d", "panels" => "openstage")
+        expect(query(toggles.css("a").find { |link| link.text.include?("Views") })).to eq("show" => "commits,views", "panels" => "openstage")
+        expect(query(page.at_css("[data-chart-row='page'] a[aria-label='Show only Your stage']"))).to eq("projects" => "page", "panels" => "openstage")
+        expect(page.css("[aria-label='Time range'] form input[type='hidden']").map { |field| [ field["name"], field["value"] ] }).to eq([ [ "panels", "openstage" ] ])
+      end
+
+      it "follows the window, the days picked and the projects in view; with all in view, every project with website data, and never the stage" do
+        quiet = create(:github_repo, user: user, name: "quiet", full_name: "builder/quiet", homepage: "https://quiet.example")
+        lib = create(:github_repo, user: user, name: "lib", full_name: "builder/lib")
+        create(:entry, user: user, repo_name: "builder/lib", occurred_at: 3.days.ago)
+        count(repo, "page", "/", 3)
+        count(repo, "page", "/old", 8, day: Date.new(2026, 9, 1))
+        count(repo, "page", "/early", 2, day: Date.new(2026, 10, 2))
+        count(quiet, "page", "/quiet", 5)
+        count(lib, "page", "/lib", 1)
+
+        get "/analytics"
+        expect(page.css("[data-chart-row]").map { |row| row["data-chart-row"] }).to eq([ "page", "builder/app", "builder/lib" ])
+        expect(panel("site-pages")).to end_with("/quiet 5 / 3 /early 2 /lib 1")
+
+        get "/analytics", params: { range: "90d" }
+        expect(panel("site-pages")).to end_with("/old 8 /quiet 5 / 3 /early 2 /lib 1")
+
+        get "/analytics", params: { range: "2026-10-01..2026-10-10" }
+        expect(panel("site-pages")).to eq("Top pages Page views on your websites, by path, 1 Oct – 10 Oct. /early 2")
+        get "/analytics", params: { from: "2026-10-01", to: "2026-10-10" }
+        expect(panel("site-pages")).to end_with("/early 2")
+
+        get "/analytics", params: { projects: "builder/lib" }
+        expect(panel("site-pages")).to end_with("by path, last 30 days. /lib 1")
+
+        get "/analytics", params: { projects: "page" }
+        expect(page.at_css("section[aria-labelledby='site-pages']")).to be_nil
+        note = page.css("p.os-note").find { |each| each.text.include?("None of the projects") }
+        expect([ note.text.squish, note.at_css("a") ]).to eq([ "None of the projects in view counts site visits.", nil ])
+      end
+
+      it "says when none of the projects in view counts site visits, with a link to set up the first one's, and when none came in the window" do
+        repo.update!(site_source: nil)
+        get "/analytics"
+        note = page.css("p.os-note").find { |each| each.text.include?("None of the projects") }
+        expect(note.text.squish).to eq("None of the projects in view counts site visits. Set up app's site visits")
+        expect(note.at_css("a")["href"]).to eq("/projects/#{repo.id}/edit?site=open#site-visits")
+
+        repo.update!(site_source: "script")
+        count(repo, "page", "/", 3, day: Date.new(2026, 8, 1))
+        get "/analytics"
+        expect(page.css("p.os-note").map { |each| each.text.squish }).to include("No site visits in the last 30 days.")
+        expect(response.body).not_to include("None of the projects in view counts site visits.")
+
+        get "/analytics", params: { range: "all" }
+        expect(panel("site-pages")).to end_with("/ 3")
+      end
     end
   end
 end

@@ -27,20 +27,28 @@ export type FilterOptions = {
   named: boolean
   // Old params the page's URL drops once a view shows (pageUrl).
   dropped: string[]
+  // Params the page's URL names beside the view, which the island keeps for
+  // the page (analytics' panels): Back and Forward over them stay in place,
+  // and call restored, so the page reads them again.
+  kept?: string[]
+  restored?: () => void
 }
 
 // The view asked for: its window, the line each number asked for wears, and
 // the rows in view, none for all of them.
 type Wanted = { range: ProgressRange; lines: Lines; projects: string[] }
 
-export function useFilter<V extends FilterView>(initial: V, { endpoint, defaultRange, named, dropped }: FilterOptions) {
+export function useFilter<V extends FilterView>(initial: V, { endpoint, defaultRange, named, dropped, kept = [], restored: reread }: FilterOptions) {
   const order = (view: FilterView) => view.numbers.map((number) => number.key)
   const first: Wanted = { range: initial.range, lines: linesFrom(initial.drawn), projects: named ? initial.selected : [] }
   const address = (want: Wanted, numbers: string[]) => apiUrl(endpoint, { range: want.range, show: lineOrder(want.lines), projects: want.projects }, numbers)
   const [wanted, setWanted] = useState(first)
   // A view Back or Forward brings back sets what is asked for to it.
-  const restored = (arrived: V) => setWanted((was) => ({ range: arrived.range, lines: reconcile(was.lines, arrived.drawn), projects: named ? arrived.selected : [] }))
-  const { view, busy, failed, open, reload, retry, prefetch } = useView(initial, address(first, order(initial)), { own: [...OWN_PARAMS, ...dropped], restored })
+  const restored = (arrived: V) => {
+    setWanted((was) => ({ range: arrived.range, lines: reconcile(was.lines, arrived.drawn), projects: named ? arrived.selected : [] }))
+    reread?.()
+  }
+  const { view, busy, failed, open, reload, retry, prefetch, step } = useView(initial, address(first, order(initial)), { own: [...OWN_PARAMS, ...dropped, ...kept], restored })
   const [notice, setNotice] = useState("")
   const [focus, setFocus] = useState<Focus | null>(null)
   const lines = reconcile(wanted.lines, view.drawn)
@@ -91,7 +99,7 @@ export function useFilter<V extends FilterView>(initial: V, { endpoint, defaultR
   }
 
   return {
-    view, busy, failed, retry, lines, notice, focus, rows, numbers,
+    view, busy, failed, retry, lines, notice, focus, rows, numbers, step,
     // The window's pills and its calendar, beside whatever they scope.
     window: (range: ProgressRange) => to({ range }, true),
     // The view asked for again, past every view kept, after a change on the

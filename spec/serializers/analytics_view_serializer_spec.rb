@@ -36,6 +36,26 @@ RSpec.describe AnalyticsViewSerializer do
     expect(json["badges"].first).to eq("label" => "README badge", "count" => "0", "sites" => "0 sites")
   end
 
+  it "sends the panels of the builder's websites, each bar as wide as its share of the busiest, the cap's Other row too" do
+    repo = create(:github_repo, user: user, full_name: "me/app", name: "app", site_source: "script")
+    { "github.com" => 2, SiteVisitCount::DIRECT => 1, SiteVisitCount::OTHER => 4 }.each { |host, count| repo.site_visit_counts.create!(kind: "source", value: host, count: count, day: 1.day.ago.to_date) }
+    repo.site_visit_counts.create!(kind: "ref", value: "hn", count: 1_200, day: 1.day.ago.to_date)
+
+    expect(view["websites"]).to eq("sources" => [ { "label" => "GitHub", "count" => "2", "width" => 50 }, { "label" => "Direct", "count" => "1", "width" => 25 },
+                                                  { "label" => "Other", "count" => "4", "width" => 100 } ],
+                                   "refs" => [ { "label" => "hn", "count" => "1,200" } ], "countries" => [], "pages" => [], "empty" => nil, "setup" => nil)
+  end
+
+  it "says why the website panels are empty, with a link to set up the first project's site visits while none of the projects in view counts them" do
+    repo = create(:github_repo, user: user, full_name: "me/app", name: "app")
+
+    expect(view["websites"].slice("empty", "setup")).to eq("empty" => "None of the projects in view counts site visits.",
+                                                           "setup" => { "text" => "Set up app's site visits", "path" => "/projects/#{repo.id}/edit?site=open#site-visits" })
+    repo.update!(site_source: "script")
+    expect(view(range: "90d")["websites"].slice("empty", "setup")).to eq("empty" => "No site visits in the last 90 days.", "setup" => nil)
+    expect(view(range: "all")["websites"]["empty"]).to eq("No site visits yet.")
+  end
+
   it "compares nothing over all time, and a quiet panel says so for all time" do
     json = view(range: "all")
 

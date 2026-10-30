@@ -207,6 +207,12 @@ export function pageUrl(href: string, place: Place, defaults: { range: string; s
   if (place.range !== defaults.range) query.set("range", place.range)
   if (place.show.join(",") !== defaults.show.join(",")) query.set("show", place.show.join(","))
   if (own.projects && place.projects.length) query.set("projects", place.projects.join(","))
-  const search = query.toString().replace(/%2C/gi, ",").replace(/%2F/gi, "/")
+  return written(url)
+}
+
+// An address as a page's URL writes it: its path, its query with its commas
+// and slashes plain, and its hash.
+export function written(url: URL): string {
+  const search = url.searchParams.toString().replace(/%2C/gi, ",").replace(/%2F/gi, "/")
   return `${url.pathname}${search ? `?${search}` : ""}${url.hash}`
 }

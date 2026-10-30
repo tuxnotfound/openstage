@@ -122,8 +122,10 @@ export type ShippedItem = {
   project: string | null
 }
 
-// The analytics page (AnalyticsViewSerializer): the chart filter, then where
-// visitors came from, the links they followed and the badge and embed.
+// The analytics page (AnalyticsViewSerializer): the chart filter, then both
+// sets of panels: where visitors to the builder's pages on Openstage came
+// from, the links they followed and the badge and embed; and the panels of
+// their websites.
 export type AnalyticsView = FilterView & {
   // What the changes compare with; null for all time.
   changesNote: string | null
@@ -133,4 +135,18 @@ export type AnalyticsView = FilterView & {
   countries: { label: string; count: string }[]
   links: { title: string; page: string; count: string }[]
   badges: { label: string; count: string; sites: string }[]
+  websites: WebsitesView
+}
+
+// The panels of the builder's websites, each value with its count, the
+// busiest first and the cap's Other row last; with none of them, what shows
+// instead (empty) and, while none of the projects in view counts site
+// visits, the link that sets up the first one's (setup).
+export type WebsitesView = {
+  sources: { label: string; count: string; width: number }[]
+  refs: { label: string; count: string }[]
+  countries: { label: string; count: string }[]
+  pages: { label: string; count: string }[]
+  empty: string | null
+  setup: { text: string; path: string } | null
 }

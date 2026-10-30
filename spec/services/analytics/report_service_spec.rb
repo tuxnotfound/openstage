@@ -129,6 +129,21 @@ RSpec.describe Analytics::ReportService do
     expect(report(pages: [ "me/app" ]).links.map(&:title)).to eq([ "View on GitHub" ])
   end
 
+  it "reads the website panels of every project of the builder's while all are in view, of the projects in view otherwise, and never of the stage" do
+    hidden = create(:github_repo, user: user, full_name: "me/hidden", name: "hidden")
+    app.site_visit_counts.create!(kind: "page", value: "/app", count: 2, day: 2.days.ago.to_date)
+    hidden.site_visit_counts.create!(kind: "page", value: "/hidden", count: 1, day: 2.days.ago.to_date)
+    app.site_visit_counts.create!(kind: "page", value: "/before", count: 5, day: 40.days.ago.to_date)
+
+    expect(report.rows.map(&:key)).not_to include("me/hidden")
+    expect(report.websites.ranks["page"]).to eq([ [ "/app", 2 ], [ "/hidden", 1 ] ])
+    expect(report(range: "90d").websites.ranks["page"]).to eq([ [ "/before", 5 ], [ "/app", 2 ], [ "/hidden", 1 ] ])
+    expect(report(pages: %w[me/app]).websites.ranks["page"]).to eq([ [ "/app", 2 ] ])
+    expect([ report(pages: %w[page]).websites.state, report(pages: %w[page]).setup_row ]).to eq([ :off, nil ])
+    expect(report(pages: %w[page me/lib]).setup_row).to be_nil
+    expect(report(pages: %w[page me/app]).setup_row.name).to eq("app")
+  end
+
   it "refuses without a builder" do
     expect(described_class.new.call).to be(false)
   end

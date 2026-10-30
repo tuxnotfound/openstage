@@ -1,15 +1,18 @@
 # The Pro builder's numbers, for their page and each project's: the chart
 # filter every chart page shares, with commits, site visits and Openstage's
-# own visitors, views, new followers and clicks out, then where visitors
-# came from and the links they followed.
+# own visitors, views, new followers and clicks out, then the panels of
+# their websites or of their pages on Openstage.
 class AnalyticsController < ApplicationController
   before_action :require_authentication
   before_action :require_pro
 
-  # The view asked for (Progress::Filter, old links too) renders first; the
-  # page's script asks Api::AnalyticsController for the others.
+  # The view asked for (Progress::Filter, old links too) renders first, with
+  # the panels its URL names (AnalyticsHelper::PANELS); the page's script
+  # asks Api::AnalyticsController for the others, and switches the panels
+  # itself.
   def index
     filter = Progress::Filter.from_analytics(params)
+    @panels = params[:panels].presence_in(AnalyticsHelper::PANELS.keys) || AnalyticsHelper::PANELS.keys.first
     @report = Analytics::ReportService.new(user: current_user, range: filter.range, show: filter.show, pages: filter.projects)
     return if @report.call
 
