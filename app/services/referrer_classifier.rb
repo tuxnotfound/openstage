@@ -1,14 +1,18 @@
 module ReferrerClassifier
+  # Matched in order. An Android app sends its package as the referrer's
+  # host (android-app://com.reddit.frontpage), so an app counts as its site,
+  # and Gmail's mail as Gmail rather than as Google's search.
   RULES = [
     [ "Hacker News",   %w[news.ycombinator.com] ],
-    [ "Reddit",        %w[reddit.com old.reddit.com new.reddit.com m.reddit.com] ],
-    [ "Twitter / X",   %w[twitter.com x.com t.co mobile.twitter.com] ],
+    [ "Reddit",        %w[reddit.com old.reddit.com new.reddit.com m.reddit.com com.reddit.frontpage] ],
+    [ "Twitter / X",   %w[twitter.com x.com t.co mobile.twitter.com com.twitter.android] ],
     [ "Product Hunt",  %w[producthunt.com www.producthunt.com] ],
     [ "GitHub",        %w[github.com www.github.com] ],
-    [ "LinkedIn",      %w[linkedin.com www.linkedin.com lnkd.in] ],
+    [ "LinkedIn",      %w[linkedin.com www.linkedin.com lnkd.in com.linkedin.android] ],
     [ "Mastodon",      %w[mastodon.social mastodon.online fosstodon.org hachyderm.io] ],
     [ "Bluesky",       %w[bsky.app] ],
     [ "Dev.to",        %w[dev.to] ],
+    [ "Gmail",         %w[mail.google.com com.google.android.gm] ],
     [ "Google",        :google_match ]
   ].freeze
 

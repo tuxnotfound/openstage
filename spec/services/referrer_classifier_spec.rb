@@ -35,5 +35,11 @@ RSpec.describe ReferrerClassifier do
       expect([ described_class.known("www.news.ycombinator.com"), described_class.known("t.co"), described_class.known("google.de") ]).to eq([ "Hacker News", "Twitter / X", "Google" ])
       expect([ described_class.known("somerandomblog.dev"), described_class.known("openstage.dev"), described_class.known(nil) ]).to eq([ nil, nil, nil ])
     end
+
+    it "names Gmail apart from Google, and an Android app as its site" do
+      expect(%w[mail.google.com com.google.android.gm].map { |host| described_class.known(host) }).to eq(%w[Gmail Gmail])
+      expect(%w[com.google.android.googlequicksearchbox news.google.com].map { |host| described_class.known(host) }).to eq(%w[Google Google])
+      expect(%w[com.twitter.android com.reddit.frontpage com.linkedin.android].map { |host| described_class.known(host) }).to eq([ "Twitter / X", "Reddit", "LinkedIn" ])
+    end
   end
 end
