@@ -3,12 +3,15 @@
 # ApplicationController does; it answers every request the same way, at once,
 # whether the view counted or not.
 class SiteVisitsController < ActionController::API
-  # The script sends a token and a URL; anything bigger is not from it.
-  MAX_BODY = 4.kilobytes
+  # The script sends a token, the page's URL and, as a page loads, its
+  # referrer; anything bigger is not from it.
+  MAX_BODY = 8.kilobytes
 
+  # A missing r (a view sent without the referrer) is not an empty one (a
+  # visitor with no referrer), so it goes on as it came.
   def create
-    SiteVisits::RecordService.new(token: payload["p"], url: payload["u"], origin: request.headers["Origin"],
-                                  ip: request.remote_ip, user_agent: request.user_agent).call
+    SiteVisits::RecordService.new(token: payload["p"], url: payload["u"], referrer: payload["r"], origin: request.headers["Origin"],
+                                  country: request.headers["CF-IPCountry"], ip: request.remote_ip, user_agent: request.user_agent).call
     head :no_content
   end
 

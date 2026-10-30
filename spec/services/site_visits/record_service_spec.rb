@@ -11,6 +11,10 @@ RSpec.describe SiteVisits::RecordService do
     described_class.new(token: "os_abc123", url: "https://shipnote.app/", ip: "203.0.113.7", user_agent: browser, **overrides)
   end
 
+  def counts
+    repo.site_visit_counts.pluck(:day, :kind, :value, :count).sort
+  end
+
   it "counts views and visitors on the builder's day, a visitor once" do
     2.times { record.call! }
     record(ip: "203.0.113.8").call!
@@ -38,19 +42,56 @@ RSpec.describe SiteVisits::RecordService do
     3.times { record.call! }
 
     expect(repo.site_visit_days.sole.visits).to eq(2)
+    expect(counts).to eq([ [ Date.new(2026, 10, 25), "page", "/", 2 ] ])
+  end
+
+  it "counts a visitor's first view of the day by page, source, ref tag and country, and the later ones by page" do
+    record(url: "https://shipnote.app/pricing?ref=HN", referrer: "https://news.ycombinator.com/item?id=41", country: "PT").call!
+    record(url: "https://shipnote.app/docs/", referrer: "https://www.reddit.com/", country: "ES").call!
+    record(url: "https://shipnote.app/pricing", ip: "203.0.113.8", referrer: "", country: "US").call!
+    day = Date.new(2026, 10, 25)
+
+    expect(counts).to eq([
+      [ day, "country", "PT", 1 ], [ day, "country", "US", 1 ], [ day, "page", "/docs", 1 ], [ day, "page", "/pricing", 2 ],
+      [ day, "ref", "hn", 1 ], [ day, "source", "(direct)", 1 ], [ day, "source", "news.ycombinator.com", 1 ]
+    ])
+  end
+
+  it "counts a first view sent without a referrer, by an app's page change or an older script, by page and country alone" do
+    record(url: "https://shipnote.app/app?ref=hn", country: "PT").call!
+
+    expect(counts).to eq([ [ Date.new(2026, 10, 25), "country", "PT", 1 ], [ Date.new(2026, 10, 25), "page", "/app", 1 ] ])
+  end
+
+  it "takes a referrer on the project's own website for no source" do
+    record(referrer: "https://www.shipnote.app/blog", country: "XX").call!
+
+    expect(counts).to eq([ [ Date.new(2026, 10, 25), "page", "/", 1 ] ])
+  end
+
+  it "writes a view's counts in one statement, beside the visitor and the day" do
+    record.call!
+    statements = []
+    ActiveSupport::Notifications.subscribed(->(*, payload) { statements << payload[:sql] unless %w[SCHEMA TRANSACTION].include?(payload[:name]) }, "sql.active_record") do
+      record(ip: "203.0.113.8", referrer: "https://news.ycombinator.com/", country: "PT").call!
+    end
+
+    expect(statements.grep(/site_visit_counts/).size).to eq(1)
+    expect(statements.size).to eq(4)
   end
 
   it "refuses a bot" do
-    service = record(user_agent: "Googlebot/2.1")
+    service = record(user_agent: "Googlebot/2.1", referrer: "", country: "PT")
 
     expect(service.call).to be(false)
     expect(service.errors[:user_agent]).to be_present
+    expect(SiteVisitCount.count).to eq(0)
   end
 
   it "refuses a page or an Origin that is not the project's website" do
-    expect(record(url: "https://copycat.example/").call).to be(false)
-    expect(record(origin: "https://copycat.example").call).to be(false)
-    expect(SiteVisitDay.count).to eq(0)
+    expect(record(url: "https://copycat.example/", referrer: "").call).to be(false)
+    expect(record(origin: "https://copycat.example", referrer: "").call).to be(false)
+    expect([ SiteVisitDay.count, SiteVisitCount.count ]).to eq([ 0, 0 ])
   end
 
   it "refuses a project without a website, without the script, or of a deleted builder" do
@@ -63,6 +104,7 @@ RSpec.describe SiteVisits::RecordService do
     repo.update!(site_source: "script")
     user.soft_delete!
     expect(record.call).to be(false)
+    expect(SiteVisitCount.count).to eq(0)
   end
 
   it "takes nothing from a project paused on Free, keeps its totals, and counts the one set up first" do
@@ -70,11 +112,13 @@ RSpec.describe SiteVisits::RecordService do
     repo.update!(site_set_up_at: 10.days.ago)
     paused = create(:github_repo, user: user, homepage: "https://tidepool.dev", site_source: "script", site_token: "os_other", site_set_up_at: 3.days.ago)
     paused.site_visit_days.create!(day: Date.new(2026, 10, 1), visits: 50, visitors: 40)
-    service = record(token: "os_other", url: "https://tidepool.dev/")
+    paused.site_visit_counts.create!(day: Date.new(2026, 10, 1), kind: "page", value: "/", count: 50)
+    service = record(token: "os_other", url: "https://tidepool.dev/", referrer: "", country: "PT")
 
     expect(service.call).to be(false)
     expect(service.errors[:token]).to eq([ "names no project that counts visits" ])
     expect([ paused.site_visitors.count, paused.site_visit_days.sole.visits, paused.reload.site_first_visit_at ]).to eq([ 0, 50, nil ])
+    expect(paused.site_visit_counts.pluck(:value, :count)).to eq([ [ "/", 50 ] ])
     expect(record.call).to be(true)
   end
 end

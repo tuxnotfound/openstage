@@ -1,17 +1,20 @@
 module SiteVisits
   # One page view on a project's website, sent by Openstage's script
-  # (public/v.js), added to the day's totals in the builder's zone. It counts
-  # only from the project's own website, from a person rather than a bot, for a
-  # project whose visits count (GithubRepo#counts_site_visits?), and up to
-  # DAILY_LIMIT views per visitor and day. A visitor is their IP hashed with a
-  # key that changes every day, deleted within two days.
+  # (public/v.js), added to the day's totals in the builder's zone, and to
+  # its counts by page, source, ref tag and country (SiteVisitCount). It
+  # counts only from the project's own website, from a person rather than a
+  # bot, for a project whose visits count (GithubRepo#counts_site_visits?),
+  # and up to DAILY_LIMIT views per visitor and day. A visitor is their IP
+  # hashed with a key that changes every day, deleted within two days.
   class RecordService < ApplicationService
     # Past this, one address's page views on a site that day are dropped.
     DAILY_LIMIT = 200
 
     # token: the script's data-project; url: the page viewed; origin: the
-    # request's Origin header, when the browser sent one.
-    attr_accessor :token, :url, :origin, :ip, :user_agent
+    # request's Origin header, when the browser sent one; referrer: the
+    # page's referrer, which the script sends with a page load's first view
+    # only; country: the CF-IPCountry header.
+    attr_accessor :token, :url, :origin, :ip, :user_agent, :referrer, :country
     attr_reader :counted
 
     validates :token, :url, :ip, presence: true
@@ -42,8 +45,7 @@ module SiteVisits
     def from_its_website
       return unless repo
 
-      host = repo.site_host
-      on_site = same_site?(host_of(url), host) && (origin.blank? || same_site?(host_of(origin), host))
+      on_site = view.on_site?(url) && (origin.blank? || view.on_site?(origin))
       errors.add(:url, "is not on the project's website") unless on_site
     end
 
@@ -53,6 +55,10 @@ module SiteVisits
       @repo = GithubRepo.joins(:user).merge(User.active).includes(:user).find_by(site_token: token.to_s) if token.present?
     end
 
+    def view
+      @view ||= PageView.new(url: url, referrer: referrer, country: country, site_host: repo.site_host)
+    end
+
     # Its page views today, this one included.
     def record_visitor(day)
       SiteVisitor.upsert({ github_repo_id: repo.id, day: day, visitor_hash: visitor_hash(day), hits: 1 },
@@ -60,11 +66,13 @@ module SiteVisits
                          on_duplicate: Arel.sql("hits = site_visitors.hits + 1")).first.fetch("hits")
     end
 
+    # The day's totals, then its counts by page, source, ref tag and country.
     def add_to_day(day, first:)
       SiteVisitDay.upsert({ github_repo_id: repo.id, day: day, visits: 1, visitors: first ? 1 : 0 },
                           unique_by: %i[github_repo_id day],
                           on_duplicate: Arel.sql("visits = site_visit_days.visits + 1, visitors = site_visit_days.visitors + EXCLUDED.visitors, " \
                                                  "updated_at = EXCLUDED.updated_at"))
+      SiteVisitCount.add(repo.id, day, view.counts(first: first))
     end
 
     # What the setup step shows once the script works.
@@ -79,17 +87,6 @@ module SiteVisits
     def visitor_hash(day)
       key = Rails.application.key_generator.generate_key("site-visitors/#{day.iso8601}", 32)
       OpenSSL::HMAC.hexdigest("SHA256", key, "#{repo.id}/#{ip}")
-    end
-
-    # www. and the bare domain are one site.
-    def same_site?(one, other)
-      one.present? && other.present? && one.delete_prefix("www.") == other.delete_prefix("www.")
-    end
-
-    def host_of(address)
-      URI(address.to_s).host&.downcase
-    rescue URI::InvalidURIError
-      nil
     end
   end
 end

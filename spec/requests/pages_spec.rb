@@ -22,6 +22,19 @@ RSpec.describe "Marketing pages", type: :request do
       )
       expect(response.body).to include(%(href="/privacy"))
     end
+
+    it "says what the script keeps of each view, and what it never keeps" do
+      get "/privacy"
+
+      expect(Nokogiri::HTML(response.body).at_css("#builders-sites").text.squish).to include(
+        "When a page loads, it also sends the address of the page you came from.",
+        "It sets no cookie and stores nothing in your browser.",
+        "It counts each page by its path, without the query string.",
+        "For your first view of the day, it also counts the name of the site you came from, the ref or utm_source tag in the " \
+        "page's address, and your country as Cloudflare reports it.",
+        "deletes it within two days. It does not keep your IP address or your device."
+      )
+    end
   end
 
   describe "GET /pricing" do

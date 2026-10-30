@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_28_000002) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_30_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -180,6 +180,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_28_000002) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id", "repo_name", "viewed_at"], name: "index_project_views_on_user_id_and_repo_name_and_viewed_at"
+  end
+
+  create_table "site_visit_counts", force: :cascade do |t|
+    t.bigint "github_repo_id", null: false
+    t.string "kind", null: false
+    t.date "day", null: false
+    t.string "value", null: false
+    t.integer "count", default: 0, null: false
+    t.index ["github_repo_id", "kind", "day", "value"], name: "index_site_visit_counts_once_a_day", unique: true
   end
 
   create_table "site_visit_days", force: :cascade do |t|
@@ -417,6 +426,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_28_000002) do
   add_foreign_key "profile_views", "users"
   add_foreign_key "project_clicks", "users", on_delete: :cascade
   add_foreign_key "project_views", "users", on_delete: :cascade
+  add_foreign_key "site_visit_counts", "github_repos", on_delete: :cascade
   add_foreign_key "site_visit_days", "github_repos", on_delete: :cascade
   add_foreign_key "site_visitors", "github_repos", on_delete: :cascade
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

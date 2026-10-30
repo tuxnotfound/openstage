@@ -19,6 +19,22 @@ RSpec.describe "Site visits from Openstage's script", type: :request do
     expect(repo.site_visit_days.last).to have_attributes(visits: 1, visitors: 1)
   end
 
+  it "passes on the referrer the script sends as a page loads, and Cloudflare's country" do
+    send_view({ p: "os_abc123", u: "https://shipnote.app/pricing?ref=hn", r: "https://news.ycombinator.com/" },
+              headers: { "Origin" => "https://shipnote.app", "CF-IPCountry" => "PT" })
+
+    expect(repo.site_visit_counts.pluck(:kind, :value)).to contain_exactly(
+      [ "page", "/pricing" ], [ "source", "news.ycombinator.com" ], [ "ref", "hn" ], [ "country", "PT" ]
+    )
+  end
+
+  it "takes a view sent without r for no source, and an empty r for Direct" do
+    send_view({ p: "os_abc123", u: "https://shipnote.app/app?ref=hn" }, headers: { "CF-IPCountry" => "PT" })
+    send_view({ p: "os_abc123", u: "https://shipnote.app/", r: "" }, headers: { "REMOTE_ADDR" => "203.0.113.8" })
+
+    expect(repo.site_visit_counts.where(kind: %w[source ref]).pluck(:value)).to eq([ SiteVisitCount::DIRECT ])
+  end
+
   it "answers the same way when nothing counts, and keeps nothing" do
     send_view({ p: "os_nope", u: "https://shipnote.app/" })
     expect(response).to have_http_status(:no_content)
@@ -26,10 +42,17 @@ RSpec.describe "Site visits from Openstage's script", type: :request do
     expect(response).to have_http_status(:no_content)
     post "/v", params: "not json", headers: browser
     expect(response).to have_http_status(:no_content)
-    post "/v", params: { p: "os_abc123", u: "https://shipnote.app/", pad: "x" * 5000 }.to_json, headers: browser
+    post "/v", params: { p: "os_abc123", u: "https://shipnote.app/", pad: "x" * 9000 }.to_json, headers: browser
     expect(response).to have_http_status(:no_content)
 
-    expect(SiteVisitDay.count).to eq(0)
+    expect([ SiteVisitDay.count, SiteVisitCount.count ]).to eq([ 0, 0 ])
+  end
+
+  it "counts a page load whose address and referrer are both long" do
+    long = "https://news.example/#{'a' * 3000}"
+    send_view({ p: "os_abc123", u: "https://shipnote.app/pricing?q=#{'b' * 3000}", r: long })
+
+    expect(repo.site_visit_counts.pluck(:kind, :value)).to contain_exactly([ "page", "/pricing" ], [ "source", "news.example" ])
   end
 
   it "answers a paused project's script the same quiet way, and keeps nothing from it" do
@@ -41,12 +64,12 @@ RSpec.describe "Site visits from Openstage's script", type: :request do
 
     expect(response).to have_http_status(:no_content)
     expect([ response.body, response.cookies ]).to eq([ "", {} ])
-    expect([ SiteVisitDay.count, SiteVisitor.count ]).to eq([ 0, 0 ])
+    expect([ SiteVisitDay.count, SiteVisitor.count, SiteVisitCount.count ]).to eq([ 0, 0, 0 ])
   end
 
   it "serves the script that sends them" do
     script = Rails.public_path.join("v.js").read
 
-    expect(script).to include('getAttribute("data-project")', "sendBeacon", "pushState", '"/v"')
+    expect(script).to include('getAttribute("data-project")', "sendBeacon", "pushState", '"/v"', "document.referrer")
   end
 end

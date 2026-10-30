@@ -19,6 +19,17 @@ RSpec.describe GithubRepos::DropUnreadableService do
     expect(kept_entry.reload.hidden).to be(false)
   end
 
+  it "drops a dropped repo's site visits with it, as the database deletes them" do
+    [ gone, readable ].each do |repo|
+      repo.site_visit_days.create!(day: Date.current, visits: 2, visitors: 1)
+      repo.site_visit_counts.create!(day: Date.current, kind: "page", value: "/", count: 2)
+    end
+
+    described_class.new(user: user, listed_ids: [ 1 ], listed_at: Time.current).call!
+
+    expect([ SiteVisitDay.distinct.pluck(:github_repo_id), SiteVisitCount.distinct.pluck(:github_repo_id) ]).to eq([ [ readable.id ], [ readable.id ] ])
+  end
+
   it "drops every private repo when nothing is readable, and never a public one" do
     described_class.new(user: user, listed_ids: [], listed_at: Time.current).call!
 

@@ -67,14 +67,29 @@ RSpec.describe GithubRepo do
       expect(site.site_visits_public?).to be(false)
     end
 
-    it "deletes its days and visitors, never orphans them" do
+    it "deletes its days, counts and visitors, never orphans them" do
       site.site_visit_days.create!(day: Date.current, visits: 1, visitors: 1)
+      site.site_visit_counts.create!(day: Date.current, kind: "page", value: "/", count: 1)
       site.site_visitors.create!(day: Date.current, visitor_hash: "a")
 
       site.site_visit_days.delete_all
+      site.site_visit_counts.delete_all
       site.site_visitors.delete_all
 
-      expect([ SiteVisitDay.count, SiteVisitor.count ]).to eq([ 0, 0 ])
+      expect([ SiteVisitDay.count, SiteVisitCount.count, SiteVisitor.count ]).to eq([ 0, 0, 0 ])
+    end
+
+    it "takes its days and counts with it, destroyed or deleted in the database" do
+      other = create(:github_repo, user: user)
+      [ site, other ].each do |repo|
+        repo.site_visit_days.create!(day: Date.current, visits: 1, visitors: 1)
+        repo.site_visit_counts.create!(day: Date.current, kind: "source", value: "github.com", count: 1)
+      end
+
+      site.destroy!
+      GithubRepo.where(id: other.id).delete_all
+
+      expect([ SiteVisitDay.count, SiteVisitCount.count ]).to eq([ 0, 0 ])
     end
 
     it "refuses a source it does not know" do

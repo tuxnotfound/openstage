@@ -20,6 +20,9 @@ RSpec.describe "Setting up a project's site visits", type: :request do
     expect(view.at_css(".os-code").text).to eq(%(<script defer src="http://www.example.com/v.js" data-project="#{token}"></script>))
     expect(view.text).to include("Waiting for the first visit")
     expect(view.text).not_to include("one project only")
+    expect(view.at_css(".os-note").text.squish).to include(
+      "No cookie: a visitor is one browser on one day. Only the day's totals are kept, views by page and visitors by the site they came from, ref tag and country."
+    )
   end
 
   it "says when the first visit came, and counts the last 30 days" do

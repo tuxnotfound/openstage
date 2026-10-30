@@ -18,6 +18,16 @@ RSpec.describe SiteVisits::ConfigureService do
     expect(repo.reload).to have_attributes(site_source: "script", site_token: token)
   end
 
+  it "keeps what was counted when the script is turned off" do
+    configure(repo, "script").call!
+    repo.site_visit_days.create!(day: Date.current, visits: 3, visitors: 2)
+    repo.site_visit_counts.create!(day: Date.current, kind: "ref", value: "hn", count: 2)
+
+    configure(repo, "off").call!
+
+    expect([ repo.site_visit_days.sum(:visits), repo.site_visit_counts.sum(:count) ]).to eq([ 3, 2 ])
+  end
+
   it "keeps the time it was first set up, whatever comes after" do
     set_up = Time.utc(2026, 10, 20, 9)
     travel_to(set_up) { configure(repo, "script").call! }
