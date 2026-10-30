@@ -15,6 +15,11 @@ module ReferrerClassifier
   def self.classify(host)
     return "Direct" if host.blank?
 
+    known(host) || "Other"
+  end
+
+  # The name of a site the rules know, nil for any other host.
+  def self.known(host)
     normalized = host.to_s.downcase.sub(/\Awww\./, "")
     RULES.each do |label, matcher|
       if matcher == :google_match
@@ -23,6 +28,6 @@ module ReferrerClassifier
         return label
       end
     end
-    "Other"
+    nil
   end
 end

@@ -29,4 +29,11 @@ RSpec.describe ReferrerClassifier do
       expect(described_class.classify("somerandomblog.dev")).to eq("Other")
     end
   end
+
+  describe ".known" do
+    it "names the sites the rules know, and no other host" do
+      expect([ described_class.known("www.news.ycombinator.com"), described_class.known("t.co"), described_class.known("google.de") ]).to eq([ "Hacker News", "Twitter / X", "Google" ])
+      expect([ described_class.known("somerandomblog.dev"), described_class.known("openstage.dev"), described_class.known(nil) ]).to eq([ nil, nil, nil ])
+    end
+  end
 end
