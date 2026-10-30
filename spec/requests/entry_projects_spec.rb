@@ -13,51 +13,59 @@ RSpec.describe "Tagging entries with a project" do
   end
 
   let(:year) { Date.new(2025, 11, 1)..ProgressData::TODAY.to_date }
-  let(:month) { (ProgressData::TODAY.to_date - 29)..ProgressData::TODAY.to_date }
 
   def section
-    Nokogiri::HTML(response.body).at_css("section[aria-label='Profile']")
+    Nokogiri::HTML(response.body).at_css("turbo-frame#untagged")
   end
 
-  it "tells the owner how many entries have no project, and never a visitor" do
-    get "/tux"
-    expect(section.text).not_to include("have no project")
-
+  # The tag panel is the builder's chore: on their dashboard, never on their
+  # stage, even while they look at it signed in (Pedro, 2026-10-30).
+  it "tells the builder on their dashboard how many entries have no project, and never on their stage" do
     sign_in_as(user)
     get "/tux"
-    expect(section.text.squish).to include("#{progress_untagged(year)} entries in the last 12 months have no project. Tag them")
+    expect(response.body).not_to include("have no project", "Tag them")
 
-    get "/tux", params: { repo: progress_repo(0) }
-    expect(section.text.squish).to include("#{progress_untagged(year)} entries in the last 12 months have no project, so this view leaves them out.")
+    get "/dashboard"
+    expect(section.text.squish).to include("#{progress_untagged(year)} entries in the last 12 months have no project. Tag them")
+    expect(section.at_css("a")["href"]).to eq("/dashboard?tag=1#activity")
+  end
+
+  # The chart above may show 90 days or one project; the backlog is the
+  # same last 12 months, as the stage showed it before.
+  it "counts the last 12 months whatever the chart shows, and keeps the chart's view on its links" do
+    sign_in_as(user)
+    get "/dashboard", params: { range: "30d", projects: progress_repo(0) }
+
+    expect(section.text.squish).to include("#{progress_untagged(year)} entries in the last 12 months have no project.")
+    expect(section.at_css("a")["href"]).to eq("/dashboard?projects=#{CGI.escape(progress_repo(0))}&range=30d&tag=1#activity")
+  end
+
+  it "redraws the panel alone in its frame, a row for each entry it counts" do
+    sign_in_as(user)
+    get "/dashboard", params: { tag: "1", range: "30d" }, headers: { "Turbo-Frame" => "untagged" }
+
+    expect(section.css("[data-tag-row]").size).to eq(progress_untagged(year))
+    expect(response.body).to start_with('<turbo-frame id="untagged">')
+    expect(response.body).not_to include("<html", "Search your entries")
   end
 
   it "opens the panel with the projects that had commits that day first, busiest first" do
     sign_in_as(user)
-    get "/tux", params: { tag: "1", range: "30d" }
+    get "/dashboard", params: { tag: "1", range: "30d" }
 
     row = section.at_css("[data-tag-row='#{post.id}']")
     expect(row.css("button").map { |button| button.text.squish })
       .to eq([ "trained-on · 5 that day", "openstage · 2 that day", "No project" ])
-    expect(section.css("[data-tag-row]").size).to eq(progress_untagged(month))
-  end
-
-  it "offers every picked project first when several are picked" do
-    sign_in_as(user)
-    get "/tux", params: { tag: "1", range: "30d", repo: [ progress_repo(0), progress_repo(1) ] }
-
-    row = section.at_css("[data-tag-row='#{post.id}']")
-    expect(row.css("button").map { |button| button.text.squish })
-      .to eq([ "openstage", "wheels-off", "trained-on · 5 that day", "No project" ])
   end
 
   it "tags any entry type and redraws the period with the panel open" do
     sign_in_as(user)
     patch "/entries/#{post.id}/project", params: { repo_name: progress_repo(4), range: "30d" }
 
-    expect(response).to redirect_to("/tux?range=30d&tag=1")
+    expect(response).to redirect_to("/dashboard?range=30d&tag=1#activity")
     expect(post.reload.repo_name).to eq(progress_repo(4))
     follow_redirect!
-    expect(section.css("[data-tag-row]").size).to eq(progress_untagged(month) - 1)
+    expect(section.css("[data-tag-row]").size).to eq(progress_untagged(year) - 1)
   end
 
   it "marks an entry as having no project, which takes it off the backlog for good" do
@@ -65,7 +73,7 @@ RSpec.describe "Tagging entries with a project" do
     patch "/entries/#{post.id}/project", params: { no_project: "1" }
 
     expect(post.reload).to have_attributes(no_project: true, repo_name: nil)
-    get "/tux"
+    get "/dashboard"
     expect(section.text).to include("#{progress_untagged(year) - 1} entries in the last 12 months have no project")
 
     patch "/entries/#{post.id}/project", params: { repo_name: progress_repo(0) }

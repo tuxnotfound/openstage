@@ -87,6 +87,8 @@ class Entry < ApplicationRecord
   scope :without_hidden_commits, -> {
     where("NOT (entries.source = ? AND entries.entry_type = ?) OR #{HIDDEN_COMMITS_SQL}", sources[:github], entry_types[:shipped])
   }
+  # In no project, and not marked as having none: the builder's backlog to tag.
+  scope :untagged, -> { where(repo_name: nil, no_project: false) }
   # where.not on two keys leaves out only the rows that match both: commits.
   scope :highlights, -> { where(entry_type: SHIPPED_TYPES + PUBLISHED_TYPES).where.not(source: :github, entry_type: :shipped) }
 

@@ -1,6 +1,6 @@
 module Entries
-  # The progress section's tag panel: one click puts an entry in a project, or
-  # says it has none, then the section redraws on the builder's page.
+  # The dashboard's tag panel: one click puts an entry in a project, or says
+  # it has none, then the panel redraws, still open.
   class ProjectsController < ApplicationController
     before_action :require_authentication
 
@@ -9,7 +9,7 @@ module Entries
       service = TagService.new(entry: entry, repo_name: params[:repo_name], no_project: params[:no_project] == "1")
       return head(:unprocessable_entity) unless service.call
 
-      redirect_to profile_path(current_user.username, **back_params), status: :see_other
+      redirect_to dashboard_path(**back_params, anchor: "activity"), status: :see_other
     end
 
     private

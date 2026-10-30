@@ -1,18 +1,23 @@
-<%# The owner's backlog: entries with no project never show in a project
-    view, and nothing is inferred from their text. One click tags a row and
-    the page redraws with the panel still open. back: the chart filter's
-    params, so the view comes back as it was. %>
-<% untagged = section.tally.untagged %>
-<% open = params[:tag] == "1" %>
-<% if untagged.any? || open %>
-  <% if untagged.any? %>
+<%# The builder's backlog, on their dashboard alone, never on their stage:
+    entries with no project never show in a project view, and nothing is
+    inferred from their text. One click tags a row and the panel redraws in
+    its frame, still open (DashboardController); without JavaScript the
+    dashboard comes back with it open. count: the entries of the last 12
+    months with no project, whatever the chart above shows; labels: that
+    window's; section: their rows and tag choices, read only while the panel
+    is open. back: the chart filter's params, so the view comes back as it was. %>
+<% open = !section.nil? %>
+<%= turbo_frame_tag "untagged" do %>
+<% if count.positive? || open %>
+  <% if count.positive? %>
     <p class="os-xs os-muted mt-[18px]">
-      <%= progress_untagged_line(section) %>
-      <%= link_to (open ? "Close" : "Tag them"), progress_view_path(user, **back, tag: (open ? nil : "1")), class: "os-link text-[13px]" %>
+      <%= progress_untagged_line(count, labels) %>
+      <%= link_to (open ? "Close" : "Tag them"), dashboard_path(**back, tag: (open ? nil : "1"), anchor: "activity"), class: "os-link text-[13px]" %>
     </p>
   <% end %>
 
   <% if open %>
+    <% untagged = section.tally.untagged %>
     <div class="os-card mt-2.5 px-3.5 pt-1 pb-2.5" data-tag-panel>
       <% untagged.each_with_index do |item, i| %>
         <% if i == 6 %><details class="group"><summary class="os-sm mt-2 cursor-pointer list-none text-ink-2 group-open:hidden [&::-webkit-details-marker]:hidden">Show <%= untagged.size - 6 %> more</summary><% end %>
@@ -48,4 +53,5 @@
       <% end %>
     </div>
   <% end %>
+<% end %>
 <% end %>

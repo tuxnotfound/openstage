@@ -39,9 +39,10 @@
 <% end %>
 
 <%# The chart's numbers, window and projects change in the page's script
-    (react_island); the frame redraws the page for the owner's tag
-    panel. entry-link: an old link to an entry the page does not show asks
-    for it again with ?entry=. %>
+    (react_island); the frame redraws the page in place for its own links.
+    The owner's tag panel is on their dashboard, never here. entry-link: an
+    old link to an entry the page does not show asks for it again with
+    ?entry=. %>
 <div data-controller="entry-link">
 <%= turbo_frame_tag "profile", data: { turbo_action: "advance" } do %>
   <div class="os-stack">
@@ -53,17 +54,12 @@
       <% if @empty %>
         <%= render "profiles/page/empty", user: @user %>
       <% elsif (chart = @page&.chart) %>
-        <% section = chart.section %>
         <% serializer = ProgressViewSerializer.new(chart, linked_id: @linked&.id) %>
         <% view = serializer.attributes %>
-        <% back = chart_params(view, default_range: Progress::Window::DEFAULT).compact %>
         <%= react_island("progress", { initial: serializer.as_json, endpoint: api_progress_path(@user.username), mode: "page",
                                        defaultRange: Progress::Window::DEFAULT, shippedTarget: "what-shipped-panel" }, id: "progress", class: "mt-[30px]") do %>
           <%= render "charts/filter", view: view, mode: "page",
                      path_for: ->(changes) { progress_view_path(@user, **chart_params(view, default_range: Progress::Window::DEFAULT, **changes)) } %>
-        <% end %>
-        <% if current_user == @user %>
-          <%= render "profiles/page/untagged", user: @user, section: section, back: back %>
         <% end %>
       <% end %>
     </section>

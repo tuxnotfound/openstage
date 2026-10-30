@@ -125,14 +125,15 @@ RSpec.describe "The public page's chart and what shipped" do
     expect(panel.css("svg[role='img'] path[stroke-width='4.5']").size).to eq(7)
   end
 
-  it "shows the owner, and only the owner, the tag line, and nobody Make a card" do
+  # The tag line is on the builder's dashboard (entry_projects_spec).
+  it "shows nobody the tag line, the owner included, and nobody Make a card" do
     get "/tux"
     expect(panel.text).not_to include("have no project")
 
     sign_in_as(user)
     get "/tux"
     expect(panel.at_css("turbo-frame#progress_card")).to be_nil
-    expect(panel.text.squish).to include("#{progress_untagged(Date.new(2025, 11, 1)..today)} entries in the last 12 months have no project. Tag them")
+    expect(panel.text).not_to include("have no project", "Tag them")
   end
 
   it "shows several projects at once, and the rest of the page follows them" do

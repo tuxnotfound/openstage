@@ -52,11 +52,10 @@ module ProgressHelper
     [ text, change.positive? ]
   end
 
-  # "19 entries in 2026 have no project." for the owner's tag line.
-  def progress_untagged_line(section)
-    count = section.tally.untagged.size
-    "#{pluralize(count, 'entry')} #{section.labels.word} #{count == 1 ? 'has' : 'have'} no project" \
-      "#{section.filtered? ? ', so this view leaves them out.' : '.'}"
+  # "19 entries in the last 12 months have no project." for the builder's
+  # tag line. labels: the window's (Progress::WindowLabels).
+  def progress_untagged_line(count, labels)
+    "#{pluralize(count, 'entry')} #{labels.word} #{count == 1 ? 'has' : 'have'} no project."
   end
 
   # The projects a tag row offers first: those in view, then those with

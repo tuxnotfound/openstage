@@ -12,11 +12,8 @@ class DashboardController < ApplicationController
   def index
     respond_to do |format|
       format.html do
-        # A filter redraws the tabs and their lists in their frame, without
-        # the rest of the page.
-        next render(partial: "dashboard/entry_lists", locals: { tabs: entries_tabs }) if entries_frame?
-
-        load_page
+        render_frame
+        load_page unless performed?
       end
       # Only "Load more" (which always carries before) wants the append stream.
       # Every Turbo form that redirects here (Sync now, entry create) also
@@ -29,8 +26,30 @@ class DashboardController < ApplicationController
 
   private
 
-  def entries_frame?
-    turbo_frame_request? && turbo_frame_request_id == "entries-lists"
+  # A frame a click redraws alone, without the rest of the page: the
+  # entries' tabs and lists as the filters change, or the tag panel as a row
+  # is tagged.
+  def render_frame
+    case (turbo_frame_request_id if turbo_frame_request?)
+    when "entries-lists" then render(partial: "dashboard/entry_lists", locals: { tabs: entries_tabs })
+    when "untagged"
+      back = params.slice(*ProgressHelper::PROGRESS_PARAMS).permit(*ProgressHelper::PROGRESS_PARAMS).to_h.symbolize_keys
+      render partial: "dashboard/untagged", locals: { **untagged, back: back }
+    end
+  end
+
+  # The entries of the last 12 months with no project, whatever window the
+  # chart shows: counted alone while the panel is closed, and read with the
+  # section's tally, which gives each row its tag choices, while it is open.
+  def untagged
+    window = Progress::Window.new(range: Progress::Window::DEFAULT, today: Time.current.in_time_zone(current_user.zone).to_date, first_activity: nil)
+    count = current_user.entries.listed_on_page.highlights.untagged.where(occurred_at: window.span.first.in_time_zone(current_user.zone)..).count
+    { count: count, labels: window.labels, section: (untagged_section(window) if params[:tag] == "1") }
+  end
+
+  def untagged_section(window)
+    service = Progress::ComposeService.new(user: current_user, range: window.range, rolling: true)
+    service.section if service.call
   end
 
   def load_page
@@ -40,6 +59,7 @@ class DashboardController < ApplicationController
     load_week
     @chart = activity_chart
     @activity = @chart&.section
+    @untagged = untagged
     @show_pro_activated = params[:pro] == "activated"
   end
 
