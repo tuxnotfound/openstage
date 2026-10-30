@@ -12,17 +12,23 @@ RSpec.describe SiteVisits::PageView do
       expect(view(url: "https://shipnote.app/Blog/Launch-Day").page).to eq("/Blog/Launch-Day")
     end
 
-    it "masks a part that holds an email, a UUID or a long token mixing letters and digits" do
-      expect(view(url: "https://shipnote.app/u/jane@example.com/settings").page).to eq("/u/*/settings")
-      expect(view(url: "https://shipnote.app/invite/jane%40example.com").page).to eq("/invite/*")
-      expect(view(url: "https://shipnote.app/orders/123E4567-e89b-12d3-a456-426614174000/").page).to eq("/orders/*")
-      expect(view(url: "https://shipnote.app/reset/Zx9_Kq2-Lm8pRt4vWy6bNc3d").page).to eq("/reset/*")
+    it "masks a part that holds an email address, a UUID, a digest, an id, a token or a phone number" do
+      masked = [
+        "jane@example.com", "jane%40example.com", "550e8400-e29b-41d4-a716-446655440000", "550E8400-E29B-41D4-A716-446655440000",
+        "invoice-550e8400-e29b-41d4-a716-446655440000", "9e107d9d372bb6826bd81d3542a419d6", "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12",
+        "d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592", "507f1f77bcf86cd799439011", "pX27zsMN2ViQKta1bGfLmVJE",
+        "V1StGXR8_Z5jdHi6B-myT", "zyx-9QcN2_Pe7mBv1Hk3", "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
+        "4155551234"
+      ]
+
+      expect(masked.to_h { |part| [ part, view(url: "https://shipnote.app/u/#{part}/settings").page ] }).to eq(masked.to_h { |part| [ part, "/u/*/settings" ] })
     end
 
-    it "keeps a long part of letters alone, or of digits alone, and a short token" do
-      expect(view(url: "https://shipnote.app/blog/how-we-priced-shipnote-for-teams").page).to eq("/blog/how-we-priced-shipnote-for-teams")
-      expect(view(url: "https://shipnote.app/orders/123456789012345678901234").page).to eq("/orders/123456789012345678901234")
-      expect(view(url: "https://shipnote.app/p/Zx9Kq2Lm8pRt4vWy6bNc3d").page).to eq("/p/Zx9Kq2Lm8pRt4vWy6bNc3d")
+    it "keeps a slug, in title case or with a product's name too, a handle, a number and a version" do
+      kept = %w[launching-v2-of-shipnote-today 2026-10-30-release-notes top-10-tips-for-rails-7-developers My-Trip-To-Paris-2026 @pedro 123 v2
+                getting-started iPhone-15-Pro-Max-Review useEffect-in-React-18 GitHub-vs-GitLab-2026 B2B-SaaS-Metrics-101 how-we-priced-shipnote-for-teams]
+
+      expect(kept.map { |part| view(url: "https://shipnote.app/blog/#{part}").page }).to eq(kept.map { |part| "/blog/#{part}" })
     end
 
     it "cuts a path at 200 characters" do

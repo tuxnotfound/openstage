@@ -3,15 +3,24 @@ module SiteVisits
   # counts keep (SiteVisitCount): its page's path, and for a visitor's first
   # view of the day the site they came from, the ref tag they followed and
   # their country. Never a query string, a whole referrer, or a part of a
-  # path that looks like an email, an id or a secret.
+  # path that looks like an email address, an id or a secret.
   class PageView
     MAX_PATH = 200
     MAX_TAG = 64
     # A host as it names a site, at most as long as DNS allows.
     HOST = /\A[a-z0-9_-]+(\.[a-z0-9_-]+)*\z/
     MAX_HOST = 253
-    UUID = /\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/
-    TOKEN = /\A[A-Za-z0-9_-]{24,}\z/
+    # Anywhere in a part of a path: an email address (an "@" with something
+    # before it, so a handle such as @pedro stays), a UUID, or ten digits or
+    # more in a row, as a phone number has.
+    PERSONAL = /.(@|%40)|\h{8}-\h{4}-\h{4}-\h{4}-\h{12}|\d{10,}/i
+    # 16 letters and digits or more in a row: a digest, an id or a token
+    # once it mixes letters and digits.
+    RUN = /[A-Za-z\d]{16,}/
+    # Inside a word, a digit next to a letter or an upper-case letter right
+    # after a lower-case one: a slug turns a few times (v2, GitHub, B2B), a
+    # random token many times.
+    TURN = /\d(?=[A-Za-z])|[A-Za-z](?=\d)|[a-z](?=[A-Z])/
 
     # url: the page viewed, on the project's website; referrer: the page's
     # referrer, which the script sends with a page load's first view only,
@@ -76,11 +85,14 @@ module SiteVisits
 
     private
 
-    # An email, a UUID, or a long token mixing letters and digits.
+    # PERSONAL, a RUN mixing letters and digits, or a token that "-" or "_"
+    # cut into short runs, as nanoid and Devise make them: 16 characters or
+    # more mixing upper case, lower case and digits that TURN four times or
+    # more. A slug in title case or with a product's name stays.
     def personal?(part)
-      return true if part.include?("@") || part.match?(/%40/i) || part.match?(UUID)
+      return true if part.match?(PERSONAL) || part.scan(RUN).any? { |run| run.match?(/[A-Za-z]/) && run.match?(/\d/) }
 
-      part.match?(TOKEN) && part.match?(/[A-Za-z]/) && part.match?(/\d/)
+      part.length >= 16 && part.match?(/[A-Z]/) && part.match?(/[a-z]/) && part.match?(/\d/) && part.scan(TURN).size >= 4
     end
 
     def host_of(address)
