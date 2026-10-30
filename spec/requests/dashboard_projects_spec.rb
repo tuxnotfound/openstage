@@ -79,7 +79,7 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
 
     def cells(repo)
       page.css("[data-chart-row='#{repo}'] td").drop(1).map do |cell|
-        [ cell.text.squish.sub(/\A(Commits|Site visits) ?/, ""), cell.at_css("button[role='switch']")&.[]("aria-checked") ]
+        [ cell.text.squish.sub(/\A(Commits|Site visits|Site visitors) ?/, ""), cell.at_css("button[role='switch']")&.[]("aria-checked") ]
       end
     end
 
@@ -87,11 +87,12 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       page.css("section[aria-labelledby='your-activity'] svg[role='img'] path").map { |path| path["data-number"] }
     end
 
-    it "lists each project with its commits and site visits, each shown to visitors, and offers to set up visits where none count" do
+    it "lists each project with its commits, site visits and site visitors, each shown to visitors, and offers to set up visits where none count" do
       get "/dashboard"
 
-      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "true" ] ])
-      expect(cells("builder/bare")).to eq([ [ "1", "true" ], [ "Set up", nil ] ])
+      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "true" ], [ "30", "true" ] ])
+      expect(cells("builder/bare")).to eq([ [ "1", "true" ], [ "Set up", nil ], [ "–", nil ] ])
+      expect(page.css("[data-chart-table] thead th").map { |head| head.text.squish }).to eq([ "Projects", "Your stage", "Commits", "Site visits", "Site visitors" ])
       expect(page.at_css("[data-chart-row='builder/bare'] a[aria-label^='Set up']")["href"]).to eq("/projects/#{bare.id}/edit?site=open#site-visits")
       activity = page.at_css("section[aria-labelledby='your-activity']").text.squish
       expect(activity).to include("Site visits 90", "and this chart follows them;", "Commits solid and site visits dotted")
@@ -104,8 +105,8 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       expect(tool.reload.hidden_numbers).to eq([ "visits" ])
 
       get "/dashboard"
-      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "false" ] ])
-      expect(page.at_css("[data-chart-row='builder/app'] td:last-child .os-num")["class"]).to include("text-ink-3", "font-medium")
+      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "false" ], [ "30", "true" ] ])
+      expect(page.at_css("[data-chart-row='builder/app'] td:nth-last-child(2) .os-num")["class"]).to include("text-ink-3", "font-medium")
       expect(drawn).to eq(%w[commits commits])
 
       patch "/projects/#{tool.id}/numbers", params: { number: "visits", shown: true }, as: :json
@@ -117,28 +118,48 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       bare.update!(homepage: "https://bare.example", site_source: "script", site_set_up_at: 10.days.ago)
       get "/dashboard"
 
-      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90 Paused", nil ] ])
-      paused = page.at_css("[data-chart-row='builder/app'] td:last-child")
+      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90 Paused", nil ], [ "30", nil ] ])
+      paused = page.at_css("[data-chart-row='builder/app'] td:nth-last-child(2)")
       expect(paused.at_css(".os-num")["class"]).to include("text-ink-3")
       expect(paused.at_css("a").attributes.transform_values(&:value)).to include("href" => "/projects/#{tool.id}/edit?site=open#site-visits",
                                                                                   "aria-label" => "Paused: see why app's site visits do not count")
       expect(island_cell("builder/app")).to include("value" => "90", "pick" => nil)
       expect(island_cell("builder/app")["link"]).to eq("text" => "Paused", "label" => "Paused: see why app's site visits do not count",
                                                        "path" => "/projects/#{tool.id}/edit?site=open#site-visits")
-      expect(cells("builder/bare")).to eq([ [ "1", "true" ], [ "Set up", nil ] ])
+      expect(cells("builder/bare")).to eq([ [ "1", "true" ], [ "Set up", nil ], [ "–", nil ] ])
       expect(drawn).to eq(%w[commits commits])
     end
 
     it "says Set up where the script is off, beside the value in grey while the window has any" do
       tool.update!(site_source: nil)
       get "/dashboard"
-      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90 Set up", nil ] ])
+      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90 Set up", nil ], [ "30", nil ] ])
       expect(island_cell("builder/app")).to include("value" => "90", "pick" => nil)
       expect(island_cell("builder/app")["link"]).to eq("text" => "Set up", "label" => "Set up app's site visits", "path" => "/projects/#{tool.id}/edit?site=open#site-visits")
 
       tool.site_visit_days.update_all(day: 60.days.ago.to_date)
       get "/dashboard", params: { range: "30d" }
-      expect(cells("builder/app").last).to eq([ "Set up", nil ])
+      expect(cells("builder/app").last(2)).to eq([ [ "Set up", nil ], [ "0", nil ] ])
+    end
+
+    it "switches site visitors off for one project and on again, leaving its site visits and the other projects alone" do
+      switch = -> { page.at_css("[data-chart-row='builder/app'] button[role='switch'][aria-label='Show site visitors for app']") }
+      get "/dashboard", params: { show: "commits,site_visitors" }
+      expect(switch.call["aria-checked"]).to eq("true")
+      expect(drawn).to contain_exactly("commits", "commits", "site_visitors")
+      expect(page.at_css("section[aria-labelledby='your-activity']").text.squish).to include("Commits solid and site visitors dotted")
+
+      patch "/projects/#{tool.id}/numbers", params: { number: "site_visitors", shown: "false", show: "commits,site_visitors" }
+      expect(response).to redirect_to(dashboard_path(show: "commits,site_visitors", anchor: "your-activity"))
+      expect(tool.reload.hidden_numbers).to eq([ "site_visitors" ])
+
+      get "/dashboard", params: { show: "commits,site_visitors" }
+      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "true" ], [ "30", "false" ] ])
+      expect(drawn).to eq(%w[commits commits])
+
+      patch "/projects/#{tool.id}/numbers", params: { number: "site_visitors", shown: "true" }, as: :json
+      expect(response).to have_http_status(:no_content)
+      expect(tool.reload.hidden_numbers).to eq([])
     end
 
     it "refuses a number a project cannot hide, a switch with no state, and someone else's project" do

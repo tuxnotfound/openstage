@@ -45,7 +45,8 @@ RSpec.describe ChartFilterSerializer do
 
     json = view(changes: true, table: false, repos: [ "me/lib" ])
 
-    expect(json["numbers"].map { |number| [ number["key"], number["value"], number["change"] ] }).to eq([ [ "commits", "1", nil ], [ "visits", "–", nil ] ])
+    expect(json["numbers"].map { |number| [ number["key"], number["value"], number["change"] ] })
+      .to eq([ [ "commits", "1", nil ], [ "visits", "–", nil ], [ "site_visitors", "–", nil ] ])
   end
 
   it "gives the toggles their change, and the table's cells theirs only when asked" do

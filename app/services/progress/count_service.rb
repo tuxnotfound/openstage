@@ -1,10 +1,11 @@
 module Progress
   # Counts a builder's numbers per project and day, in their zone, over the
   # days a chart needs: their public commits, as their pages count them, and
-  # the visits to each project's website. Also the first day each project
-  # counted each one, ever, since a chart starts where its numbers start.
-  # The commits come read with the page's section (TallyService#commit_days,
-  # Projects#first_commits), so a page reads them once.
+  # the visits and visitors to each project's website. Also the first day
+  # each project counted each one, ever, since a chart starts where its
+  # numbers start. The commits come read with the page's section
+  # (TallyService#commit_days, Projects#first_commits), so a page reads them
+  # once.
   class CountService < ApplicationService
     # commit_repos: the full names of the repos whose commits count;
     # visit_repos: the GithubRepos whose visits count; from: the first day
@@ -20,8 +21,10 @@ module Progress
     private
 
     def execute
-      @counts = Counts.new(days: { "commits" => counted_commits, "visits" => visit_days },
-                           firsts: { "commits" => commit_firsts, "visits" => visit_firsts })
+      visit_days, visitor_days = site_days
+      visit_firsts, visitor_firsts = site_firsts
+      @counts = Counts.new(days: { "commits" => counted_commits, "visits" => visit_days, "site_visitors" => visitor_days },
+                           firsts: { "commits" => commit_firsts, "visits" => visit_firsts, "site_visitors" => visitor_firsts })
     end
 
     # {repo => {date => count}} for the repos whose commits count.
@@ -36,13 +39,18 @@ module Progress
       first_commits.slice(*Array(commit_repos)).transform_values { |time| time.in_time_zone(zone).to_date }
     end
 
-    def visit_days
+    # The visits and the visitors, read together: a project has one row a day.
+    def site_days
       scope = from ? visits.where(day: from..) : visits
-      nested(scope.group(:github_repo_id, :day).sum(:visits)).transform_keys { |id| names.fetch(id) }
+      rows = scope.pluck(:github_repo_id, :day, :visits, :visitors)
+      [ nested(rows.to_h { |id, day, count, _| [ [ names.fetch(id), day ], count ] }),
+        nested(rows.to_h { |id, day, _, count| [ [ names.fetch(id), day ], count ] }) ]
     end
 
-    def visit_firsts
-      visits.group(:github_repo_id).minimum(:day).transform_keys { |id| names.fetch(id) }
+    # The first day with a visit, and the first with a visitor.
+    def site_firsts
+      rows = visits.group(:github_repo_id).pluck(:github_repo_id, Arel.sql("MIN(day)"), Arel.sql("MIN(day) FILTER (WHERE visitors > 0)"))
+      [ rows.to_h { |id, day, _| [ names.fetch(id), day ] }, rows.filter_map { |id, _, day| [ names.fetch(id), day ] if day }.to_h ]
     end
 
     def visits

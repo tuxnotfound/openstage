@@ -94,9 +94,10 @@ class GithubRepo < ApplicationRecord
     (slot || SiteVisits::Slot.new(user)).counts?(self)
   end
 
-  # Shown on its page: switched on, counting, and counted at least once.
-  def site_visits_public?(slot: nil)
-    picks?("visits") && site_first_visit_at.present? && counts_site_visits?(slot: slot)
+  # Its site visits or site visitors, shown on its page: switched on,
+  # counting, and counted at least once.
+  def site_number_public?(number, slot: nil)
+    picks?(number) && site_first_visit_at.present? && counts_site_visits?(slot: slot)
   end
 
   # Whether its builder picks a number for visitors to see on its pages:
@@ -106,9 +107,9 @@ class GithubRepo < ApplicationRecord
   end
 
   # Whether its visitors see a number it counts: one its builder picks and,
-  # for site visits, one that still counts.
+  # for site visits and site visitors, one that still counts.
   def public_number?(number, slot: nil)
-    number == "visits" ? site_visits_public?(slot: slot) : picks?(number)
+    Progress::Numbers::SITE.include?(number) ? site_number_public?(number, slot: slot) : picks?(number)
   end
 
   private

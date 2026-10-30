@@ -1,7 +1,8 @@
 module Analytics
   # Each page's numbers per day, from a first day on: each project's commits
-  # and the visits to its own website, then the visitors, views, new
-  # followers and clicks out on Openstage, by their keys in Progress::Numbers.
+  # and the visits and visitors to its own website, then the visitors, views,
+  # new followers and clicks out on Openstage, by their keys in
+  # Progress::Numbers.
   # A page is the builder's own, PAGE, or a project's, by its repo's full
   # name. Days are in the builder's zone.
   class CountService < ApplicationService
@@ -17,9 +18,11 @@ module Analytics
     private
 
     def execute
+      visits, visitors = site_visits
       @counts = {
         "commits" => commits,
-        "visits" => site_visits,
+        "visits" => visits,
+        "site_visitors" => visitors,
         "visitors" => merge(daily(user.profile_views, "profile_views.viewed_at", distinct: "profile_views.ip_hash"),
                             daily(user.project_views, "project_views.viewed_at", "project_views.repo_name", distinct: "project_views.ip_hash")),
         "views" => merge(daily(user.profile_views, "profile_views.viewed_at"),
@@ -35,11 +38,14 @@ module Analytics
       merge(daily(user.entries.publicly_counted.without_tooling_noise.commits, "entries.occurred_at", "entries.repo_name"))
     end
 
-    # Counted on the builder's day already, so read as they are.
+    # Counted on the builder's day already, so read as they are; the visits
+    # and the visitors together.
     def site_visits
       scope = user.site_visit_days
       scope = scope.where(day: from..) if from
-      merge(scope.group("github_repos.full_name", :day).sum(:visits))
+      sums = scope.group("github_repos.full_name", :day)
+                  .pluck("github_repos.full_name", :day, Arel.sql("SUM(site_visit_days.visits)"), Arel.sql("SUM(site_visit_days.visitors)"))
+      [ merge(sums.to_h { |page, date, visits, _| [ [ page, date ], visits ] }), merge(sums.to_h { |page, date, _, visitors| [ [ page, date ], visitors ] }) ]
     end
 
     # Confirmed: for the builder's page, or for one project.

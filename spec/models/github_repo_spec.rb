@@ -37,10 +37,11 @@ RSpec.describe GithubRepo do
   end
 
   it "shows every number its builder did not hide, and hides only numbers a project shows" do
-    expect([ repo.picks?("commits"), repo.picks?("visits") ]).to eq([ true, true ])
+    expect([ repo.picks?("commits"), repo.picks?("visits"), repo.picks?("site_visitors") ]).to eq([ true, true, true ])
 
-    repo.hidden_numbers = [ "commits" ]
-    expect([ repo.picks?("commits"), repo.picks?("visits") ]).to eq([ false, true ])
+    repo.hidden_numbers = [ "commits", "site_visitors" ]
+    expect([ repo.picks?("commits"), repo.picks?("visits"), repo.picks?("site_visitors") ]).to eq([ false, true, false ])
+    expect(repo).to be_valid
 
     repo.hidden_numbers = [ "views" ]
     expect(repo).not_to be_valid
@@ -55,16 +56,39 @@ RSpec.describe GithubRepo do
     end
 
     it "shows them on its page once one came, while switched on and counting" do
-      expect(site.site_visits_public?).to be(false)
+      expect(site.site_number_public?("visits")).to be(false)
 
       site.update!(site_first_visit_at: Time.current)
-      expect(site.site_visits_public?).to be(true)
+      expect(site.site_number_public?("visits")).to be(true)
 
       site.update!(hidden_numbers: [ "visits" ])
-      expect(site.site_visits_public?).to be(false)
+      expect(site.site_number_public?("visits")).to be(false)
 
       site.update!(hidden_numbers: [], site_source: nil)
-      expect(site.site_visits_public?).to be(false)
+      expect(site.site_number_public?("visits")).to be(false)
+    end
+
+    it "shows its site visitors as it shows its site visits, each with its own switch" do
+      public_numbers = -> { %w[commits visits site_visitors].select { |number| site.reload.public_number?(number) } }
+      expect(public_numbers.call).to eq(%w[commits])
+
+      site.update!(site_first_visit_at: Time.current)
+      expect(public_numbers.call).to eq(%w[commits visits site_visitors])
+
+      site.update!(hidden_numbers: [ "site_visitors" ])
+      expect(public_numbers.call).to eq(%w[commits visits])
+
+      site.update!(hidden_numbers: [], site_source: nil)
+      expect(public_numbers.call).to eq(%w[commits])
+    end
+
+    it "keeps a Free builder's site visitors off every project but the one set up first" do
+      user.update!(pro: false)
+      first = create(:github_repo, user: user, homepage: "https://first.example", site_source: "script", site_set_up_at: 2.days.ago,
+                                   site_first_visit_at: 1.day.ago)
+      site.update!(site_set_up_at: 1.day.ago, site_first_visit_at: Time.current)
+
+      expect([ first.public_number?("site_visitors"), site.public_number?("site_visitors") ]).to eq([ true, false ])
     end
 
     it "deletes its days, counts and visitors, never orphans them" do

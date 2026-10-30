@@ -21,7 +21,17 @@ RSpec.describe Analytics::FindStartService do
     expect(firsts).to include("visitors" => { "page" => Date.new(2026, 10, 2), "me/app" => Date.new(2026, 10, 10) },
                               "views" => { "page" => Date.new(2026, 10, 2), "me/app" => Date.new(2026, 10, 10) },
                               "follows" => { "me/app" => Date.new(2026, 10, 5) }, "commits" => { "me/app" => Date.new(2026, 9, 3) },
-                              "visits" => { "me/app" => Date.new(2026, 9, 20) }, "clicks" => {})
+                              "visits" => { "me/app" => Date.new(2026, 9, 20) }, "site_visitors" => { "me/app" => Date.new(2026, 9, 20) }, "clicks" => {})
+  end
+
+  it "starts a project's site visitors on the first day with one" do
+    repo = create(:github_repo, user: user, full_name: "me/app", name: "app")
+    repo.site_visit_days.create!(day: Date.new(2026, 9, 18), visits: 2, visitors: 0)
+    repo.site_visit_days.create!(day: Date.new(2026, 9, 20), visits: 1, visitors: 1)
+    create(:github_repo, user: user, full_name: "me/lib", name: "lib").site_visit_days.create!(day: Date.new(2026, 9, 19), visits: 3, visitors: 0)
+
+    expect(firsts.slice("visits", "site_visitors"))
+      .to eq("visits" => { "me/app" => Date.new(2026, 9, 18), "me/lib" => Date.new(2026, 9, 19) }, "site_visitors" => { "me/app" => Date.new(2026, 9, 20) })
   end
 
   it "counts a click on an entry's link for its project, or the builder's page with none, the earlier of a project's two" do

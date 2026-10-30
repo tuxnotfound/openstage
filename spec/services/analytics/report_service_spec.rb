@@ -40,13 +40,27 @@ RSpec.describe Analytics::ReportService do
     expect(report(pages: %w[page me/app me/lib] + (0..7).map { |i| "me/p#{i}" }).selected_keys).to eq([])
   end
 
-  it "gives each page the numbers it has counted: a project its commits and site visits, every page Openstage's own" do
+  it "gives each page the numbers it has counted: a project its commits, site visits and site visitors, every page Openstage's own" do
     app.site_visit_days.create!(day: 1.day.ago.to_date, visits: 30, visitors: 9)
     create(:profile_view, user: user, viewed_at: 2.days.ago)
     user.project_views.create!(repo_name: "me/lib", viewed_at: 1.day.ago, ip_hash: "b")
 
-    expect(report.rows.to_h { |row| [ row.name, row.shown ] }).to eq("Your stage" => %w[visitors views], "app" => %w[commits visits],
+    expect(report.rows.to_h { |row| [ row.name, row.shown ] }).to eq("Your stage" => %w[visitors views], "app" => %w[commits visits site_visitors],
                                                                      "lib" => %w[commits visitors views])
+  end
+
+  it "totals site visitors over the window, picked days included, each project's part and the window before's" do
+    lib = create(:github_repo, user: user, full_name: "me/lib", name: "lib")
+    app.site_visit_days.create!(day: Date.new(2026, 9, 1), visits: 10, visitors: 4)
+    app.site_visit_days.create!(day: Date.new(2026, 10, 3), visits: 30, visitors: 9)
+    app.site_visit_days.create!(day: Date.new(2026, 10, 20), visits: 12, visitors: 6)
+    lib.site_visit_days.create!(day: Date.new(2026, 10, 4), visits: 8, visitors: 5)
+
+    visitors = total(report, "site_visitors")
+    expect([ visitors.value, visitors.previous, visitors.split.map { |row, count| [ row.name, count ] } ]).to eq([ 20, 4, [ [ "app", 15 ], [ "lib", 5 ] ] ])
+
+    picked = total(report(range: "2026-10-01..2026-10-10"), "site_visitors")
+    expect([ picked.value, picked.split.map { |row, count| [ row.name, count ] } ]).to eq([ 14, [ [ "app", 9 ], [ "lib", 5 ] ] ])
   end
 
   it "leaves out the numbers a project's builder hides from it, and never Openstage's own" do

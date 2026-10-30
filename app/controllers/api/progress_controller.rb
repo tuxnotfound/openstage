@@ -80,7 +80,7 @@ module Api
                                                    Arel.sql("MAX(entries.updated_at)"))
       repos_now = user.github_repos.pick(Arel.sql("COUNT(*)"), Arel.sql("MAX(github_repos.updated_at)"))
       today = Time.current.in_time_zone(user.zone).to_date
-      [ "progress-view/v5", user.id, *entries, *repos_now, user.pro?, user.zone.tzinfo.identifier, today,
+      [ "progress-view/v6", user.id, *entries, *repos_now, user.pro?, user.zone.tzinfo.identifier, today,
         site_stamp(user), filter.range, reveal, dashboard?(user), lone?, "show", *asked, "projects", *repos.sort ]
     end
 

@@ -249,14 +249,14 @@ RSpec.describe "Project pages", type: :request do
       Nokogiri::HTML(response.body).css("[aria-label='Numbers on the chart'] > *").map { |toggle| [ toggle.text.squish, toggle["aria-current"] == "true" ] }
     end
 
-    it "puts a toggle per number above the chart, both drawn, the chart comparing them" do
+    it "puts a toggle per number above the chart, commits and site visits drawn, the chart comparing them" do
       get "/builder/side.app"
-      expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ] ])
+      expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ], [ "+ Site visitors 800", false ] ])
       expect(response.body).to include("Commits solid and site visits dotted, each against its own peak in the window")
 
       get "/builder/side.app", params: { show: "visits", range: "30d" }
       page = Nokogiri::HTML(response.body)
-      expect(toggles).to eq([ [ "+ Commits 1", false ], [ "Site visits 1,204", true ] ])
+      expect(toggles).to eq([ [ "+ Commits 1", false ], [ "Site visits 1,204", true ], [ "+ Site visitors 800", false ] ])
       expect(page.css(".os-big")).to be_empty
       expect(response.body).to include("A 7-day average of site visits per day.")
       props = JSON.parse(page.at_css("#progress-props").text)
@@ -268,35 +268,65 @@ RSpec.describe "Project pages", type: :request do
       repo.update!(hidden_numbers: [ "commits" ])
       get "/builder/side.app"
 
-      expect(toggles).to eq([ [ "Site visits 1,204", true ] ])
+      expect(toggles).to eq([ [ "Site visits 1,204", true ], [ "+ Site visitors 800", false ] ])
     end
 
     it "keeps them off the page while switched off, or while Free counts the project set up first" do
-      repo.update!(hidden_numbers: [ "visits" ])
+      repo.update!(hidden_numbers: %w[visits site_visitors])
       get "/builder/side.app"
       expect(toggles).to eq([ [ "Commits 1", true ] ])
 
       repo.update!(hidden_numbers: [])
       user.update!(pro: false)
       get "/builder/side.app"
-      expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ] ])
+      expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ], [ "+ Site visitors 800", false ] ])
 
       first = create(:github_repo, user: user, homepage: "https://first.example", site_source: "script", site_set_up_at: 10.days.ago)
       get "/builder/side.app"
       expect(toggles).to eq([ [ "Commits 1", true ] ])
-      expect(response.body).not_to include("1,204")
+      expect(response.body).not_to include("1,204", "Site visitors")
 
       first.destroy!
       get "/builder/side.app"
+      expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ], [ "+ Site visitors 800", false ] ])
+    end
+
+    it "keeps site visitors off the page until the first visit, as it keeps site visits" do
+      repo.update!(site_first_visit_at: nil)
+      get "/builder/side.app"
+
+      expect(toggles).to eq([ [ "Commits 1", true ] ])
+      expect(response.body).not_to include("Site visitors")
+    end
+
+    it "shows site visitors to everyone by default, draws them when asked, and drops them while the builder switches them off" do
+      get "/builder/side.app", params: { show: "site_visitors", range: "30d" }
+      expect(toggles).to eq([ [ "+ Commits 1", false ], [ "+ Site visits 1,204", false ], [ "Site visitors 800", true ] ])
+      expect(response.body).to include("A 7-day average of site visitors per day.")
+
+      sign_in_as(user)
+      patch "/projects/#{repo.id}/numbers", params: { number: "site_visitors", shown: "false", back: "project" }
+      delete sign_out_path
+      get "/builder/side.app", params: { show: "site_visitors" }
       expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ] ])
+      expect(response.body).not_to include("Site visitors", "site_visitors")
+      get "/builder"
+      expect(Nokogiri::HTML(response.body).at_css("[data-chart-row='builder/side.app']").css("td").map { |cell| cell.text.squish })
+        .to eq([ "Commits 1", "Site visits 1,204" ])
+
+      sign_in_as(user)
+      patch "/projects/#{repo.id}/numbers", params: { number: "site_visitors", shown: "true", back: "project" }
+      delete sign_out_path
+      get "/builder/side.app"
+      expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ], [ "+ Site visitors 800", false ] ])
     end
 
     it "shows them on the builder's page too, beside every project's commits" do
       get "/builder"
 
-      expect(toggles).to eq([ [ "Commits 2", true ], [ "Site visits 1,204", true ] ])
+      expect(toggles).to eq([ [ "Commits 2", true ], [ "Site visits 1,204", true ], [ "+ Site visitors 800", false ] ])
       row = Nokogiri::HTML(response.body).at_css("[data-chart-row='builder/side.app']")
-      expect(row.css("td").map { |cell| cell.text.squish }).to eq([ "Commits 1", "Site visits 1,204" ])
+      expect(row.css("td").map { |cell| cell.text.squish }).to eq([ "Commits 1", "Site visits 1,204", "Site visitors 800" ])
     end
   end
 

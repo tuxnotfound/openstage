@@ -120,7 +120,7 @@ RSpec.describe "Api::Progress", type: :request do
     it "draws them beside the commits where the builder shows them, each number against its own peak" do
       get "/api/progress/builder", params: { range: "30d" }
 
-      expect(totals).to eq("commits" => "3", "visits" => "40")
+      expect(totals).to eq("commits" => "3", "visits" => "40", "site_visitors" => "12")
       expect(json["drawn"]).to eq(%w[commits visits])
       expect(json["chart"]["paths"].map { |path| path["number"] }).to contain_exactly("commits", "visits")
       expect(json["chart"]).to include("indexed" => true, "heads" => %w[commits visits])
@@ -131,11 +131,33 @@ RSpec.describe "Api::Progress", type: :request do
     end
 
     it "leaves out the ones the builder hides from visitors" do
-      repo.update!(hidden_numbers: [ "visits" ])
+      repo.update!(hidden_numbers: %w[visits site_visitors])
 
-      get "/api/progress/builder", params: { range: "90d", show: "visits" }
+      get "/api/progress/builder", params: { range: "90d", show: "visits,site_visitors" }
       expect(totals.keys).to eq([ "commits" ])
       expect(json["drawn"]).to eq([ "commits" ])
+    end
+
+    it "sums site visitors over the window asked for, days picked included, per project and in total, and draws them when asked" do
+      lib = create(:github_repo, user: user, full_name: "builder/lib", name: "lib", homepage: "https://lib.example",
+                                 site_source: "script", site_token: "os_l", site_first_visit_at: 30.days.ago)
+      lib.site_visit_days.create!(day: Date.new(2026, 10, 2), visits: 9, visitors: 7)
+      repo.site_visit_days.create!(day: Date.new(2026, 10, 5), visits: 20, visitors: 8)
+      site_visitors = ->(row) { row["cells"].find { |cell| cell["key"] == "site_visitors" }["value"] }
+
+      get "/api/progress/builder", params: { range: "30d" }
+      expect(totals).to include("visits" => "69", "site_visitors" => "27")
+      expect(json["table"]["rows"].to_h { |row| [ row["name"], site_visitors.call(row) ] }).to eq("app" => "20", "lib" => "7")
+
+      get "/api/progress/builder", params: { range: "2026-10-01..2026-10-10", show: "site_visitors" }
+      expect(json).to include("range" => "2026-10-01..2026-10-10", "drawn" => [ "site_visitors" ])
+      expect(totals).to include("visits" => "29", "site_visitors" => "15")
+      expect(json["numbers"].find { |number| number["key"] == "site_visitors" })
+        .to include("label" => "Site visitors", "word" => "site visitors", "group" => "On your websites",
+                    "split" => [ { "key" => "builder/app", "colorClass" => "os-project-1", "value" => 8 }, { "key" => "builder/lib", "colorClass" => "os-project-2", "value" => 7 } ])
+      expect(json["table"]["rows"].to_h { |row| [ row["name"], site_visitors.call(row) ] }).to eq("app" => "8", "lib" => "7")
+      expect(json["chart"]["paths"].map { |path| [ path["number"], path["key"] ] }).to contain_exactly([ "site_visitors", "builder/app" ], [ "site_visitors", "builder/lib" ])
+      expect(json["chart"]["ariaLabel"]).to start_with("Site visitors per day by project")
     end
 
     it "answers the dashboard to the builder alone, with what visitors do not see, and never into a shared cache" do
@@ -149,7 +171,8 @@ RSpec.describe "Api::Progress", type: :request do
       get "/api/progress/builder", params: { range: "30d", dashboard: 1 }
       cell = json["table"]["rows"].first["cells"].find { |each| each["key"] == "visits" }
       expect(cell).to include("value" => "40", "shown" => false, "pick" => false)
-      expect(totals.keys).to eq([ "commits" ])
+      expect(json["table"]["rows"].first["cells"].find { |each| each["key"] == "site_visitors" }).to include("value" => "12", "shown" => true, "pick" => true, "link" => nil)
+      expect(totals.keys).to eq(%w[commits site_visitors])
       expect(response.headers["Cache-Control"]).to include("private")
     end
 

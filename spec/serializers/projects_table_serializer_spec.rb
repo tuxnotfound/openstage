@@ -35,7 +35,7 @@ RSpec.describe ProjectsTableSerializer do
   end
 
   it "fills a project's cells with the numbers its visitors see, and leaves the rest empty" do
-    app.update!(hidden_numbers: [ "visits" ])
+    app.update!(hidden_numbers: %w[visits site_visitors])
     json = table
 
     expect(json["columns"]).to eq([ { "key" => "commits", "label" => "Commits", "word" => "commits" } ])
@@ -59,7 +59,8 @@ RSpec.describe ProjectsTableSerializer do
 
     expect(cells(json, "app")["commits"]).to include("value" => "1")
     expect(json["rows"].map { |row| [ row["name"], row["cells"].to_h { |cell| [ cell["key"], cell["change"] ] } ] })
-      .to eq([ [ "app", { "commits" => { "arrow" => "±", "text" => "0%", "up" => nil }, "visits" => nil } ], [ "lib", { "commits" => nil, "visits" => nil } ] ])
+      .to eq([ [ "app", { "commits" => { "arrow" => "±", "text" => "0%", "up" => nil }, "visits" => nil, "site_visitors" => nil } ],
+               [ "lib", { "commits" => nil, "visits" => nil, "site_visitors" => nil } ] ])
     expect(table["rows"].flat_map { |row| row["cells"].pluck("change") }.uniq).to eq([ nil ])
   end
 
@@ -70,10 +71,13 @@ RSpec.describe ProjectsTableSerializer do
     json = table(builder: true)
 
     expect(cells(json, "app")["visits"]).to eq("value" => "1,204", "shown" => false, "pick" => false, "link" => nil)
+    expect(cells(json, "app")["site_visitors"]).to eq("value" => "800", "shown" => true, "pick" => true, "link" => nil)
     expect(cells(json, "lib")["visits"]).to eq("value" => nil, "shown" => false, "pick" => nil, "link" => set_up("lib", lib))
+    expect(cells(json, "lib")["site_visitors"]).to eq("value" => nil, "shown" => false, "pick" => nil, "link" => nil)
+    expect(json["columns"].map { |column| [ column["label"], column["word"] ] }).to eq([ %w[Commits commits], [ "Site visits", "site visits" ], [ "Site visitors", "site visitors" ] ])
     expect(json["rows"].map { |row| [ row["name"], row["colorClass"] ] }).to eq([ [ "app", "os-project-1" ], [ "lib", "os-project-2" ], [ "old", nil ] ])
     expect(json["rows"].last).to include("name" => "old", "drawable" => false, "on" => false)
-    expect(json["rows"].last["cells"].pluck("link")).to eq([ nil, nil ])
+    expect(json["rows"].last["cells"].pluck("link")).to eq([ nil, nil, nil ])
     expect(json["rows"].last["page"]).to eq("on" => false, "path" => "/github_repos/#{user.github_repos.find_by(name: 'old').id}")
   end
 
@@ -84,9 +88,11 @@ RSpec.describe ProjectsTableSerializer do
 
     paused = table(builder: true)
     expect(cells(paused, "app")["visits"]).to eq("value" => "1,204", "shown" => false, "pick" => nil, "link" => paused("app", app))
+    expect(cells(paused, "app")["site_visitors"]).to eq("value" => "800", "shown" => false, "pick" => nil, "link" => nil)
     expect(cells(paused, "lib")["visits"]).to eq("value" => nil, "shown" => false, "pick" => nil, "link" => set_up("lib", lib))
 
     app.update!(site_source: nil)
     expect(cells(table(builder: true), "app")["visits"]).to eq("value" => "1,204", "shown" => false, "pick" => nil, "link" => set_up("app", app))
+    expect(cells(table(builder: true), "app")["site_visitors"]).to eq("value" => "800", "shown" => false, "pick" => nil, "link" => nil)
   end
 end

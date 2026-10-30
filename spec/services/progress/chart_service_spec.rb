@@ -29,7 +29,7 @@ RSpec.describe Progress::ChartService do
   it "totals every number the projects show over the window, with each project's part, and draws the page's own two" do
     service = chart
 
-    expect(totals(service)).to eq("commits" => [ 4, [ [ "app", 3 ], [ "lib", 1 ] ] ], "visits" => [ 40, [ [ "app", 40 ] ] ])
+    expect(totals(service)).to eq("commits" => [ 4, [ [ "app", 3 ], [ "lib", 1 ] ] ], "visits" => [ 40, [ [ "app", 40 ] ] ], "site_visitors" => [ 12, [ [ "app", 12 ] ] ])
     expect(service.drawn.map(&:key)).to eq(%w[commits visits])
     expect(service.chart.lines.map { |line| [ line.repo, line.number.key ] })
       .to contain_exactly([ "builder/app", "commits" ], [ "builder/lib", "commits" ], [ "builder/app", "visits" ])
@@ -47,6 +47,26 @@ RSpec.describe Progress::ChartService do
     expect([ commits.previous, visits.previous ]).to eq([ 1, nil ])
   end
 
+  it "shows site visitors as it shows site visits: once one came, while switched on, and while they count" do
+    lib.update!(homepage: "https://lib.example", site_source: "script")
+    create(:entry, user: user, repo_name: "builder/lib", occurred_at: 2.days.ago)
+    shown = -> { chart.rows.to_h { |row| [ row.name, row.shown ] } }
+    expect(shown.call).to eq("app" => %w[commits visits site_visitors], "lib" => %w[commits])
+
+    app.update!(hidden_numbers: [ "site_visitors" ])
+    expect(shown.call["app"]).to eq(%w[commits visits])
+    expect(chart(show: %w[site_visitors]).drawn.map(&:key)).to eq(%w[commits visits])
+
+    app.update!(hidden_numbers: [ "visits" ])
+    expect(totals(chart(show: %w[site_visitors]))["site_visitors"]).to eq([ 12, [ [ "app", 12 ] ] ])
+    expect(chart(show: %w[site_visitors]).chart.lines.map { |line| [ line.repo, line.number.key ] }).to eq([ [ "builder/app", "site_visitors" ] ])
+
+    user.update!(pro: false)
+    lib.update!(site_set_up_at: 20.days.ago)
+    app.update!(hidden_numbers: [], site_set_up_at: 10.days.ago)
+    expect(shown.call["app"]).to eq(%w[commits])
+  end
+
   it "starts the chart where the numbers drawn start" do
     expect(chart(show: %w[visits]).window.first).to eq(Date.new(2026, 10, 26))
     expect(chart(show: %w[commits]).window.first).to eq(Date.new(2026, 8, 3))
@@ -61,7 +81,7 @@ RSpec.describe Progress::ChartService do
   end
 
   it "keeps for the builder's own view the numbers visitors do not see, the projects hidden from their page, and site visits to set up" do
-    app.update!(hidden_numbers: [ "visits" ])
+    app.update!(hidden_numbers: %w[visits site_visitors])
     create(:github_repo, user: user, full_name: "builder/old", name: "old", included: false)
     create(:entry, user: user, repo_name: "builder/old", occurred_at: 2.days.ago)
     expect(totals(chart).keys).to eq(%w[commits])
@@ -69,8 +89,9 @@ RSpec.describe Progress::ChartService do
     builder = chart(builder: true)
     row = builder.rows.find { |each| each.name == "app" }
     expect([ row.counts?("visits"), row.shows?("visits") ]).to eq([ true, false ])
-    expect(builder.cells(row).to_h { |cell| [ cell.number.key, [ cell.value, cell.pick ] ] }).to eq("commits" => [ 3, true ], "visits" => [ 40, false ])
-    expect(builder.columns.map(&:key)).to eq(%w[commits visits])
+    expect(builder.cells(row).to_h { |cell| [ cell.number.key, [ cell.value, cell.pick ] ] })
+      .to eq("commits" => [ 3, true ], "visits" => [ 40, false ], "site_visitors" => [ 12, false ])
+    expect(builder.columns.map(&:key)).to eq(%w[commits visits site_visitors])
     expect(builder.off_page.map(&:name)).to eq([ "old" ])
     expect(builder.chart.lines.map { |line| line.number.key }.uniq).to eq(%w[commits])
   end

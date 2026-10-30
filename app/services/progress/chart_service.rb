@@ -103,7 +103,7 @@ module Progress
     end
 
     def row(project, repo, slot)
-      counted = [ ("commits" if project.commits.positive?), ("visits" if repo&.site_first_visit_at) ].compact
+      counted = [ ("commits" if project.commits.positive?), *(Numbers::SITE if repo&.site_first_visit_at) ].compact
       Row.new(key: project.repo, name: project.name, rank: project.rank, color_class: color_class(project), repo: repo,
               on: !section.filtered? || section.selected.include?(project), counted: counted,
               shown: counted.select { |key| repo.nil? || repo.public_number?(key, slot: slot) }, site: (slot.state(repo) if repo))
@@ -120,9 +120,15 @@ module Progress
     def count
       tally = section.tally
       service = CountService.new(user: user, from: count_from, commit_days: tally.commit_days, first_commits: tally.projects.first_commits,
-                                 commit_repos: rows.select { |row| row.counts?("commits") }.map(&:key),
-                                 visit_repos: rows.select { |row| builder ? row.counts?("visits") : row.shows?("visits") }.map(&:repo))
+                                 commit_repos: rows.select { |row| row.counts?("commits") }.map(&:key), visit_repos: visit_repos)
       @counts = service.counts if run(service)
+    end
+
+    # The projects whose site visits or site visitors the page reads: the
+    # ones that count them on the builder's own view, else the ones that
+    # show either.
+    def visit_repos
+      rows.select { |row| Numbers::SITE.any? { |key| builder ? row.counts?(key) : row.shows?(key) } }.map(&:repo)
     end
 
     # Each number its projects show visitors, the numbers drawn and the chart.

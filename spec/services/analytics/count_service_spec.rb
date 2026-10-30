@@ -48,6 +48,7 @@ RSpec.describe Analytics::CountService do
 
     expect(counts["commits"]).to eq("me/app" => { Date.new(2026, 10, 22) => 1 })
     expect(counts["visits"]).to eq("me/app" => { Date.new(2026, 10, 23) => 40 })
+    expect(counts["site_visitors"]).to eq("me/app" => { Date.new(2026, 10, 23) => 12 })
   end
 
   it "counts from the first day asked for, or every day" do
@@ -55,8 +56,9 @@ RSpec.describe Analytics::CountService do
     create(:profile_view, user: user, viewed_at: 20.days.ago)
     create(:github_repo, user: user, full_name: "me/app", name: "app").site_visit_days.create!(day: Date.new(2026, 9, 1), visits: 5, visitors: 5)
 
-    expect([ counts["views"]["page"].values.sum, counts["visits"] ]).to eq([ 1, {} ])
+    expect([ counts["views"]["page"].values.sum, counts["visits"], counts["site_visitors"] ]).to eq([ 1, {}, {} ])
     expect([ counts(from: nil)["views"]["page"].values.sum, counts(from: nil)["visits"]["me/app"].values.sum ]).to eq([ 2, 5 ])
+    expect(counts(from: nil)["site_visitors"]["me/app"].values.sum).to eq(5)
   end
 
   it "refuses without a builder" do

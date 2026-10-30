@@ -42,16 +42,17 @@ module Progress
 
     # Its builder's switch for a number it counts: on while they pick it for
     # visitors; nil without a synced repo or a count, and for site visits
-    # that do not count now, where flipping it would change nothing visitors
-    # see.
+    # and site visitors that do not count now, where flipping it would
+    # change nothing visitors see.
     def pick(number)
-      repo.picks?(number) if repo && counts?(number) && (number != "visits" || site == :counting)
+      repo.picks?(number) if repo && counts?(number) && (Numbers::SITE.exclude?(number) || site == :counting)
     end
 
     # What stands in the switch's place for site visits, on a synced repo:
     # :paused while Free counts another project, :set_up while none count
     # (the script off, or on and waiting for its first visit); nil where a
-    # switch stands.
+    # switch stands. Site visitors have none: the site visits cell beside
+    # them already leads to the setup they share.
     def link(number)
       return unless repo && number == "visits"
 

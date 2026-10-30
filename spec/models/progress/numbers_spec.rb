@@ -1,13 +1,23 @@
 require "rails_helper"
 
 RSpec.describe Progress::Numbers do
-  it "lists every number in the pages' order, commits first, then site visits" do
-    expect(described_class::ALL.map(&:key)).to eq(%w[commits visits visitors views follows clicks])
+  it "lists every number in the pages' order, commits first, then site visits and site visitors" do
+    expect(described_class::ALL.map(&:key)).to eq(%w[commits visits site_visitors visitors views follows clicks])
     expect(described_class::ALL.map(&:group).uniq).to eq([ "On GitHub", "On your websites", "On Openstage" ])
   end
 
-  it "lets a project's builder pick only the numbers a project counts" do
-    expect(described_class::PICKABLE).to eq(%w[commits visits])
+  it "lets a project's builder pick only the numbers a project counts, the ones its website counts among them" do
+    expect(described_class::PICKABLE).to eq(%w[commits visits site_visitors])
+    expect(described_class::SITE).to eq(%w[visits site_visitors])
+    expect(described_class::SITE.map { |key| described_class.find(key).group }.uniq).to eq([ "On your websites" ])
+  end
+
+  it "names site visitors apart from Openstage's own visitors" do
+    site_visitors = described_class.find("site_visitors")
+
+    expect([ site_visitors.label, site_visitors.word, site_visitors.word_after("1"), site_visitors.word_after("3") ])
+      .to eq([ "Site visitors", "site visitors", "site visitor", "site visitors" ])
+    expect(described_class.find("visitors").label).to eq("Visitors")
   end
 
   it "finds a number by its key, and puts keys in the pages' order once each" do

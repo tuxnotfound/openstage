@@ -6,9 +6,11 @@ RSpec.describe Projects::ShowNumberService do
   it "hides a number from the project's visitors, and shows it again" do
     described_class.new(repo: repo, number: "commits", shown: false).call!
     described_class.new(repo: repo, number: "visits", shown: false).call!
-    expect(repo.reload.hidden_numbers).to eq(%w[commits visits])
+    described_class.new(repo: repo, number: "site_visitors", shown: false).call!
+    expect(repo.reload.hidden_numbers).to eq(%w[commits visits site_visitors])
 
     described_class.new(repo: repo, number: "commits", shown: true).call!
+    described_class.new(repo: repo, number: "site_visitors", shown: true).call!
     expect(repo.reload.hidden_numbers).to eq([ "visits" ])
   end
 

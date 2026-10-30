@@ -3,11 +3,11 @@ module Analytics
   # and the pages in view, on the chart filter every chart page shares: a row
   # per page, the builder's own and one per project, as the public page
   # orders and colours them, each counting Openstage's own four numbers and a
-  # project also its commits and site visits, as its builder shows them; what
-  # Progress::DrawService makes of their counts, each number's total and
-  # change for the pages in view and the one chart of the numbers drawn; and
-  # where visitors came from, the links they followed and where the badge and
-  # embed showed.
+  # project also its commits, site visits and site visitors, as its builder
+  # shows them; what Progress::DrawService makes of their counts, each
+  # number's total and change for the pages in view and the one chart of the
+  # numbers drawn; and where visitors came from, the links they followed and
+  # where the badge and embed showed.
   class ReportService < ApplicationService
     # It opens on commits alone, over the window every chart page opens on.
     DEFAULT_SHOW = %w[commits].freeze

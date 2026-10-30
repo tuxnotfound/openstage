@@ -32,6 +32,7 @@ module Progress
     ALL = [
       Number.new(key: "commits", label: "Commits", one: "commit", group: "On GitHub", level: false, money: false, pickable: true),
       Number.new(key: "visits", label: "Site visits", one: "site visit", group: "On your websites", level: false, money: false, pickable: true),
+      Number.new(key: "site_visitors", label: "Site visitors", one: "site visitor", group: "On your websites", level: false, money: false, pickable: true),
       Number.new(key: "visitors", label: "Visitors", one: "visitor", group: "On Openstage", level: false, money: false, pickable: false),
       Number.new(key: "views", label: "Views", one: "view", group: "On Openstage", level: false, money: false, pickable: false),
       Number.new(key: "follows", label: "New followers", one: "new follower", group: "On Openstage", level: false, money: false, pickable: false),
@@ -40,6 +41,9 @@ module Progress
 
     # The numbers a project's builder shows its visitors or hides from them.
     PICKABLE = ALL.select(&:pickable).map(&:key).freeze
+    # The numbers Openstage's script counts on a project's website: visitors
+    # see them only while it counts there (GithubRepo#public_number?).
+    SITE = %w[visits site_visitors].freeze
 
     def self.find(key)
       ALL.find { |number| number.key == key.to_s }
