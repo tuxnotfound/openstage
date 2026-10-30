@@ -12,8 +12,9 @@ class DashboardController < ApplicationController
   def index
     respond_to do |format|
       format.html do
-        # A filter redraws one list in its frame, without the rest of the page.
-        next render(partial: "dashboard/entry_list", locals: { tab: entries_tab(entries_frame) }) if entries_frame
+        # A filter redraws the tabs and their lists in their frame, without
+        # the rest of the page.
+        next render(partial: "dashboard/entry_lists", locals: { tabs: entries_tabs }) if entries_frame?
 
         load_page
       end
@@ -28,11 +29,8 @@ class DashboardController < ApplicationController
 
   private
 
-  # The tab whose list a frame request asks for, as its frame is named.
-  def entries_frame
-    return unless turbo_frame_request?
-
-    turbo_frame_request_id.to_s.delete_prefix("entries-").presence_in(EntriesSection::TABS)
+  def entries_frame?
+    turbo_frame_request? && turbo_frame_request_id == "entries-lists"
   end
 
   def load_page

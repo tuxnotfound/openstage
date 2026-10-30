@@ -1,20 +1,12 @@
 <%# Every entry, findable without scrolling the whole history, then what was
-    hidden and what only the builder sees. Each tab's list is a frame: the
-    filters redraw the timeline's alone, and a click on a row redraws only
-    what it changed (entries/changed), so the page never reloads or jumps.
-    The tabs are links and the buttons plain forms, so it all works without
-    JavaScript too. %>
-<% active = entry_tab_active(@entry_tabs) %>
+    hidden and what only the builder sees. One search, type and repo narrow
+    every tab; they redraw the tabs and lists in one frame, and a click on a
+    row redraws only what it changed (entries/changed), so the page never
+    reloads or jumps. The tabs are links and the buttons plain forms, so it
+    all works without JavaScript too. %>
 <section id="entries" class="os-panel scroll-mt-4" aria-label="Entries"
-         data-controller="tabs entries-filter" data-tabs-active-value="<%= active %>" data-tabs-param-value="tab"
+         data-controller="tabs entries-filter" data-tabs-active-value="<%= entry_tab_active(@entry_tabs) %>" data-tabs-param-value="tab"
          data-action="submit->entries-filter#carry:capture">
-  <%= render "dashboard/entry_tabs", tabs: @entry_tabs, active: active %>
-
-  <% @entry_tabs.each do |tab| %>
-    <div data-tabs-target="panel" data-tabs-panel="<%= tab.key %>" role="tabpanel" aria-label="<%= DashboardHelper::ENTRY_TABS[tab.key] %>"
-         class="mt-3.5 <%= "hidden" unless tab.key == active %>">
-      <%= render "dashboard/entries_filter" if tab.key == "timeline" %>
-      <%= render "dashboard/entry_list", tab: tab %>
-    </div>
-  <% end %>
+  <%= render "dashboard/entries_filter" %>
+  <%= render "dashboard/entry_lists", tabs: @entry_tabs %>
 </section>

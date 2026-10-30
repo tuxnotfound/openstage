@@ -1,9 +1,10 @@
 # What the dashboard's Entries section shows: a tab per list the builder
 # manages (every entry their pages list, the ones they hid, the private
-# ones), a page at a time, newest first. DashboardController renders it with
-# the page, a list alone into its frame as the filters change, and the next
-# page for Load more; EntriesController redraws what a click on a row changed.
-# Both read it here, so the two cannot drift apart.
+# ones), each narrowed by the same search, type and repo, a page at a time,
+# newest first. DashboardController renders it with the page, the tabs and
+# lists alone into their frame as the filters change, and the next page for
+# Load more; EntriesController redraws what a click on a row changed. Both
+# read it here, so the two cannot drift apart.
 module EntriesSection
   extend ActiveSupport::Concern
 
@@ -11,7 +12,8 @@ module EntriesSection
   # The lists, the one the section opens on first.
   TABS = %w[timeline hidden private].freeze
 
-  # query, type and repo narrow the timeline; repos: the ones it can pick.
+  # query, type and repo narrow every tab; repos: the ones they can pick,
+  # from every tab's entries.
   Filter = Data.define(:query, :type, :repo, :repos) do
     def any?
       query.present? || type.present? || repo.present?
@@ -79,7 +81,7 @@ module EntriesSection
 
   def entries_filter
     @entries_filter ||= begin
-      repos = current_user.entries.listed.repo_names
+      repos = current_user.entries.listed.or(current_user.entries.where(hidden: true)).repo_names
       Filter.new(query: params[:q].to_s.strip, type: params[:type].presence_in(Entry.entry_types.keys),
                  repo: params[:repo].presence_in(repos), repos: repos)
     end
@@ -96,7 +98,7 @@ module EntriesSection
 
   def entries_tab(key, after: nil)
     list = entries_list(key)
-    Tab.new(key: key, list: list, narrowed: (narrowed(list) if key == "timeline" && entries_filter.any?), after: after)
+    Tab.new(key: key, list: list, narrowed: (narrowed(list) if entries_filter.any?), after: after)
   end
 
   def entries_list(key)

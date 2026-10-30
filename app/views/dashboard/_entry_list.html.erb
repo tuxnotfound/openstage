@@ -1,12 +1,12 @@
-<%# One tab's list, a page at a time, newest first, in a frame of its own:
-    the filters redraw it alone, and a click on a row redraws it or just the
-    row (entries/changed). target _top: a link in it leaves the frame. %>
+<%# One tab's list, a page at a time, newest first, in a frame of its own,
+    which a click on a row redraws, or just the row (entries/changed).
+    target _top: a link in it leaves the frame. %>
 <%= turbo_frame_tag "entries-#{tab.key}", target: "_top" do %>
   <%= render "dashboard/entry_list_count", tab: tab %>
   <% if tab.entries.empty? %>
     <p class="os-sm os-muted mt-4 rounded-card border border-dashed border-line py-10 text-center">
-      <% if tab.key == "timeline" && entries_filter.any? %>
-        No entries match that. <%= link_to "Clear the filters", dashboard_path(tab: "timeline", anchor: "entries"),
+      <% if entries_filter.any? %>
+        No entries match that. <%= link_to "Clear the filters", dashboard_path(tab: tab.key, anchor: "entries"),
                                       data: { action: "entries-filter#clear" }, class: "underline hover:text-ink" %>.
       <% elsif tab.key == "timeline" %>
         Nothing here yet. Commits appear after the first sync, or add a milestone above.

@@ -160,17 +160,69 @@ RSpec.describe "Dashboard search and paging", type: :request do
       expect(response.body).to include("The oldest")
     end
 
-    # The filters redraw the timeline's frame alone: the rest of the page is
-    # never rendered for it, and the frame's links leave it.
-    it "renders only the timeline's frame for a filter" do
+    # The filters redraw the tabs and lists in their frame alone: the rest of
+    # the page is never rendered for it, and each list's links leave it.
+    it "renders only the tabs and lists for a filter" do
       create(:entry, user: user, title: "the needle")
       create(:entry, user: user, title: "a haystack")
 
-      get "/dashboard", params: { q: "needle", tab: "timeline" }, headers: { "Turbo-Frame" => "entries-timeline" }
+      get "/dashboard", params: { q: "needle" }, headers: { "Turbo-Frame" => "entries-lists" }
 
       page = Nokogiri::HTML(response.body)
-      expect(page.at_css("turbo-frame#entries-timeline[target='_top']").text).to include("the needle", "1 entry of 2")
-      expect(response.body).not_to include("a haystack", "This week", "entries-tabs")
+      expect(page.css("#entries-tabs a").map(&:text)).to eq([ "Entries (1)" ])
+      expect(page.at_css("turbo-frame#entries-lists turbo-frame#entries-timeline[target='_top']").text).to include("the needle", "1 entry of 2")
+      expect(response.body).not_to include("a haystack", "This week", "Search your entries")
+    end
+  end
+
+  # One search, type and repo narrow every tab, and each tab's count with them.
+  describe "the filters on Hidden and Private" do
+    before do
+      user.update!(pro: true)
+      create(:entry, user: user, title: "shown fix", repo_name: "builder/app")
+      create(:entry, user: user, title: "hidden fix", repo_name: "builder/off", hidden: true)
+      create(:entry, user: user, title: "hidden chore", repo_name: "builder/off", hidden: true)
+      create(:entry, user: user, source: "manual", entry_type: "note", title: "private fix", visibility: :private_entry)
+    end
+
+    def page
+      Nokogiri::HTML(response.body)
+    end
+
+    it "narrows every tab and counts what each matches, the tabs shown as before" do
+      get "/dashboard", params: { q: "fix", tab: "hidden" }
+
+      expect(page.css("#entries-tabs a").map(&:text)).to eq([ "Entries (2)", "Hidden (1)", "Private (1)" ])
+      expect(page.at_css("#entries-hidden").text.squish).to include("1 entry of 2", "hidden fix")
+      expect(page.at_css("#entries-hidden").text).not_to include("hidden chore")
+      expect(page.at_css("#entries-private").text.squish).to include("1 entry of 1", "private fix")
+      expect(page.at_css("[data-tabs-panel='hidden']")["class"]).not_to include("hidden")
+    end
+
+    it "keeps a tab whose entries the filters all leave out, saying none match" do
+      get "/dashboard", params: { q: "chore", tab: "private" }
+
+      expect(page.css("#entries-tabs a").map(&:text)).to eq([ "Entries (0)", "Hidden (1)", "Private (0)" ])
+      expect(page.at_css("#entries-private").text).to include("No entries match that.")
+    end
+
+    it "offers the repos only hidden entries come from" do
+      get "/dashboard", params: { repo: "builder/off", tab: "hidden" }
+
+      expect(page.css("select[name='repo'] option").map { |option| option["value"] }).to include("builder/off", "builder/app")
+      expect(page.css("#entries-tabs a").map(&:text)).to eq([ "Entries (0)", "Hidden (2)", "Private (0)" ])
+    end
+
+    it "pages the hidden list under the filters" do
+      create_list(:entry, EntriesSection::PER_PAGE, user: user, title: "another hidden fix", hidden: true, occurred_at: 1.day.ago)
+      create(:entry, user: user, title: "the oldest hidden fix", hidden: true, occurred_at: 1.year.ago)
+      get "/dashboard", params: { q: "fix", tab: "hidden" }
+      more = page.at_css("#entries-more-hidden a")["href"]
+      expect(more).to include("q=fix", "tab=hidden")
+
+      get more, headers: { "Accept" => "text/vnd.turbo-stream.html, text/html" }
+
+      expect(response.body).to include('target="entries-list-hidden"', "the oldest hidden fix")
     end
   end
 
