@@ -25,7 +25,7 @@ RSpec.describe Analytics::ReportService do
     rows = report.rows
 
     expect(rows.map { |row| [ row.key, row.name, row.rank, row.color_class ] })
-      .to eq([ [ "page", "Your page", nil, "os-project-none" ], [ "me/app", "app", 0, "os-project-1" ], [ "me/lib", "lib", 1, "os-project-2" ] ])
+      .to eq([ [ "page", "Your stage", nil, "os-project-none" ], [ "me/app", "app", 0, "os-project-1" ], [ "me/lib", "lib", 1, "os-project-2" ] ])
   end
 
   it "gives a project's page past the tenth no colour, and never puts it in view by name" do
@@ -45,7 +45,7 @@ RSpec.describe Analytics::ReportService do
     create(:profile_view, user: user, viewed_at: 2.days.ago)
     user.project_views.create!(repo_name: "me/lib", viewed_at: 1.day.ago, ip_hash: "b")
 
-    expect(report.rows.to_h { |row| [ row.name, row.shown ] }).to eq("Your page" => %w[visitors views], "app" => %w[commits visits],
+    expect(report.rows.to_h { |row| [ row.name, row.shown ] }).to eq("Your stage" => %w[visitors views], "app" => %w[commits visits],
                                                                      "lib" => %w[commits visitors views])
   end
 

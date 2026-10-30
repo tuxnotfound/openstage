@@ -1,5 +1,5 @@
 class SessionsController < ApplicationController
-  RESTORED = "Welcome back. Your account is restored and your page is online again.".freeze
+  RESTORED = "Welcome back. Your account is restored and your stage is online again.".freeze
 
   def create
     auth = request.env["omniauth.auth"]

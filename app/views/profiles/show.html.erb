@@ -81,7 +81,7 @@
       <% unless @user.pro? || current_user == @user %>
         <%# Every circulating profile link is an ad. The visitor's next action is
             their own page, not our homepage. Pro removes this; it never paywalls it. %>
-        <a href="<%= root_url %>?ref=footer" class="os-muted hover:text-ink" data-claim-cta data-turbo-frame="_top">Get your own proof-of-work page &rarr;</a>
+        <a href="<%= root_url %>?ref=footer" class="os-muted hover:text-ink" data-claim-cta data-turbo-frame="_top">Get your own proof-of-work stage &rarr;</a>
       <% end %>
     </footer>
   </div>

@@ -11,9 +11,9 @@
     { q: "What does it read from GitHub?",
       a: "Sign-in asks only for your email address. Public repos you push to sync every 2 hours, with the description, website and preview image you set on each. Private repos stay out unless you connect them in Settings and include each one, and even then only commit messages and release names appear, never links to the code." },
     { q: "Does it post for me?",
-      a: "No. Openstage never posts, ranks or rewrites anything for you. Share your page wherever you like; it keeps itself current." },
+      a: "No. Openstage never posts, ranks or rewrites anything for you. Share your stage wherever you like; it keeps itself current." },
     { q: "What does it cost?",
-      a: "Your page, a page for each project, the sync and a subscribe box are free for good. Pro is $7 a month and adds your subscriber list, profile analytics, private entries and pins." }
+      a: "Your stage, a page for each project, the sync and a subscribe box are free for good. Pro is $7 a month and adds your subscriber list, profile analytics, private entries and pins." }
   ]
 %>
 
@@ -83,9 +83,9 @@
   <p class="os-p mt-1.5">One sign-in and the page fills itself. The rest is optional.</p>
   <ol class="os-grid2 mt-4.5">
     <% [ [ "Connect GitHub once", "Your public repos sync every 2 hours. Private ones join only if you add them in Settings. Nothing to install." ],
-         [ "Every project gets its line", "Your page charts each project's commits over 30 days, 90 days or 12 months. Visitors see what you work on now and what came before, all together or one project at a time." ],
+         [ "Every project gets its line", "Your stage charts each project's commits over 30 days, 90 days or 12 months. Visitors see what you work on now and what came before, all together or one project at a time." ],
          [ "What each project is", "Its description, website and picture come from GitHub, or from its README when GitHub has none. Fill any gap once, from your dashboard." ],
-         [ "Launches stand out", "Log a launch or a post in one line. It shows under What shipped, on your page and on the project's own page." ] ].each_with_index do |(title, about), i| %>
+         [ "Launches stand out", "Log a launch or a post in one line. It shows under What shipped, on your stage and on the project's own page." ] ].each_with_index do |(title, about), i| %>
       <li class="os-card">
         <div class="os-num text-[28px] text-ink-3"><%= format("%02d", i + 1) %></div>
         <h3 class="os-h3 mt-1.5"><%= title %></h3>

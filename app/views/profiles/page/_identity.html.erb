@@ -34,7 +34,7 @@
         <% facts.each do |fact| %><span><%= fact %></span><span aria-hidden="true">·</span><% end %>
         <span class="inline-flex gap-1.5" data-controller="share"
               data-share-url-value="<%= profile_url(user.username) %>"
-              data-share-title-value="<%= user.display_name %>'s proof-of-work page">
+              data-share-title-value="<%= user.display_name %>'s proof-of-work stage">
           <button type="button" data-action="share#share" data-share-target="button" data-share-button
                   class="cursor-pointer underline hover:text-ink">Share</button>
           <span aria-hidden="true">·</span>

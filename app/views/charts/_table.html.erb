@@ -34,7 +34,7 @@
             </span>
           </th>
           <% if local_assigns[:manage] %>
-            <th scope="col" class="w-px whitespace-nowrap pt-1.5 pb-2 pl-[18px] text-right font-bold max-md:hidden">Your page</th>
+            <th scope="col" class="w-px whitespace-nowrap pt-1.5 pb-2 pl-[18px] text-right font-bold max-md:hidden">Your stage</th>
           <% end %>
           <% table[:columns].each do |column| %>
             <% drawn = view[:drawn].include?(column[:key]) %>
@@ -81,12 +81,12 @@
             </th>
             <% if local_assigns[:manage] %>
               <td class="py-2.5 pl-[18px] text-right max-md:p-0 max-md:text-left">
-                <span class="os-xs os-muted mb-1 block md:hidden">Your page</span>
+                <span class="os-xs os-muted mb-1 block md:hidden">Your stage</span>
                 <% if row[:page] %>
                   <%= form_with url: row[:page][:path], method: :patch, class: "inline-flex", data: { turbo: false } do %>
                     <%= hidden_field_tag :included, (!row[:page][:on]).to_s, id: nil %>
                     <% back.each do |key, value| %><%= hidden_field_tag key, value, id: nil %><% end %>
-                    <button type="submit" role="switch" aria-checked="<%= row[:page][:on] %>" aria-label="Show <%= row[:name] %> on your page" class="os-switch"></button>
+                    <button type="submit" role="switch" aria-checked="<%= row[:page][:on] %>" aria-label="Show <%= row[:name] %> on your stage" class="os-switch"></button>
                   <% end %>
                 <% end %>
               </td>

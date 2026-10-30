@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server"
-import { describe, expect, test } from "vitest"
+import { afterEach, describe, expect, test, vi } from "vitest"
 import ProjectsTable, { type CellSwitches, type RowTargets } from "../../app/javascript/charts/filter/ProjectsTable"
 import type { TableCell, TableRow } from "../../app/javascript/charts/types"
 
@@ -74,5 +74,27 @@ describe("a project past the tenth", () => {
     expect(row).toContain('quiet</span><span class="sr-only">, draws no line</span>')
     expect(row).toMatch(/text-ink-3 ">4<\/span>/)
     expect(html.match(/draws no line/g)).toHaveLength(1)
+  })
+})
+
+// The builder's public page is their stage (Pedro, 2026-10-30): the column
+// and each row's switch say so.
+describe("the dashboard's stage switch", () => {
+  afterEach(() => { vi.unstubAllGlobals() })
+
+  test("heads its column Your stage and names the project it puts on the stage", () => {
+    vi.stubGlobal("window", { location: { search: "" } })
+    vi.stubGlobal("document", { querySelector: () => null })
+    const commits: TableCell = { key: "commits", value: "4", shown: true, pick: null, link: null, change: null }
+    const app: TableRow = { key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true, cells: [commits], edit: null,
+                            page: { on: true, path: "/github_repos/1" }, switch: "/projects/1/numbers" }
+    const html = renderToStaticMarkup(
+      <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits" }], rows: [app] }} drawn={["commits"]}
+                     lines={{ commits: 0 }} indexed={false} words="last 90 days" focused={null} rows={rows} switches={switches} />,
+    )
+
+    expect(html.match(/>Your stage</g)).toHaveLength(2)
+    expect(html).toContain('aria-label="Show app on your stage"')
+    expect(html).not.toMatch(/your page/i)
   })
 })

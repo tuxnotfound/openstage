@@ -1,7 +1,7 @@
 {
   "name": "Openstage",
   "short_name": "Openstage",
-  "description": "Your automatic proof-of-work page",
+  "description": "Your automatic proof-of-work stage",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

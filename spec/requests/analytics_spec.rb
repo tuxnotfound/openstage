@@ -139,7 +139,7 @@ RSpec.describe "Analytics", type: :request do
       expect(query(toggles.css("a").find { |link| link.text.include?("Views") })).to eq("show" => "commits,views")
       expect(query(page.css("[aria-label='Time range'] a").find { |link| link.text == "90 days" })).to eq("range" => "90d")
       expect(query(page.at_css("[data-chart-row='page'] th > span > a:first-child"))).to eq("projects" => "builder/app")
-      expect(query(page.at_css("[data-chart-row='page'] a[aria-label='Show only Your page']"))).to eq("projects" => "page")
+      expect(query(page.at_css("[data-chart-row='page'] a[aria-label='Show only Your stage']"))).to eq("projects" => "page")
     end
 
     it "draws 90 days by week and 12 months by month, and the last 30 days for a window it does not know" do

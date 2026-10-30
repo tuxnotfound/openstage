@@ -40,7 +40,7 @@
             <div class="os-fieldset">
               <div class="os-between">
                 <%= f.label :email, "Email", class: "os-label" %>
-                <label class="os-xs os-muted inline-flex items-center gap-2">Show on your page <%= f.check_box :show_email, class: "os-switch" %></label>
+                <label class="os-xs os-muted inline-flex items-center gap-2">Show on your stage <%= f.check_box :show_email, class: "os-switch" %></label>
               </div>
               <%= f.email_field :email, autocomplete: "email", class: "os-field" %>
               <span class="os-xs os-muted">Your own mail from Openstage goes here too.</span>
@@ -48,7 +48,7 @@
             <div class="os-fieldset">
               <div class="os-between">
                 <%= f.label :x_username, "X username", class: "os-label" %>
-                <label class="os-xs os-muted inline-flex items-center gap-2">Show on your page <%= f.check_box :show_x_username, class: "os-switch" %></label>
+                <label class="os-xs os-muted inline-flex items-center gap-2">Show on your stage <%= f.check_box :show_x_username, class: "os-switch" %></label>
               </div>
               <%= f.text_field :x_username, placeholder: "@", autocapitalize: "off", spellcheck: false, class: "os-field" %>
             </div>
@@ -59,9 +59,9 @@
       </section>
 
       <section class="os-panel" aria-labelledby="your-page-settings">
-        <h2 id="your-page-settings" class="os-h3">Your page</h2>
-        <% [ [ :weekly_email, "Weekly email", "On Fridays, when your week has three or more things in it: your week, with a link to your page." ],
-             [ :branch_commits, "Commits on other branches", "Work not yet on your default branch shows on your page, marked with its branch, until it merges." ] ].each do |field, title, about| %>
+        <h2 id="your-page-settings" class="os-h3">Your stage</h2>
+        <% [ [ :weekly_email, "Weekly email", "On Fridays, when your week has three or more things in it: your week, with a link to your stage." ],
+             [ :branch_commits, "Commits on other branches", "Work not yet on your default branch shows on your stage, marked with its branch, until it merges." ] ].each do |field, title, about| %>
           <div class="os-row flex items-start justify-between gap-[18px] py-3.5">
             <%= f.label field, class: "min-w-0" do %>
               <span class="block font-bold"><%= title %></span>
@@ -79,7 +79,7 @@
         <h2 id="subscribers" class="os-h3">Subscribers</h2>
         <% unless current_user.pro? %><%= link_to "See who, with Pro", pricing_path, class: "os-link text-[13px]" %><% end %>
       </div>
-      <p class="os-sm os-ink2 mt-1"><b class="text-ink"><%= pluralize(@subscribers.size, "person") %></b> confirmed they want your updates, from the box on your page or one project's. They get that week by email on Fridays, when it has three or more things in it. Nobody else sees how many.</p>
+      <p class="os-sm os-ink2 mt-1"><b class="text-ink"><%= pluralize(@subscribers.size, "person") %></b> confirmed they want your updates, from the box on your stage or on a project's page. They get that week by email on Fridays, when it has three or more things in it. Nobody else sees how many.</p>
       <% if current_user.pro? && @subscribers.any? %>
         <ul class="mt-2.5">
           <% @subscribers.each do |subscriber| %>

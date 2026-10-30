@@ -67,7 +67,7 @@ export default function ProjectsTable({ table, drawn, lines, indexed, words, foc
                 {rows.all && <button type="button" className="os-link inline-flex min-h-7 items-center rounded-md px-1.5 text-[13px] no-underline" onClick={rows.all.go} onPointerEnter={rows.all.warm} onFocus={rows.all.warm}>Show all</button>}
               </span>
             </th>
-            {switches && <th scope="col" className="w-px whitespace-nowrap pt-1.5 pb-2 pl-[18px] text-right font-bold max-md:hidden">Your page</th>}
+            {switches && <th scope="col" className="w-px whitespace-nowrap pt-1.5 pb-2 pl-[18px] text-right font-bold max-md:hidden">Your stage</th>}
             {table.columns.map((column) => (
               <th key={column.key} scope="col" className={`whitespace-nowrap pt-1.5 pb-2 pl-[18px] text-right font-bold max-md:hidden ${drawn.includes(column.key) ? "text-ink" : ""}`}>
                 <span className="inline-flex items-center gap-[7px]">
@@ -122,7 +122,7 @@ function Row({ row, table, drawn, alone, hot, rows, switches }: {
       </th>
       {switches && (
         <td className="py-2.5 pl-[18px] text-right max-md:p-0 max-md:text-left">
-          <span className="os-xs os-muted mb-1 block md:hidden">Your page</span>
+          <span className="os-xs os-muted mb-1 block md:hidden">Your stage</span>
           {row.page && <PageSwitch row={row} page={row.page} />}
         </td>
       )}
@@ -185,7 +185,7 @@ function PageSwitch({ row, page }: { row: TableRow; page: { on: boolean; path: s
       <input type="hidden" name="authenticity_token" value={csrfToken()} />
       <input type="hidden" name="included" value={String(!page.on)} />
       {["range", "show", "projects"].map((key) => view.get(key) && <input key={key} type="hidden" name={key} value={view.get(key) ?? ""} />)}
-      <button type="submit" role="switch" aria-checked={page.on} aria-label={`Show ${row.name} on your page`} className="os-switch" />
+      <button type="submit" role="switch" aria-checked={page.on} aria-label={`Show ${row.name} on your stage`} className="os-switch" />
     </form>
   )
 }

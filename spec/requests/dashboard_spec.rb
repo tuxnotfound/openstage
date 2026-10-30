@@ -99,7 +99,7 @@ RSpec.describe "Dashboard", type: :request do
       get "/dashboard"
 
       nav = response.body[/<nav class="os-nav.*?<\/nav>/m]
-      expect(nav).to include(">Dashboard<", "Your page ", ">Feed<", ">Settings<")
+      expect(nav).to include(">Dashboard<", "Your stage ", ">Feed<", ">Settings<")
       expect(nav).not_to include("Week card")
       expect(nav).to include(%(<a aria-current="page" href="/dashboard">Dashboard</a>))
 

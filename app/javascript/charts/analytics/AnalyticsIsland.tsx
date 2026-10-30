@@ -50,7 +50,7 @@ export default function AnalyticsIsland({ initial, endpoint, defaultRange }: Ana
               That view did not load. <button type="button" className="os-link text-[13px]" onClick={filter.retry}>Try again</button>
             </p>
           )}
-          <p className="os-note mt-0 border-t border-line pt-2.5">Commits: yours, public, merges and dependency bumps left out. Site visits: page views on a project's own website, counted by Openstage's script. On Openstage, your page and your project pages: a visitor is one browser on one day; views count every page load; new followers confirmed by email, for your page or one project; clicks out are a project's Visit and View on GitHub buttons and the links in your entries. Your own visits and bots are left out.</p>
+          <p className="os-note mt-0 border-t border-line pt-2.5">Commits: yours, public, merges and dependency bumps left out. Site visits: page views on a project's own website, counted by Openstage's script. On Openstage, your stage and your project pages: a visitor is one browser on one day; views count every page load; new followers confirmed by email, for your stage or one project; clicks out are a project's Visit and View on GitHub buttons and the links in your entries. Your own visits and bots are left out.</p>
         </section>
 
         <Panels view={view} />

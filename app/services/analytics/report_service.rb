@@ -78,7 +78,7 @@ module Analytics
     # for keep them in view (Progress::Filter.in_view).
     def page_rows
       synced = user.github_repos.by_full_name(projects.map(&:repo))
-      all = [ [ CountService::PAGE, "Your page", nil ] ] + projects.map { |project| [ project.repo, project.name, project.rank ] }
+      all = [ [ CountService::PAGE, "Your stage", nil ] ] + projects.map { |project| [ project.repo, project.name, project.rank ] }
       in_view = Progress::Filter.in_view(pages, all.select { |_key, _name, rank| ProgressChart::Palette.colored?(rank) }.map(&:first))
       all.map { |key, name, rank| row(key, name, rank, synced[key], in_view.empty? || in_view.include?(key)) }
     end

@@ -25,7 +25,7 @@ class UsernamesController < ApplicationController
       GithubSyncJob.perform_later(user.id)
       # The page is the product. A new builder lands on their own profile and
       # watches it fill, not on a dashboard of controls.
-      redirect_to profile_path(user.username), notice: "Welcome to Openstage, #{user.display_name}! This is your page."
+      redirect_to profile_path(user.username), notice: "Welcome to Openstage, #{user.display_name}! This is your stage."
     else
       @proposed_username = params[:username]
       flash.now[:alert] = user.errors.full_messages.to_sentence

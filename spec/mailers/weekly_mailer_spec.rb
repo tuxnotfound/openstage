@@ -55,7 +55,7 @@ RSpec.describe WeeklyMailer do
       url = "https://openstage.dev/maker?range=30d&ref=weekly"
       expect(html.index(url.sub("&", "&amp;"))).to be > html.index("Wrote about pricing")
       expect(text.index(url)).to be > text.index("Wrote about pricing")
-      expect(text).to include("See your page: #{url}")
+      expect(text).to include("See your stage: #{url}")
     end
 
     it "draws the app's look: the wordmark, then grey panels with soft corners" do

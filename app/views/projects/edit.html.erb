@@ -34,10 +34,10 @@
       <%= form_with url: github_repo_path(@repo), method: :patch, data: { turbo: false }, class: "flex items-center gap-3" do %>
         <%= hidden_field_tag :included, (!@repo.included?).to_s, id: nil %>
         <%= hidden_field_tag :back, "project", id: nil %>
-        <button type="submit" role="switch" aria-checked="<%= @repo.included? %>" aria-label="Show <%= @repo.name %> on your page" class="os-switch"></button>
+        <button type="submit" role="switch" aria-checked="<%= @repo.included? %>" aria-label="Show <%= @repo.name %> on your stage" class="os-switch"></button>
         <span>
-          <span class="font-bold"><%= @repo.included? ? "On your page" : "Hidden from your page" %></span>
-          <span class="os-xs os-muted block"><%= @repo.included? ? "Its page is public, and it shows on yours." : "Only you can open its page." %></span>
+          <span class="font-bold"><%= @repo.included? ? "On your stage" : "Hidden from your stage" %></span>
+          <span class="os-xs os-muted block"><%= @repo.included? ? "Its page is public, and it shows on your stage." : "Only you can open its page." %></span>
         </span>
       <% end %>
       <%= link_to project_page_path(current_user.username, @repo.name), class: "os-btn2 sm" do %>View its page <span aria-hidden="true">↗</span><% end %>

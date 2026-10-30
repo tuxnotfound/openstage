@@ -45,6 +45,6 @@ class Subscription < ApplicationRecord
   private
 
   def project_is_the_builders
-    errors.add(:github_repo, "is not on this builder's page") if github_repo && github_repo.user_id != user_id
+    errors.add(:github_repo, "is not on this builder's stage") if github_repo && github_repo.user_id != user_id
   end
 end

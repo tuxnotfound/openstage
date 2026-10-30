@@ -2,7 +2,7 @@ xml.instruct! :xml, version: "1.0"
 xml.rss version: "2.0", "xmlns:atom" => "http://www.w3.org/2005/Atom" do
   xml.channel do
     xml.title "#{@user.display_name} on Openstage"
-    xml.description(@user.bio.presence || "#{@user.display_name}'s proof-of-work page.")
+    xml.description(@user.bio.presence || "#{@user.display_name}'s proof-of-work stage.")
     xml.link profile_url(@user.username)
     xml.tag! "atom:link", href: profile_url(@user.username, format: :rss), rel: "self", type: "application/rss+xml"
     xml.language "en"
