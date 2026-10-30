@@ -111,12 +111,12 @@ module Analytics
       @drawing = service if run(service)
     end
 
-    # Hosts grouped as the old analytics grouped them (Hacker News, GitHub,
-    # Direct...), and the countries Cloudflare names, busiest first.
+    # Sources named as the website panels name them (Hacker News, Direct,
+    # indiehackers.com...), and the countries Cloudflare names, busiest first.
     def read_visits
       views = [ (user.profile_views if page_for(CountService::PAGE)), user.project_views.where(repo_name: selected.map(&:key)) ].compact
       views = views.map { |scope| scope.where(viewed_at: times) }
-      @sources = tally(views.flat_map { |scope| scope.group(:referrer).count.to_a }) { |host| ReferrerClassifier.classify(host) }
+      @sources = tally(views.flat_map { |scope| scope.group(:referrer).count.to_a }) { |host| ReferrerClassifier.label(host) }
       @countries = tally(views.flat_map { |scope| scope.where.not(country: [ nil, "" ]).group(:country).count.to_a }, &:itself).first(TOP_COUNTRIES)
     end
 

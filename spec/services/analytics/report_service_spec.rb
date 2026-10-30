@@ -120,6 +120,12 @@ RSpec.describe Analytics::ReportService do
     expect(report(pages: %w[me/app]).sources).to eq([])
   end
 
+  it "names the sources of the builder's pages as the website panels do: Openstage's own, and any other host as itself" do
+    [ "openstage.dev", "www.IndieHackers.com", "news.ycombinator.com", nil ].each { |host| create(:profile_view, user: user, viewed_at: 2.days.ago, referrer: host) }
+
+    expect(report.sources).to eq([ [ "Direct", 1 ], [ "Hacker News", 1 ], [ "Openstage", 1 ], [ "indiehackers.com", 1 ] ])
+  end
+
   it "lists the links visitors followed, busiest first, on the pages in view" do
     entry = create(:entry, user: user, repo_name: "me/lib", entry_type: "milestone", source: "manual", title: "Launched", url: "https://lib.example")
     2.times { EntryClick.create!(user: user, entry: entry, clicked_at: 1.day.ago) }

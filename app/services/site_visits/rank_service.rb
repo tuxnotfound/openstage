@@ -2,13 +2,10 @@ module SiteVisits
   # The busiest values of one kind on some projects' websites over some days
   # (SiteVisitCount): pages by page views; sources, ref tags and countries
   # by visitors, each counted once a day, by their first view. A source is
-  # named as Openstage's own Sources panel names it, else by its host, and
-  # hosts of one name count together, so sources are cut after naming; the
-  # database cuts the other kinds.
+  # named as Openstage's own Sources panel names it (ReferrerClassifier.label)
+  # and hosts of one name count together, so sources are cut after naming;
+  # the database cuts the other kinds.
   class RankService < ApplicationService
-    # Openstage's own pages, whose Visit buttons send visitors to a project.
-    OPENSTAGE = "openstage.dev".freeze
-
     # repos: GithubRepos, their ids or a relation of them; days: a range of
     # days, beginless for every day up to its end, nil for every day; kind:
     # one of SiteVisitCount::KINDS; top: how many values to keep.
@@ -36,13 +33,9 @@ module SiteVisits
       [ named.sort_by { |label, count| [ -count, label ] }.first(top), other ]
     end
 
-    # Never "Other", which is the cap's row alone.
+    # Direct is stored as DIRECT, a value no host can take.
     def name_of(host)
-      case host
-      when SiteVisitCount::DIRECT then "Direct"
-      when OPENSTAGE then "Openstage"
-      else ReferrerClassifier.known(host) || host
-      end
+      ReferrerClassifier.label(host == SiteVisitCount::DIRECT ? nil : host)
     end
 
     # One grouped query: the Other row first when there is one, then the
