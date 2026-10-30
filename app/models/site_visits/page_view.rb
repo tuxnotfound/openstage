@@ -29,6 +29,10 @@ module SiteVisits
     # after a lower-case one: a slug turns a few times (v2, GitHub, B2B), a
     # random token many times.
     TURN = /\d(?=[A-Za-z])|[A-Za-z](?=\d)|[a-z](?=[A-Z])/
+    # A ref tag that also holds these is someone's, not a campaign's: an "@"
+    # anywhere, a hex digest or id, or a JSON web token. A campaign's name
+    # with a year or a number in it (summer2026) stays.
+    SECRET_TAG = /@|(?<!\h)(\h{24}|\h{32}|\h{40}|\h{64})(?!\h)|\AeyJ[\w-]+\.[\w-]+\.[\w-]*\z/
 
     # url: the page viewed, on the project's website; referrer: the page's
     # referrer, which the script sends with a page load's first view only,
@@ -78,11 +82,13 @@ module SiteVisits
     end
 
     # The page's ref or utm_source tag, the first given, in letters, digits,
-    # ".", "-" and "_" alone.
+    # ".", "-" and "_" alone. A tag with an email address, an id or a
+    # secret in it (PERSONAL, SECRET_TAG) is dropped, not cleaned, so the
+    # next one counts instead.
     def ref_tag
       params = URI.decode_www_form(URI(@url).query.to_s)
-      tags = %w[ref utm_source].flat_map { |key| params.filter_map { |name, value| value if name == key } }
-      tags.map { |tag| tag.scrub("").downcase.gsub(/[^a-z0-9._-]/, "").first(MAX_TAG) }.find(&:present?)
+      tags = %w[ref utm_source].flat_map { |key| params.filter_map { |name, value| value if name == key } }.map { |tag| tag.scrub("") }
+      tags.reject { |tag| tag.match?(PERSONAL) || tag.match?(SECRET_TAG) }.map { |tag| tag.downcase.gsub(/[^a-z0-9._-]/, "").first(MAX_TAG) }.find(&:present?)
     end
 
     # Two letters; Cloudflare's XX (unknown) and T1 (Tor) name no country.

@@ -82,6 +82,25 @@ RSpec.describe SiteVisits::PageView do
       expect(view(url: "https://shipnote.app/?ref=launch_week-2").ref_tag).to eq("launch_week-2")
       expect(view(url: "https://shipnote.app/?ref=#{'a' * 80}").ref_tag).to eq("a" * 64)
     end
+
+    it "drops a tag with an email address in it, and takes the next one" do
+      expect(view(url: "https://shipnote.app/?ref=jane@example.com").ref_tag).to be_nil
+      expect(view(url: "https://shipnote.app/?ref=jane%40example.com&utm_source=newsletter").ref_tag).to eq("newsletter")
+      expect(view(url: "https://shipnote.app/?ref=@pedro").ref_tag).to be_nil
+    end
+
+    it "drops a tag that holds a phone number, a UUID, a digest, an id, a token or an IP address" do
+      dropped = %w[4155551234 550E8400-E29B-41D4-A716-446655440000 9e107d9d372bb6826bd81d3542a419d6 507f1f77bcf86cd799439011 203.0.113.57
+                   eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U]
+
+      expect(dropped.map { |tag| view(url: "https://shipnote.app/?utm_source=#{tag}").ref_tag }).to eq([ nil ] * dropped.size)
+    end
+
+    it "keeps a campaign's tag with a year, a number or a date in it" do
+      kept = %w[hn reddit producthunt news.ycombinator.com launch_week-2 summer2026campaign newsletter-2026-10-30]
+
+      expect(kept.map { |tag| view(url: "https://shipnote.app/?ref=#{tag}").ref_tag }).to eq(kept)
+    end
   end
 
   describe "#country" do
