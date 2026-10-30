@@ -24,9 +24,16 @@ RSpec.describe SiteVisits::PageView do
       expect(masked.to_h { |part| [ part, view(url: "https://shipnote.app/u/#{part}/settings").page ] }).to eq(masked.to_h { |part| [ part, "/u/*/settings" ] })
     end
 
+    it "masks a part that holds an IP address or a place's coordinates" do
+      masked = %w[203.0.113.57 2001:db8:85a3::8a2e:370:7334 ::1 38.72231,-9.13932 @38.72231,-9.13932,17z]
+
+      expect(masked.to_h { |part| [ part, view(url: "https://shipnote.app/ip/#{part}").page ] }).to eq(masked.to_h { |part| [ part, "/ip/*" ] })
+    end
+
     it "keeps a slug, in title case or with a product's name too, a handle, a number and a version" do
       kept = %w[launching-v2-of-shipnote-today 2026-10-30-release-notes top-10-tips-for-rails-7-developers My-Trip-To-Paris-2026 @pedro 123 v2
-                getting-started iPhone-15-Pro-Max-Review useEffect-in-React-18 GitHub-vs-GitLab-2026 B2B-SaaS-Metrics-101 how-we-priced-shipnote-for-teams]
+                getting-started iPhone-15-Pro-Max-Review useEffect-in-React-18 GitHub-vs-GitLab-2026 B2B-SaaS-Metrics-101 how-we-priced-shipnote-for-teams
+                v1.2.3 rails-7.1 1.0 12:30]
 
       expect(kept.map { |part| view(url: "https://shipnote.app/blog/#{part}").page }).to eq(kept.map { |part| "/blog/#{part}" })
     end
@@ -51,6 +58,13 @@ RSpec.describe SiteVisits::PageView do
       expect([ view(referrer: "hello").source, view(referrer: "not a url").source, view(referrer: "https://(direct)/").source ]).to eq([ nil, nil, nil ])
       expect(view(referrer: "https://#{'a' * 250}.example/").source).to be_nil
       expect([ view(referrer: "mailto:x").source, view(referrer: "mailto://news.example/").source, view(referrer: "ldap://a/%zz").source ]).to eq([ nil, nil, nil ])
+    end
+
+    it "is nothing from an IP address or a machine on a home or office network" do
+      local = %w[http://203.0.113.57:8080/ http://192.168.1.23:3000/ http://[2001:db8::1]/ http://pedros-macbook-pro.local:3000/ http://jane-pc/
+                 http://localhost:3000/ http://nas.lan/ http://build.internal/ http://router.home.arpa/]
+
+      expect(local.map { |referrer| view(referrer: referrer).source }).to eq([ nil ] * local.size)
     end
   end
 

@@ -1,19 +1,27 @@
+require "resolv"
+
 module SiteVisits
   # One page view sent by Openstage's script, as much of it as the day's
   # counts keep (SiteVisitCount): its page's path, and for a visitor's first
   # view of the day the site they came from, the ref tag they followed and
-  # their country. Never a query string, a whole referrer, or a part of a
-  # path that looks like an email address, an id or a secret.
+  # their country. Never a query string, a whole referrer, a machine's own
+  # name, or a part of a path that looks like an email address, an id, a
+  # secret, an IP address or a place's coordinates.
   class PageView
     MAX_PATH = 200
     MAX_TAG = 64
-    # A host as it names a site, at most as long as DNS allows.
-    HOST = /\A[a-z0-9_-]+(\.[a-z0-9_-]+)*\z/
+    # A host as it names a site, at most as long as DNS allows: dotted, and
+    # its last label a name, so never an IP address or a lone machine name.
+    HOST = /\A[a-z0-9_-]+(\.[a-z0-9_-]+)*\.[a-z][a-z0-9-]*\z/
     MAX_HOST = 253
+    # A machine on a home or office network, whose name can be its owner's
+    # (pedros-macbook-pro.local).
+    LOCAL = /\.(local|lan|internal|localhost|home\.arpa)\z/
     # Anywhere in a part of a path: an email address (an "@" with something
-    # before it, so a handle such as @pedro stays), a UUID, or ten digits or
-    # more in a row, as a phone number has.
-    PERSONAL = /.(@|%40)|\h{8}-\h{4}-\h{4}-\h{4}-\h{12}|\d{10,}/i
+    # before it, so a handle such as @pedro stays), a UUID, ten digits or
+    # more in a row, as a phone number has, an IPv4 address, or a latitude
+    # and longitude. An IPv6 address is a whole part (Resolv::IPv6::Regex).
+    PERSONAL = /.(@|%40)|\h{8}-\h{4}-\h{4}-\h{4}-\h{12}|\d{10,}|(?<![\d.])\d{1,3}(\.\d{1,3}){3}(?![\d.])|-?\d{1,3}\.\d{3,},-?\d{1,3}\.\d{3,}/i
     # 16 letters and digits or more in a row: a digest, an id or a token
     # once it mixes letters and digits.
     RUN = /[A-Za-z\d]{16,}/
@@ -60,13 +68,13 @@ module SiteVisits
 
     # The referrer's host, www. dropped; DIRECT for an empty referrer; nil
     # without a referrer, for one on the project's own website, or for one
-    # with no host to name.
+    # with no site's name to give.
     def source
       return if @referrer.nil?
       return SiteVisitCount::DIRECT if @referrer.blank?
 
       host = host_of(@referrer)&.delete_prefix("www.")
-      host if host&.match?(HOST) && host.length <= MAX_HOST && !on_site?(@referrer)
+      host if host&.match?(HOST) && !host.match?(LOCAL) && host.length <= MAX_HOST && !on_site?(@referrer)
     end
 
     # The page's ref or utm_source tag, the first given, in letters, digits,
@@ -90,7 +98,7 @@ module SiteVisits
     # more mixing upper case, lower case and digits that TURN four times or
     # more. A slug in title case or with a product's name stays.
     def personal?(part)
-      return true if part.match?(PERSONAL) || part.scan(RUN).any? { |run| run.match?(/[A-Za-z]/) && run.match?(/\d/) }
+      return true if part.match?(PERSONAL) || part.match?(Resolv::IPv6::Regex) || part.scan(RUN).any? { |run| run.match?(/[A-Za-z]/) && run.match?(/\d/) }
 
       part.length >= 16 && part.match?(/[A-Z]/) && part.match?(/[a-z]/) && part.match?(/\d/) && part.scan(TURN).size >= 4
     end
