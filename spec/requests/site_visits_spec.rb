@@ -44,8 +44,17 @@ RSpec.describe "Site visits from Openstage's script", type: :request do
     expect(response).to have_http_status(:no_content)
     post "/v", params: { p: "os_abc123", u: "https://shipnote.app/", pad: "x" * 9000 }.to_json, headers: browser
     expect(response).to have_http_status(:no_content)
+    send_view({ p: "os_abc123", u: "mailto://shipnote.app/" })
+    expect(response).to have_http_status(:no_content)
 
     expect([ SiteVisitDay.count, SiteVisitCount.count ]).to eq([ 0, 0 ])
+  end
+
+  it "counts a page load whose forged referrer names no host, with no source" do
+    send_view({ p: "os_abc123", u: "https://shipnote.app/pricing", r: "mailto:x" })
+
+    expect(response).to have_http_status(:no_content)
+    expect(repo.site_visit_counts.pluck(:kind, :value)).to eq([ [ "page", "/pricing" ] ])
   end
 
   it "counts a page load whose address and referrer are both long" do

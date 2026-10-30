@@ -95,9 +95,10 @@ module SiteVisits
       part.length >= 16 && part.match?(/[A-Z]/) && part.match?(/[a-z]/) && part.match?(/\d/) && part.scan(TURN).size >= 4
     end
 
+    # A forged mailto: or ldap: address fails as a component, not as a URI.
     def host_of(address)
       URI(address.to_s).host&.downcase
-    rescue URI::InvalidURIError
+    rescue URI::Error
       nil
     end
   end

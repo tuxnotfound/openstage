@@ -50,6 +50,7 @@ RSpec.describe SiteVisits::PageView do
       expect(view(referrer: "https://www.shipnote.app/pricing").source).to be_nil
       expect([ view(referrer: "hello").source, view(referrer: "not a url").source, view(referrer: "https://(direct)/").source ]).to eq([ nil, nil, nil ])
       expect(view(referrer: "https://#{'a' * 250}.example/").source).to be_nil
+      expect([ view(referrer: "mailto:x").source, view(referrer: "mailto://news.example/").source, view(referrer: "ldap://a/%zz").source ]).to eq([ nil, nil, nil ])
     end
   end
 
@@ -99,5 +100,6 @@ RSpec.describe SiteVisits::PageView do
 
   it "takes the bare domain and www. as one site, any case" do
     expect([ view.on_site?("https://WWW.shipnote.app/blog"), view.on_site?("https://shipnote.app.evil.example/"), view.on_site?(nil) ]).to eq([ true, false, false ])
+    expect(view.on_site?("mailto://shipnote.app/")).to be(false)
   end
 end
