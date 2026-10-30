@@ -63,6 +63,24 @@ RSpec.describe SiteVisits::RecordService do
     expect(counts).to eq([ [ Date.new(2026, 10, 25), "country", "PT", 1 ], [ Date.new(2026, 10, 25), "page", "/app", 1 ] ])
   end
 
+  it "counts a visitor's source and ref tag on their first page load, and their country on their first view, whichever reaches it first" do
+    page_load = { url: "https://shipnote.app/?ref=hn", referrer: "https://news.ycombinator.com/", country: "PT" }
+    page_change = { url: "https://shipnote.app/login", country: "PT" }
+    record(**page_load).call!
+    record(**page_change).call!
+    record(ip: "203.0.113.8", **page_change).call!
+    record(ip: "203.0.113.8", **page_load).call!
+    record(ip: "203.0.113.9", **page_change).call!
+    record(url: "https://shipnote.app/pricing?ref=later", referrer: "https://news.ycombinator.com/", country: "PT").call!
+    day = Date.new(2026, 10, 25)
+
+    expect(counts).to eq([
+      [ day, "country", "PT", 3 ], [ day, "page", "/", 2 ], [ day, "page", "/login", 3 ], [ day, "page", "/pricing", 1 ],
+      [ day, "ref", "hn", 2 ], [ day, "source", "news.ycombinator.com", 2 ]
+    ])
+    expect(repo.site_visit_days.sole).to have_attributes(visits: 6, visitors: 3)
+  end
+
   it "takes a referrer on the project's own website for no source" do
     record(referrer: "https://www.shipnote.app/blog", country: "XX").call!
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_30_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_30_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -206,6 +206,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_30_000001) do
     t.date "day", null: false
     t.string "visitor_hash", null: false
     t.integer "hits", default: 1, null: false
+    t.integer "loads", default: 0, null: false
     t.index ["day"], name: "index_site_visitors_on_day"
     t.index ["github_repo_id", "day", "visitor_hash"], name: "index_site_visitors_once_a_day", unique: true
   end

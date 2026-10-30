@@ -25,9 +25,9 @@ module SiteVisits
     def execute
       day = Time.current.in_time_zone(repo.user.zone).to_date
       transaction do
-        hits = record_visitor(day)
+        hits, loads = record_visitor(day)
         @counted = hits <= DAILY_LIMIT
-        add_to_day(day, first: hits == 1) if counted
+        add_to_day(day, first: hits == 1, first_load: !referrer.nil? && loads == 1) if counted
       end
       mark_first_visit if counted
     end
@@ -59,20 +59,22 @@ module SiteVisits
       @view ||= PageView.new(url: url, referrer: referrer, country: country, site_host: repo.site_host)
     end
 
-    # Its page views today, this one included.
+    # Its page views today and, of them, its page loads (the views sent
+    # with a referrer), this one included.
     def record_visitor(day)
-      SiteVisitor.upsert({ github_repo_id: repo.id, day: day, visitor_hash: visitor_hash(day), hits: 1 },
-                         unique_by: %i[github_repo_id day visitor_hash], returning: :hits,
-                         on_duplicate: Arel.sql("hits = site_visitors.hits + 1")).first.fetch("hits")
+      SiteVisitor.upsert({ github_repo_id: repo.id, day: day, visitor_hash: visitor_hash(day), hits: 1, loads: referrer.nil? ? 0 : 1 },
+                         unique_by: %i[github_repo_id day visitor_hash], returning: %i[hits loads],
+                         on_duplicate: Arel.sql("hits = site_visitors.hits + 1, loads = site_visitors.loads + EXCLUDED.loads"))
+                 .first.values_at("hits", "loads")
     end
 
     # The day's totals, then its counts by page, source, ref tag and country.
-    def add_to_day(day, first:)
+    def add_to_day(day, first:, first_load:)
       SiteVisitDay.upsert({ github_repo_id: repo.id, day: day, visits: 1, visitors: first ? 1 : 0 },
                           unique_by: %i[github_repo_id day],
                           on_duplicate: Arel.sql("visits = site_visit_days.visits + 1, visitors = site_visit_days.visitors + EXCLUDED.visitors, " \
                                                  "updated_at = EXCLUDED.updated_at"))
-      SiteVisitCount.add(repo.id, day, view.counts(first: first))
+      SiteVisitCount.add(repo.id, day, view.counts(first: first, first_load: first_load))
     end
 
     # What the setup step shows once the script works.

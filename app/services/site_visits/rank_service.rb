@@ -1,12 +1,12 @@
 module SiteVisits
   # The busiest values of one kind on some projects' websites over some days
   # (SiteVisitCount): pages by page views; sources, ref tags and countries
-  # by visitors, each counted once a day, by their first view. A source is
-  # named as Openstage's own Sources panel names it (ReferrerClassifier.label)
-  # and hosts of one name count together, so sources are cut after naming;
-  # the database cuts the other kinds. Sources, ref tags and countries add
-  # up across sites, but a path means something only on its own, so a page
-  # is ranked per project.
+  # by visitors, each counted once a day. A source is named as Openstage's
+  # own Sources panel names it (ReferrerClassifier.label) and hosts of one
+  # name count together, so sources are cut after naming; the database cuts
+  # the other kinds. Sources, ref tags and countries add up across sites,
+  # but a path means something only on its own site, so a page is ranked
+  # per project.
   class RankService < ApplicationService
     SUMMED = "SUM(site_visit_counts.count) AS summed".freeze
     # Every value's count, beside each grouped row.

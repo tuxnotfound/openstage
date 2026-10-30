@@ -1,7 +1,8 @@
 # One day's count of one value on a project's website, in the builder's
-# zone: a page's views; or visitors by the site they came from, their ref
-# tag or their country, each counted once a day, by their first view
-# (SiteVisits::PageView). Only these totals are kept.
+# zone: a page's views; or visitors, each counted once a day, by their
+# country on their first view, and by the site they came from and their ref
+# tag on their first page load (SiteVisits::PageView). Only these totals are
+# kept.
 class SiteVisitCount < ApplicationRecord
   KINDS = %w[page source ref country].freeze
   # The script's token is public, so a flood of made-up values could grow a

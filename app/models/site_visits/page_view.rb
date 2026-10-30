@@ -2,9 +2,9 @@ require "resolv"
 
 module SiteVisits
   # One page view sent by Openstage's script, as much of it as the day's
-  # counts keep (SiteVisitCount): its page's path, and for a visitor's first
-  # view of the day the site they came from, the ref tag they followed and
-  # their country. Never a query string, a whole referrer, a machine's own
+  # counts keep (SiteVisitCount): its page's path; for a visitor's first
+  # view of the day their country; and for their first page load of the day
+  # the site they came from and the ref tag they followed. Never a query string, a whole referrer, a machine's own
   # name, or a part of a path that looks like an email address, an id, a
   # secret, an IP address or a place's coordinates.
   class PageView
@@ -55,13 +55,14 @@ module SiteVisits
     end
 
     # What it adds to the day's counts, by kind: its page always; on its
-    # visitor's first view of the day their country and, when the script
-    # sent a referrer, their source and ref tag.
-    def counts(first:)
-      return { "page" => page } unless first
-
-      counts = { "page" => page, "source" => source, "country" => country }
-      counts["ref"] = ref_tag unless @referrer.nil?
+    # visitor's first view of the day (first) their country; on their first
+    # page load of the day (first_load), the first view the script sent with
+    # a referrer, their source and ref tag. An app that changes its page as
+    # it loads sends two views at once, and either can reach Openstage first.
+    def counts(first:, first_load:)
+      counts = { "page" => page }
+      counts["country"] = country if first
+      counts.merge!("source" => source, "ref" => ref_tag) if first_load
       counts.compact
     end
 

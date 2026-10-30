@@ -113,21 +113,17 @@ RSpec.describe SiteVisits::PageView do
   describe "#counts" do
     let(:landing) { view(url: "https://shipnote.app/pricing?ref=hn", referrer: "https://news.ycombinator.com/", country: "PT") }
 
-    it "adds the page, and on the visitor's first view of the day their source, ref tag and country" do
-      expect(landing.counts(first: true)).to eq("page" => "/pricing", "source" => "news.ycombinator.com", "ref" => "hn", "country" => "PT")
-      expect(landing.counts(first: false)).to eq("page" => "/pricing")
+    it "adds the page, the country on the visitor's first view of the day, and the source and ref tag on their first page load" do
+      expect(landing.counts(first: true, first_load: true)).to eq("page" => "/pricing", "source" => "news.ycombinator.com", "ref" => "hn", "country" => "PT")
+      expect(landing.counts(first: false, first_load: true)).to eq("page" => "/pricing", "source" => "news.ycombinator.com", "ref" => "hn")
+      expect(landing.counts(first: true, first_load: false)).to eq("page" => "/pricing", "country" => "PT")
+      expect(landing.counts(first: false, first_load: false)).to eq("page" => "/pricing")
     end
 
-    it "adds no source or ref tag to a first view sent without a referrer, and still its country" do
-      sent_without = view(url: "https://shipnote.app/pricing?ref=hn", referrer: nil, country: "PT")
-
-      expect(sent_without.counts(first: true)).to eq("page" => "/pricing", "country" => "PT")
-    end
-
-    it "adds the ref tag of a first view that came from the project's own website, and no source" do
+    it "adds the ref tag of a page load that came from the project's own website, and no source" do
       inside = view(url: "https://shipnote.app/pricing?ref=hn", referrer: "https://shipnote.app/", country: "XX")
 
-      expect(inside.counts(first: true)).to eq("page" => "/pricing", "ref" => "hn")
+      expect(inside.counts(first: true, first_load: true)).to eq("page" => "/pricing", "ref" => "hn")
     end
   end
 
