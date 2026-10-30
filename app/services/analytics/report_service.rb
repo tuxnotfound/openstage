@@ -9,8 +9,7 @@ module Analytics
   # where visitors came from, the links they followed and where the badge and
   # embed showed.
   class ReportService < ApplicationService
-    # It opens on the last 30 days and on commits alone.
-    DEFAULT_RANGE = "30d".freeze
+    # It opens on commits alone, over the window every chart page opens on.
     DEFAULT_SHOW = %w[commits].freeze
     Link = Data.define(:title, :page, :count)
     TOP = 6
@@ -50,7 +49,7 @@ module Analytics
     private
 
     def execute
-      @totals_window = Progress::Window.new(range: range.presence_in(Progress::Window::RANGES) || DEFAULT_RANGE, today: today, first_activity: nil)
+      @totals_window = Progress::Window.new(range: range, today: today, first_activity: nil)
       return unless count
 
       @rows = page_rows

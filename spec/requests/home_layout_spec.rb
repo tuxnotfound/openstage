@@ -49,14 +49,14 @@ RSpec.describe "Home layout", type: :request do
   end
 
   describe "demo card" do
-    it "draws the page's last 12 months: the number, the colour bar and the chart, nothing more" do
+    it "draws the page's last 30 days: the number, the colour bar and the chart, nothing more" do
       create(:entry, user: demo, entry_type: "milestone", source: "manual", title: "Rebirth begins", occurred_at: 3.weeks.ago)
       create(:entry, user: demo, repo_name: "tuxnotfound/app")
 
       get "/"
 
       card = response.body[/<div class="os-card min-w-0 p-5">.*A real Openstage page/m]
-      expect(card).to include("commits, last 12 months", "os-sharebar", "os-chart")
+      expect(card).to include("commits, last 30 days", "os-sharebar", "os-chart")
       expect(card).not_to include("Rebirth begins", "os-disc")
     end
 
@@ -68,7 +68,7 @@ RSpec.describe "Home layout", type: :request do
 
       get "/"
 
-      expect(response.body).to match(%r{<span class="os-num[^"]*">3</span>\s*<span[^>]*>commits, last 12 months})
+      expect(response.body).to match(%r{<span class="os-num[^"]*">3</span>\s*<span[^>]*>commits, last 30 days})
       expect(response.body).not_to include("Merge pull request #5")
     end
   end

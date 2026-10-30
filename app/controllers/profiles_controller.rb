@@ -50,7 +50,7 @@ class ProfilesController < ApplicationController
     @user.entries.publicly_listed.without_hidden_commits.find_by(id: params[:entry]) if params[:entry].present?
   end
 
-  # The page opens on the last 12 months, commits and site visits, every
+  # The page opens on the last 30 days, commits and site visits, every
   # project; ?range=, ?show= and ?projects= pick another view (Progress::Filter),
   # and the projects scope the whole page.
   def gather

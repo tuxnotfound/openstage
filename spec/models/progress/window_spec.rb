@@ -61,8 +61,9 @@ RSpec.describe Progress::Window do
     expect(window("12m", first_activity: Date.new(2026, 6, 2)).unit).to eq(:month)
   end
 
-  it "opens on the last 12 months for a range it does not know" do
-    expect(window("year").range).to eq("12m")
+  it "opens on the last 30 days for a range it does not know" do
+    expect(window("year").range).to eq("30d")
+    expect(window(nil).range).to eq("30d")
   end
 
   it "finds the point a date falls on" do

@@ -35,8 +35,8 @@ RSpec.describe Progress::GatherService do
     expect(hiding.cards.map(&:repo)).to include(progress_repo(0))
   end
 
-  it "opens on the last 12 months" do
-    expect(described_class.new(user: user).tap(&:call!).section.labels.range).to eq("12m")
+  it "opens on the last 30 days" do
+    expect(described_class.new(user: user).tap(&:call!).section.labels.range).to eq("30d")
   end
 
   it "refuses without a builder" do

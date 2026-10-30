@@ -28,14 +28,14 @@ RSpec.describe "The public page's chart and what shipped" do
     panel.css("[data-chart-row]").map { |row| row.text.squish }
   end
 
-  it "opens on the last 12 months, every project, the number in its toggle and no figure over the chart" do
+  it "opens on the last 30 days, every project, the number in its toggle and no figure over the chart" do
     get "/tux"
 
-    expect(toggles).to eq([ "Commits #{progress_commits(Date.new(2025, 11, 1)..today)}" ])
+    expect(toggles).to eq([ "Commits #{progress_commits((today - 29)..today)}" ])
     expect(panel.css(".os-big, .os-sharebar")).to be_empty
     expect(panel.text).not_to include("active days")
-    expect(table_rows.first).to eq("openstage Only Commits #{progress_commits(Date.new(2025, 11, 1)..today, [ 0 ])}")
-    expect(shipped).to include("20 in the last 12 months", "live on Hacker News")
+    expect(table_rows.first).to eq("openstage Only Commits #{progress_commits((today - 29)..today, [ 0 ])}")
+    expect(shipped).to include("6 in the last 30 days", "Trained on me is live!!")
   end
 
   it "counts 30 and 90 days in the toggle and in each project's row" do
@@ -72,11 +72,11 @@ RSpec.describe "The public page's chart and what shipped" do
   it "scopes the page to the projects picked, counting only tagged entries, from the old links too" do
     get "/tux", params: { repo: progress_repo(4) }
 
-    expect(toggles).to eq([ "Commits #{progress_commits(Date.new(2025, 11, 1)..today, [ 4 ])}" ])
+    expect(toggles).to eq([ "Commits #{progress_commits((today - 29)..today, [ 4 ])}" ])
     expect(shipped).to include("Trained on me is live!!")
 
     get "/tux", params: { projects: progress_repo(0) }
-    expect(shipped).to include("No entries tagged openstage in the last 12 months.")
+    expect(shipped).to include("No entries tagged openstage in the last 30 days.")
   end
 
   # A row's box, which comes first in its header: a link to its view, current
@@ -101,8 +101,8 @@ RSpec.describe "The public page's chart and what shipped" do
     expect(box_for("openstage")["href"]).to eq("/tux?range=90d")
     expect(panel.at_css("[data-chart-table] a", text: "Show all")["href"]).to eq("/tux?range=90d")
     windows = panel.css("[aria-label='Time range'] a").to_h { |a| [ a.text, query_of(a) ] }
-    expect(windows["12 months"].keys).to eq([ "projects" ])
-    expect(windows["30 days"]).to include("range" => "30d")
+    expect(windows["30 days"].keys).to eq([ "projects" ])
+    expect(windows["12 months"]).to include("range" => "12m")
   end
 
   it "shows one project alone with Only, and keeps the last project in view on" do
@@ -118,7 +118,7 @@ RSpec.describe "The public page's chart and what shipped" do
   end
 
   it "draws the lines alone, with no numbered discs or list beside the chart" do
-    get "/tux"
+    get "/tux", params: { range: "12m" }
 
     expect(panel.css(".os-disc")).to be_empty
     expect(panel.css("ol")).to be_empty
@@ -150,6 +150,6 @@ RSpec.describe "The public page's chart and what shipped" do
     get "/tux", params: { show: "commits" }
 
     expect(panel.css("svg[role='img'] path").map { |path| path["stroke-dasharray"] }.uniq).to eq([ nil ])
-    expect(panel.at_css("[aria-label='Time range'] a", text: "30 days")["href"]).to eq("/tux?range=30d")
+    expect(panel.css("[aria-label='Time range'] a").find { |a| a.text == "90 days" }["href"]).to eq("/tux?range=90d")
   end
 end

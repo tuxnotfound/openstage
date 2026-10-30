@@ -7,7 +7,8 @@ module Progress
   # Period answers, so the tally and the picks read either.
   class Window
     RANGES = %w[30d 90d 12m all].freeze
-    DEFAULT = "12m".freeze
+    # Every chart page opens on the last 30 days.
+    DEFAULT = "30d".freeze
     UNITS = { "30d" => :day, "90d" => :week, "12m" => :month, "all" => :month }.freeze
     # Work younger than the 90-day view draws by week in the longer views: a
     # month or two would leave the chart a point or two. A week is the finest

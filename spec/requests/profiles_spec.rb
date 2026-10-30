@@ -97,7 +97,7 @@ RSpec.describe "Profiles", type: :request do
         expect(rows.first).to include("Published", note.title)
         expect(rows.last).to include("Shipped", milestone.title)
         expect(shipped.text).not_to include(commit.title)
-        expect(shipped.text.squish).to include("2 in the last 12 months")
+        expect(shipped.text.squish).to include("2 in the last 30 days")
       end
 
       it "does not show hidden entries" do

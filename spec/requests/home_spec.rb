@@ -63,7 +63,7 @@ RSpec.describe "Home", type: :request do
       get "/"
 
       page = Nokogiri::HTML(response.body)
-      expect(response.body).to match(%r{<span class="os-num[^"]*">1</span>\s*<span[^>]*>commits, last 12 months})
+      expect(response.body).to match(%r{<span class="os-num[^"]*">1</span>\s*<span[^>]*>commits, last 30 days})
       expect(page.css("[aria-label='Share of commits by project'] > div").map { |part| part["title"] }).to eq([ "site: 1 commit" ])
       expect(page.css(".os-chart svg path").size).to eq(1)
     end
@@ -77,7 +77,7 @@ RSpec.describe "Home", type: :request do
 
       get "/"
 
-      expect(response.body).to match(%r{<span class="os-num[^"]*">2</span>\s*<span[^>]*>commits, last 12 months})
+      expect(response.body).to match(%r{<span class="os-num[^"]*">2</span>\s*<span[^>]*>commits, last 30 days})
     end
   end
 end

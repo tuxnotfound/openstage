@@ -3,8 +3,8 @@ class DashboardController < ApplicationController
 
   before_action :require_authentication
 
-  # The activity chart opens on the last 90 days, as the drafts drew it.
-  ACTIVITY_RANGE = "90d".freeze
+  # The untagged entries the tag line counts: the last 12 months.
+  UNTAGGED_RANGE = "12m".freeze
 
   # The entries are paginated and searchable (EntriesSection). They used to
   # load every one (178 for the owner), so acting on an old one meant
@@ -39,10 +39,11 @@ class DashboardController < ApplicationController
   end
 
   # The entries of the last 12 months with no project, whatever window the
-  # chart shows: counted alone while the panel is closed, and read with the
-  # section's tally, which gives each row its tag choices, while it is open.
+  # chart shows, its default included: counted alone while the panel is
+  # closed, and read with the section's tally, which gives each row its tag
+  # choices, while it is open.
   def untagged
-    window = Progress::Window.new(range: Progress::Window::DEFAULT, today: Time.current.in_time_zone(current_user.zone).to_date, first_activity: nil)
+    window = Progress::Window.new(range: UNTAGGED_RANGE, today: Time.current.in_time_zone(current_user.zone).to_date, first_activity: nil)
     count = current_user.entries.listed_on_page.highlights.untagged.where(occurred_at: window.span.first.in_time_zone(current_user.zone)..).count
     { count: count, labels: window.labels, section: (untagged_section(window) if params[:tag] == "1") }
   end
@@ -94,7 +95,7 @@ class DashboardController < ApplicationController
   # projects param is the chart's (Progress::Filter); repo filters the entries.
   def activity_chart
     filter = Progress::Filter.from(params, repo: false)
-    service = Progress::ChartService.new(user: current_user, range: filter.range || ACTIVITY_RANGE, repos: filter.projects,
+    service = Progress::ChartService.new(user: current_user, range: filter.range, repos: filter.projects,
                                          show: filter.show, builder: true)
     service if service.call
   end

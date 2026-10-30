@@ -34,10 +34,10 @@ RSpec.describe "Tagging entries with a project" do
   # same last 12 months, as the stage showed it before.
   it "counts the last 12 months whatever the chart shows, and keeps the chart's view on its links" do
     sign_in_as(user)
-    get "/dashboard", params: { range: "30d", projects: progress_repo(0) }
+    get "/dashboard", params: { range: "90d", projects: progress_repo(0) }
 
     expect(section.text.squish).to include("#{progress_untagged(year)} entries in the last 12 months have no project.")
-    expect(section.at_css("a")["href"]).to eq("/dashboard?projects=#{CGI.escape(progress_repo(0))}&range=30d&tag=1#activity")
+    expect(section.at_css("a")["href"]).to eq("/dashboard?projects=#{CGI.escape(progress_repo(0))}&range=90d&tag=1#activity")
   end
 
   it "redraws the panel alone in its frame, a row for each entry it counts" do

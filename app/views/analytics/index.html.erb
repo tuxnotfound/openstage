@@ -2,7 +2,7 @@
 <% content_for :main_class, "os-wrap pt-1.5" %>
 <% serializer = AnalyticsViewSerializer.new(@report) %>
 <% view = serializer.attributes %>
-<% default_range = Analytics::ReportService::DEFAULT_RANGE %>
+<% default_range = Progress::Window::DEFAULT %>
 <% path_for = ->(changes) { analytics_path(chart_params(view, default_range: default_range, **changes).compact) } %>
 
 <%# The chart filter every chart page shares, as the page's script draws it

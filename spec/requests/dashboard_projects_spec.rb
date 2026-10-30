@@ -24,15 +24,15 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     page.at_css("[data-chart-row='#{repo}'] form[action^='/github_repos/'] button[role='switch']")
   end
 
-  it "charts the last 90 days of the builder's work with no figure over it, and keeps the entry filters on its links" do
+  it "charts the last 30 days of the builder's work with no figure over it, and keeps the entry filters on its links" do
     get "/dashboard", params: { q: "work" }
 
     activity = page.at_css("section[aria-labelledby='your-activity']")
     expect(activity.at_css("[aria-label='Numbers on the chart']").text.squish).to eq("Commits 4")
     expect(activity.css(".os-num.leading-none, .os-big")).to be_empty
-    expect(activity.at_css("svg[role='img']")["aria-label"]).to eq("Commits per week by project, last 90 days")
-    month = activity.css("[aria-label='Time range'] a").find { |a| a.text == "30 days" }
-    expect(month["href"]).to eq("/dashboard?q=work&range=30d")
+    expect(activity.at_css("svg[role='img']")["aria-label"]).to eq("7-day average of commits per day by project, last 30 days")
+    quarter = activity.css("[aria-label='Time range'] a").find { |a| a.text == "90 days" }
+    expect(quarter["href"]).to eq("/dashboard?q=work&range=90d")
     only = activity.at_css("[data-chart-row='builder/bare'] a[aria-label='Show only bare']")
     expect(only["href"]).to eq("/dashboard?projects=builder%2Fbare&q=work")
     expect(activity.css("p.os-note").map(&:text).grep(/The switches set what visitors see/).size).to eq(1)
