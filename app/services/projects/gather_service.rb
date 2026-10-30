@@ -12,7 +12,7 @@ module Projects
     # last_site_visit: when the latest counted; site_state: :counting,
     # :paused, :off or :no_website; slot_project: the project that holds
     # Free's slot instead of this one, nil when this one can count.
-    attr_reader :project, :commits, :last_commit, :site_visits, :last_site_visit, :site_state, :slot_project
+    attr_reader :project, :commits, :last_commit, :site_visits, :site_visitors, :last_site_visit, :site_state, :slot_project
 
     validates :repo, presence: true
 
@@ -24,7 +24,8 @@ module Projects
       commits = entries.commits.where(repo_name: repo.full_name)
       @commits = commits.where(occurred_at: (today - (DAYS - 1)).in_time_zone(user.zone)..).count
       @last_commit = commits.maximum(:occurred_at)&.in_time_zone(user.zone)&.to_date
-      @site_visits = repo.site_visit_days.where(day: (today - (DAYS - 1))..today).sum(:visits)
+      @site_visits, @site_visitors = repo.site_visit_days.where(day: (today - (DAYS - 1))..today)
+                                         .pick(Arel.sql("COALESCE(SUM(visits), 0)"), Arel.sql("COALESCE(SUM(visitors), 0)"))
       @last_site_visit = repo.site_visit_days.maximum(:updated_at)
       slot = SiteVisits::Slot.new(user)
       @slot_project = slot.instead_of(repo)

@@ -11,6 +11,14 @@ module SiteVisitsHelper
     end
   end
 
+  # The state beside the Site visitors switch: Shown or Hidden while its
+  # site counts, else what the Site visits row says (Off, Paused).
+  def site_visitors_state(repo, overview)
+    return site_visits_status(repo, overview).last unless overview.site_state == :counting
+
+    repo.picks?("site_visitors") ? "Shown" : "Hidden"
+  end
+
   # The line a builder pastes into their site's pages.
   def site_script_tag(repo)
     %(<script defer src="#{request.base_url}/v.js" data-project="#{repo.site_token}"></script>)

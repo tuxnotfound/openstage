@@ -10,15 +10,20 @@ RSpec.describe Projects::GatherService do
     described_class.new(repo: repo).tap(&:call!)
   end
 
-  it "counts the last 30 days' commits and site visits, and the last commit" do
+  it "counts the last 30 days' commits, site visits and site visitors, and the last commit" do
     create(:entry, user: user, repo_name: "me/app", source: "github", entry_type: "shipped", occurred_at: 2.days.ago)
     create(:entry, user: user, repo_name: "me/app", source: "github", entry_type: "shipped", occurred_at: 40.days.ago)
     repo.site_visit_days.create!(day: Date.new(2026, 10, 20), visits: 12, visitors: 5)
+    repo.site_visit_days.create!(day: Date.new(2026, 9, 27), visits: 3, visitors: 2)
     repo.site_visit_days.create!(day: Date.new(2026, 9, 1), visits: 99, visitors: 50)
 
     overview = gather
 
-    expect([ overview.commits, overview.site_visits, overview.last_commit ]).to eq([ 1, 12, Date.new(2026, 10, 24) ])
+    expect([ overview.commits, overview.site_visits, overview.site_visitors, overview.last_commit ]).to eq([ 1, 15, 7, Date.new(2026, 10, 24) ])
+  end
+
+  it "counts no site visits or visitors for a project with none" do
+    expect([ gather.site_visits, gather.site_visitors ]).to eq([ 0, 0 ])
   end
 
   it "says where site visits stand" do

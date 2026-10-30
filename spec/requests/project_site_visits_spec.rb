@@ -11,6 +11,12 @@ RSpec.describe "Setting up a project's site visits", type: :request do
     Nokogiri::HTML(response.body).at_css("#site-visits")
   end
 
+  # The Site visitors row, under the Site visits row and its setup.
+  def visitors_row
+    get "/projects/#{repo.id}/edit"
+    Nokogiri::HTML(response.body).at_xpath("//div[@id='site-visits']/following-sibling::div[contains(@class, 'os-row')][.//span[text()='Site visitors']]")
+  end
+
   it "picks Openstage's script and comes back with the line to paste" do
     patch "/projects/#{repo.id}/site_visits", params: { source: "script" }
 
@@ -43,6 +49,32 @@ RSpec.describe "Setting up a project's site visits", type: :request do
 
     patch "/projects/#{repo.id}/site_visits", params: { source: "off" }
     expect(repo.reload).to have_attributes(site_source: nil, site_token: "os_a")
+  end
+
+  it "lists site visitors under site visits, the last 30 days, with a switch of their own" do
+    travel_to Time.utc(2026, 10, 26, 14, 2)
+    repo.update!(site_source: "script", site_token: "os_a", site_first_visit_at: Time.current)
+    repo.site_visit_days.create!(day: Date.new(2026, 10, 20), visits: 1204, visitors: 800)
+    repo.site_visit_days.create!(day: Date.new(2026, 9, 1), visits: 40, visitors: 30)
+
+    expect(visitors_row.text.squish).to eq("Site visitors 800 A visitor is one browser on one day, counted by the same script. Shown")
+    expect(visitors_row.at_css("button[role='switch']").attributes.transform_values(&:value))
+      .to include("aria-checked" => "true", "aria-label" => "Show site visitors on shipnote's page")
+
+    patch "/projects/#{repo.id}/numbers", params: { number: "site_visitors", shown: "false", back: "project" }
+    expect(response).to redirect_to(edit_project_path(repo, anchor: "numbers"))
+    expect(repo.reload.hidden_numbers).to eq([ "site_visitors" ])
+    expect(visitors_row.text.squish).to end_with("Hidden")
+    expect(visitors_row.at_css("button[role='switch']")["aria-checked"]).to eq("false")
+    expect(view.at_css("button[role='switch']")["aria-checked"]).to eq("true")
+  end
+
+  it "says Off beside the site visitors' switch while nothing counts, and lets the builder hide them before the first visit" do
+    expect(visitors_row.text.squish).to eq("Site visitors – A visitor is one browser on one day, counted by the same script. Off")
+    expect(visitors_row.at_css("button[role='switch']")["aria-checked"]).to eq("true")
+
+    repo.update!(site_source: "script", site_token: "os_a")
+    expect(visitors_row.text.squish).to end_with("Shown")
   end
 
   it "asks for a website first" do
@@ -113,6 +145,8 @@ RSpec.describe "Setting up a project's site visits", type: :request do
       expect(state).to eq("Paused")
       expect(view.at_css("a[href='/pricing']").text).to eq("Go Pro")
       expect(view.at_css("button[role='switch']")).to be_nil
+      expect(visitors_row.text.squish).to eq("Site visitors 3 A visitor is one browser on one day, counted by the same script. Paused")
+      expect(visitors_row.at_css("button[role='switch']")).to be_nil
     end
   end
 

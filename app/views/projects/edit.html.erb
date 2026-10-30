@@ -64,6 +64,7 @@
       <% end %>
     </div>
     <%= render "projects/site_visits", repo: @repo, overview: overview %>
+    <%= render "projects/site_visitors", repo: @repo, overview: overview %>
 
     <p class="os-note mt-2">Values are the last 30 days. A number with nothing to show stays off the page whatever its switch says. Your dashboard's table has the same switches, except where flipping one would change nothing visitors see.</p>
   </section>
