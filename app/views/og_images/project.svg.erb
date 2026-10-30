@@ -1,7 +1,8 @@
 <%# One project's page, for a project without a picture of its own: its name,
     who builds it, its status, what it is, its commits, and its line across
     the bottom, where X's label over the bottom left corner covers only line.
-    A project past the palette has no colour: no mark, and its line in ink. %>
+    A project past the palette has no colour: no mark, and its line in ink.
+    One whose builder hides its commits shows neither its commits nor its line. %>
 <% card = @cards.first %>
 <% mark = share_card_color(card.rank) %>
 <% color = mark || ShareCardHelper::INK %>
@@ -31,10 +32,12 @@
 <% lines.each_with_index do |line, i| %>
   <%= share_card_text(line, x: 64, y: 256 + (i * 44), size: 34, fill: ShareCardHelper::INK_2) %>
 <% end %>
-<text x="64" y="<%= lines.any? ? 256 + (lines.size * 44) + 30 : 270 %>" font-family="<%= ShareCardHelper::SANS %>" font-size="28" fill="<%= ShareCardHelper::INK_3 %>"><tspan font-family="<%= ShareCardHelper::DISPLAY %>" font-weight="700" font-size="52" fill="<%= ShareCardHelper::INK %>"><%= card.commits %></tspan>  <%= card.commits == 1 ? "commit" : "commits" %> in 12 months<% if card.last_commit %> · last commit <%= progress_ago(card.last_commit) %><% end %></text>
+<% if card.commits_shown? %>
+  <text x="64" y="<%= lines.any? ? 256 + (lines.size * 44) + 30 : 270 %>" font-family="<%= ShareCardHelper::SANS %>" font-size="28" fill="<%= ShareCardHelper::INK_3 %>"><tspan font-family="<%= ShareCardHelper::DISPLAY %>" font-weight="700" font-size="52" fill="<%= ShareCardHelper::INK %>"><%= card.commits %></tspan>  <%= card.commits == 1 ? "commit" : "commits" %> in 12 months<% if card.last_commit %> · last commit <%= progress_ago(card.last_commit) %><% end %></text>
 
-<% line, area = progress_sparkline(card.weeks, width: 1200, height: 206) %>
-<g transform="translate(0 420)">
-  <path d="<%= area %>" fill="<%= color %>" fill-opacity="0.16"/>
-  <path d="<%= line %>" fill="none" stroke="<%= color %>" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
-</g>
+  <% line, area = progress_sparkline(card.weeks, width: 1200, height: 206) %>
+  <g transform="translate(0 420)">
+    <path d="<%= area %>" fill="<%= color %>" fill-opacity="0.16"/>
+    <path d="<%= line %>" fill="none" stroke="<%= color %>" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  </g>
+<% end %>

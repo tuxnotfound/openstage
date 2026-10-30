@@ -38,6 +38,24 @@ RSpec.describe "Share cards", type: :request do
       expect(drawn.last).to include("data:image/png;base64,")
     end
 
+    it "draws a project whose builder hides its commits with no share, no line and no count, and no caption for lines none draws" do
+      user.github_repos.find_by!(full_name: "builder/app").update!(hidden_numbers: [ "commits" ])
+
+      get "/og/builder"
+
+      expect(drawn.last).to include(">app<", ">side<", "Commits per week, last 12 months")
+      expect(drawn.last.scan(%(stroke-width="5")).size).to eq(1)
+      expect(drawn.last.scan(/y="196" width="[\d.]+" height="16" fill=/).size).to eq(1)
+      expect(drawn.last).to include(">1</text>")
+      expect(drawn.last).not_to include(">2</text>")
+
+      user.github_repos.find_by!(full_name: "builder/side").update!(hidden_numbers: [ "commits" ])
+      get "/og/builder"
+
+      expect(drawn.last).to include(">app<", ">side<")
+      expect(drawn.last).not_to include("Commits per week", %(stroke-width="5"), %(y="196"), ">1</text>")
+    end
+
     it "draws the builder's initials when GitHub gives no avatar" do
       stub_request(:get, %r{\Ahttps://avatars\.githubusercontent\.com/}).to_return(status: 404)
 
@@ -64,6 +82,16 @@ RSpec.describe "Share cards", type: :request do
       expect(response).to have_http_status(:ok)
       expect(card_size).to eq([ "image/png", 1200, 630 ])
       expect(drawn.last).to include(">app<", "Bea Builder", ">Live<", "A tool for builders.", "commits in 12 months")
+    end
+
+    it "draws a project whose builder hides its commits with its name and words, and neither its commits nor its line" do
+      user.github_repos.find_by!(full_name: "builder/app").update!(hidden_numbers: [ "commits" ])
+
+      get "/og/builder/app"
+
+      expect(response).to have_http_status(:ok)
+      expect(drawn.last).to include(">app<", "Bea Builder", ">Live<", "A tool for builders.")
+      expect(drawn.last).not_to include("commit", %(fill-opacity="0.16"), %(stroke-width="6"))
     end
 
     it "draws a project past the tenth with no mark, its name where the mark was, and its line in ink" do
@@ -98,6 +126,19 @@ RSpec.describe "Share cards", type: :request do
 
       expect(card_size).to eq([ "image/png", 1200, 630 ])
       expect(drawn.last).to include(post.title.split.first(3).join(" "), "#{repo}, commits per week")
+    end
+
+    it "draws what a post says, and not the line, while the builder of its project hides its commits" do
+      owner, repo = post.chart.split("/")
+      builder = create(:user, username: owner)
+      create(:github_repo, user: builder, full_name: "#{owner}/#{repo}", name: repo, hidden_numbers: [ "commits" ])
+      create(:entry, user: builder, repo_name: "#{owner}/#{repo}", occurred_at: 2.days.ago)
+
+      get "/og/blog/#{post.slug}"
+
+      expect(response).to have_http_status(:ok)
+      expect(drawn.last).to include(ERB::Util.html_escape(post.description.split.first(4).join(" ")))
+      expect(drawn.last).not_to include("commits per week", %(fill-opacity="0.16"))
     end
 
     it "draws what a post says when it is about no one project" do

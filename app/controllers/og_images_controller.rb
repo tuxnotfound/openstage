@@ -51,11 +51,12 @@ class OgImagesController < ApplicationController
     true
   end
 
-  # The project a post is about, as its page shows it; none once it is gone.
+  # The project a post is about, as its page shows it; none once it is gone,
+  # or while its builder hides its commits, which its line is drawn from.
   def chart_of(post)
     username, slug = post.chart.split("/", 2)
     focus = Progress::FocusService.new(user: User.active.find_by(username: username), slug: slug)
-    focus if focus.call
+    focus if focus.call && focus.card.commits_shown?
   end
 
   # The same drawing is turned into a PNG once a day at most.
