@@ -22,7 +22,7 @@ module Progress
     end
 
     # A project's count at each point: the sum of its days, or, averaged,
-    # each day's 7-day average, as the 30-day view draws commits.
+    # each day's 7-day average, as a window drawn by day draws commits.
     def per_point(key, repo, buckets, average: false)
       daily = daily(key, repo)
       span = Window::AVERAGE

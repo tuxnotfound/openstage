@@ -15,7 +15,8 @@ class AnalyticsViewSerializer < ApplicationSerializer
 
   # changes_note: what the changes compare with, while a toggle or a cell
   # has one (never for all time, which compares with nothing); quiet: what a
-  # panel with nothing in it says ("in the last 30 days", "yet").
+  # panel with nothing in it says ("in the last 30 days", "between 3 Oct and
+  # 28 Oct", "yet").
   def attributes
     @attributes ||= begin
       view = ChartFilterSerializer.new(@report, changes: true, table: ProjectsTableSerializer.new(@report, changes: true)).attributes
@@ -34,12 +35,12 @@ class AnalyticsViewSerializer < ApplicationSerializer
   end
 
   def changes_note
-    span = Progress::WindowLabels::SPANS[labels.range]
-    "Changes compare each value with the #{span} before." if span
+    before = labels.before
+    "Changes compare each value with #{before}." if before
   end
 
   def quiet
-    labels.range == "all" ? "yet" : "in the #{labels.span_words}"
+    labels.range == "all" ? "yet" : labels.word
   end
 
   def sources

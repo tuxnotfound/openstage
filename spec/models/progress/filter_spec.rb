@@ -17,6 +17,20 @@ RSpec.describe Progress::Filter do
     expect([ view.range, view.show, view.projects ]).to eq([ nil, %w[visits], [] ])
   end
 
+  it "reads days picked as the range, in order, and nothing that is not two real days" do
+    expect(filter(range: "2026-10-28..2026-10-03").range).to eq("2026-10-03..2026-10-28")
+    expect(filter(range: "2007-06-01..2008-02-01").range).to eq("2008-01-01..2008-02-01")
+    expect([ filter(range: "2026-02-30..2026-03-01"), filter(range: "2026-10-03"), filter(range: %w[30d]) ].map(&:range)).to eq([ nil, nil, nil ])
+  end
+
+  it "reads the window's form, from and to, as the same days, over any range" do
+    expect(filter(from: "2026-10-03", to: "2026-10-28", range: "90d").range).to eq("2026-10-03..2026-10-28")
+    expect(filter(from: "2026-10-28", to: "2026-10-03").range).to eq("2026-10-03..2026-10-28")
+    expect(filter(from: "2026-10-03", to: "", range: "90d").range).to eq("90d")
+    expect(filter(from: "soon", to: "2026-10-03").range).to be_nil
+    expect(described_class.from_analytics(ActionController::Parameters.new(from: "2026-10-03", to: "2026-10-04")).range).to eq("2026-10-03..2026-10-04")
+  end
+
   it "still reads the old links: repo[] and repo= for the projects, and a single show value" do
     expect(filter(repo: %w[me/app me/lib]).projects).to eq(%w[me/app me/lib])
     expect(filter(repo: "me/app").projects).to eq(%w[me/app])

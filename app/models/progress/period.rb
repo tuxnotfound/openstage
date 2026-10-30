@@ -39,6 +39,11 @@ module Progress
       [ last, today ].min
     end
 
+    # A calendar period counts each day as it is; only a Window averages.
+    def average?
+      false
+    end
+
     def previous
       self.class.new(range: range, offset: offset - 1, today: today, first_activity: first_activity) unless range == "all"
     end

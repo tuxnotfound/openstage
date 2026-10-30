@@ -79,12 +79,14 @@ module ProgressChart
       buckets.map { |bucket| column(bucket, buckets.size) }
     end
 
-    # The first point, the middle one and today, under the chart.
+    # The first point, the middle one and the last, under the chart: today
+    # while the window runs.
     def axis
       buckets = window.buckets
-      return [ window.labels.axis(buckets.first), "Today" ] if buckets.size < 3
+      last = window.running? ? "Today" : window.labels.axis(buckets.last)
+      return [ window.labels.axis(buckets.first), last ] if buckets.size < 3
 
-      [ window.labels.axis(buckets.first), window.labels.axis(buckets[buckets.size / 2]), "Today" ]
+      [ window.labels.axis(buckets.first), window.labels.axis(buckets[buckets.size / 2]), last ]
     end
 
     # A number's highest value in the window, over every project: its 100%.

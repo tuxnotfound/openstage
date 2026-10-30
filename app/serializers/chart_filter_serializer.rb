@@ -16,11 +16,12 @@ class ChartFilterSerializer < ApplicationSerializer
   end
 
   # selected: the rows in view, none for all of them; drawn: the numbers
-  # drawn, in line order; default_show: the page's own, which its URL leaves out.
+  # drawn, in line order; default_show: the page's own, which its URL leaves
+  # out; calendar: what the window's calendar offers (calendar).
   def attributes
     labels = @filter.totals_window.labels
     {
-      range: labels.range, words: labels.span_words, selected: @filter.selected_keys,
+      range: labels.range, words: labels.span_words, calendar: calendar(labels), selected: @filter.selected_keys,
       numbers: @filter.totals.map { |total| number_of(total) }, drawn: @filter.drawn.map(&:key), default_show: @filter.default_drawn.map(&:key),
       chart: CompareChartSerializer.new(@filter.chart).attributes,
       table: @table&.attributes
@@ -28,6 +29,17 @@ class ChartFilterSerializer < ApplicationSerializer
   end
 
   private
+
+  # today, in the builder's zone, and earliest, the first day anything here
+  # counted (nil with none), bound the days it offers; picked: the days
+  # picked on screen, with their name for the window's pill, nil for the
+  # other windows.
+  def calendar(labels)
+    window = @filter.totals_window
+    picked = window.picked
+    { today: window.today.iso8601, earliest: @filter.earliest&.iso8601,
+      picked: (picked && { from: picked.from.iso8601, to: picked.to.iso8601, name: labels.name }) }
+  end
 
   # group: where it happens, for the toggles grouped under it; value: "–"
   # when no row in view shows it; split: the part of each row in view with

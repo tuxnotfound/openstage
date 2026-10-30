@@ -22,7 +22,7 @@ module Analytics
     # the pages' fixed order; drawing: the DrawService of the totals and the chart.
     attr_reader :totals_window, :rows, :counts, :drawing, :sources, :countries, :links, :badges
 
-    delegate :totals, :drawn, :default_drawn, :window, :chart, to: :drawing
+    delegate :totals, :drawn, :default_drawn, :window, :chart, :earliest, to: :drawing
 
     validates :user, presence: true
 
@@ -152,10 +152,10 @@ module Analytics
       selected.find { |row| row.key == key }
     end
 
-    # The window's days in the builder's zone; every day before today for all time.
+    # The window's days in the builder's zone; every day up to today for all time.
     def times
       first = totals_window.span&.first
-      (first&.in_time_zone(user.zone))..(today.in_time_zone(user.zone).end_of_day)
+      (first&.in_time_zone(user.zone))..(totals_window.last.in_time_zone(user.zone).end_of_day)
     end
 
     def run(service)

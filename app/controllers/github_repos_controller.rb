@@ -47,7 +47,7 @@ class GithubReposController < ApplicationController
         next redirect_to(edit_project_path(@repo)) if params[:back] == "project"
 
         redirect_to dashboard_path(**params.permit(:show, :projects).to_h.symbolize_keys.compact_blank,
-                                   range: params[:range].presence_in(Progress::Window::RANGES), anchor: "activity")
+                                   range: Progress::Filter.new(range: params[:range]).range, anchor: "activity")
       end
     end
   end

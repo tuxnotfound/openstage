@@ -38,9 +38,10 @@ module ProgressChart
       section.pick.kept
     end
 
-    # Only the page's 30-day window averages; a calendar week counts each day.
+    # Only a window drawn by day averages (Window#average?); a calendar week
+    # counts each day.
     def average?
-      period.range == "30d"
+      period.average?
     end
 
     # The projects in view with commits in the window, busiest of all time

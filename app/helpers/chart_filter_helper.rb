@@ -47,6 +47,13 @@ module ChartFilterHelper
     view[:chart][:indexed] ? view[:drawn].index(key).to_i : 0
   end
 
+  # A link's address as a GET form asks for it: its path, and its params as
+  # [name, value] pairs for hidden fields, since the form sends only its own.
+  def chart_form_target(url)
+    path, query = url.split("#").first.split("?", 2)
+    [ path, URI.decode_www_form(query.to_s) ]
+  end
+
   # The colour of a change's arrow; only the arrow wears it.
   def chart_tone(up)
     { true => "text-up", false => "text-down" }[up]

@@ -4,7 +4,7 @@
     page's script. chart: the dashboard's Progress::ChartService. %>
 <% serializer = ProgressViewSerializer.new(chart) %>
 <% view = serializer.attributes %>
-<% kept = request.query_parameters.except("page", *ProgressHelper::PROGRESS_PARAMS.map(&:to_s)) %>
+<% kept = request.query_parameters.except("page", *ProgressHelper::PROGRESS_PARAMS.map(&:to_s), *Progress::Filter::DAYS_PARAMS) %>
 <% path_for = ->(changes) { dashboard_path(kept.merge(chart_params(view, default_range: Progress::Window::DEFAULT, **changes)).compact) } %>
 <section class="os-panel" aria-labelledby="your-activity">
   <%= react_island("progress", { initial: serializer.as_json, endpoint: api_progress_path(current_user.username, dashboard: 1),

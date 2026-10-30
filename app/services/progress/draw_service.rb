@@ -32,6 +32,14 @@ module Progress
 
     validates :counts, :totals_window, presence: true
 
+    # The first day a row counted a number it shows, or the window's first
+    # activity when that came earlier; nil with neither. The calendar offers
+    # no day before it, and a number a row hides dates nothing.
+    def earliest
+      firsts = Numbers::ALL.filter_map { |number| counts.first_day(number.key, Array(rows).select { |row| row.shows?(number.key) }.map(&:key)) }
+      [ totals_window.first_activity, *firsts ].compact.min
+    end
+
     # A row's cells under the table's numbers (columns); manage: the
     # builder's own table, where they pick what visitors see.
     def cells(row, columns, manage: false)

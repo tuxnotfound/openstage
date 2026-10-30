@@ -1,12 +1,14 @@
 module Progress
-  # The one set of params every chart page reads: the window (range), the
-  # numbers drawn (show: their keys, comma-separated, in line order) and the
-  # projects in view (projects: repos' full names, comma-separated, and on
-  # analytics Analytics::CountService::PAGE for the builder's own page; none
-  # for all of them). A page leaves its defaults out of its URL. Old links
-  # keep working: repo[] and repo= name the projects where a page reads them,
-  # analytics' pages[] its pages and its metric the one number it drew, and a
-  # single show value is a list of one.
+  # The one set of params every chart page reads: the window (range: one of
+  # Window::RANGES, or days picked as "2026-10-03..2026-10-28"), the numbers
+  # drawn (show: their keys, comma-separated, in line order) and the projects
+  # in view (projects: repos' full names, comma-separated, and on analytics
+  # Analytics::CountService::PAGE for the builder's own page; none for all of
+  # them). A page leaves its defaults out of its URL. The window's form
+  # without the script sends its days as from and to, which name the same
+  # window. Old links keep working: repo[] and repo= name the projects where
+  # a page reads them, analytics' pages[] its pages and its metric the one
+  # number it drew, and a single show value is a list of one.
   class Filter
     # More projects than any page shows; a longer list is not a person. Both
     # chart APIs read their projects here, so neither takes more.
@@ -14,20 +16,29 @@ module Progress
     # Analytics' old name for a number, where it differs from the number's key.
     OLD_METRICS = { "site" => "visits" }.freeze
 
-    # range: nil for the page's default; show: known keys, in line order.
+    # The params the window's form sends in place of range.
+    DAYS_PARAMS = %w[from to].freeze
+
+    # range: nil for the page's default, else a known range or days picked,
+    # in order (Days#to_s); show: known keys, in line order.
     attr_reader :range, :show, :projects
 
     # repo: whether the page reads the old repo params (the dashboard's repo
     # filters its entries instead).
     def self.from(params, repo: true)
-      new(range: params[:range], show: params[:show], projects: params[:projects].presence || (params[:repo] if repo))
+      new(range: range_in(params), show: params[:show], projects: params[:projects].presence || (params[:repo] if repo))
     end
 
     # Analytics, whose old links named its pages pages[] and the one number
     # it drew metric.
     def self.from_analytics(params)
       metric = params[:metric].to_s
-      new(range: params[:range], show: params[:show].presence || OLD_METRICS.fetch(metric, metric), projects: params[:projects].presence || params[:pages])
+      new(range: range_in(params), show: params[:show].presence || OLD_METRICS.fetch(metric, metric), projects: params[:projects].presence || params[:pages])
+    end
+
+    # The days the form sent, when they are days; else the range param.
+    def self.range_in(params)
+      Days.of(params[:from], params[:to])&.to_s || params[:range]
     end
 
     # The projects a list keeps in view, by key; none for all of them. A list
@@ -40,7 +51,7 @@ module Progress
     end
 
     def initialize(range: nil, show: nil, projects: nil)
-      @range = range.to_s.presence_in(Window::RANGES)
+      @range = range.to_s.presence_in(Window::RANGES) || Days.parse(range)&.to_s
       @show = items(show).select { |key| Numbers.find(key) }.uniq
       @projects = items(projects).uniq.first(MAX_PROJECTS)
     end

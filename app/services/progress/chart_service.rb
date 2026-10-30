@@ -21,7 +21,7 @@ module Progress
     # columns, its numbers; drawing: the DrawService of the totals and the chart.
     attr_reader :section, :rows, :off_page, :columns, :counts, :drawing
 
-    delegate :totals, :drawn, :default_drawn, :window, :chart, to: :drawing
+    delegate :totals, :drawn, :default_drawn, :window, :chart, :earliest, to: :drawing
 
     validates :user, presence: true
 
@@ -73,9 +73,9 @@ module Progress
       TallyService::Counting.new(from: count_from, repos: (Array(repos) if lone))
     end
 
-    # The window before the range, and the six days before it that the
-    # 30-day view's first average reads; every day for all time. Known before
-    # the section is, as no window's span hangs on where the work began.
+    # The window before the range, and the six days before it that a window
+    # drawn by day reads for its first average; every day for all time. Known
+    # before the section is, as no window's span hangs on where the work began.
     def count_from
       return @count_from if defined?(@count_from)
 
@@ -128,7 +128,7 @@ module Progress
     # Each number its projects show visitors, the numbers drawn and the chart.
     def draw
       service = DrawService.new(rows: rows, counts: counts, totals_window: totals_window, show: show, default_show: DEFAULT_SHOW,
-                                average: totals_window.range == "30d", lone: lone, per: "project")
+                                average: totals_window.average?, lone: lone, per: "project")
       @drawing = service if run(service)
     end
 
