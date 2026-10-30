@@ -8,11 +8,11 @@ RSpec.describe "Dashboard search and paging", type: :request do
   before { sign_in_as(user) }
 
   it "pages instead of dumping every entry on the page" do
-    create_list(:entry, DashboardController::PER_PAGE + 5, user: user)
+    create_list(:entry, EntriesSection::PER_PAGE + 5, user: user)
 
     get "/dashboard"
     expect(response.body).to include("Load more")
-    expect(response.body.scan(/id="entry-\d+"/).size).to eq(DashboardController::PER_PAGE)
+    expect(response.body.scan(/id="entry-\d+"/).size).to eq(EntriesSection::PER_PAGE)
   end
 
   it "does not offer Load more when everything already fits" do
@@ -71,7 +71,7 @@ RSpec.describe "Dashboard search and paging", type: :request do
     end
 
     it "keeps the repo on the Load more link" do
-      create_list(:entry, DashboardController::PER_PAGE, user: user, repo_name: "builder/openstage")
+      create_list(:entry, EntriesSection::PER_PAGE, user: user, repo_name: "builder/openstage")
 
       get "/dashboard", params: { repo: "builder/openstage" }
 
@@ -111,7 +111,7 @@ RSpec.describe "Dashboard search and paging", type: :request do
   end
 
   it "keeps the filters on the Load more link" do
-    create_list(:entry, DashboardController::PER_PAGE + 2, user: user, title: "findable thing")
+    create_list(:entry, EntriesSection::PER_PAGE + 2, user: user, title: "findable thing")
 
     get "/dashboard", params: { q: "findable" }
 
@@ -134,12 +134,76 @@ RSpec.describe "Dashboard search and paging", type: :request do
     end
 
     it "still appends the next page for Load more" do
-      create_list(:entry, DashboardController::PER_PAGE + 2, user: user)
+      create_list(:entry, EntriesSection::PER_PAGE + 2, user: user)
+      get "/dashboard"
+      more = Nokogiri::HTML(response.body).at_css("#entries-more-timeline a")["href"]
 
-      get "/dashboard", params: { page: 2 }, headers: turbo_accept
+      get more, headers: turbo_accept
 
       expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
-      expect(response.body).to include('turbo-stream action="append" target="dashboard-entries"')
+      expect(response.body).to include('turbo-stream action="append" target="entries-list-timeline"')
+      expect(response.body.scan(/id="entry-\d+"/).size).to eq(2)
+      expect(response.body).to include('turbo-stream action="remove" target="entries-more-timeline"')
+    end
+
+    # Rows hidden in place above the last one shown used to shift a page
+    # number's next page past entries never shown.
+    it "starts the next page past the last row shown, whatever was hidden above it" do
+      oldest = create(:entry, user: user, title: "The oldest", occurred_at: 2.years.ago)
+      create_list(:entry, EntriesSection::PER_PAGE, user: user, occurred_at: 1.day.ago)
+      get "/dashboard"
+      more = Nokogiri::HTML(response.body).at_css("#entries-more-timeline a")["href"]
+
+      user.entries.where.not(id: oldest.id).first.update!(hidden: true)
+      get more, headers: turbo_accept
+
+      expect(response.body).to include("The oldest")
+    end
+
+    # The filters redraw the timeline's frame alone: the rest of the page is
+    # never rendered for it, and the frame's links leave it.
+    it "renders only the timeline's frame for a filter" do
+      create(:entry, user: user, title: "the needle")
+      create(:entry, user: user, title: "a haystack")
+
+      get "/dashboard", params: { q: "needle", tab: "timeline" }, headers: { "Turbo-Frame" => "entries-timeline" }
+
+      page = Nokogiri::HTML(response.body)
+      expect(page.at_css("turbo-frame#entries-timeline[target='_top']").text).to include("the needle", "1 entry of 2")
+      expect(response.body).not_to include("a haystack", "This week", "entries-tabs")
+    end
+  end
+
+  # Without JavaScript the tabs are links and Load more opens the next page.
+  describe "without JavaScript" do
+    it "opens the tab a link names, with its list" do
+      create(:entry, user: user, title: "Out of sight", hidden: true)
+
+      get "/dashboard", params: { tab: "hidden" }
+
+      page = Nokogiri::HTML(response.body)
+      expect(page.at_css("[data-tabs-panel='hidden']")["class"]).not_to include("hidden")
+      expect(page.at_css("[data-tabs-panel='timeline']")["class"]).to include("hidden")
+      expect(page.css("#entries-tabs a").map { |tab| [ tab.text, tab["href"] ] })
+        .to eq([ [ "Entries (0)", "/dashboard?tab=timeline#entries" ], [ "Hidden (1)", "/dashboard?tab=hidden#entries" ] ])
+      expect(page.at_css("#entries-hidden").text).to include("Out of sight", "Restore")
+    end
+
+    it "opens the timeline when the tab asked for holds nothing" do
+      get "/dashboard", params: { tab: "hidden" }
+
+      expect(Nokogiri::HTML(response.body).at_css("[data-tabs-panel='timeline']")["class"]).not_to include("hidden")
+    end
+
+    it "opens the page past the last row shown for Load more" do
+      create(:entry, user: user, title: "The oldest", occurred_at: 2.years.ago)
+      create_list(:entry, EntriesSection::PER_PAGE, user: user, occurred_at: 1.day.ago)
+      get "/dashboard"
+
+      get Nokogiri::HTML(response.body).at_css("#entries-more-timeline a")["href"]
+
+      expect(response.body.scan(/id="entry-\d+"/).size).to eq(1)
+      expect(response.body).to include("The oldest")
     end
   end
 end

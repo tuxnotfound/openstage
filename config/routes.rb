@@ -63,7 +63,7 @@ Rails.application.routes.draw do
   resources :github_repos, only: [ :index, :update ]
 
   # Entries
-  resources :entries, only: [ :create, :edit, :update, :destroy ] do
+  resources :entries, only: [ :create, :show, :edit, :update, :destroy ] do
     # The progress section's tag panel, for any entry type.
     resource :project, only: :update, module: :entries
   end

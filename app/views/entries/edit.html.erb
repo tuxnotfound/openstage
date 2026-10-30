@@ -1,6 +1,8 @@
 <%= turbo_frame_tag dom_id(@entry) do %>
   <div class="os-card my-2">
     <%= form_with model: @entry, url: entry_path(@entry), method: :patch, class: "os-stack gap-2.5" do |f| %>
+      <%# The tab and filters, which the page fills in on submit, so the lists Save redraws stay as they were. %>
+      <% entry_action_params("timeline").each do |name, value| %><%= hidden_field_tag name, value, id: nil %><% end %>
       <%= render "entries/type_picker", f: f, current: @entry.entry_type, id_prefix: "edit_entry_type_#{@entry.id}" %>
       <%= f.text_field :title, placeholder: "Title", aria: { label: "Title" }, class: "os-field" %>
       <%= f.text_area :body, placeholder: "More detail (optional)", rows: 2, aria: { label: "More detail (optional)" }, class: "os-area min-h-20" %>
@@ -15,7 +17,7 @@
       </datalist>
       <div class="flex items-center gap-2">
         <%= f.submit "Save", class: "os-btn sm" %>
-        <%= link_to "Cancel", dashboard_path, class: "os-btn2 sm", data: { turbo_frame: dom_id(@entry) } %>
+        <%= link_to "Cancel", entry_path(@entry), class: "os-btn2 sm", data: { turbo_frame: dom_id(@entry) } %>
       </div>
     <% end %>
   </div>

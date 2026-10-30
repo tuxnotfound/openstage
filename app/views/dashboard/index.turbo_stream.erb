@@ -1,15 +1,12 @@
-<%# "Load more" appends onto the existing list rather than re-rendering the
+<%# "Load more" appends onto its tab's list rather than re-rendering the
     whole dashboard, so your scroll position survives. %>
-<%= turbo_stream.append "dashboard-entries" do %>
-  <% @entries.each do |entry| %>
-    <%= render "dashboard/entry_row", entry: entry %>
-  <% end %>
+<% tab = @entries_page %>
+<%= turbo_stream.append "entries-list-#{tab.key}" do %>
+  <%= render partial: DashboardHelper::ENTRY_ROWS[tab.key], collection: tab.entries, as: :entry, locals: { tab: tab.key } %>
 <% end %>
 
-<% if @entries.next_page %>
-  <%= turbo_stream.replace "dashboard-load-more" do %>
-    <%= render "dashboard/load_more" %>
-  <% end %>
+<% if tab.more? %>
+  <%= turbo_stream.replace "entries-more-#{tab.key}", partial: "dashboard/load_more", locals: { tab: tab } %>
 <% else %>
-  <%= turbo_stream.remove "dashboard-load-more" %>
+  <%= turbo_stream.remove "entries-more-#{tab.key}" %>
 <% end %>

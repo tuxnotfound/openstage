@@ -1,44 +1,38 @@
 class DashboardController < ApplicationController
+  include EntriesSection
+
   before_action :require_authentication
 
-  PER_PAGE = 25
   # The activity chart opens on the last 90 days, as the drafts drew it.
   ACTIVITY_RANGE = "90d".freeze
 
+  # The entries are paginated and searchable (EntriesSection). They used to
+  # load every one (178 for the owner), so acting on an old one meant
+  # scrolling the whole history.
   def index
-    # Paginated and searchable. This used to load every entry (178 for the
-    # owner), so acting on an old one meant scrolling the whole history.
-    scope = filtered_entries
-    @entries        = scope.page(params[:page]).per(PER_PAGE)
-    @filtered_count = scope.count
-
     respond_to do |format|
-      format.html { load_page }
-      # Only "Load more" (which always carries page) wants the append stream.
-      # Every Turbo form that redirects here (Sync now, entry create/edit/delete)
-      # also arrives accepting turbo_stream, because fetch keeps the Accept header
+      format.html do
+        # A filter redraws one list in its frame, without the rest of the page.
+        next render(partial: "dashboard/entry_list", locals: { tab: entries_tab(entries_frame) }) if entries_frame
+
+        load_page
+      end
+      # Only "Load more" (which always carries before) wants the append stream.
+      # Every Turbo form that redirects here (Sync now, entry create) also
+      # arrives accepting turbo_stream, because fetch keeps the Accept header
       # across the redirect. Serving them the stream skipped the layout, so the
       # flash only appeared on the next full load and page 1 was appended again.
-      format.turbo_stream if params[:page].present?
+      format.turbo_stream { @entries_page = entries_tab(entries_tab_key, after: entries_cursor) } if params[:before].present?
     end
   end
 
   private
 
-  # Search, type and repo narrow the list. Only repos with entries are offered,
-  # and an unknown type or repo is ignored rather than emptying the page.
-  def filtered_entries
-    @query        = params[:q].to_s.strip
-    @type_filter  = params[:type].presence_in(Entry.entry_types.keys)
-    @repo_options = current_user.entries.listed.repo_names
-    @repo_filter  = params[:repo].presence_in(@repo_options)
-    @filtering    = @query.present? || @type_filter.present? || @repo_filter.present?
+  # The tab whose list a frame request asks for, as its frame is named.
+  def entries_frame
+    return unless turbo_frame_request?
 
-    scope = current_user.entries.listed.chronological
-    scope = scope.where(entry_type: @type_filter) if @type_filter
-    scope = scope.where(repo_name: @repo_filter) if @repo_filter
-    scope = scope.search(@query) if @query.present?
-    scope
+    turbo_frame_request_id.to_s.delete_prefix("entries-").presence_in(EntriesSection::TABS)
   end
 
   def load_page
@@ -51,10 +45,9 @@ class DashboardController < ApplicationController
     @show_pro_activated = params[:pro] == "activated"
   end
 
+  # Without JavaScript, Load more opens the tab it came from past its last row.
   def load_entry_tabs
-    @timeline_count  = current_user.entries.listed.count
-    @hidden_entries  = current_user.entries.where(hidden: true).chronological
-    @private_entries = current_user.entries.listed.where(visibility: :private_entry).chronological
+    @entry_tabs = EntriesSection::TABS.map { |key| entries_tab(key, after: (entries_cursor if key == entries_tab_key)) }
   end
 
   def load_sync
