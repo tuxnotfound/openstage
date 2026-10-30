@@ -51,7 +51,7 @@ Rails.application.routes.draw do
   post "/v", to: "site_visits#create", as: :site_visits
 
   # A project as its builder sees it: its words, website and picture, and
-  # where its site visits come from.
+  # what counts its site visits.
   resources :projects, only: [ :edit, :update ] do
     resource :site_visits, only: :update, module: :projects
     # The numbers its visitors see, switched in the dashboard's table and on

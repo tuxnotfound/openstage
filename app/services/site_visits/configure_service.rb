@@ -1,5 +1,5 @@
 module SiteVisits
-  # Where a project's site visits come from, as its builder sets it:
+  # What counts a project's site visits, as its builder sets it:
   # Openstage's script or nowhere ("off"). The first time it becomes the
   # script, its setup time is kept for good. Free counts the one project set
   # up first (Slot): setting up any other is refused, with Pro offered.

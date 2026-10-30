@@ -96,6 +96,7 @@ RSpec.describe "Settings", type: :request do
 
         section = Nokogiri::HTML(response.body).at_css("section[aria-labelledby='site-analytics']").text.squish
         expect(section).to include("Counting shipnote.app", "Planned: Vercel Web Analytics, Plausible")
+        expect(section).to include("Each project picks one counter on its own page, so no visit counts twice.")
       end
 
       it "counts on Free only the project set up first, and says so" do

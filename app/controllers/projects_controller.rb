@@ -1,5 +1,5 @@
 # A project as its builder sees it: whether their page shows it, the numbers
-# its page shows and where its site visits come from, and its words, website
+# its page shows and what counts its site visits, and its words, website
 # and picture. The builder's own words win over GitHub's; a field left blank
 # goes back to what GitHub says.
 class ProjectsController < ApplicationController

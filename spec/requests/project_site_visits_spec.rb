@@ -17,6 +17,15 @@ RSpec.describe "Setting up a project's site visits", type: :request do
     Nokogiri::HTML(response.body).at_xpath("//div[@id='site-visits']/following-sibling::div[contains(@class, 'os-row')][.//span[text()='Site visitors']]")
   end
 
+  it "offers to set up what counts the site's visits, and to edit the setup once a counter is picked" do
+    expect(view.at_css("[data-toggle-target='openIcon']").text).to eq("Set up")
+    expect(view.at_css("#site-source .os-label").text).to eq("What counts shipnote.app's visits")
+    expect(view.css("#site-source [role='group'][aria-label='Counter'] button").map(&:text)).to eq([ "Openstage's script", "Off" ])
+
+    repo.update!(site_source: "script", site_token: "os_a")
+    expect(view.at_css("[data-toggle-target='openIcon']").text).to eq("Edit setup")
+  end
+
   it "picks Openstage's script and comes back with the line to paste" do
     patch "/projects/#{repo.id}/site_visits", params: { source: "script" }
 
@@ -111,7 +120,7 @@ RSpec.describe "Setting up a project's site visits", type: :request do
       expect(view.text).not_to include("Count this one instead")
     end
 
-    it "says at setup, before the sources, that Free counts one project for life, with Pro a link away" do
+    it "says at setup, before the counters, that Free counts one project for life, with Pro a link away" do
       other.destroy!
       setup = view.at_css("#site-source")
       notice = setup.at_css("[data-free-notice]")
@@ -119,7 +128,7 @@ RSpec.describe "Setting up a project's site visits", type: :request do
       expect(notice.text.squish).to eq("Free counts site visits for one project only, the first you set up. Go Pro to count them for every project.")
       expect(notice.at_css("a")["href"]).to eq("/pricing")
       expect(setup.element_children.first).to eq(notice)
-      expect(setup.at_css("[role='group'][aria-label='Source']")).to be_present
+      expect(setup.at_css("[role='group'][aria-label='Counter']")).to be_present
 
       repo.update!(homepage: nil)
       expect(view.at_css("#site-source [data-free-notice]")).to be_present
