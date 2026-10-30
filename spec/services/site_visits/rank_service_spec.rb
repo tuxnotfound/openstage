@@ -33,16 +33,20 @@ RSpec.describe SiteVisits::RankService do
     expect(rank("source", top: 2).ranked).to eq([ [ "Twitter / X", 4 ], [ "indiehackers.com", 3 ] ])
   end
 
-  it "gives the cap's Other row apart from the top, for every kind" do
+  it "gives what the list leaves out apart, for every kind: the values past the top and the cap's Other row" do
     count(app, "source", "github.com", 2)
+    count(lib, "source", "dev.to", 1)
     count(app, "source", SiteVisitCount::OTHER, 7)
     count(app, "page", "/", 9)
+    count(app, "page", "/a", 3)
     count(lib, "page", SiteVisitCount::OTHER, 4)
     count(app, "page", SiteVisitCount::OTHER, 1, on: day + 1)
 
-    expect([ rank("source").ranked, rank("source").other ]).to eq([ [ [ "GitHub", 2 ] ], 7 ])
-    expect([ rank("page").ranked, rank("page").other ]).to eq([ [ [ "/", 9 ] ], 5 ])
-    expect(rank("ref").other).to eq(0)
+    expect([ rank("source").ranked, rank("source").other ]).to eq([ [ [ "GitHub", 2 ], [ "Dev.to", 1 ] ], 7 ])
+    expect([ rank("source", top: 1).ranked, rank("source", top: 1).other ]).to eq([ [ [ "GitHub", 2 ] ], 8 ])
+    expect([ rank("page").ranked, rank("page").other ]).to eq([ [ [ "/", 9 ], [ "/a", 3 ] ], 5 ])
+    expect([ rank("page", top: 1).ranked, rank("page", top: 1).other ]).to eq([ [ [ "/", 9 ] ], 8 ])
+    expect([ rank("ref").ranked, rank("ref").other ]).to eq([ [], 0 ])
   end
 
   it "keeps the busiest pages, ref tags and countries, the busiest first, then by value" do
@@ -54,7 +58,7 @@ RSpec.describe SiteVisits::RankService do
     count(lib, "country", "PT", 1)
     count(lib, "country", "US", 2)
 
-    expect(rank("page", top: 3).ranked).to eq([ [ "/pricing", 9 ], [ "/blog", 5 ], [ "/", 4 ] ])
+    expect([ rank("page", top: 3).ranked, rank("page", top: 3).other ]).to eq([ [ [ "/pricing", 9 ], [ "/blog", 5 ], [ "/", 4 ] ], 4 ])
     expect(rank("ref").ranked).to eq([ [ "hn", 3 ], [ "newsletter", 1 ] ])
     expect(rank("country").ranked).to eq([ [ "PT", 3 ], [ "US", 2 ] ])
   end

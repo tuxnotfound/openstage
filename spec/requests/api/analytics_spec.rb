@@ -42,7 +42,7 @@ RSpec.describe "Api::Analytics", type: :request do
     expect(response.headers["Cache-Control"]).to include("private")
   end
 
-  it "sends both sets of panels in one view, whichever the page's URL names, each its busiest only" do
+  it "sends both sets of panels in one view, whichever the page's URL names, each its busiest, then Other" do
     repo = create(:github_repo, user: user, name: "app", full_name: "builder/app", site_source: "script", site_set_up_at: 3.days.ago)
     7.times { |i| repo.site_visit_counts.create!(kind: "page", value: "/p#{i}", count: 10 - i, day: 1.day.ago.to_date) }
     repo.site_visit_counts.create!(kind: "page", value: SiteVisitCount::OTHER, count: 2, day: 1.day.ago.to_date)
@@ -56,7 +56,7 @@ RSpec.describe "Api::Analytics", type: :request do
     expect(json["sources"]).to eq([ { "label" => "Hacker News", "count" => "1", "width" => 100 } ])
     expect(json["websites"]).to eq("sources" => [ { "label" => "Direct", "count" => "4", "width" => 50 }, { "label" => "Other", "count" => "8", "width" => 100 } ],
                                    "refs" => [], "countries" => [],
-                                   "pages" => (0..5).map { |i| { "label" => "/p#{i}", "count" => (10 - i).to_s } } + [ { "label" => "Other", "count" => "2" } ],
+                                   "pages" => (0..5).map { |i| { "label" => "/p#{i}", "count" => (10 - i).to_s } } + [ { "label" => "Other", "count" => "6" } ],
                                    "empty" => nil, "setup" => nil)
     get "/api/analytics"
     expect(json["websites"]["pages"].size).to eq(7)

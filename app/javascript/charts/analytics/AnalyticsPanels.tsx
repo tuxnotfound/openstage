@@ -31,7 +31,7 @@ export default function AnalyticsPanels({ view, panels, flip }: Props) {
 }
 
 // As analytics/websites: where visitors came from and their countries, their
-// ref tags and the busiest pages, each with the cap's Other row last; with
+// ref tags and the busiest pages, each with Other last, what it leaves out; with
 // none of them, one line says why.
 function WebsitePanels({ site, words, quiet }: { site: WebsitesView; words: string; quiet: string }) {
   if (site.empty) {

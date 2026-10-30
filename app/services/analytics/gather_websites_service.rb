@@ -3,20 +3,18 @@ module Analytics
   # over some days, as Openstage's script counted them there
   # (SiteVisits::RankService): where visitors came from, their ref tags and
   # their countries, by visitors, and the busiest pages, by page views; as
-  # many of each as Openstage's own panels show, with the cap's Other row
-  # last. With none of them it says why: none of the projects counts site
-  # visits (:off), or nothing came in those days (:quiet).
+  # many of each as Openstage's own panels show, then Other, what the list
+  # leaves out. With none of them it says why: none of the projects counts
+  # site visits (:off), or nothing came in those days (:quiet).
   class GatherWebsitesService < ApplicationService
     TOPS = { "source" => ReportService::TOP, "ref" => ReportService::TOP, "country" => ReportService::TOP_COUNTRIES, "page" => ReportService::TOP }.freeze
-    # Only the cap's row: a host the rules do not name shows as itself.
-    OTHER = "Other".freeze
 
     # repos: the projects, as GithubRepos, their ids or a relation of them;
     # days: a range of days in the builder's zone, nil for every day.
     attr_accessor :user, :repos, :days
     # ranks: [[label, count]] by kind (SiteVisitCount::KINDS), the busiest
-    # first, then Other; state: :shown while any kind has one, else :quiet
-    # or :off.
+    # first, then Other while the list leaves anything out; state: :shown
+    # while any kind has one, else :quiet or :off.
     attr_reader :ranks, :state
 
     validates :user, presence: true
@@ -35,7 +33,7 @@ module Analytics
       service = SiteVisits::RankService.new(repos: repos, days: days, kind: kind, top: top)
       return [] unless run(service)
 
-      service.other.positive? ? service.ranked + [ [ OTHER, service.other ] ] : service.ranked
+      service.other.positive? ? service.ranked + [ [ ReportService::OTHER, service.other ] ] : service.ranked
     end
 
     # Whether one of the projects counts site visits now; read only when the

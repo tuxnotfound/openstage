@@ -120,6 +120,16 @@ RSpec.describe Analytics::ReportService do
     expect(report(pages: %w[me/app]).sources).to eq([])
   end
 
+  it "ends the sources and the countries with Other, what their lists leave out, and leaves out Cloudflare's XX and T1" do
+    hosts = %w[a.example b.example c.example d.example e.example f.example g.example]
+    hosts.each_with_index { |host, i| (8 - i).times { create(:profile_view, user: user, viewed_at: 2.days.ago, referrer: host, country: %w[PT ES FR DE IT NL BE][i]) } }
+    %w[XX T1].each { |code| create(:profile_view, user: user, viewed_at: 2.days.ago, referrer: "a.example", country: code) }
+
+    service = report
+    expect(service.sources).to eq([ [ "a.example", 8 + 2 ] ] + hosts[1, 5].each_with_index.map { |host, i| [ host, 7 - i ] } + [ [ "Other", 2 ] ])
+    expect(service.countries).to eq([ [ "PT", 8 ], [ "ES", 7 ], [ "FR", 6 ], [ "DE", 5 ], [ "IT", 4 ], [ "Other", 3 + 2 ] ])
+  end
+
   it "names the sources of the builder's pages as the website panels do: Openstage's own, and any other host as itself" do
     [ "openstage.dev", "www.IndieHackers.com", "news.ycombinator.com", nil ].each { |host| create(:profile_view, user: user, viewed_at: 2.days.ago, referrer: host) }
 

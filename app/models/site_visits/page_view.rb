@@ -33,6 +33,8 @@ module SiteVisits
     # anywhere, a hex digest or id, or a JSON web token. A campaign's name
     # with a year or a number in it (summer2026) stays.
     SECRET_TAG = /@|(?<!\h)(\h{24}|\h{32}|\h{40}|\h{64})(?!\h)|\AeyJ[\w-]+\.[\w-]+\.[\w-]*\z/
+    # Cloudflare's codes that name no country: XX (unknown) and T1 (Tor).
+    NO_COUNTRY = %w[XX T1].freeze
 
     # url: the page viewed, on the project's website; referrer: the page's
     # referrer, which the script sends with a page load's first view only,
@@ -91,10 +93,10 @@ module SiteVisits
       tags.reject { |tag| tag.match?(PERSONAL) || tag.match?(SECRET_TAG) }.map { |tag| tag.downcase.gsub(/[^a-z0-9._-]/, "").first(MAX_TAG) }.find(&:present?)
     end
 
-    # Two letters; Cloudflare's XX (unknown) and T1 (Tor) name no country.
+    # Two letters, none of NO_COUNTRY.
     def country
       code = @country.to_s.strip.upcase
-      code if code.match?(/\A[A-Z]{2}\z/) && code != "XX"
+      code if code.match?(/\A[A-Z]{2}\z/) && NO_COUNTRY.exclude?(code)
     end
 
     private

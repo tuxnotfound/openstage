@@ -47,7 +47,7 @@ describe("the switch above analytics' panels", () => {
     expect(ours(state, "a", "http://x.test/analytics", "http://x.test/analytics?panels=openstage", own.slice(0, -1))).toBeNull()
   })
 
-  test("presses the panels shown, and shows only theirs: the websites' with the cap's Other rows, or Openstage's as before", () => {
+  test("presses the panels shown, and shows only theirs: the websites' with their Other rows, or Openstage's as before", () => {
     const site = renderToStaticMarkup(<AnalyticsPanels view={viewWith(websites)} panels="websites" flip={() => {}} />)
 
     expect([...site.matchAll(/aria-pressed="(\w+)"[^>]*>([^<]+)</g)].map(([, pressed, label]) => [label, pressed])).toEqual([["On your websites", "true"], ["On Openstage", "false"]])

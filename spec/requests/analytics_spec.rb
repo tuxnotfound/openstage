@@ -214,7 +214,7 @@ RSpec.describe "Analytics", type: :request do
 
       before { repo.update!(site_source: "script", site_token: "os_a", site_set_up_at: 50.days.ago, site_first_visit_at: 50.days.ago) }
 
-      it "opens on the builder's websites, each panel saying what it counts and where, the sources named and the cap's Other rows last" do
+      it "opens on the builder's websites, each panel saying what it counts and where, the sources named and Other last" do
         count(repo, "source", "news.ycombinator.com", 5)
         count(repo, "source", "t.co", 2)
         count(repo, "source", "x.com", 2)

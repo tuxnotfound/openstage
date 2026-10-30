@@ -15,6 +15,9 @@ module Analytics
     Link = Data.define(:title, :page, :count)
     TOP = 6
     TOP_COUNTRIES = 5
+    # The last row of a ranked panel: everything its list leaves out, so its
+    # rows add up to its total.
+    OTHER = "Other".freeze
 
     # range: a Progress::Window range, nil for the default; show: the numbers
     # asked for, by key in line order; pages: the pages in view, by key, none
@@ -112,16 +115,25 @@ module Analytics
     end
 
     # Sources named as the website panels name them (Hacker News, Direct,
-    # indiehackers.com...), and the countries Cloudflare names, busiest first.
+    # indiehackers.com...), and the countries Cloudflare names, busiest
+    # first, then Other.
     def read_visits
       views = [ (user.profile_views if page_for(CountService::PAGE)), user.project_views.where(repo_name: selected.map(&:key)) ].compact
       views = views.map { |scope| scope.where(viewed_at: times) }
-      @sources = tally(views.flat_map { |scope| scope.group(:referrer).count.to_a }) { |host| ReferrerClassifier.label(host) }
-      @countries = tally(views.flat_map { |scope| scope.where.not(country: [ nil, "" ]).group(:country).count.to_a }, &:itself).first(TOP_COUNTRIES)
+      @sources = ranked(tally(views.flat_map { |scope| scope.group(:referrer).count.to_a }) { |host| ReferrerClassifier.label(host) }, TOP)
+      countries = views.flat_map { |scope| scope.where.not(country: [ nil, "", *SiteVisits::PageView::NO_COUNTRY ]).group(:country).count.to_a }
+      @countries = ranked(tally(countries, &:itself), TOP_COUNTRIES)
     end
 
     def tally(pairs)
-      pairs.each_with_object(Hash.new(0)) { |(key, count), sums| sums[yield(key)] += count }.sort_by { |key, count| [ -count, key ] }.first(TOP)
+      pairs.each_with_object(Hash.new(0)) { |(key, count), sums| sums[yield(key)] += count }.sort_by { |key, count| [ -count, key ] }
+    end
+
+    # The busiest, at most top of them, then OTHER while the list leaves
+    # anything out.
+    def ranked(sorted, top)
+      rest = sorted.drop(top).sum(&:last)
+      rest.positive? ? sorted.first(top) + [ [ OTHER, rest ] ] : sorted.first(top)
     end
 
     # Entry links and project buttons, together, busiest first.

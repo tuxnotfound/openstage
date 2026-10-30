@@ -36,7 +36,7 @@ RSpec.describe AnalyticsViewSerializer do
     expect(json["badges"].first).to eq("label" => "README badge", "count" => "0", "sites" => "0 sites")
   end
 
-  it "sends the panels of the builder's websites, each bar as wide as its share of the busiest, the cap's Other row too" do
+  it "sends the panels of the builder's websites, each bar as wide as its share of the busiest, Other's too" do
     repo = create(:github_repo, user: user, full_name: "me/app", name: "app", site_source: "script")
     { "github.com" => 2, SiteVisitCount::DIRECT => 1, SiteVisitCount::OTHER => 4 }.each { |host, count| repo.site_visit_counts.create!(kind: "source", value: host, count: count, day: 1.day.ago.to_date) }
     repo.site_visit_counts.create!(kind: "ref", value: "hn", count: 1_200, day: 1.day.ago.to_date)
