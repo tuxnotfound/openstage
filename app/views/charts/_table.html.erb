@@ -11,7 +11,8 @@
     count, Set up or Paused stands in place of the switch, after the value
     when the window has any. On a phone each row stacks, with only the
     numbers it counts. Only shows on hover, and always on a touch screen,
-    where there is no hover to find it by.
+    where there is no hover to find it by. A table wider than its panel, as
+    analytics' can be on a tablet, scrolls inside it, never the page.
     view: a ChartFilterSerializer's attributes; path_for: the page's address
     for some params changed; back: the view's params, for the forms; label:
     what a row is, "Projects" unless told. %>
@@ -20,7 +21,7 @@
 <% label = local_assigns.fetch(:label, "Projects") %>
 <% columns = table[:columns].index_by { |column| column[:key] } %>
 <% on = table[:rows].count { |row| row[:on] } %>
-<div class="mt-5" data-chart-table>
+<div class="-mx-1 mt-5 overflow-x-auto px-1" data-chart-table>
   <% if table[:rows].empty? %>
     <p class="os-sm os-ink2">No repo has commits here yet. Your public repos appear once the first sync is done.</p>
   <% else %>

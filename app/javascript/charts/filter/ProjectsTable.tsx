@@ -18,7 +18,8 @@ import { lineOf, type Lines } from "./lines"
 // visits do not count; a project hidden from the page comes last, with no
 // box. On a phone each row stacks, with only the numbers it counts. Only
 // shows on hover, and always on a touch screen, where there is no hover to
-// find it by.
+// find it by. A table wider than its panel, as analytics' can be on a
+// tablet, scrolls inside it, never the page.
 
 export type RowTargets = {
   // A row's box; null when it is the last project in view.
@@ -56,7 +57,7 @@ export default function ProjectsTable({ table, drawn, lines, indexed, words, foc
   }
   const on = table.rows.filter((row) => row.on).length
   return (
-    <div className="mt-5" data-chart-table>
+    <div className="-mx-1 mt-5 overflow-x-auto px-1" data-chart-table>
       <table className="w-full border-collapse text-sm max-md:block">
         <caption className="sr-only">{label}: what the chart draws, and each number, {words}</caption>
         <thead className="max-md:block">
