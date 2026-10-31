@@ -181,7 +181,7 @@ RSpec.describe "Analytics", type: :request do
       expect(cells("builder/app")).to eq([ "Commits 0 ▼down 100%" ])
     end
 
-    it "draws site visitors on their own over the days picked, saying a site visitor is one browser on one day" do
+    it "draws site visitors on their own over the days picked, saying a site visitor is one IP address or IPv6 network on one day" do
       repo.site_visit_days.create!(day: Date.new(2026, 10, 2), visits: 30, visitors: 9)
       repo.site_visit_days.create!(day: Date.new(2026, 10, 12), visits: 12, visitors: 4)
 
@@ -191,7 +191,9 @@ RSpec.describe "Analytics", type: :request do
       expect(toggles.at_css("[aria-current='true']").text.squish).to eq("Site visitors 9")
       expect(page.at_css("svg[role='img']")["aria-label"]).to start_with("Site visitors per day by page")
       expect(cells("builder/app")).to include("Site visitors 9")
-      expect(response.body).to include("On a project's own website, counted by Openstage's script: site visits are page views; a site visitor is one browser on one day.")
+      expect(response.body).to include("On a project's own website, counted by Openstage's script: site visits are page views; a site visitor is one IP " \
+                                       "address, or one IPv6 network, on one day. On Openstage, your stage and your project pages: a visitor is one IP address " \
+                                       "on one day;")
 
       get "/api/analytics", params: { show: "site_visitors", range: "2026-10-01..2026-10-10" }
       expect(response.parsed_body["numbers"].find { |number| number["key"] == "site_visitors" }).to include("label" => "Site visitors", "value" => "9")

@@ -1,13 +1,14 @@
 <%# A project's Site visitors row, under its Site visits row: the last 30
     days, where they stand, and the switch that shows them on its page,
     except while its site visits are paused, when flipping it would change
-    nothing visitors see. The same script counts them, so the setup is the
-    Site visits row's. %>
+    nothing visitors see. They are counted with site visits, so the setup is
+    the Site visits row's, and its line under the title reads right in every
+    state, Off and Paused too. %>
 <div class="os-row flex items-center gap-3.5 py-3">
   <span class="min-w-0 flex-auto">
     <span class="font-bold">Site visitors</span>
     <span class="os-num os-muted text-sm"><%= overview.site_visitors.positive? ? number_with_delimiter(overview.site_visitors) : "–" %></span>
-    <span class="os-xs os-muted block">A visitor is one browser on one day, counted by the same script.</span>
+    <span class="os-xs os-muted block">A visitor is one IP address, or one IPv6 network, on one day, counted with site visits.</span>
   </span>
   <span class="os-xs os-muted whitespace-nowrap"><%= site_visitors_state(repo, overview) %></span>
   <% unless overview.site_state == :paused %>

@@ -28,6 +28,7 @@ RSpec.describe "Marketing pages", type: :request do
 
       expect(Nokogiri::HTML(response.body).at_css("#builders-sites").text.squish).to include(
         "When a page loads, it also sends the address of the page you came from.",
+        "page views, and visitors, a visitor being one IP address, or one IPv6 network, on one day.",
         "It sets no cookie and stores nothing in your browser.",
         "It counts each page by its path, without the query string, and replaces any part of the path that looks like an email " \
         "address or a code with an asterisk.",

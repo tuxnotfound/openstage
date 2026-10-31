@@ -36,7 +36,8 @@ RSpec.describe "Setting up a project's site visits", type: :request do
     expect(view.text).to include("Waiting for the first visit")
     expect(view.text).not_to include("one project only")
     expect(view.at_css(".os-note").text.squish).to include(
-      "No cookie: a visitor is one browser on one day. Only the day's totals are kept, views by page and visitors by the site they came from, ref tag and country."
+      "No cookie: a visitor is one IP address, or one IPv6 network, on one day. Only the day's totals are kept, views by page and visitors by the site they " \
+      "came from, ref tag and country."
     )
   end
 
@@ -66,7 +67,7 @@ RSpec.describe "Setting up a project's site visits", type: :request do
     repo.site_visit_days.create!(day: Date.new(2026, 10, 20), visits: 1204, visitors: 800)
     repo.site_visit_days.create!(day: Date.new(2026, 9, 1), visits: 40, visitors: 30)
 
-    expect(visitors_row.text.squish).to eq("Site visitors 800 A visitor is one browser on one day, counted by the same script. Shown")
+    expect(visitors_row.text.squish).to eq("Site visitors 800 A visitor is one IP address, or one IPv6 network, on one day, counted with site visits. Shown")
     expect(visitors_row.at_css("button[role='switch']").attributes.transform_values(&:value))
       .to include("aria-checked" => "true", "aria-label" => "Show site visitors on shipnote's page")
 
@@ -79,7 +80,7 @@ RSpec.describe "Setting up a project's site visits", type: :request do
   end
 
   it "says Off beside the site visitors' switch while nothing counts, and lets the builder hide them before the first visit" do
-    expect(visitors_row.text.squish).to eq("Site visitors – A visitor is one browser on one day, counted by the same script. Off")
+    expect(visitors_row.text.squish).to eq("Site visitors – A visitor is one IP address, or one IPv6 network, on one day, counted with site visits. Off")
     expect(visitors_row.at_css("button[role='switch']")["aria-checked"]).to eq("true")
 
     repo.update!(site_source: "script", site_token: "os_a")
@@ -154,7 +155,7 @@ RSpec.describe "Setting up a project's site visits", type: :request do
       expect(state).to eq("Paused")
       expect(view.at_css("a[href='/pricing']").text).to eq("Go Pro")
       expect(view.at_css("button[role='switch']")).to be_nil
-      expect(visitors_row.text.squish).to eq("Site visitors 3 A visitor is one browser on one day, counted by the same script. Paused")
+      expect(visitors_row.text.squish).to eq("Site visitors 3 A visitor is one IP address, or one IPv6 network, on one day, counted with site visits. Paused")
       expect(visitors_row.at_css("button[role='switch']")).to be_nil
     end
   end
