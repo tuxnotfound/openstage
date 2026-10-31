@@ -115,12 +115,14 @@ RSpec.describe Progress::DrawService do
   end
 
   describe "site visitors, which sit beside site visits" do
-    # app shows both, lib its site visits alone; both counted visitors.
+    # app shows both, lib its site visits alone; both counted visitors, and
+    # each a commit.
     let(:counts) do
       Progress::Counts.new(
-        days: { "commits" => { "me/app" => { today - 1 => 3 } }, "visits" => { "me/app" => { today - 2 => 40 }, "me/lib" => { today - 2 => 9 } },
+        days: { "commits" => { "me/app" => { today - 1 => 3 }, "me/lib" => { today - 1 => 1 } },
+                "visits" => { "me/app" => { today - 2 => 40 }, "me/lib" => { today - 2 => 9 } },
                 "site_visitors" => { "me/app" => { today - 2 => 12 }, "me/lib" => { today - 2 => 4 } } },
-        firsts: { "commits" => { "me/app" => today - 1 }, "visits" => { "me/app" => today - 2, "me/lib" => today - 2 },
+        firsts: { "commits" => { "me/app" => today - 1, "me/lib" => today - 1 }, "visits" => { "me/app" => today - 2, "me/lib" => today - 2 },
                   "site_visitors" => { "me/app" => today - 2, "me/lib" => today - 2 } }
       )
     end
@@ -151,6 +153,14 @@ RSpec.describe Progress::DrawService do
       expect(chart.tips.map(&:key)).to eq(%w[visits site_visitors])
       expect(chart.columns.last.rows.map { |each| [ each.name, each.values ] }).to eq([ [ "app", %w[40 12] ], [ "lib", %w[9 –] ] ])
       expect(chart.indexed?).to be(false)
+    end
+
+    it "show beside a row's own site visits alone: a row that hides those has a dash for both, whatever else of it is drawn" do
+      hiding = row("me/lib", %w[commits site_visitors], rank: 1)
+      chart = draw([ app, hiding ], show: %w[commits visits]).chart
+
+      expect(chart.tips.map(&:key)).to eq(%w[commits visits site_visitors])
+      expect(chart.columns.last.rows.map { |each| [ each.name, each.values ] }).to eq([ [ "app", %w[3 40 12] ], [ "lib", %w[1 – –] ] ])
     end
 
     it "leave the tooltip with no column of theirs while no row in view shows them" do
