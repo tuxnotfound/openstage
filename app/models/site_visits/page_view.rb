@@ -47,6 +47,13 @@ module SiteVisits
       @site_host = site_host
     end
 
+    # Whether a referrer's host names a site, so a panel may show it:
+    # Openstage's own pages keep their referrers' hosts as they came.
+    def self.site?(host)
+      name = host.to_s.downcase.delete_prefix("www.")
+      name.match?(HOST) && !name.match?(LOCAL) && name.length <= MAX_HOST
+    end
+
     # Whether an address is on the project's website: www. and the bare
     # domain are one site.
     def on_site?(address)
@@ -81,7 +88,7 @@ module SiteVisits
       return SiteVisitCount::DIRECT if @referrer.blank?
 
       host = host_of(@referrer)&.delete_prefix("www.")
-      host if host&.match?(HOST) && !host.match?(LOCAL) && host.length <= MAX_HOST && !on_site?(@referrer)
+      host if self.class.site?(host) && !on_site?(@referrer)
     end
 
     # The page's ref or utm_source tag, the first given, in letters, digits,

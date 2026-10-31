@@ -120,7 +120,7 @@ module Analytics
     def read_visits
       views = [ (user.profile_views if page_for(CountService::PAGE)), user.project_views.where(repo_name: selected.map(&:key)) ].compact
       views = views.map { |scope| scope.where(viewed_at: times) }
-      @sources = ranked(tally(views.flat_map { |scope| scope.group(:referrer).count.to_a }) { |host| ReferrerClassifier.label(host) }, TOP)
+      @sources = ranked(tally(views.flat_map { |scope| scope.group(:referrer).count.to_a }) { |host| source_label(host) }, TOP)
       countries = views.flat_map { |scope| scope.where.not(country: [ nil, "", *SiteVisits::PageView::NO_COUNTRY ]).group(:country).count.to_a }
       @countries = ranked(tally(countries, &:itself), TOP_COUNTRIES)
     end
@@ -129,11 +129,19 @@ module Analytics
       pairs.each_with_object(Hash.new(0)) { |(key, count), sums| sums[yield(key)] += count }.sort_by { |key, count| [ -count, key ] }
     end
 
+    # A host that names no site, an address or a machine on someone's network
+    # (pedros-macbook-pro.local), goes in Other: the website panels never
+    # show one, because the script does not keep it.
+    def source_label(host)
+      host.blank? || SiteVisits::PageView.site?(host) ? ReferrerClassifier.label(host) : OTHER
+    end
+
     # The busiest, at most top of them, then OTHER while the list leaves
-    # anything out.
+    # anything out, the hosts source_label sends there included.
     def ranked(sorted, top)
-      rest = sorted.drop(top).sum(&:last)
-      rest.positive? ? sorted.first(top) + [ [ OTHER, rest ] ] : sorted.first(top)
+      shown = sorted.reject { |label, _count| label == OTHER }.first(top)
+      rest = sorted.sum(&:last) - shown.sum(&:last)
+      rest.positive? ? shown + [ [ OTHER, rest ] ] : shown
     end
 
     # Entry links and project buttons, together, busiest first.

@@ -136,6 +136,12 @@ RSpec.describe Analytics::ReportService do
     expect(report.sources).to eq([ [ "Direct", 1 ], [ "Hacker News", 1 ], [ "Openstage", 1 ], [ "indiehackers.com", 1 ] ])
   end
 
+  it "counts a host that names no site, an address or a machine on someone's network, in Other, which stays last" do
+    %w[localhost pedros-macbook-pro.local 192.168.1.23 news.ycombinator.com].each { |host| create(:profile_view, user: user, viewed_at: 2.days.ago, referrer: host) }
+
+    expect(report.sources).to eq([ [ "Hacker News", 1 ], [ "Other", 3 ] ])
+  end
+
   it "lists the links visitors followed, busiest first, on the pages in view" do
     entry = create(:entry, user: user, repo_name: "me/lib", entry_type: "milestone", source: "manual", title: "Launched", url: "https://lib.example")
     2.times { EntryClick.create!(user: user, entry: entry, clicked_at: 1.day.ago) }
