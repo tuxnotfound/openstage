@@ -17,6 +17,12 @@ class KeyVisitorHashes < ActiveRecord::Migration[7.1]
     end
   end
 
+  # Rails' own down does nothing, so a rollback would pass and the next
+  # migrate would key every hash twice.
+  def down
+    raise ActiveRecord::IrreversibleMigration
+  end
+
   private
 
   # By id, BATCH rows at a time. The UPDATE names each row's id and its new

@@ -20,4 +20,8 @@ RSpec.describe ClearClickAndBadgeIpHashes do
 
     expect(tables.map { |table| stored(table) }).to eq([ [ nil ], [ nil ], [ nil, nil ] ])
   end
+
+  it "stops a rollback, as the hashes cannot come back" do
+    expect { ActiveRecord::Migration.suppress_messages { described_class.new.migrate(:down) } }.to raise_error(ActiveRecord::IrreversibleMigration)
+  end
 end

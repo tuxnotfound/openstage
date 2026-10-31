@@ -52,4 +52,8 @@ RSpec.describe KeyVisitorHashes, type: :request do
     expect(counted["visitors"]).to eq(counts["visitors"])
     expect(counted["views"]["page"][today]).to eq(counts["views"]["page"][today] + 1)
   end
+
+  it "stops a rollback, as a second up would key every hash twice" do
+    expect { ActiveRecord::Migration.suppress_messages { described_class.new.migrate(:down) } }.to raise_error(ActiveRecord::IrreversibleMigration)
+  end
 end

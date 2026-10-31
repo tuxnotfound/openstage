@@ -8,4 +8,8 @@ class ClearClickAndBadgeIpHashes < ActiveRecord::Migration[7.1]
       execute "UPDATE #{table} SET ip_hash = NULL WHERE ip_hash IS NOT NULL"
     end
   end
+
+  def down
+    raise ActiveRecord::IrreversibleMigration
+  end
 end
