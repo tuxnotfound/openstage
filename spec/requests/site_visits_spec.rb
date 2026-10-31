@@ -76,6 +76,22 @@ RSpec.describe "Site visits from Openstage's script", type: :request do
     expect([ SiteVisitDay.count, SiteVisitor.count, SiteVisitCount.count ]).to eq([ 0, 0, 0 ])
   end
 
+  it "keeps the visitor's address out of the log, and logs other requests as before" do
+    io = StringIO.new
+    # A plain logger: a second tagged one would make the broadcast run the
+    # request twice.
+    log = ActiveSupport::Logger.new(io)
+    Rails.logger.broadcast_to(log)
+    send_view(headers: { "REMOTE_ADDR" => "203.0.113.99" })
+    get "/privacy", headers: { "REMOTE_ADDR" => "203.0.113.98" }
+
+    expect(io.string).not_to include("203.0.113.99")
+    expect(io.string).to include(%(Started GET "/privacy" for 203.0.113.98))
+    expect(repo.site_visit_days.sole.visits).to eq(1)
+  ensure
+    Rails.logger.stop_broadcasting_to(log)
+  end
+
   it "serves the script that sends them" do
     script = Rails.public_path.join("v.js").read
 
