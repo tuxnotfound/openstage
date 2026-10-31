@@ -12,10 +12,10 @@
     when the window has any. On a phone each row stacks, with only the
     numbers it counts, and below the width its columns need too (stack,
     the stacked variant). The name column takes what the numbers leave, and
-    a long name is cut short rather than widening the table. Only shows on
-    hover, and always on a touch screen, where there is no hover to find it
-    by. A table that is wider still, as very large numbers can make one,
-    scrolls inside its panel, never the page.
+    a long name wraps rather than widening the table. Only shows on hover,
+    and always on a touch screen, where there is no hover to find it by. A
+    table that is wider still, as very large numbers can make one, scrolls
+    inside its panel, never the page.
     view: a ChartFilterSerializer's attributes; path_for: the page's address
     for some params changed; back: the view's params, for the forms; label:
     what a row is, "Projects" unless told. %>
@@ -52,7 +52,7 @@
       </thead>
       <tbody class="stacked:block">
         <% table[:rows].each do |row| %>
-          <% name_css = "truncate font-bold #{row[:drawable] ? ('text-ink-2' unless row[:on]) : 'font-semibold text-ink-3'}" %>
+          <% name_css = "wrap-anywhere font-bold #{row[:drawable] ? ('text-ink-2' unless row[:on]) : 'font-semibold text-ink-3'}" %>
           <tr class="group border-t border-line stacked:grid stacked:grid-cols-3 stacked:gap-x-3 stacked:gap-y-2.5 stacked:py-3" data-chart-row="<%= row[:key] %>">
             <th scope="row" class="min-w-45 max-w-0 py-2.5 text-left font-normal stacked:col-span-3 stacked:max-w-none stacked:py-0">
               <span class="flex min-w-0 items-center gap-2.5">

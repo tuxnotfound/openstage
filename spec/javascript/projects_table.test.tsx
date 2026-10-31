@@ -78,7 +78,7 @@ describe("a project past the tenth", () => {
 })
 
 describe("the table's width", () => {
-  test("names the breakpoint it stacks below, and lets a long name be cut short rather than widen the table", () => {
+  test("names the breakpoint it stacks below, and lets a long name wrap rather than widen the table", () => {
     const commits: TableCell = { key: "commits", value: "4", shown: true, pick: null, link: null, change: null }
     const app: TableRow = { key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true, cells: [commits], edit: null, page: null, switch: null }
     const html = renderToStaticMarkup(
@@ -89,6 +89,7 @@ describe("the table's width", () => {
     expect(html).toContain('data-stack="lg"')
     expect(html).toMatch(/<table class="[^"]*stacked:block/)
     expect(html).toMatch(/<th scope="row" class="min-w-45 max-w-0 [^"]*stacked:max-w-none/)
+    expect(html).toMatch(/<span class="wrap-anywhere font-bold[^"]*">app<\/span>/)
     expect(html).not.toContain("max-md:")
   })
 })

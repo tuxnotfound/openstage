@@ -50,6 +50,12 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     expect(idle).to be_persisted
   end
 
+  it "wraps a long project name rather than cutting it short, so it can be read in full" do
+    get "/dashboard"
+
+    expect(page.css("[data-chart-row] th span.font-bold").map { |name| name["class"].split.first }).to eq(%w[wrap-anywhere wrap-anywhere])
+  end
+
   it "hides a project from the page with its switch, and keeps it listed to switch back" do
     get "/dashboard"
     expect(page_switch("builder/app")["aria-checked"]).to eq("true")

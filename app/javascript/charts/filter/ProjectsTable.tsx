@@ -18,8 +18,8 @@ import { lineOf, type Lines } from "./lines"
 // visits do not count; a project hidden from the page comes last, with no
 // box. On a phone each row stacks, with only the numbers it counts, and
 // below the width its columns need too (stack, the stacked variant). The
-// name column takes what the numbers leave, and a long name is cut short
-// rather than widening the table. Only shows on hover, and always on a touch
+// name column takes what the numbers leave, and a long name wraps rather
+// than widening the table. Only shows on hover, and always on a touch
 // screen, where there is no hover to find it by. A table that is wider
 // still, as very large numbers can make one, scrolls inside its panel, never
 // the page.
@@ -96,7 +96,7 @@ function Row({ row, table, drawn, alone, hot, rows, switches }: {
 }) {
   const box = row.drawable ? rows.box(row.key) : null
   const only = row.drawable && !alone ? rows.only(row.key) : null
-  const name = `truncate font-bold ${row.drawable ? (row.on ? "" : "text-ink-2") : "font-semibold text-ink-3"}`
+  const name = `wrap-anywhere font-bold ${row.drawable ? (row.on ? "" : "text-ink-2") : "font-semibold text-ink-3"}`
   return (
     <tr className={`group border-t border-line transition-colors stacked:grid stacked:grid-cols-3 stacked:gap-x-3 stacked:gap-y-2.5 stacked:py-3 ${hot ? "bg-surface" : ""}`}
         data-chart-row={row.key} onPointerEnter={(event) => { if (row.drawable && event.pointerType === "mouse") rows.focus(row.key) }}
