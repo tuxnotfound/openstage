@@ -18,6 +18,22 @@
   }
 }
 
+/* A chart table stacks, as on a phone, below the breakpoint its columns
+   need, which its wrapper names (data-stack, ProjectsTableSerializer#stack),
+   so it never runs past its panel at a width where it does not fit. */
+@custom-variant stacked {
+  @media (width < 48rem) {
+    &:where([data-stack="md"] *) {
+      @slot;
+    }
+  }
+  @media (width < 64rem) {
+    &:where([data-stack="lg"] *) {
+      @slot;
+    }
+  }
+}
+
 @font-face {
   font-family: "Funnel Sans";
   font-style: normal;

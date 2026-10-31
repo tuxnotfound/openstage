@@ -87,7 +87,9 @@ export type TableRow = {
 }
 
 // columns: a number each, with its names, whether a project here shows it or not.
-export type TableView = { columns: { key: string; label: string; word: string }[]; rows: TableRow[] }
+// stack: the breakpoint below which the table stacks, as on a phone, where
+// its columns no longer fit (ProjectsTableSerializer#stack).
+export type TableView = { columns: { key: string; label: string; word: string }[]; rows: TableRow[]; stack: "md" | "lg" }
 
 // A chart filter's view, the same on every chart page (ChartFilterSerializer).
 export type FilterView = {

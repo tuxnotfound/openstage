@@ -17,7 +17,7 @@ const switches: CellSwitches = { pick: (_, cell) => cell.pick, shown: (_, cell) 
 // Each row's site visits cell, as markup with its quotes back.
 function cells(...tableRows: TableRow[]): Record<string, string> {
   const html = renderToStaticMarkup(
-    <ProjectsTable table={{ columns: [{ key: "visits", label: "Site visits", word: "site visits" }], rows: tableRows }} drawn={["visits"]}
+    <ProjectsTable table={{ columns: [{ key: "visits", label: "Site visits", word: "site visits" }], rows: tableRows, stack: "md" }} drawn={["visits"]}
                    lines={{ visits: 0 }} indexed={false} words="last 90 days" focused={null} rows={rows} switches={switches} />,
   ).replaceAll("&#x27;", "'")
   return Object.fromEntries(tableRows.map((each) => {
@@ -63,7 +63,7 @@ describe("a project past the tenth", () => {
     const commits: TableCell = { key: "commits", value: "4", shown: true, pick: null, link: null, change: null }
     const quiet: TableRow = { key: "me/quiet", name: "quiet", colorClass: null, on: false, drawable: false, cells: [commits], edit: null, page: null, switch: null }
     const html = renderToStaticMarkup(
-      <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits" }], rows: [{ ...quiet, key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true }, quiet] }}
+      <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits" }], rows: [{ ...quiet, key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true }, quiet], stack: "md" }}
                      drawn={["commits"]} lines={{ commits: 0 }} indexed={false} words="last 90 days" focused={null} rows={rows} />,
     )
     const row = html.slice(html.indexOf('data-chart-row="me/quiet"'))
@@ -74,6 +74,22 @@ describe("a project past the tenth", () => {
     expect(row).toContain('quiet</span><span class="sr-only">, draws no line</span>')
     expect(row).toMatch(/text-ink-3 ">4<\/span>/)
     expect(html.match(/draws no line/g)).toHaveLength(1)
+  })
+})
+
+describe("the table's width", () => {
+  test("names the breakpoint it stacks below, and lets a long name be cut short rather than widen the table", () => {
+    const commits: TableCell = { key: "commits", value: "4", shown: true, pick: null, link: null, change: null }
+    const app: TableRow = { key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true, cells: [commits], edit: null, page: null, switch: null }
+    const html = renderToStaticMarkup(
+      <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits" }], rows: [app], stack: "lg" }} drawn={["commits"]}
+                     lines={{ commits: 0 }} indexed={false} words="last 90 days" focused={null} rows={rows} />,
+    )
+
+    expect(html).toContain('data-stack="lg"')
+    expect(html).toMatch(/<table class="[^"]*stacked:block/)
+    expect(html).toMatch(/<th scope="row" class="min-w-45 max-w-0 [^"]*stacked:max-w-none/)
+    expect(html).not.toContain("max-md:")
   })
 })
 
@@ -89,7 +105,7 @@ describe("the dashboard's stage switch", () => {
     const app: TableRow = { key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true, cells: [commits], edit: null,
                             page: { on: true, path: "/github_repos/1" }, switch: "/projects/1/numbers" }
     const html = renderToStaticMarkup(
-      <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits" }], rows: [app] }} drawn={["commits"]}
+      <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits" }], rows: [app], stack: "md" }} drawn={["commits"]}
                      lines={{ commits: 0 }} indexed={false} words="last 90 days" focused={null} rows={rows} switches={switches} />,
     )
 

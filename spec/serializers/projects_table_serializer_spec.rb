@@ -34,6 +34,14 @@ RSpec.describe ProjectsTableSerializer do
     { "text" => "Paused", "label" => "Paused: see why #{name}'s site visits do not count", "path" => site_row(repo) }
   end
 
+  it "stacks below md, and below lg from five columns on, the dashboard's Your stage counted" do
+    chart = ->(count) { Struct.new(:columns, :rows).new(Progress::Numbers::ALL.first(count), []) }
+
+    expect([ table["stack"], table(builder: true)["stack"] ]).to eq(%w[md md])
+    expect([ described_class.new(chart.call(4)).attributes[:stack], described_class.new(chart.call(4), manage: true).attributes[:stack] ]).to eq(%w[md lg])
+    expect(described_class.new(chart.call(7), changes: true).attributes[:stack]).to eq("lg")
+  end
+
   it "fills a project's cells with the numbers its visitors see, and leaves the rest empty" do
     app.update!(hidden_numbers: %w[visits site_visitors])
     json = table

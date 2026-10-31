@@ -16,10 +16,13 @@ import { lineOf, type Lines } from "./lines"
 // the builder's page lists it, and each cell the switch for what visitors
 // see (its value grey while they do not), or Set up or Paused where site
 // visits do not count; a project hidden from the page comes last, with no
-// box. On a phone each row stacks, with only the numbers it counts. Only
-// shows on hover, and always on a touch screen, where there is no hover to
-// find it by. A table wider than its panel, as analytics' can be on a
-// tablet, scrolls inside it, never the page.
+// box. On a phone each row stacks, with only the numbers it counts, and
+// below the width its columns need too (stack, the stacked variant). The
+// name column takes what the numbers leave, and a long name is cut short
+// rather than widening the table. Only shows on hover, and always on a touch
+// screen, where there is no hover to find it by. A table that is wider
+// still, as very large numbers can make one, scrolls inside its panel, never
+// the page.
 
 export type RowTargets = {
   // A row's box; null when it is the last project in view.
@@ -57,20 +60,20 @@ export default function ProjectsTable({ table, drawn, lines, indexed, words, foc
   }
   const on = table.rows.filter((row) => row.on).length
   return (
-    <div className="-mx-1 mt-5 overflow-x-auto px-1" data-chart-table>
-      <table className="w-full border-collapse text-sm max-md:block">
+    <div className="-mx-1 mt-5 overflow-x-auto px-1" data-chart-table data-stack={table.stack}>
+      <table className="w-full border-collapse text-sm stacked:block">
         <caption className="sr-only">{label}: what the chart draws, and each number, {words}</caption>
-        <thead className="max-md:block">
-          <tr className="text-xs text-ink-3 max-md:flex">
-            <th scope="col" className="w-full pt-1.5 pb-2 text-left font-bold">
+        <thead className="stacked:block">
+          <tr className="text-xs text-ink-3 stacked:flex">
+            <th scope="col" className="w-full min-w-45 max-w-0 pt-1.5 pb-2 text-left font-bold stacked:max-w-none">
               <span className="flex items-center gap-3">
                 {label}
                 {rows.all && <button type="button" className="os-link inline-flex min-h-7 items-center rounded-md px-1.5 text-[13px] no-underline" onClick={rows.all.go} onPointerEnter={rows.all.warm} onFocus={rows.all.warm}>Show all</button>}
               </span>
             </th>
-            {switches && <th scope="col" className="w-px whitespace-nowrap pt-1.5 pb-2 pl-[18px] text-right font-bold max-md:hidden">Your stage</th>}
+            {switches && <th scope="col" className="w-px whitespace-nowrap pt-1.5 pb-2 pl-[18px] text-right font-bold stacked:hidden">Your stage</th>}
             {table.columns.map((column) => (
-              <th key={column.key} scope="col" className={`whitespace-nowrap pt-1.5 pb-2 pl-[18px] text-right font-bold max-md:hidden ${drawn.includes(column.key) ? "text-ink" : ""}`}>
+              <th key={column.key} scope="col" className={`whitespace-nowrap pt-1.5 pb-2 pl-[18px] text-right font-bold stacked:hidden ${drawn.includes(column.key) ? "text-ink" : ""}`}>
                 <span className="inline-flex items-center gap-[7px]">
                   <span className={drawn.includes(column.key) ? "" : "invisible"}><LineKey line={lineOf(lines, column.key, indexed)} /></span>{column.label}
                 </span>
@@ -78,7 +81,7 @@ export default function ProjectsTable({ table, drawn, lines, indexed, words, foc
             ))}
           </tr>
         </thead>
-        <tbody className="max-md:block">
+        <tbody className="stacked:block">
           {table.rows.map((row) => (
             <Row key={row.key} row={row} table={table} drawn={drawn} alone={row.on && on === 1} hot={focused === row.key} rows={rows} switches={switches} />
           ))}
@@ -95,10 +98,10 @@ function Row({ row, table, drawn, alone, hot, rows, switches }: {
   const only = row.drawable && !alone ? rows.only(row.key) : null
   const name = `truncate font-bold ${row.drawable ? (row.on ? "" : "text-ink-2") : "font-semibold text-ink-3"}`
   return (
-    <tr className={`group border-t border-line transition-colors max-md:grid max-md:grid-cols-3 max-md:gap-x-3 max-md:gap-y-2.5 max-md:py-3 ${hot ? "bg-surface" : ""}`}
+    <tr className={`group border-t border-line transition-colors stacked:grid stacked:grid-cols-3 stacked:gap-x-3 stacked:gap-y-2.5 stacked:py-3 ${hot ? "bg-surface" : ""}`}
         data-chart-row={row.key} onPointerEnter={(event) => { if (row.drawable && event.pointerType === "mouse") rows.focus(row.key) }}
         onPointerLeave={() => rows.focus(null)}>
-      <th scope="row" className="py-2.5 text-left font-normal max-md:col-span-3 max-md:py-0">
+      <th scope="row" className="min-w-45 max-w-0 py-2.5 text-left font-normal stacked:col-span-3 stacked:max-w-none stacked:py-0">
         <span className="flex min-w-0 items-center gap-2.5">
           {row.drawable ? (
             <label className="relative inline-flex min-h-7 min-w-0 cursor-pointer items-center gap-2.5">
@@ -116,22 +119,22 @@ function Row({ row, table, drawn, alone, hot, rows, switches }: {
           ) : <><span className={name}>{row.name}</span><span className="sr-only">, draws no line</span></>}
           {only && (
             <button type="button" aria-label={`Show only ${row.name}`} onClick={only.go} onPointerEnter={only.warm} onFocus={only.warm}
-                    className="min-h-7 shrink-0 rounded-md px-1.5 py-0.5 text-[13px] font-bold text-accent-ink opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 focus:opacity-100 max-md:opacity-100 pointer-coarse:opacity-100">Only</button>
+                    className="min-h-7 shrink-0 rounded-md px-1.5 py-0.5 text-[13px] font-bold text-accent-ink opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 focus:opacity-100 stacked:opacity-100 pointer-coarse:opacity-100">Only</button>
           )}
           {row.edit && <a href={row.edit} className="os-btn2 ml-auto h-[30px] shrink-0 rounded-[9px] px-3 text-[13px]" aria-label={`Edit ${row.name}`}>Edit</a>}
         </span>
       </th>
       {switches && (
-        <td className="py-2.5 pl-[18px] text-right max-md:p-0 max-md:text-left">
-          <span className="os-xs os-muted mb-1 block md:hidden">Your stage</span>
+        <td className="py-2.5 pl-[18px] text-right stacked:p-0 stacked:text-left">
+          <span className="os-xs os-muted mb-1 hidden stacked:block">Your stage</span>
           {row.page && <PageSwitch row={row} page={row.page} />}
         </td>
       )}
       {row.cells.map((cell) => {
         const column = table.columns.find((each) => each.key === cell.key)
         return (
-          <td key={cell.key} className={`py-2.5 pl-[18px] text-right max-md:p-0 max-md:text-left ${cell.value === null && cell.link === null ? "max-md:hidden" : ""}`}>
-            <span className="os-xs os-muted mb-1 block md:hidden">{column?.label}</span>
+          <td key={cell.key} className={`py-2.5 pl-[18px] text-right stacked:p-0 stacked:text-left ${cell.value === null && cell.link === null ? "stacked:hidden" : ""}`}>
+            <span className="os-xs os-muted mb-1 hidden stacked:block">{column?.label}</span>
             <Cell row={row} cell={cell} word={column?.word ?? cell.key} drawn={drawn.includes(cell.key)} switches={switches} />
           </td>
         )

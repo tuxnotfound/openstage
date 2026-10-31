@@ -16,6 +16,8 @@ class ProjectsTableSerializer < ApplicationSerializer
   include ActionView::Helpers::NumberHelper
   include Rails.application.routes.url_helpers
 
+  WIDE = 5
+
   # chart: a Progress::ChartService or an Analytics::ReportService; changes:
   # whether each cell carries its change; manage: the builder's own table;
   # off_page: the GithubRepos hidden from their page.
@@ -28,10 +30,19 @@ class ProjectsTableSerializer < ApplicationSerializer
 
   def attributes
     { columns: @chart.columns.map { |number| { key: number.key, label: number.label, word: number.word } },
-      rows: @chart.rows.map { |row| row_of(row) } + @off_page.map { |repo| off_page_row(repo) } }
+      rows: @chart.rows.map { |row| row_of(row) } + @off_page.map { |repo| off_page_row(repo) }, stack: stack }
   end
 
   private
+
+  # The breakpoint below which the table stacks, as on a phone (the stacked
+  # variant): "md", or "lg" from WIDE columns on. Its name column takes 180
+  # px at least, each number's 80 to 120 with its change or its switch, and
+  # Your stage 76; at 768 px a panel holds 682 px, at 1024 px 909, so four
+  # columns fit from md, and analytics' seven from lg.
+  def stack
+    @chart.columns.size + (@manage ? 1 : 0) >= WIDE ? "lg" : "md"
+  end
 
   # color_class: the class its box wears; drawable: whether it has one; on:
   # whether the chart draws it.
