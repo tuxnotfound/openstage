@@ -40,5 +40,11 @@ module Openstage
     # sets its keys. Rows written before encryption still read as they are,
     # until a later release turns this off, once every row is encrypted.
     config.active_record.encryption.support_unencrypted_data = true
+
+    # Nothing uses Action Cable: no channel, no Turbo stream. Its connections
+    # write their own Started and Finished lines with the client's IP address,
+    # past the request log (config/initializers/request_log.rb), so /cable
+    # stays unmounted until a feature needs it and those lines leave it out.
+    config.action_cable.mount_path = nil
   end
 end

@@ -37,6 +37,13 @@ RSpec.describe "The request log", type: :request do
     expect(io.string).not_to include("203.0.113.99")
   end
 
+  it "leaves /cable to the app's own routes: Action Cable's connections log the address on their own" do
+    get "/cable", headers: visitor
+
+    expect(io.string).to include(%(Started GET "/cable" at ))
+    expect(io.string).not_to include("203.0.113.99", "WebSocket")
+  end
+
   it "tags that line with the request's id, as production does" do
     logger = RequestLogger.new(->(_env) { [ 204, {}, [] ] }, [ :request_id ])
     logger.call(Rack::MockRequest.env_for("/builder", "REMOTE_ADDR" => "203.0.113.99", "action_dispatch.request_id" => "req-42"))
