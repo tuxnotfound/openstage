@@ -94,7 +94,7 @@ RSpec.describe SiteVisits::RecordService do
 
   it "counts a visitor's source and ref tag on their first page load, and their country on their first view, whichever reaches it first" do
     page_load = { url: "https://shipnote.app/?ref=hn", referrer: "https://news.ycombinator.com/", country: "PT" }
-    page_change = { url: "https://shipnote.app/login", country: "PT" }
+    page_change = { url: "https://shipnote.app/login?ref=app", country: "PT" }
     record(**page_load).call!
     record(**page_change).call!
     record(ip: "203.0.113.8", **page_change).call!
