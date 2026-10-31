@@ -1,7 +1,8 @@
-# Openstage's request log keeps no visitor's IP address. Rails::Rack::Logger
-# writes every request's "Started" line at info with request.remote_ip, which
-# cloudflare_proxies.rb walks back to the visitor, and the host keeps that
-# log. RequestLogger writes the same line, under the same tags, without it.
+# Openstage's request log keeps no visitor's IP address, as the privacy page
+# says. Rails::Rack::Logger writes every request's "Started" line at info with
+# request.remote_ip, which cloudflare_proxies.rb walks back to the visitor,
+# and the host keeps that log. RequestLogger writes the same line, under the
+# same tags, without it.
 class RequestLogger < Rails::Rack::Logger
   private
 

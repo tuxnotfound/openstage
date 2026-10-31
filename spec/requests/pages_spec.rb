@@ -41,6 +41,21 @@ RSpec.describe "Marketing pages", type: :request do
         "It does not keep your IP address or your device."
       )
     end
+
+    it "says what a visit and a click on Openstage's own pages keep, and that its request log leaves out the address" do
+      get "/privacy"
+
+      page = Nokogiri::HTML(response.body)
+      own_pages = page.at_css("section[aria-labelledby='on-openstage']").text.squish
+      expect(own_pages).to include(
+        "and a hash of your IP address with the date, not the address itself. The hash is made with a secret key, so " \
+        "without that key it cannot be turned back into the address.",
+        "A click on a page's links records the link and the time.",
+        "Openstage's request log leaves out your IP address, on its own pages and for the script's page views."
+      )
+      expect(own_pages).not_to include("the same hash")
+      expect(page.text.squish).to include("Updated October 31, 2026.")
+    end
   end
 
   describe "GET /pricing" do

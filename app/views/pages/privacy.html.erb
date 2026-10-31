@@ -6,7 +6,7 @@
   <span class="os-tag">Privacy</span>
   <h1 class="os-h1 mt-4 max-w-[900px]">What Openstage counts, and what it keeps.</h1>
   <p class="os-p mt-4.5 max-w-[720px] text-lg">Openstage counts visits so builders can see who reads their work. It counts people in totals, never as profiles.</p>
-  <p class="os-xs os-muted mt-3">Updated October 30, 2026.</p>
+  <p class="os-xs os-muted mt-3">Updated October 31, 2026.</p>
 </section>
 
 <section id="builders-sites" class="os-panel scroll-mt-6" aria-labelledby="on-builders-sites">
@@ -40,10 +40,11 @@
   <div class="mt-3 max-w-[720px] space-y-3.5">
     <p class="os-p">
       A visit to a builder's stage or a project's page records the time, the site you came from, your country as
-      Cloudflare reports it, and a hash of your IP address with the date, not the address itself. A click on a page's
-      links records the time and the same hash. Bots and the builder's own visits are left out. Builders on Pro see
-      these numbers.
+      Cloudflare reports it, and a hash of your IP address with the date, not the address itself. The hash is made with
+      a secret key, so without that key it cannot be turned back into the address. A click on a page's links records the
+      link and the time. Bots and the builder's own visits are left out. Builders on Pro see these numbers.
     </p>
+    <p class="os-p">Openstage's request log leaves out your IP address, on its own pages and for the script's page views.</p>
     <p class="os-p">Openstage's own site analytics run on Umami, which sets no cookie.</p>
   </div>
 </section>
