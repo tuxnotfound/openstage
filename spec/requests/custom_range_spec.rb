@@ -143,7 +143,7 @@ RSpec.describe "Days picked for a chart's window", type: :request do
       create(:profile_view, user: user, viewed_at: Time.utc(2026, 10, 10, 12), referrer: "news.ycombinator.com")
       get "/analytics", params: { range: range, panels: "openstage" }
 
-      expect(response.body).to include("Changes compare each value with the 30 days before.", "No visits between 1 Sep and 30 Sep.")
+      expect(response.body).to include("Changes compare each value with the 30 days before.", "No views between 1 Sep and 30 Sep.")
     end
   end
 

@@ -9,7 +9,7 @@
     <h2 id="visitors-from" class="os-h3">Where views came from</h2>
     <p class="os-xs os-muted mt-1 mb-2">Views of your Openstage pages, by the site they came from, <%= view[:words] %>.</p>
     <% if view[:sources].empty? %>
-      <p class="os-note">No visits <%= view[:quiet] %>.</p>
+      <p class="os-note">No views <%= view[:quiet] %>.</p>
     <% end %>
     <% view[:sources].each do |source| %>
       <div class="os-row py-2">

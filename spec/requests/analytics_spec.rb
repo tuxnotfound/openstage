@@ -63,7 +63,7 @@ RSpec.describe "Analytics", type: :request do
       get "/analytics", params: { panels: "openstage" }
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("No visits in the last 30 days.", "No clicks out in the last 30 days.")
+      expect(response.body).to include("No views in the last 30 days.", "No clicks out in the last 30 days.")
     end
 
     it "opens on commits alone over the last 30 days, the window beside the title, the numbers in their groups with their changes" do

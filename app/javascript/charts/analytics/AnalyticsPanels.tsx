@@ -100,7 +100,7 @@ function OpenstagePanels({ view }: { view: AnalyticsView }) {
       <section className="os-panel" aria-labelledby="visitors-from">
         <h2 id="visitors-from" className="os-h3">Where views came from</h2>
         <p className="os-xs os-muted mt-1 mb-2">Views of your Openstage pages, by the site they came from, {view.words}.</p>
-        {view.sources.length === 0 && <p className="os-note">No visits {view.quiet}.</p>}
+        {view.sources.length === 0 && <p className="os-note">No views {view.quiet}.</p>}
         {view.sources.map((source) => (
           <div key={source.label} className="os-row py-2">
             <div className="os-between"><span className="os-sm font-semibold">{source.label}</span><span className="os-sm os-num font-bold">{source.count}</span></div>
