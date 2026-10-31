@@ -46,6 +46,17 @@ RSpec.describe AnalyticsViewSerializer do
                                    "refs" => [ { "label" => "hn", "count" => "1,200" } ], "countries" => [], "pages" => [], "empty" => nil, "setup" => nil)
   end
 
+  it "names each page's project as the table does while pages of several count, and one with no row by its full name" do
+    projects = %w[me/app acme/app me/lib me/quiet].map { |full_name| create(:github_repo, user: user, full_name: full_name, name: full_name.split("/").last) }
+    create(:entry, user: user, repo_name: "acme/app", occurred_at: 2.days.ago)
+    create(:entry, user: user, repo_name: "me/lib", occurred_at: 2.days.ago)
+    projects.each_with_index { |repo, i| repo.site_visit_counts.create!(kind: "page", value: "/", count: 4 - i, day: 1.day.ago.to_date) }
+    json = view
+
+    expect(json["table"]["rows"].pluck("name")).to eq([ "Your stage", "me/app", "acme/app", "lib" ])
+    expect(json["websites"]["pages"].map { |page| page.values_at("label", "project") }).to eq([ [ "/", "me/app" ], [ "/", "acme/app" ], [ "/", "lib" ], [ "/", "me/quiet" ] ])
+  end
+
   it "says why the website panels are empty, with a link to set up the first project's site visits while none of the projects in view counts them" do
     repo = create(:github_repo, user: user, full_name: "me/app", name: "app")
 

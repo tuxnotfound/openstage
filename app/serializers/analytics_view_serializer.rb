@@ -77,9 +77,12 @@ class AnalyticsViewSerializer < ApplicationSerializer
   end
 
   # Each with its project while pages of several projects count
-  # (SiteVisits::RankService), nil otherwise and for Other.
+  # (SiteVisits::RankService), nil otherwise and for Other: named as the
+  # table above names it, or by its full name when it has no row there, so
+  # two projects never share a name.
   def pages(rows)
-    rows.map { |label, count, project| { label: label, count: number_with_delimiter(count), project: project } }
+    names = @report.rows.to_h { |row| [ row.key, row.name ] }
+    rows.map { |label, count, project| { label: label, count: number_with_delimiter(count), project: (names.fetch(project, project) if project) } }
   end
 
   def empty_words(state)

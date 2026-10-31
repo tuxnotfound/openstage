@@ -22,11 +22,11 @@ module SiteVisits
     # one of SiteVisitCount::KINDS; top: how many values to keep.
     attr_accessor :repos, :days, :kind, :top
     # ranked: [[label, count]], the busiest first, then by label, at most
-    # top of them, with "Direct" among sources; a page's also names its
-    # project while pages of several projects count, else nil: [[path,
-    # count, project]]. other: what the list leaves out, the values past the
-    # top and the cap's Other row, 0 without any, so the list and other add
-    # up to the total.
+    # top of them, with "Direct" among sources; a page's also has its
+    # project's full name while pages of several projects count, else nil:
+    # [[path, count, full_name]]. other: what the list leaves out, the
+    # values past the top and the cap's Other row, 0 without any, so the
+    # list and other add up to the total.
     attr_reader :ranked, :other
 
     validates :kind, inclusion: { in: SiteVisitCount::KINDS }
@@ -68,11 +68,11 @@ module SiteVisits
     end
 
     # As by_value, a row per project and path, each project's cap row in
-    # the total.
+    # the total. A full name, as two projects can share a short one.
     def by_page(counts)
-      rows = counts.joins(:github_repo).group(:github_repo_id, "github_repos.name", :value).order(order, "github_repos.name").limit(top)
-                   .pluck(:value, Arel.sql(SUMMED), "github_repos.name", Arel.sql(SEVERAL), Arel.sql(TOTAL))
-      ranked = rows.filter_map { |path, count, name, several, _| [ path, count, (name if several) ] unless path == SiteVisitCount::OTHER }
+      rows = counts.joins(:github_repo).group(:github_repo_id, "github_repos.full_name", :value).order(order, "github_repos.full_name").limit(top)
+                   .pluck(:value, Arel.sql(SUMMED), "github_repos.full_name", Arel.sql(SEVERAL), Arel.sql(TOTAL))
+      ranked = rows.filter_map { |path, count, full_name, several, _| [ path, count, (full_name if several) ] unless path == SiteVisitCount::OTHER }
       [ ranked, rows.first&.last.to_i ]
     end
 
