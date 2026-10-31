@@ -4,11 +4,16 @@ module SiteVisits
   # its counts by page, source, ref tag and country (SiteVisitCount). It
   # counts only from the project's own website, from a person rather than a
   # bot, for a project whose visits count (GithubRepo#counts_site_visits?),
-  # and up to DAILY_LIMIT views per visitor and day. A visitor is their IP
-  # hashed with a key that changes every day, deleted within two days.
+  # and up to DAILY_LIMIT views per visitor and day. A visitor is their IP,
+  # or their IPv6 network, hashed with a key that changes every day, deleted
+  # within two days.
   class RecordService < ApplicationService
-    # Past this, one address's page views on a site that day are dropped.
+    # Past this, one visitor's page views on a site that day are dropped.
     DAILY_LIMIT = 200
+    # Past this many views on a day, a visitor's views count only on pages
+    # the day already counts (SiteVisitCount.add): a script's token is
+    # public, and one address could fill the day's 100 pages otherwise.
+    FRESH_HITS = 20
 
     # token: the script's data-project; url: the page viewed; origin: the
     # request's Origin header, when the browser sent one; referrer: the
@@ -27,7 +32,7 @@ module SiteVisits
       transaction do
         hits, loads = record_visitor(day)
         @counted = hits <= DAILY_LIMIT
-        add_to_day(day, first: hits == 1, first_load: !referrer.nil? && loads == 1) if counted
+        add_to_day(day, hits: hits, first_load: !referrer.nil? && loads == 1) if counted
       end
       mark_first_visit if counted
     end
@@ -69,12 +74,13 @@ module SiteVisits
     end
 
     # The day's totals, then its counts by page, source, ref tag and country.
-    def add_to_day(day, first:, first_load:)
+    def add_to_day(day, hits:, first_load:)
+      first = hits == 1
       SiteVisitDay.upsert({ github_repo_id: repo.id, day: day, visits: 1, visitors: first ? 1 : 0 },
                           unique_by: %i[github_repo_id day],
                           on_duplicate: Arel.sql("visits = site_visit_days.visits + 1, visitors = site_visit_days.visitors + EXCLUDED.visitors, " \
                                                  "updated_at = EXCLUDED.updated_at"))
-      SiteVisitCount.add(repo.id, day, view.counts(first: first, first_load: first_load))
+      SiteVisitCount.add(repo.id, day, view.counts(first: first, first_load: first_load), fresh: hits <= FRESH_HITS)
     end
 
     # What the setup step shows once the script works.
@@ -88,7 +94,19 @@ module SiteVisits
     # with another day's, nor with the IP, without it.
     def visitor_hash(day)
       key = Rails.application.key_generator.generate_key("site-visitors/#{day.iso8601}", 32)
-      OpenSSL::HMAC.hexdigest("SHA256", key, "#{repo.id}/#{ip}")
+      OpenSSL::HMAC.hexdigest("SHA256", key, "#{repo.id}/#{network}")
+    end
+
+    # An IPv4 address as it is; an IPv6 address by its /64, the network a
+    # home or an office gets, where one machine can take a new address at
+    # will. Native, so an IPv4 address written as IPv6 (::ffff:a.b.c.d)
+    # stays itself rather than masking to "::". A value that is not an
+    # address is hashed as it came.
+    def network
+      address = IPAddr.new(ip).native
+      address.ipv6? ? address.mask(64).to_s : address.to_s
+    rescue IPAddr::InvalidAddressError
+      ip
     end
   end
 end

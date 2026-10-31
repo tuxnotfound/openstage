@@ -19,13 +19,16 @@ class SiteVisitCount < ApplicationRecord
 
   # Adds one to each value's count for a project's day, by kind, in one
   # statement. A value the day has not counted yet counts as OTHER once its
-  # kind has CAPS of them; two values new at the same instant can both take
-  # the last place, so a day can pass a cap by a few.
-  def self.add(repo_id, day, values)
+  # kind has CAPS of them, or when it comes from a visitor who is no longer
+  # fresh (SiteVisits::RecordService::FRESH_HITS): one address cannot fill a
+  # day's caps alone. Two values new at the same instant can both take the
+  # last place, so a day can pass a cap by a few.
+  def self.add(repo_id, day, values, fresh: true)
     return if values.empty?
 
     caps = values.keys.map { |kind| CAPS[kind] }
-    connection.exec_update(sanitize_sql_array([ ADD, { repo: repo_id, day: day, other: OTHER, kinds: values.keys, values: values.values, caps: caps } ]),
+    connection.exec_update(sanitize_sql_array([ ADD, { repo: repo_id, day: day, other: OTHER, kinds: values.keys, values: values.values, caps: caps,
+                                                       fresh: fresh } ]),
                            "SiteVisitCount Add")
   end
 
@@ -35,8 +38,8 @@ class SiteVisitCount < ApplicationRecord
            CASE WHEN added.cap IS NULL
                   OR EXISTS (SELECT 1 FROM site_visit_counts kept
                              WHERE kept.github_repo_id = :repo AND kept.kind = added.kind AND kept.day = :day AND kept.value = added.value)
-                  OR (SELECT COUNT(*) FROM site_visit_counts kept
-                      WHERE kept.github_repo_id = :repo AND kept.kind = added.kind AND kept.day = :day AND kept.value <> :other) < added.cap
+                  OR (:fresh AND (SELECT COUNT(*) FROM site_visit_counts kept
+                                  WHERE kept.github_repo_id = :repo AND kept.kind = added.kind AND kept.day = :day AND kept.value <> :other) < added.cap)
                 THEN added.value ELSE :other END,
            1
     FROM unnest(ARRAY[:kinds]::varchar[], ARRAY[:values]::varchar[], ARRAY[:caps]::integer[]) AS added (kind, value, cap)

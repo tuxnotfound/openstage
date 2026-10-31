@@ -23,6 +23,26 @@ RSpec.describe SiteVisits::RecordService do
     expect(repo.reload.site_first_visit_at).to eq(Time.current)
   end
 
+  it "counts an IPv6 visitor by their network, and an IPv4 address written as IPv6 as itself" do
+    record(ip: "2001:db8:1:2::1").call!
+    record(ip: "2001:db8:1:2:a0b1:c2d3:e4f5:6789").call!
+    record(ip: "2001:db8:1:3::1").call!
+    record(ip: "::ffff:203.0.113.7").call!
+    record(ip: "::ffff:203.0.113.8").call!
+    record.call!
+
+    expect(repo.site_visit_days.sole).to have_attributes(visits: 6, visitors: 4)
+  end
+
+  it "lets a visitor past their fresh views add no new page, so one address cannot fill the day's cap" do
+    stub_const("#{described_class}::FRESH_HITS", 2)
+    stub_const("SiteVisitCount::CAPS", { "page" => 3, "source" => 3, "ref" => 3 })
+    %w[/a /b /c /d /a].each { |path| record(url: "https://shipnote.app#{path}").call! }
+    record(ip: "203.0.113.8", url: "https://shipnote.app/pricing").call!
+
+    expect(counts.map { |_day, _kind, value, count| [ value, count ] }).to eq([ [ "(other)", 2 ], [ "/a", 2 ], [ "/b", 1 ], [ "/pricing", 1 ] ])
+  end
+
   it "keeps a visitor as a hash that changes with the day, never the IP" do
     record.call!
     travel 1.day

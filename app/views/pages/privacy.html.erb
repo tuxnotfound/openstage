@@ -23,7 +23,8 @@
       on one day. It counts each page by its path, without the query string. For your first view of the day, it also
       counts the name of the site you came from, the ref or utm_source tag in the page's address, and your country as
       Cloudflare reports it. To count you once a day, it keeps a hash of your IP address made with a key that changes
-      every day, and deletes it within two days. It does not keep your IP address or your device.
+      every day, and deletes it within two days. For an IPv6 address, it hashes only the first half, the part that names
+      your network. It does not keep your IP address or your device.
     </p>
     <p class="os-p">
       Openstage does not count views from bots, from sites other than the project's own, or on a project's site while its
