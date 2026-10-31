@@ -25,21 +25,23 @@ module ProgressChart
     Row = Data.define(:repo, :name, :color_class, :values)
     Column = Data.define(:left, :width, :mark, :title, :rows)
 
-    # numbers: the numbers drawn, in line order. average: each point a 7-day
-    # average. lone: one project's page. per: what a line's row is, "project"
-    # or, on analytics, "page".
-    attr_reader :window, :numbers, :every_line, :lone, :per
+    # numbers: the numbers drawn, in line order. shown: every number the rows
+    # show, drawn or not. average: each point a 7-day average. lone: one
+    # project's page. per: what a line's row is, "project" or, on analytics,
+    # "page".
+    attr_reader :window, :numbers, :shown, :every_line, :lone, :per
 
     delegate :note, :note_parts, :aria_label, :none, to: :words
 
     # beside: Lines of the numbers the tooltip shows beside those drawn, for
     # the projects that show them; they draw no path, set no peak or scale
-    # and name nothing in the note.
-    def initialize(window:, lines:, numbers:, beside: [], average: false, lone: false, per: "project")
+    # and name nothing in the note. shown: the numbers drawn unless given.
+    def initialize(window:, lines:, numbers:, beside: [], shown: numbers, average: false, lone: false, per: "project")
       @window = window
       @every_line = lines
       @beside = beside
       @numbers = numbers
+      @shown = shown
       @average = average
       @lone = lone
       @per = per

@@ -99,8 +99,15 @@ module ProgressChart
       [ colorless, *rest.partition { |number| lines.call(number).any? } ]
     end
 
+    # With nothing drawn: the rows show no number yet, or only numbers the
+    # chart never draws (Progress::Numbers::Number#drawable?), which a table
+    # may still list. It names none of them: they have no line.
     def empty
-      chart.lone ? "This project shows no numbers yet." : "No #{chart.per} here shows a number yet."
+      if chart.shown.any?
+        chart.lone ? "This project shows no number the chart draws." : "No #{chart.per} here shows a number the chart draws."
+      else
+        chart.lone ? "This project shows no numbers yet." : "No #{chart.per} here shows a number yet."
+      end
     end
 
     def sentence(words, last = "and")

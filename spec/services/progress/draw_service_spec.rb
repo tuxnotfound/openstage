@@ -142,6 +142,7 @@ RSpec.describe Progress::DrawService do
 
       expect([ service.shown.map(&:key), service.totals, service.drawn, service.chart.lines ]).to eq([ %w[site_visitors], [], [], [] ])
       expect(service.chart.tips).to be_empty
+      expect(service.chart.note).to eq("No project here shows a number the chart draws.")
     end
 
     it "show in the tooltip beside each row's site visits, a dash for a row that does not show them" do

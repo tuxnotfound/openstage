@@ -82,8 +82,8 @@ module Progress
     def draw
       @window = Window.new(range: totals_window.range, today: totals_window.today, first_activity: first_drawn_day)
       lines = drawn.flat_map { |number| showing(number).map { |row| line(number, row) } }
-      ProgressChart::Compare.new(window: window, lines: lines, beside: beside_lines, numbers: drawn, average: average.present?, lone: lone.present?,
-                                 per: per || "project")
+      ProgressChart::Compare.new(window: window, lines: lines, beside: beside_lines, numbers: drawn, shown: shown, average: average.present?,
+                                 lone: lone.present?, per: per || "project")
     end
 
     # What the tooltip shows beside each number drawn (Numbers.beside), of

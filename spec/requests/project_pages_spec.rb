@@ -359,6 +359,26 @@ RSpec.describe "Project pages", type: :request do
       expect(row.css("td").map { |cell| cell.text.squish }).to eq([ "Commits 1", "Site visits 1,204", "Site visitors 800" ])
     end
 
+    it "says no project shows a number the chart draws while each shows only its site visitors, which the tables under it list" do
+      other = create(:github_repo, user: user, full_name: "builder/other", name: "other", homepage: "https://other.example", site_source: "script", site_token: "os_b",
+                                   site_set_up_at: 3.days.ago, site_first_visit_at: 3.days.ago)
+      other.site_visit_days.create!(day: Date.current, visits: 30, visitors: 21)
+      [ repo, other ].each { |each| each.update!(hidden_numbers: %w[commits visits]) }
+
+      get "/builder"
+      page = Nokogiri::HTML(response.body)
+      expect(page.css("[data-chart-row]").to_h { |row| [ row["data-chart-row"], row.css("td").map { |cell| cell.text.squish } ] })
+        .to eq("builder/side.app" => [ "Site visitors 800" ], "builder/other" => [ "Site visitors 21" ])
+      expect([ view["drawn"], view["chart"]["note"], page.at_css(".os-chart ~ .os-note").text ])
+        .to eq([ [], "No project here shows a number the chart draws.", "No project here shows a number the chart draws." ])
+      expect(page.at_css("svg[role='img']")["aria-label"]).to start_with("Nothing to chart")
+
+      sign_in_as(user)
+      get "/dashboard"
+      expect(JSON.parse(Nokogiri::HTML(response.body).at_css("#activity-chart-props").text)["initial"]["chart"]["note"])
+        .to eq("No project here shows a number the chart draws.")
+    end
+
     it "never puts the site visitors of a project that hides them in the page or the script's view, its tooltip saying a dash" do
       other = create(:github_repo, user: user, full_name: "builder/other", name: "other", homepage: "https://other.example", site_source: "script", site_token: "os_b",
                                    site_set_up_at: 3.days.ago, site_first_visit_at: 3.days.ago, hidden_numbers: [ "site_visitors" ])
