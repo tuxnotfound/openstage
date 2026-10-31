@@ -16,6 +16,7 @@ RSpec.describe "Editing a project", type: :request do
     expect(form.at_css("textarea")["placeholder"]).to eq("From GitHub.")
     expect(form.at_css("input[name='github_repo[website_edit]']")["placeholder"]).to eq("https://gh.example")
     expect(page.at_css("h2#numbers").text).to eq("Numbers on its page")
+    expect(page.at_css("h2#numbers + p").text).to eq("The numbers its page shows. A hidden number keeps counting, and you still see it here.")
     expect(page.at_css("a[href='/builder/app']").text).to include("View its page")
     expect(page.at_css("h2#numbers ~ p.os-note").text.squish)
       .to end_with("Your dashboard's table has the same switches, except where flipping one would change nothing visitors see.")
