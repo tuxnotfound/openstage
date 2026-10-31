@@ -65,6 +65,12 @@ RSpec.describe "The request log", type: :request do
     expect(io.string).not_to include("203.0.113.99")
   end
 
+  it "is the app's request logger, with the app's log tags" do
+    request_logger = Rails.application.config.middleware.find { |middleware| middleware.klass == RequestLogger }
+
+    expect(request_logger.args).to eq([ Rails.application.config.log_tags ])
+  end
+
   it "logs nothing below a warning of the page views the script sends, and counts them once" do
     repo = create(:github_repo, user: create(:user, pro: true), homepage: "https://shipnote.app", site_source: "script", site_token: "os_abc123")
     send_view
