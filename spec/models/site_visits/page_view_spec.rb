@@ -25,15 +25,16 @@ RSpec.describe SiteVisits::PageView do
     end
 
     it "masks a part that holds an IP address or a place's coordinates" do
-      masked = %w[203.0.113.57 2001:db8:85a3::8a2e:370:7334 ::1 38.72231,-9.13932 @38.72231,-9.13932,17z]
+      masked = %w[203.0.113.57 2001:db8:85a3::8a2e:370:7334 ::1 38.72231,-9.13932 38.72231%2C-9.13932 @38.72231,-9.13932,17z]
 
       expect(masked.to_h { |part| [ part, view(url: "https://shipnote.app/ip/#{part}").page ] }).to eq(masked.to_h { |part| [ part, "/ip/*" ] })
     end
 
-    it "keeps a slug, in title case or with a product's name too, a handle, a number and a version" do
+    it "keeps a slug, in title case, with a product's name, accents or spaces too, a handle, a number and a version" do
       kept = %w[launching-v2-of-shipnote-today 2026-10-30-release-notes top-10-tips-for-rails-7-developers My-Trip-To-Paris-2026 @pedro 123 v2
                 getting-started iPhone-15-Pro-Max-Review useEffect-in-React-18 GitHub-vs-GitLab-2026 B2B-SaaS-Metrics-101 how-we-priced-shipnote-for-teams
-                v1.2.3 rails-7.1 1.0 12:30]
+                v1.2.3 rails-7.1 1.0 12:30 introdu%C3%A7%C3%A3o-ao-shipnote m%C3%BCnchen-gr%C3%BC%C3%9Fe %C3%A4nderungsmitteilung
+                How%20To%20Set%20Up%20Your%20Account %FF%FE]
 
       expect(kept.map { |part| view(url: "https://shipnote.app/blog/#{part}").page }).to eq(kept.map { |part| "/blog/#{part}" })
     end

@@ -74,9 +74,10 @@ module SiteVisits
     end
 
     # The path alone, its trailing slash dropped, a part that looks personal
-    # or secret as "*".
+    # or secret as "*", judged as its visitor reads it (decoded) and kept as
+    # it came.
     def page
-      path = URI(@url).path.split("/").map { |part| personal?(part) ? "*" : part }.join("/")
+      path = URI(@url).path.split("/").map { |part| personal?(decoded(part)) ? "*" : part }.join("/")
       path.presence&.first(MAX_PATH) || "/"
     end
 
@@ -108,6 +109,13 @@ module SiteVisits
     end
 
     private
+
+    # The browser sends "é" as "%C3%A9" and a space as "%20", whose hex
+    # would read as letters and digits. URI has checked every escape; bytes
+    # that are not UTF-8 (%FF) are dropped, as the patterns cannot read them.
+    def decoded(part)
+      URI.decode_uri_component(part).scrub("")
+    end
 
     # PERSONAL, a RUN mixing letters and digits, or a token that "-" or "_"
     # cut into short runs, as nanoid and Devise make them: 16 characters or
