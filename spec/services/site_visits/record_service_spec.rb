@@ -35,17 +35,14 @@ RSpec.describe SiteVisits::RecordService do
     expect(repo.site_visit_days.sole).to have_attributes(visits: 7, visitors: 4)
   end
 
-  it "lets a visitor past their fresh views add no new page, so one address cannot fill the day's cap" do
-    stub_const("#{described_class}::FRESH_HITS", 2)
-    stub_const("SiteVisitCount::CAPS", { "page" => 3, "source" => 3, "ref" => 3 })
-    %w[/a /b /c /d /a].each { |path| record(url: "https://shipnote.app#{path}").call! }
-    record(ip: "203.0.113.8", url: "https://shipnote.app/pricing").call!
+  it "counts a page new to the day however many views its visitor sent before it" do
+    25.times { record.call! }
+    record(url: "https://shipnote.app/pricing").call!
 
-    expect(counts.map { |_day, _kind, value, count| [ value, count ] }).to eq([ [ "(other)", 2 ], [ "/a", 2 ], [ "/b", 1 ], [ "/pricing", 1 ] ])
+    expect(counts.map { |_day, _kind, value, count| [ value, count ] }).to eq([ [ "/", 25 ], [ "/pricing", 1 ] ])
   end
 
-  it "counts the source and ref tag of a visitor's first page load past their fresh views, as a lost beacon or an old tab sends it" do
-    stub_const("#{described_class}::FRESH_HITS", 2)
+  it "counts the source and ref tag of a visitor's first page load after other views, as a lost beacon or an old tab sends it" do
     3.times { record.call! }
     record(url: "https://shipnote.app/?ref=hn", referrer: "https://news.ycombinator.com/").call!
 

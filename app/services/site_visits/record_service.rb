@@ -10,11 +10,6 @@ module SiteVisits
   class RecordService < ApplicationService
     # Past this, one visitor's page views on a site that day are dropped.
     DAILY_LIMIT = 200
-    # Past this many views on a day, a visitor's views count only on pages
-    # the day already counts (SiteVisitCount.add): a script's token is
-    # public, and one address could fill the day's 100 pages otherwise. Their
-    # first page load, one a day, adds its page, source and ref tag anyway.
-    FRESH_HITS = 20
 
     # token: the script's data-project; url: the page viewed; origin: the
     # request's Origin header, when the browser sent one; referrer: the
@@ -81,7 +76,7 @@ module SiteVisits
                           unique_by: %i[github_repo_id day],
                           on_duplicate: Arel.sql("visits = site_visit_days.visits + 1, visitors = site_visit_days.visitors + EXCLUDED.visitors, " \
                                                  "updated_at = EXCLUDED.updated_at"))
-      SiteVisitCount.add(repo.id, day, view.counts(first: first, first_load: first_load), fresh: first_load || hits <= FRESH_HITS)
+      SiteVisitCount.add(repo.id, day, view.counts(first: first, first_load: first_load))
     end
 
     # What the setup step shows once the script works.

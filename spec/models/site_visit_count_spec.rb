@@ -32,14 +32,6 @@ RSpec.describe SiteVisitCount do
       expect(counts("source")).to eq([ [ "(other)", 1 ], [ "github.com", 1 ] ])
     end
 
-    it "counts a new value as Other from a visitor no longer fresh, and keeps counting the values the day has" do
-      described_class.add(repo.id, day, { "page" => "/a" })
-      described_class.add(repo.id, day, { "page" => "/a" }, fresh: false)
-      described_class.add(repo.id, day, { "page" => "/b", "country" => "PT" }, fresh: false)
-
-      expect([ counts("page"), counts("country") ]).to eq([ [ [ "(other)", 1 ], [ "/a", 2 ] ], [ [ "PT", 1 ] ] ])
-    end
-
     it "keeps the totals right past the caps, and never caps countries" do
       stub_const("#{described_class}::CAPS", { "page" => 3, "source" => 3, "ref" => 3 })
       codes = %w[PT ES FR DE IT NL BE]
