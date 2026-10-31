@@ -12,13 +12,13 @@ RSpec.describe SiteVisits::PageView do
       expect(view(url: "https://shipnote.app/Blog/Launch-Day").page).to eq("/Blog/Launch-Day")
     end
 
-    it "masks a part that holds an email address, a UUID, a digest, an id, a token or a phone number" do
+    it "masks a part that holds an email address, a UUID, a digest, an id, a token, or a phone, card or bank account number" do
       masked = [
         "jane@example.com", "jane%40example.com", "550e8400-e29b-41d4-a716-446655440000", "550E8400-E29B-41D4-A716-446655440000",
         "invoice-550e8400-e29b-41d4-a716-446655440000", "9e107d9d372bb6826bd81d3542a419d6", "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12",
         "d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592", "507f1f77bcf86cd799439011", "pX27zsMN2ViQKta1bGfLmVJE",
         "V1StGXR8_Z5jdHi6B-myT", "zyx-9QcN2_Pe7mBv1Hk3", "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
-        "4155551234"
+        "4155551234", "415-555-1234", "+44-20-7946-0958", "4111%201111%201111%201111", "DE89%203704%200044%200532%200130%2000"
       ]
 
       expect(masked.to_h { |part| [ part, view(url: "https://shipnote.app/u/#{part}/settings").page ] }).to eq(masked.to_h { |part| [ part, "/u/*/settings" ] })
@@ -34,7 +34,7 @@ RSpec.describe SiteVisits::PageView do
       kept = %w[launching-v2-of-shipnote-today 2026-10-30-release-notes top-10-tips-for-rails-7-developers My-Trip-To-Paris-2026 @pedro 123 v2
                 getting-started iPhone-15-Pro-Max-Review useEffect-in-React-18 GitHub-vs-GitLab-2026 B2B-SaaS-Metrics-101 how-we-priced-shipnote-for-teams
                 v1.2.3 rails-7.1 1.0 12:30 introdu%C3%A7%C3%A3o-ao-shipnote m%C3%BCnchen-gr%C3%BC%C3%9Fe %C3%A4nderungsmitteilung
-                How%20To%20Set%20Up%20Your%20Account %FF%FE]
+                How%20To%20Set%20Up%20Your%20Account %FF%FE 2026-10-30-2026-11-06 release-1.4.2-2026-10-30]
 
       expect(kept.map { |part| view(url: "https://shipnote.app/blog/#{part}").page }).to eq(kept.map { |part| "/blog/#{part}" })
     end
@@ -91,14 +91,14 @@ RSpec.describe SiteVisits::PageView do
     end
 
     it "drops a tag that holds a phone number, a UUID, a digest, an id, a token or an IP address" do
-      dropped = %w[4155551234 550E8400-E29B-41D4-A716-446655440000 9e107d9d372bb6826bd81d3542a419d6 507f1f77bcf86cd799439011 203.0.113.57
+      dropped = %w[4155551234 415-555-1234 550E8400-E29B-41D4-A716-446655440000 9e107d9d372bb6826bd81d3542a419d6 507f1f77bcf86cd799439011 203.0.113.57
                    eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U]
 
       expect(dropped.map { |tag| view(url: "https://shipnote.app/?utm_source=#{tag}").ref_tag }).to eq([ nil ] * dropped.size)
     end
 
     it "keeps a campaign's tag with a year, a number or a date in it" do
-      kept = %w[hn reddit producthunt news.ycombinator.com launch_week-2 summer2026campaign newsletter-2026-10-30]
+      kept = %w[hn reddit producthunt news.ycombinator.com launch_week-2 summer2026campaign newsletter-2026-10-30 2026-10-01-2026-10-31]
 
       expect(kept.map { |tag| view(url: "https://shipnote.app/?ref=#{tag}").ref_tag }).to eq(kept)
     end

@@ -4,9 +4,10 @@ module SiteVisits
   # One page view sent by Openstage's script, as much of it as the day's
   # counts keep (SiteVisitCount): its page's path; for a visitor's first
   # view of the day their country; and for their first page load of the day
-  # the site they came from and the ref tag they followed. Never a query string, a whole referrer, a machine's own
-  # name, or a part of a path that looks like an email address, an id, a
-  # secret, an IP address or a place's coordinates.
+  # the site they came from and the ref tag they followed. Never a query
+  # string, a whole referrer, a machine's own name, or a part of a path that
+  # looks like an email address, a phone or card number, an id, a secret, an
+  # IP address or a place's coordinates.
   class PageView
     MAX_PATH = 200
     MAX_TAG = 64
@@ -19,9 +20,15 @@ module SiteVisits
     LOCAL = /\.(local|lan|internal|localhost|home\.arpa)\z/
     # Anywhere in a part of a path: an email address (an "@" with something
     # before it, so a handle such as @pedro stays), a UUID, ten digits or
-    # more in a row, as a phone number has, an IPv4 address, or a latitude
-    # and longitude. An IPv6 address is a whole part (Resolv::IPv6::Regex).
+    # more in a row, an IPv4 address, or a latitude and longitude. An IPv6
+    # address is a whole part (Resolv::IPv6::Regex).
     PERSONAL = /.(@|%40)|\h{8}-\h{4}-\h{4}-\h{4}-\h{12}|\d{10,}|(?<![\d.])\d{1,3}(\.\d{1,3}){3}(?![\d.])|-?\d{1,3}\.\d{3,},-?\d{1,3}\.\d{3,}/i
+    # Digits split by dashes, dots, spaces or brackets, as phone, card and
+    # bank account numbers are written (415-555-1234, +44 20 7946 0958,
+    # 4111 1111 1111 1111); one with a DATE in it is a dated slug's
+    # (release-1.4.2-2026-10-30).
+    NUMBER = /(?<![\w.])\+?\(?\d(?:[-. ()]{0,2}\d)+(?!\w)/
+    DATE = /\d{4}[-.]\d\d[-.]\d\d/
     # 16 letters and digits or more in a row: a digest, an id or a token
     # once it mixes letters and digits.
     RUN = /[A-Za-z\d]{16,}/
@@ -93,13 +100,13 @@ module SiteVisits
     end
 
     # The page's ref or utm_source tag, the first given, in letters, digits,
-    # ".", "-" and "_" alone. A tag with an email address, an id or a
-    # secret in it (PERSONAL, SECRET_TAG) is dropped, not cleaned, so the
-    # next one counts instead.
+    # ".", "-" and "_" alone. A tag with an email address, a phone number,
+    # an id or a secret in it (PERSONAL, NUMBER, SECRET_TAG) is dropped, not
+    # cleaned, so the next one counts instead.
     def ref_tag
       params = URI.decode_www_form(URI(@url).query.to_s)
       tags = %w[ref utm_source].flat_map { |key| params.filter_map { |name, value| value if name == key } }.map { |tag| tag.scrub("") }
-      tags.reject { |tag| tag.match?(PERSONAL) || tag.match?(SECRET_TAG) }.map { |tag| tag.downcase.gsub(/[^a-z0-9._-]/, "").first(MAX_TAG) }.find(&:present?)
+      tags.reject { |tag| tag.match?(PERSONAL) || number?(tag) || tag.match?(SECRET_TAG) }.map { |tag| tag.downcase.gsub(/[^a-z0-9._-]/, "").first(MAX_TAG) }.find(&:present?)
     end
 
     # Two letters, none of NO_COUNTRY.
@@ -117,12 +124,24 @@ module SiteVisits
       URI.decode_uri_component(part).scrub("")
     end
 
-    # PERSONAL, a RUN mixing letters and digits, or a token that "-" or "_"
-    # cut into short runs, as nanoid and Devise make them: 16 characters or
-    # more mixing upper case, lower case and digits that TURN four times or
-    # more. A slug in title case or with a product's name stays.
+    # PERSONAL, an IPv6 address, a phone, card or bank account number, or a
+    # token.
     def personal?(part)
-      return true if part.match?(PERSONAL) || part.match?(Resolv::IPv6::Regex) || part.scan(RUN).any? { |run| run.match?(/[A-Za-z]/) && run.match?(/\d/) }
+      part.match?(PERSONAL) || part.match?(Resolv::IPv6::Regex) || number?(part) || token?(part)
+    end
+
+    # A NUMBER of 10 to 19 digits, as many as a phone, card or bank account
+    # number has, and no DATE.
+    def number?(text)
+      text.scan(NUMBER).any? { |run| run.count("0-9").between?(10, 19) && !run.match?(DATE) }
+    end
+
+    # A RUN mixing letters and digits, or a token that "-" or "_" cut into
+    # short runs, as nanoid and Devise make them: 16 characters or more
+    # mixing upper case, lower case and digits that TURN four times or more.
+    # A slug in title case or with a product's name stays.
+    def token?(part)
+      return true if part.scan(RUN).any? { |run| run.match?(/[A-Za-z]/) && run.match?(/\d/) }
 
       part.length >= 16 && part.match?(/[A-Z]/) && part.match?(/[a-z]/) && part.match?(/\d/) && part.scan(TURN).size >= 4
     end
