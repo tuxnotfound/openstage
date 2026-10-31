@@ -20,6 +20,9 @@ RSpec.describe "Marketing pages", type: :request do
       expect(Nokogiri::HTML(response.body).text.squish).to include(
         "Openstage does not count views from bots, from sites other than the project's own, or on a project's site while its counting is off or paused."
       )
+      expect(Nokogiri::HTML(response.body).at_css("#builders-sites").text.squish).to include(
+        "The builder sees these totals, and the builder's stage and the project's page on Openstage can show the project's page views and visitors."
+      )
       expect(response.body).to include(%(href="/privacy"))
     end
 
