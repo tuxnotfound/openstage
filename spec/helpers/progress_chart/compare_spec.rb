@@ -46,6 +46,45 @@ RSpec.describe ProgressChart::Compare do
     expect(compare.columns.first.title).to eq("Week of Oct 19–25")
   end
 
+  describe "a number that sits beside another" do
+    let(:visitors) { Progress::Numbers.find("site_visitors") }
+
+    it "shows in the tooltip right after it, a dash for a project that does not show it, and in no line, peak or word of the note" do
+      lined = [ line("app", commits, [ 3, 1 ]), line("app", visits, [ 0, 400 ]), line("lib", visits, [ 0, 90 ], rank: 1) ]
+      compare = chart(lined, beside: [ line("app", visitors, [ 0, 120 ]) ])
+
+      expect([ compare.lined.map(&:key), compare.tips.map(&:key) ]).to eq([ %w[commits visits], %w[commits visits site_visitors] ])
+      expect(compare.columns.last.rows.map { |row| [ row.name, row.values ] }).to eq([ [ "app", %w[1 400 120] ], [ "lib", %w[– 90 –] ] ])
+      expect(compare.paths.map { |path| path[2] }.uniq).to eq(%w[visits commits])
+      expect(compare.paths).to eq(chart(lined).paths)
+      expect([ compare.note, compare.aria_label ].join).not_to include("visitors")
+    end
+
+    it "leaves a number drawn alone on its own axis, as if nothing sat beside it" do
+      alone = chart([ line("app", visits, [ 0, 400 ]) ], numbers: [ visits ])
+      compare = chart([ line("app", visits, [ 0, 400 ]) ], numbers: [ visits ], beside: [ line("app", visitors, [ 0, 900 ]) ])
+
+      expect([ compare.indexed?, compare.ticks, compare.paths, compare.note ]).to eq([ false, alone.ticks, alone.paths, alone.note ])
+      expect(compare.columns.last.rows.sole.values).to eq(%w[400 900])
+    end
+
+    it "leaves its column out of the tooltip while no project with lines shows it" do
+      quiet = described_class::Line.new(repo: "builder/quiet", name: "quiet", rank: 10, color_class: nil, number: visits, values: [ 0, 90 ], total: 90)
+      quiet_visitors = described_class::Line.new(repo: "builder/quiet", name: "quiet", rank: 10, color_class: nil, number: visitors, values: [ 0, 30 ], total: 30)
+      compare = chart([ line("app", visits, [ 0, 400 ]), quiet ], numbers: [ visits ], beside: [ quiet_visitors ])
+
+      expect(compare.tips.map(&:key)).to eq(%w[visits])
+      expect(compare.columns.last.rows.sole.values).to eq(%w[400])
+    end
+
+    it "is averaged to a tenth with the number it sits beside" do
+      compare = chart([ line("app", visits, [ 0, 0, 0, 0, 0, 0, 0, 0, 2.5, 12.4 ]) ], numbers: [ visits ], range: "30d", average: true,
+                                                                                    beside: [ line("app", visitors, [ 0, 0, 0, 0, 0, 0, 0, 0, 1, 3.14 ]) ])
+
+      expect(compare.columns.last.rows.sole.values).to eq(%w[12.4 3.1])
+    end
+  end
+
   it "names each line style by the numbers' places among those drawn, and gives each number's peak" do
     compare = chart([ line("app", commits, [ 3, 1 ]), line("app", visits, [ 0, 400 ]) ], numbers: [ visits, commits ])
 

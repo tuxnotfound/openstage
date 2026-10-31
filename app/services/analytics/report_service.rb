@@ -43,7 +43,7 @@ module Analytics
 
     # The table's numbers: every one a page shows.
     def columns
-      totals.map(&:number)
+      drawing.shown
     end
 
     # A row's cells under the table's numbers. Analytics only reads them:

@@ -1,12 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
-import CompareChart from "../filter/CompareChart"
+import CompareChart, { type ProjectNumber } from "../filter/CompareChart"
 import NumberToggles from "../filter/NumberToggles"
 import ProjectsTable, { csrfToken, type CellSwitches } from "../filter/ProjectsTable"
 import WindowPills from "../filter/WindowPills"
 import { lineOrder } from "../filter/lines"
 import { useFilter } from "../filter/useFilter"
-import type { CompareChartView, ProgressRange, ProgressView, ShippedItem, TableCell, TableRow } from "../types"
+import type { ProgressRange, ProgressView, ShippedItem, TableCell, TableRow } from "../types"
 
 // The chart filter on a builder's page, a project's page and the dashboard
 // (useFilter): the numbers above the chart, the window, the chart, and the
@@ -68,12 +68,12 @@ export default function ProgressIsland({ initial, endpoint, mode, defaultRange, 
   )
 }
 
-// The dashboard's switches: a switch answers at once, and a line switched
-// off leaves the chart at once; the save goes to the server, which then
-// draws the view on screen by then again, on its new scale, and Back fetches
-// the page anew rather than Turbo's copy from before the switch. A failed
-// save puts it back.
-function useCellSwitches(view: ProgressView, redraw: () => void): { switches: CellSwitches; hidden: (path: CompareChartView["paths"][number]) => boolean; failed: boolean } {
+// The dashboard's switches: a switch answers at once, and a number switched
+// off leaves the chart at once, its line and its value in the tooltip; the
+// save goes to the server, which then draws the view on screen by then
+// again, on its new scale, and Back fetches the page anew rather than
+// Turbo's copy from before the switch. A failed save puts it back.
+function useCellSwitches(view: ProgressView, redraw: () => void): { switches: CellSwitches; hidden: (each: ProjectNumber) => boolean; failed: boolean } {
   const [pending, setPending] = useState<Record<string, boolean>>({})
   const [failed, setFailed] = useState(false)
   const latest = useRef(redraw)
@@ -113,7 +113,7 @@ function useCellSwitches(view: ProgressView, redraw: () => void): { switches: Ce
 
   return {
     switches: { pick, shown: (row, cell) => pending[key(row, cell)] ?? cell.shown, flip: (row, cell) => { void flip(row, cell) } },
-    hidden: (path) => pending[`${path.key}|${path.number}`] === false,
+    hidden: (each) => pending[`${each.key}|${each.number}`] === false,
     failed,
   }
 }

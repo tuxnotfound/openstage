@@ -75,7 +75,7 @@ RSpec.describe "Analytics", type: :request do
       get "/analytics"
 
       expect(toggles.css("[role='group']").map { |group| group["aria-label"] }).to eq([ "On GitHub", "On your websites", "More numbers", "On Openstage" ])
-      expect(toggles.text.squish).to eq("On GitHub Commits 1 ± 0% On your websites + Site visits 30 ▲up 200% + Site visitors 9 ± 0% + 2 more On Openstage + Visitors 1 + Views 1")
+      expect(toggles.text.squish).to eq("On GitHub Commits 1 ± 0% On your websites + Site visits 30 ▲up 200% + 2 more On Openstage + Visitors 1 + Views 1")
       expect(toggles.css("[aria-current='true']").map { |drawn| [ drawn.name, drawn.text.squish ] }).to eq([ [ "span", "Commits 1 ± 0%" ] ])
       expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Commits per day by page, last 30 days")
       expect(page.at_css("[aria-label='Time range'] a[aria-current='page']").text).to eq("30 days")
@@ -172,7 +172,7 @@ RSpec.describe "Analytics", type: :request do
       repo.update!(hidden_numbers: %w[visits])
 
       get "/analytics", params: { show: "visits" }
-      expect(toggles.text.squish).to eq("On GitHub Commits 0 ▼down 100% On your websites + Site visitors 9")
+      expect(toggles.text.squish).to eq("On GitHub Commits 0 ▼down 100%")
       expect(cells("builder/app")).to eq([ "Commits 0 ▼down 100%", "Site visitors 9" ])
 
       repo.update!(hidden_numbers: %w[visits site_visitors])
@@ -181,23 +181,35 @@ RSpec.describe "Analytics", type: :request do
       expect(cells("builder/app")).to eq([ "Commits 0 ▼down 100%" ])
     end
 
-    it "draws site visitors on their own over the days picked, saying a site visitor is one IP address or IPv6 network on one day" do
+    it "never draws site visitors, asked for or not, shows them beside site visits in the tooltip, and says a site visitor is one IP address or IPv6 network on one day" do
       repo.site_visit_days.create!(day: Date.new(2026, 10, 2), visits: 30, visitors: 9)
       repo.site_visit_days.create!(day: Date.new(2026, 10, 12), visits: 12, visitors: 4)
 
       get "/analytics", params: { show: "site_visitors", range: "2026-10-01..2026-10-10" }
 
-      expect(drawn).to eq([ "Site" ])
-      expect(toggles.at_css("[aria-current='true']").text.squish).to eq("Site visitors 9")
-      expect(page.at_css("svg[role='img']")["aria-label"]).to start_with("Site visitors per day by page")
+      expect(drawn).to eq([ "Commits" ])
+      expect(toggles.text).not_to include("Site visitors")
+      expect(page.at_css("svg[role='img']")["aria-label"]).to start_with("Commits per day by page")
       expect(cells("builder/app")).to include("Site visitors 9")
       expect(response.body).to include("On a project's own website, counted by Openstage's script: site visits are page views; a site visitor is one IP " \
                                        "address, or one IPv6 network, on one day. On Openstage, your stage and your project pages: a visitor is one IP address " \
                                        "on one day;")
 
-      get "/api/analytics", params: { show: "site_visitors", range: "2026-10-01..2026-10-10" }
-      expect(response.parsed_body["numbers"].find { |number| number["key"] == "site_visitors" }).to include("label" => "Site visitors", "value" => "9")
-      expect(response.parsed_body["drawn"]).to eq([ "site_visitors" ])
+      get "/api/analytics", params: { show: "visits,site_visitors", range: "2026-10-01..2026-10-10" }
+      expect(response.parsed_body).to include("drawn" => [ "visits" ])
+      expect(response.parsed_body["numbers"].pluck("key")).not_to include("site_visitors")
+      chart = response.parsed_body["chart"]
+      expect([ chart["heads"], chart["tips"].pluck("key", "line") ]).to eq([ [ "visits" ], [ [ "visits", true ], [ "site_visitors", false ] ] ])
+      expect(chart["paths"].pluck("number")).to eq([ "visits" ])
+      expect(chart["columns"].first["rows"].map { |row| [ row["name"], row["values"] ] }).to eq([ [ "app", %w[30 9] ] ])
+
+      get "/api/analytics", params: { metric: "site_visitors" }
+      expect(response.parsed_body["drawn"]).to eq([ "commits" ])
+
+      repo.update!(hidden_numbers: %w[site_visitors])
+      get "/api/analytics", params: { show: "visits", range: "2026-10-01..2026-10-10" }
+      expect(response.parsed_body["chart"]["tips"].pluck("key")).to eq([ "visits" ])
+      expect(response.body).not_to include("site_visitors")
     end
 
     it "shows where the badge and the embed were shown" do

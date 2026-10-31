@@ -1,9 +1,10 @@
 # A chart filter's view for one window, the numbers drawn and the rows in
-# view, as every chart page shows it: a toggle per number its rows show, with
-# its total for the rows in view, how that splits across them and, where the
-# page shows changes, its change against the window before; the numbers
-# drawn; the one chart; and the table of rows under it. filter: a
-# Progress::ChartService or an Analytics::ReportService.
+# view, as every chart page shows it: a toggle per number its rows show that
+# the chart can draw (Progress::DrawService#totals), with its total for the
+# rows in view, how that splits across them and, where the page shows
+# changes, its change against the window before; the numbers drawn; the one
+# chart; and the table of rows under it. filter: a Progress::ChartService or
+# an Analytics::ReportService.
 class ChartFilterSerializer < ApplicationSerializer
   include ActionView::Helpers::NumberHelper
 

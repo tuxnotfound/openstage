@@ -19,10 +19,13 @@ export type CompareChartView = {
   // key: the row's (TableRow); number: the number's.
   paths: { d: string; colorClass: string; number: string; key: string }[]
   ticks: { value: string; top: number }[]
-  // values: one per number in heads, "–" where the project counts none.
+  // values: one per tip, "–" where the project shows none of it.
   columns: { left: number; width: number; mark: number; title: string; rows: { key: string; name: string; colorClass: string; values: string[] }[] }[]
-  // The numbers with lines, in the pages' order: the tooltip's columns.
+  // The numbers with lines, in the pages' order: the note names their styles.
   heads: string[]
+  // The tooltip's columns: each number with lines, then any the server
+  // shows beside it, which has no line of its own (line false).
+  tips: { key: string; label: string; line: boolean }[]
   axis: string[]
   ariaLabel: string
   // As the server's first paint writes it; when the chart compares numbers,

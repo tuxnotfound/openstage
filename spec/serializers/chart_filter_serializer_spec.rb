@@ -39,14 +39,13 @@ RSpec.describe ChartFilterSerializer do
     expect(json["chart"]["paths"].pluck("colorClass").uniq.size).to eq(10)
   end
 
-  it "writes a dash for a number no row in view shows" do
+  it "writes a dash for a number no row in view shows, and has no toggle for site visitors, which the chart never draws" do
     user.github_repos.find_by(full_name: "me/app").update!(site_source: "script", site_set_up_at: 3.days.ago, site_first_visit_at: 2.days.ago)
     user.github_repos.find_by(full_name: "me/app").site_visit_days.create!(day: 2.days.ago.to_date, visits: 5, visitors: 2)
 
     json = view(changes: true, table: false, repos: [ "me/lib" ])
 
-    expect(json["numbers"].map { |number| [ number["key"], number["value"], number["change"] ] })
-      .to eq([ [ "commits", "1", nil ], [ "visits", "–", nil ], [ "site_visitors", "–", nil ] ])
+    expect(json["numbers"].map { |number| [ number["key"], number["value"], number["change"] ] }).to eq([ [ "commits", "1", nil ], [ "visits", "–", nil ] ])
   end
 
   it "gives the toggles their change, and the table's cells theirs only when asked" do

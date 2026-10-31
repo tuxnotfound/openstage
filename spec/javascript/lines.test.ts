@@ -39,12 +39,14 @@ describe("the lines of the numbers drawn", () => {
 })
 
 describe("the note under a chart that compares numbers", () => {
+  // Site visitors show in the tooltip beside site visits, with no line.
   const chart = {
     indexed: true, heads: ["commits", "visits"], note: "Commits solid and site visits dotted, as the server drew them.",
+    tips: [{ key: "commits", label: "Commits", line: true }, { key: "visits", label: "Site visits", line: true }, { key: "site_visitors", label: "Site visitors", line: false }],
     noteParts: { before: "7-day averages. ", after: ", each against its own peak in the window; 100% is 3 commits a day and 40 site visits a day." },
   } as CompareChartView
 
-  test("names each line by this page's own line order", () => {
+  test("names each line by this page's own line order, and no number without one", () => {
     expect(noteOf(chart, numbers, { visits: 0, commits: 2 }))
       .toBe("7-day averages. Commits dashed and site visits solid, each against its own peak in the window; 100% is 3 commits a day and 40 site visits a day.")
   })

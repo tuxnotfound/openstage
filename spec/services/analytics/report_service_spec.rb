@@ -49,18 +49,30 @@ RSpec.describe Analytics::ReportService do
                                                                      "lib" => %w[commits visitors views])
   end
 
-  it "totals site visitors over the window, picked days included, each project's part and the window before's" do
+  it "sums site visitors over the window in each project's cell, picked days included, with the window before's, and has no toggle of them" do
     lib = create(:github_repo, user: user, full_name: "me/lib", name: "lib")
     app.site_visit_days.create!(day: Date.new(2026, 9, 1), visits: 10, visitors: 4)
     app.site_visit_days.create!(day: Date.new(2026, 10, 3), visits: 30, visitors: 9)
     app.site_visit_days.create!(day: Date.new(2026, 10, 20), visits: 12, visitors: 6)
     lib.site_visit_days.create!(day: Date.new(2026, 10, 4), visits: 8, visitors: 5)
+    visitors = ->(service) { service.rows.to_h { |row| [ row.name, service.cells(row).find { |cell| cell.number.key == "site_visitors" }.to_h.slice(:value, :previous) ] } }
 
-    visitors = total(report, "site_visitors")
-    expect([ visitors.value, visitors.previous, visitors.split.map { |row, count| [ row.name, count ] } ]).to eq([ 20, 4, [ [ "app", 15 ], [ "lib", 5 ] ] ])
+    service = report
+    expect(visitors.call(service)).to eq("Your stage" => { value: nil, previous: nil }, "app" => { value: 15, previous: 4 }, "lib" => { value: 5, previous: nil })
+    expect(total(service, "site_visitors")).to be_nil
+    expect(visitors.call(report(range: "2026-10-01..2026-10-10")).transform_values { |cell| cell[:value] }).to eq("Your stage" => nil, "app" => 9, "lib" => 5)
+  end
 
-    picked = total(report(range: "2026-10-01..2026-10-10"), "site_visitors")
-    expect([ picked.value, picked.split.map { |row, count| [ row.name, count ] } ]).to eq([ 14, [ [ "app", 9 ], [ "lib", 5 ] ] ])
+  it "never draws site visitors, asked for or not, and shows them in the tooltip beside the site visits of a project that shows both" do
+    app.site_visit_days.create!(day: 2.days.ago.to_date, visits: 30, visitors: 9)
+
+    service = report(show: %w[site_visitors visits])
+    expect([ service.drawn.map(&:key), service.chart.tips.map(&:key) ]).to eq([ %w[visits], %w[visits site_visitors] ])
+    expect(service.chart.columns.find { |column| column.rows.any? }.rows.map { |row| [ row.name, row.values ] }).to eq([ [ "app", %w[30 9] ] ])
+    expect(report(show: %w[site_visitors]).drawn.map(&:key)).to eq(%w[commits])
+
+    app.update!(hidden_numbers: %w[site_visitors])
+    expect(report(show: %w[visits]).chart.tips.map(&:key)).to eq(%w[visits])
   end
 
   it "leaves out the numbers a project's builder hides from it, and never Openstage's own" do

@@ -7,7 +7,9 @@ module ProgressChart
   # lines, each is drawn against its own peak in the window, its projects on
   # one scale so they still compare; with one, the axis is that number's own.
   # The tooltip keeps the real numbers: a row per project with anything at
-  # the point, a column per number. The words are CompareNote's.
+  # the point, a column per number with lines, each followed by the numbers
+  # that sit beside it (Progress::Numbers.beside), which draw nothing. The
+  # words are CompareNote's.
   class Compare
     WIDTH = Trend::WIDTH
     HEIGHT = Trend::HEIGHT
@@ -18,7 +20,8 @@ module ProgressChart
     # values: one per point; total: its count over the window's days. Without
     # a colour or a total it draws no line.
     Line = Data.define(:repo, :name, :rank, :color_class, :number, :values, :total)
-    # values: one per number with lines; "–" where the project has none of it.
+    # values: one per column of the tooltip (tips); "–" where the project
+    # shows none of it.
     Row = Data.define(:repo, :name, :color_class, :values)
     Column = Data.define(:left, :width, :mark, :title, :rows)
 
@@ -29,9 +32,13 @@ module ProgressChart
 
     delegate :note, :note_parts, :aria_label, :none, to: :words
 
-    def initialize(window:, lines:, numbers:, average: false, lone: false, per: "project")
+    # beside: Lines of the numbers the tooltip shows beside those drawn, for
+    # the projects that show them; they draw no path, set no peak or scale
+    # and name nothing in the note.
+    def initialize(window:, lines:, numbers:, beside: [], average: false, lone: false, per: "project")
       @window = window
       @every_line = lines
+      @beside = beside
       @numbers = numbers
       @average = average
       @lone = lone
@@ -44,9 +51,16 @@ module ProgressChart
       @lines ||= every_line.select { |line| line.color_class && line.total.positive? }
     end
 
-    # The numbers drawn that have lines, in the pages' order: the tooltip's columns.
+    # The numbers drawn that have lines, in the pages' order.
     def lined
       @lined ||= Progress::Numbers::ALL.select { |number| lines.any? { |line| line.number == number } }
+    end
+
+    # The tooltip's columns: each number with lines, then the numbers that
+    # sit beside it where a project with its lines shows them, so a column
+    # no project fills never shows.
+    def tips
+      @tips ||= lined.flat_map { |number| [ number, *Progress::Numbers.beside(number).select { |other| shown_beside?(number, other) } ] }
     end
 
     def indexed?
@@ -96,8 +110,16 @@ module ProgressChart
 
     private
 
+    attr_reader :beside
+
     def words
       @words ||= CompareNote.new(self)
+    end
+
+    # Whether a project with lines of a number shows another beside it.
+    def shown_beside?(number, other)
+      repos = lines.select { |line| line.number == number }.map(&:repo)
+      beside.any? { |line| line.number == other && repos.include?(line.repo) }
     end
 
     def column(bucket, count)
@@ -113,12 +135,12 @@ module ProgressChart
     def rows_at(index)
       projects = lines.select { |line| line.values[index].positive? }.map { |line| [ line.repo, line.name, line.rank, line.color_class ] }.uniq
       projects.sort_by { |_, name, rank| [ rank || -1, name ] }.map do |repo, name, _rank, color_class|
-        Row.new(repo: repo, name: name, color_class: color_class, values: lined.map { |number| value_at(repo, number, index) })
+        Row.new(repo: repo, name: name, color_class: color_class, values: tips.map { |number| value_at(repo, number, index) })
       end
     end
 
     def value_at(repo, number, index)
-      line = every_line.find { |each| each.repo == repo && each.number == number }
+      line = (every_line + beside).find { |each| each.repo == repo && each.number == number }
       line ? words.amount(number, line.values[index]) : "–"
     end
 

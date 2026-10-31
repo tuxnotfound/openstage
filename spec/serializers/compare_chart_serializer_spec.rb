@@ -17,9 +17,23 @@ RSpec.describe CompareChartSerializer do
     expect(json["paths"].map { |path| path.slice("colorClass", "number", "key") }).to eq([ { "colorClass" => "os-project-1", "number" => "visits", "key" => "me/app" },
                                                                                            { "colorClass" => "os-project-1", "number" => "commits", "key" => "me/app" } ])
     expect(json["heads"]).to eq(%w[commits visits])
+    expect(json["tips"]).to eq([ { "key" => "commits", "label" => "Commits", "line" => true }, { "key" => "visits", "label" => "Site visits", "line" => true } ])
     expect(json["columns"].last["rows"]).to eq([ { "key" => "me/app", "name" => "app", "colorClass" => "os-project-1", "values" => %w[1 400] } ])
     expect(json["noteParts"]).to eq("before" => "", "after" => ", each against its own peak in the window; 100% is 3 commits a week and 400 site visits a week.")
     expect(json).to include("indexed" => true, "none" => "Nothing this week", "axis" => [ "Oct 19", "Today" ])
+  end
+
+  it "heads the tooltip's columns with each number with lines and, with no line, the number beside it, each row's values in their order" do
+    chart = ProgressChart::Compare.new(window: window, lines: [ line(visits, [ 0, 400 ]) ], beside: [ line(Progress::Numbers.find("site_visitors"), [ 0, 120 ]) ],
+                                       numbers: [ visits ])
+
+    json = described_class.new(chart).as_json
+
+    expect(json["heads"]).to eq(%w[visits])
+    expect(json["tips"]).to eq([ { "key" => "visits", "label" => "Site visits", "line" => true }, { "key" => "site_visitors", "label" => "Site visitors", "line" => false } ])
+    expect(json["columns"].last["rows"].sole["values"]).to eq(%w[400 120])
+    expect(json["paths"].pluck("number")).to eq(%w[visits])
+    expect(json).to include("indexed" => false, "note" => "Site visits per week, one line per project.")
   end
 
   it "sends no note parts for a chart of one number" do

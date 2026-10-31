@@ -114,6 +114,59 @@ RSpec.describe Progress::DrawService do
     expect(draw.chart.note).to eq("Commits per week, one line per project.")
   end
 
+  describe "site visitors, which sit beside site visits" do
+    # app shows both, lib its site visits alone; both counted visitors.
+    let(:counts) do
+      Progress::Counts.new(
+        days: { "commits" => { "me/app" => { today - 1 => 3 } }, "visits" => { "me/app" => { today - 2 => 40 }, "me/lib" => { today - 2 => 9 } },
+                "site_visitors" => { "me/app" => { today - 2 => 12 }, "me/lib" => { today - 2 => 4 } } },
+        firsts: { "commits" => { "me/app" => today - 1 }, "visits" => { "me/app" => today - 2, "me/lib" => today - 2 },
+                  "site_visitors" => { "me/app" => today - 2, "me/lib" => today - 2 } }
+      )
+    end
+    let(:app) { row("me/app", %w[commits visits site_visitors]) }
+    let(:lib) { row("me/lib", %w[visits], rank: 1) }
+
+    it "are no toggle, no line and never drawn, asked for or not, and the table still lists them" do
+      service = draw(show: %w[site_visitors visits])
+
+      expect([ service.shown, service.totals.map(&:number), service.drawn ].map { |numbers| numbers.map(&:key) })
+        .to eq([ %w[commits visits site_visitors], %w[commits visits], %w[visits] ])
+      expect(draw(show: %w[site_visitors], default_show: %w[commits visits]).drawn.map(&:key)).to eq(%w[commits visits])
+      expect(service.chart.lines.map { |line| line.number.key }.uniq).to eq(%w[visits])
+      expect(service.cells(app, service.shown).map(&:value)).to eq([ 3, 40, 12 ])
+    end
+
+    it "are never the number a page falls back to, even where they are the only one its rows show" do
+      service = draw([ row("me/app", %w[site_visitors]) ], show: %w[site_visitors])
+
+      expect([ service.shown.map(&:key), service.totals, service.drawn, service.chart.lines ]).to eq([ %w[site_visitors], [], [], [] ])
+      expect(service.chart.tips).to be_empty
+    end
+
+    it "show in the tooltip beside each row's site visits, a dash for a row that does not show them" do
+      chart = draw(show: %w[visits]).chart
+
+      expect(chart.tips.map(&:key)).to eq(%w[visits site_visitors])
+      expect(chart.columns.last.rows.map { |each| [ each.name, each.values ] }).to eq([ [ "app", %w[40 12] ], [ "lib", %w[9 –] ] ])
+      expect(chart.indexed?).to be(false)
+    end
+
+    it "leave the tooltip with no column of theirs while no row in view shows them" do
+      chart = draw([ row("me/app", %w[commits visits site_visitors], on: false), lib ], show: %w[visits]).chart
+
+      expect(chart.tips.map(&:key)).to eq(%w[visits])
+      expect(chart.columns.last.rows.map { |each| [ each.name, each.values ] }).to eq([ [ "lib", %w[9] ] ])
+    end
+
+    it "average to a tenth on a window drawn by day" do
+      days = Progress::Window.new(range: "30d", today: today, first_activity: nil)
+      chart = described_class.new(rows: [ app ], counts: counts, totals_window: days, show: %w[visits], average: true).tap(&:call!).chart
+
+      expect(chart.columns.last.rows.sole.values).to eq(%w[5.7 1.7])
+    end
+  end
+
   it "shows no number for rows that show none" do
     service = draw([ row("me/app", []) ])
 

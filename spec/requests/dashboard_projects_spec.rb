@@ -93,6 +93,13 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       page.css("section[aria-labelledby='your-activity'] svg[role='img'] path").map { |path| path["data-number"] }
     end
 
+    # The chart's tooltip, from the island's first view: its columns, and
+    # each project's values at today's point in their order.
+    def tooltip
+      chart = JSON.parse(page.at_css("#activity-chart-props").text)["initial"]["chart"]
+      [ chart["tips"].pluck("key"), chart["columns"].last["rows"].to_h { |row| [ row["name"], row["values"] ] } ]
+    end
+
     it "lists each project with its commits, site visits and site visitors, each shown to visitors, and offers to set up visits where none count" do
       get "/dashboard"
 
@@ -148,20 +155,22 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       expect(cells("builder/app").last(2)).to eq([ [ "Set up", nil ], [ "0", nil ] ])
     end
 
-    it "switches site visitors off for one project and on again, leaving its site visits and the other projects alone" do
+    it "switches site visitors off for one project and on again, in the tooltip beside its site visits, leaving those and the other projects alone" do
       switch = -> { page.at_css("[data-chart-row='builder/app'] button[role='switch'][aria-label='Show site visitors for app']") }
-      get "/dashboard", params: { show: "commits,site_visitors" }
+      get "/dashboard", params: { show: "site_visitors" }
       expect(switch.call["aria-checked"]).to eq("true")
-      expect(drawn).to contain_exactly("commits", "commits", "site_visitors")
-      expect(page.at_css("section[aria-labelledby='your-activity']").text.squish).to include("Commits solid and site visitors dotted")
+      expect(drawn).to contain_exactly("commits", "commits", "visits")
+      expect(page.at_css("section[aria-labelledby='your-activity']").text.squish).to include("Commits solid and site visits dotted")
+      expect(tooltip).to eq([ %w[commits visits site_visitors], { "app" => %w[0.4 12.9 4.3], "bare" => %w[0.1 – –] } ])
 
-      patch "/projects/#{tool.id}/numbers", params: { number: "site_visitors", shown: "false", show: "commits,site_visitors" }
-      expect(response).to redirect_to(dashboard_path(show: "commits,site_visitors", anchor: "your-activity"))
+      patch "/projects/#{tool.id}/numbers", params: { number: "site_visitors", shown: "false", show: "site_visitors" }
+      expect(response).to redirect_to(dashboard_path(show: "site_visitors", anchor: "your-activity"))
       expect(tool.reload.hidden_numbers).to eq([ "site_visitors" ])
 
-      get "/dashboard", params: { show: "commits,site_visitors" }
+      get "/dashboard", params: { show: "site_visitors" }
       expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "true" ], [ "30", "false" ] ])
-      expect(drawn).to eq(%w[commits commits])
+      expect(drawn).to contain_exactly("commits", "commits", "visits")
+      expect(tooltip).to eq([ %w[commits visits], { "app" => %w[0.4 12.9], "bare" => %w[0.1 –] } ])
 
       patch "/projects/#{tool.id}/numbers", params: { number: "site_visitors", shown: "true" }, as: :json
       expect(response).to have_http_status(:no_content)

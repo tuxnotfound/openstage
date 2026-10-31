@@ -1,10 +1,12 @@
 module Progress
   # What a chart filter shows from its rows and their counts over a window,
-  # on every chart page: each number a row shows, with its total for the rows
-  # in view, the window before's and each row's part of it; the numbers drawn
-  # (those asked for, else the page's own, else the first); and the one chart
-  # of them, from where the numbers drawn start for the rows in view with a
-  # colour, else for every row in view. A row past the palette has none: it
+  # on every chart page: each number a row shows, for the table; of those
+  # the chart can draw (Numbers::Number#drawable?), each one's total for the
+  # rows in view, the window before's and each row's part of it; the numbers
+  # drawn (those asked for, else the page's own, else the first); and the
+  # one chart of them, from where the numbers drawn start for the rows in
+  # view with a colour, else for every row in view, with what its tooltip
+  # shows beside them (Numbers.beside). A row past the palette has none: it
   # counts in the totals and draws no line (ProgressChart::Compare#lines).
   class DrawService < ApplicationService
     # The numbers a chart draws at once, each in its own line.
@@ -27,8 +29,10 @@ module Progress
     # 7-day average; lone: one project's page; per: what a row is, "project"
     # or "page".
     attr_accessor :rows, :counts, :totals_window, :show, :default_show, :average, :lone, :per
-    # window: the chart's points.
-    attr_reader :totals, :drawn, :default_drawn, :window, :chart
+    # shown: every number a row shows, in the pages' order, the table's;
+    # totals: a Total of each the chart can draw, the toggles'; window: the
+    # chart's points.
+    attr_reader :shown, :totals, :drawn, :default_drawn, :window, :chart
 
     validates :counts, :totals_window, presence: true
 
@@ -54,27 +58,41 @@ module Progress
     private
 
     def execute
-      @totals = Numbers::ALL.filter_map { |number| total(number) if Array(rows).any? { |row| row.shows?(number.key) } }
+      @shown = Numbers::ALL.select { |number| Array(rows).any? { |row| row.shows?(number.key) } }
+      @totals = shown.select(&:drawable?).map { |number| total(number) }
       @default_drawn = drawable(default_show)
       @drawn = drawable(show).presence || default_drawn.presence || totals.first(1).map(&:number)
       @chart = draw
     end
 
     def total(number)
-      shown = showing(number)
-      split = shown.map { |row| [ row, value(number, row) ] }
-      Total.new(number: number, value: (split.sum(&:last) if shown.any?), previous: previous(number, shown), split: split.select { |_, count| count.positive? })
+      in_view = showing(number)
+      split = in_view.map { |row| [ row, value(number, row) ] }
+      Total.new(number: number, value: (split.sum(&:last) if in_view.any?), previous: previous(number, in_view), split: split.select { |_, count| count.positive? })
     end
 
+    # The numbers some keys name that the chart can draw, as the totals have
+    # them: a number no row shows, or one that sits beside another, is left
+    # out, as if never asked for.
     def drawable(keys)
-      shown = totals.map(&:number)
-      Array(keys).filter_map { |key| shown.find { |number| number.key == key } }.uniq.first(MAX_DRAWN)
+      numbers = totals.map(&:number)
+      Array(keys).filter_map { |key| numbers.find { |number| number.key == key } }.uniq.first(MAX_DRAWN)
     end
 
     def draw
       @window = Window.new(range: totals_window.range, today: totals_window.today, first_activity: first_drawn_day)
       lines = drawn.flat_map { |number| showing(number).map { |row| line(number, row) } }
-      ProgressChart::Compare.new(window: window, lines: lines, numbers: drawn, average: average.present?, lone: lone.present?, per: per || "project")
+      ProgressChart::Compare.new(window: window, lines: lines, beside: beside_lines, numbers: drawn, average: average.present?, lone: lone.present?,
+                                 per: per || "project")
+    end
+
+    # What the tooltip shows beside each number drawn (Numbers.beside), of
+    # the rows that draw its lines and show it too: a project's site
+    # visitors beside its site visits, never a project's that hides them.
+    def beside_lines
+      drawn.flat_map do |number|
+        Numbers.beside(number).flat_map { |other| showing(number).select { |row| row.shows?(other.key) }.map { |row| line(other, row) } }
+      end
     end
 
     # Where the numbers drawn start for the rows in view with a colour, which

@@ -256,14 +256,24 @@ RSpec.describe "Project pages", type: :request do
       Nokogiri::HTML(response.body).css("[aria-label='Numbers on the chart'] > *").map { |toggle| [ toggle.text.squish, toggle["aria-current"] == "true" ] }
     end
 
+    # The chart script's first view (ProgressViewSerializer), from the JSON
+    # beside the chart.
+    def view
+      JSON.parse(Nokogiri::HTML(response.body).at_css("#progress-props").text)["initial"]
+    end
+
+    def drawn
+      Nokogiri::HTML(response.body).css("svg[role='img'] path").map { |path| path["data-number"] }
+    end
+
     it "puts a toggle per number above the chart, commits and site visits drawn, the chart comparing them" do
       get "/builder/side.app"
-      expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ], [ "+ Site visitors 800", false ] ])
+      expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ] ])
       expect(response.body).to include("Commits solid and site visits dotted, each against its own peak in the window")
 
       get "/builder/side.app", params: { show: "visits", range: "30d" }
       page = Nokogiri::HTML(response.body)
-      expect(toggles).to eq([ [ "+ Commits 1", false ], [ "Site visits 1,204", true ], [ "+ Site visitors 800", false ] ])
+      expect(toggles).to eq([ [ "+ Commits 1", false ], [ "Site visits 1,204", true ] ])
       expect(page.css(".os-big")).to be_empty
       expect(response.body).to include("A 7-day average of site visits per day.")
       props = JSON.parse(page.at_css("#progress-props").text)
@@ -275,7 +285,7 @@ RSpec.describe "Project pages", type: :request do
       repo.update!(hidden_numbers: [ "commits" ])
       get "/builder/side.app"
 
-      expect(toggles).to eq([ [ "Site visits 1,204", true ], [ "+ Site visitors 800", false ] ])
+      expect(toggles).to eq([ [ "Site visits 1,204", true ] ])
     end
 
     it "keeps them off the page while switched off, or while Free counts the project set up first" do
@@ -286,7 +296,7 @@ RSpec.describe "Project pages", type: :request do
       repo.update!(hidden_numbers: [])
       user.update!(pro: false)
       get "/builder/side.app"
-      expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ], [ "+ Site visitors 800", false ] ])
+      expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ] ])
 
       first = create(:github_repo, user: user, homepage: "https://first.example", site_source: "script", site_set_up_at: 10.days.ago)
       get "/builder/side.app"
@@ -295,7 +305,7 @@ RSpec.describe "Project pages", type: :request do
 
       first.destroy!
       get "/builder/side.app"
-      expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ], [ "+ Site visitors 800", false ] ])
+      expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ] ])
     end
 
     it "keeps site visitors off the page until the first visit, as it keeps site visits" do
@@ -306,16 +316,21 @@ RSpec.describe "Project pages", type: :request do
       expect(response.body).not_to include("Site visitors")
     end
 
-    it "shows site visitors to everyone by default, draws them when asked, and drops them while the builder switches them off" do
+    it "shows site visitors to everyone by default in the tooltip beside site visits, never as a line even when asked, and drops them while the builder switches them off" do
       get "/builder/side.app", params: { show: "site_visitors", range: "30d" }
-      expect(toggles).to eq([ [ "+ Commits 1", false ], [ "+ Site visits 1,204", false ], [ "Site visitors 800", true ] ])
-      expect(response.body).to include("A 7-day average of site visitors per day.")
+      expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ] ])
+      expect(drawn).to contain_exactly("commits", "visits")
+      expect(response.body).to include("Commits solid and site visits dotted")
+      expect(view["chart"]["tips"]).to eq([ { "key" => "commits", "label" => "Commits", "line" => true }, { "key" => "visits", "label" => "Site visits", "line" => true },
+                                            { "key" => "site_visitors", "label" => "Site visitors", "line" => false } ])
+      expect(view["chart"]["columns"].last["rows"].sole["values"]).to eq(%w[0.1 172.0 114.3])
 
       sign_in_as(user)
       patch "/projects/#{repo.id}/numbers", params: { number: "site_visitors", shown: "false", back: "project" }
       delete sign_out_path
       get "/builder/side.app", params: { show: "site_visitors" }
       expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ] ])
+      expect(view["chart"]["tips"].pluck("key")).to eq(%w[commits visits])
       expect(response.body).not_to include("Site visitors", "site_visitors")
       get "/builder"
       expect(Nokogiri::HTML(response.body).at_css("[data-chart-row='builder/side.app']").css("td").map { |cell| cell.text.squish })
@@ -325,15 +340,45 @@ RSpec.describe "Project pages", type: :request do
       patch "/projects/#{repo.id}/numbers", params: { number: "site_visitors", shown: "true", back: "project" }
       delete sign_out_path
       get "/builder/side.app"
-      expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ], [ "+ Site visitors 800", false ] ])
+      expect(view["chart"]["tips"].pluck("key")).to eq(%w[commits visits site_visitors])
+    end
+
+    it "draws the page's own numbers for a link that asks for site visitors alone" do
+      get "/builder/side.app", params: { show: "site_visitors" }
+
+      expect(view).to include("drawn" => %w[commits visits], "defaultShow" => %w[commits visits])
+      expect(drawn).to contain_exactly("commits", "visits")
+      expect(view["numbers"].pluck("key")).to eq(%w[commits visits])
     end
 
     it "shows them on the builder's page too, beside every project's commits" do
       get "/builder"
 
-      expect(toggles).to eq([ [ "Commits 2", true ], [ "Site visits 1,204", true ], [ "+ Site visitors 800", false ] ])
+      expect(toggles).to eq([ [ "Commits 2", true ], [ "Site visits 1,204", true ] ])
       row = Nokogiri::HTML(response.body).at_css("[data-chart-row='builder/side.app']")
       expect(row.css("td").map { |cell| cell.text.squish }).to eq([ "Commits 1", "Site visits 1,204", "Site visitors 800" ])
+    end
+
+    it "never puts the site visitors of a project that hides them in the page or the script's view, its tooltip saying a dash" do
+      other = create(:github_repo, user: user, full_name: "builder/other", name: "other", homepage: "https://other.example", site_source: "script", site_token: "os_b",
+                                   site_set_up_at: 3.days.ago, site_first_visit_at: 3.days.ago, hidden_numbers: [ "site_visitors" ])
+      other.site_visit_days.create!(day: Date.current, visits: 12_000, visitors: 9_999)
+      # Its site visitors as the table, the toggles or the tooltip would write them.
+      hidden = [ "9,999", "9999", "1428.4" ]
+      tooltip = ->(chart) { chart["columns"].last["rows"].to_h { |row| [ row["name"], row["values"] ] } }
+
+      get "/builder"
+      expect(view["chart"]["tips"].pluck("key")).to eq(%w[commits visits site_visitors])
+      expect(tooltip.call(view["chart"])).to eq("side.app" => %w[0.1 172.0 114.3], "other" => %w[0.1 1714.3 –])
+      expect(response.body).not_to include(*hidden)
+
+      get "/api/progress/builder"
+      expect(tooltip.call(response.parsed_body["chart"])).to eq("side.app" => %w[0.1 172.0 114.3], "other" => %w[0.1 1714.3 –])
+      expect(response.body).not_to include(*hidden)
+
+      get "/builder/other"
+      expect(view["chart"]["tips"].pluck("key")).to eq(%w[commits visits])
+      expect(response.body).not_to include(*hidden, "site_visitors")
     end
   end
 

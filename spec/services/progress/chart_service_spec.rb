@@ -26,13 +26,14 @@ RSpec.describe Progress::ChartService do
     service.totals.to_h { |total| [ total.number.key, [ total.value, total.split.map { |row, count| [ row.name, count ] } ] ] }
   end
 
-  it "totals every number the projects show over the window, with each project's part, and draws the page's own two" do
+  it "totals every number the projects show that the chart can draw, with each project's part, draws the page's own two, and lists every one in the table" do
     service = chart
 
-    expect(totals(service)).to eq("commits" => [ 4, [ [ "app", 3 ], [ "lib", 1 ] ] ], "visits" => [ 40, [ [ "app", 40 ] ] ], "site_visitors" => [ 12, [ [ "app", 12 ] ] ])
+    expect(totals(service)).to eq("commits" => [ 4, [ [ "app", 3 ], [ "lib", 1 ] ] ], "visits" => [ 40, [ [ "app", 40 ] ] ])
     expect(service.drawn.map(&:key)).to eq(%w[commits visits])
     expect(service.chart.lines.map { |line| [ line.repo, line.number.key ] })
       .to contain_exactly([ "builder/app", "commits" ], [ "builder/lib", "commits" ], [ "builder/app", "visits" ])
+    expect(service.columns.map(&:key)).to eq(%w[commits visits site_visitors])
   end
 
   it "draws the numbers asked for, in their line order, and only numbers the page shows" do
@@ -55,16 +56,36 @@ RSpec.describe Progress::ChartService do
 
     app.update!(hidden_numbers: [ "site_visitors" ])
     expect(shown.call["app"]).to eq(%w[commits visits])
-    expect(chart(show: %w[site_visitors]).drawn.map(&:key)).to eq(%w[commits visits])
 
     app.update!(hidden_numbers: [ "visits" ])
-    expect(totals(chart(show: %w[site_visitors]))["site_visitors"]).to eq([ 12, [ [ "app", 12 ] ] ])
-    expect(chart(show: %w[site_visitors]).chart.lines.map { |line| [ line.repo, line.number.key ] }).to eq([ [ "builder/app", "site_visitors" ] ])
+    expect(shown.call["app"]).to eq(%w[commits site_visitors])
 
     user.update!(pro: false)
     lib.update!(site_set_up_at: 20.days.ago)
     app.update!(hidden_numbers: [], site_set_up_at: 10.days.ago)
     expect(shown.call["app"]).to eq(%w[commits])
+  end
+
+  it "never draws site visitors, asked for or not, and shows them in the tooltip beside the site visits of a project that shows both" do
+    asked = chart(show: %w[site_visitors])
+    expect([ asked.drawn.map(&:key), asked.chart.tips.map(&:key) ]).to eq([ %w[commits visits], %w[commits visits site_visitors] ])
+    expect(asked.chart.lines.map { |line| line.number.key }).not_to include("site_visitors")
+    expect(chart(show: %w[visits]).chart.columns.last.rows.map { |row| [ row.name, row.values ] }).to eq([ [ "app", %w[40 12] ] ])
+
+    app.update!(hidden_numbers: [ "site_visitors" ])
+    expect(chart(show: %w[visits]).chart.tips.map(&:key)).to eq(%w[visits])
+
+    app.update!(hidden_numbers: [ "visits" ])
+    hiding = chart(show: %w[site_visitors])
+    expect([ hiding.drawn.map(&:key), hiding.chart.tips.map(&:key), hiding.columns.map(&:key) ]).to eq([ %w[commits], %w[commits], %w[commits site_visitors] ])
+  end
+
+  it "draws nothing on a project's page that shows only its site visitors, and never falls back to them" do
+    app.update!(hidden_numbers: %w[commits visits])
+    service = chart(repos: [ "builder/app" ], lone: true, show: %w[site_visitors])
+
+    expect([ service.rows.sole.shown, service.totals, service.drawn, service.chart.lines ]).to eq([ %w[site_visitors], [], [], [] ])
+    expect(service.chart.note).to eq("This project shows no numbers yet.")
   end
 
   it "starts the chart where the numbers drawn start" do

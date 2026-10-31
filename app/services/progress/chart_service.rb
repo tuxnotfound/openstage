@@ -3,10 +3,11 @@ module Progress
   # the projects in view: the page's section (ComposeService), a row per
   # project for the table under the chart, and what DrawService makes of
   # their counts: each number the projects show visitors, with its total for
-  # the projects in view and their part of it, and the one chart of the
-  # numbers drawn. The builder's own view (the dashboard) also lists in its
-  # rows the numbers their visitors do not see, and the projects hidden from
-  # their page; its chart draws what visitors see.
+  # the projects in view and their part of it where the chart can draw it,
+  # and the one chart of the numbers drawn. The builder's own view (the
+  # dashboard) also lists in its rows the numbers their visitors do not see,
+  # and the projects hidden from their page; its chart draws what visitors
+  # see.
   class ChartService < ApplicationService
     # A builder's page, a project's page and the dashboard open on these, as
     # far as their projects show them; analytics opens on its own.
@@ -49,7 +50,7 @@ module Progress
       list
       return unless count && draw
 
-      @columns = builder ? builder_columns : totals.map(&:number)
+      @columns = builder ? builder_columns : drawing.shown
     end
 
     # The projects a list names, as far as they stay in view (in_view).
