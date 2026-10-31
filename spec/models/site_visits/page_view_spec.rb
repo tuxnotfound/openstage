@@ -63,9 +63,12 @@ RSpec.describe SiteVisits::PageView do
 
     it "is nothing from an IP address or a machine on a home or office network" do
       local = %w[http://203.0.113.57:8080/ http://192.168.1.23:3000/ http://[2001:db8::1]/ http://pedros-macbook-pro.local:3000/ http://jane-pc/
-                 http://localhost:3000/ http://nas.lan/ http://build.internal/ http://router.home.arpa/]
+                 http://localhost:3000/ http://nas.lan/ http://build.internal/ http://router.home.arpa/ http://pedros-macbook-pro.fritz.box:3000/
+                 http://pedros-pc.localdomain/ http://router.home/ http://jane-laptop.corp/ http://shipnote.test/]
 
       expect(local.map { |referrer| view(referrer: referrer).source }).to eq([ nil ] * local.size)
+      expect(%w[https://www.home.com/ https://corp.com/ https://my.home.blog/ https://local.com/].map { |referrer| view(referrer: referrer).source })
+        .to eq(%w[home.com corp.com my.home.blog local.com])
     end
   end
 

@@ -15,9 +15,11 @@ module SiteVisits
     # its last label a name, so never an IP address or a lone machine name.
     HOST = /\A[a-z0-9_-]+(\.[a-z0-9_-]+)*\.[a-z][a-z0-9-]*\z/
     MAX_HOST = 253
-    # A machine on a home or office network, whose name can be its owner's
-    # (pedros-macbook-pro.local).
-    LOCAL = /\.(local|lan|internal|localhost|home\.arpa)\z/
+    # A machine on a home or office network, or a developer's, whose name
+    # can be its owner's (pedros-macbook-pro.local): suffixes no public site
+    # can have (.home, .corp and .test were never given out), and fritz.box,
+    # under which a FRITZ!Box router names every device.
+    LOCAL = /\.(local|lan|internal|localhost|localdomain|home|corp|test|home\.arpa|fritz\.box)\z/
     # Anywhere in a part of a path: an email address (an "@" with something
     # before it, so a handle such as @pedro stays), a UUID, ten digits or
     # more in a row, an IPv4 address, or a latitude and longitude. An IPv6
