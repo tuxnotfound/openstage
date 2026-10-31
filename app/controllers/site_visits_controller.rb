@@ -11,20 +11,11 @@ class SiteVisitsController < ActionController::API
   # visitor with no referrer), so it goes on as it came.
   def create
     SiteVisits::RecordService.new(token: payload["p"], url: payload["u"], referrer: payload["r"], origin: request.headers["Origin"],
-                                  country: request.headers["CF-IPCountry"], ip: remote_ip, user_agent: request.user_agent).call
+                                  country: request.headers["CF-IPCountry"], ip: request.remote_ip, user_agent: request.user_agent).call
     head :no_content
   end
 
   private
-
-  # Rails raises when a proxy's Client-IP is not in X-Forwarded-For, and the
-  # error it logs quotes both headers, the visitor's address in them. Such a
-  # view counts as none, as one without an address would.
-  def remote_ip
-    request.remote_ip
-  rescue ActionDispatch::RemoteIp::IpSpoofAttackError
-    nil
-  end
 
   # The script sends JSON as text/plain, which a browser posts to another
   # site without asking first. Read no more than it would send, whatever

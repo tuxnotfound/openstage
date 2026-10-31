@@ -76,19 +76,6 @@ RSpec.describe "Site visits from Openstage's script", type: :request do
     expect([ SiteVisitDay.count, SiteVisitor.count, SiteVisitCount.count ]).to eq([ 0, 0, 0 ])
   end
 
-  it "counts nothing, answering as ever and logging no address, when a proxy's Client-IP is not in X-Forwarded-For" do
-    io = StringIO.new
-    log = ActiveSupport::Logger.new(io)
-    Rails.logger.broadcast_to(log)
-    send_view(headers: { "Client-IP" => "192.168.1.50", "X-Forwarded-For" => "198.51.100.23" })
-
-    expect(response).to have_http_status(:no_content)
-    expect(io.string).not_to include("198.51.100.23")
-    expect([ SiteVisitDay.count, SiteVisitor.count, SiteVisitCount.count ]).to eq([ 0, 0, 0 ])
-  ensure
-    Rails.logger.stop_broadcasting_to(log)
-  end
-
   it "serves the script that sends them" do
     script = Rails.public_path.join("v.js").read
 
