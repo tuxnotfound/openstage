@@ -88,7 +88,7 @@ RSpec.describe "Days picked for a chart's window", type: :request do
       get path, params: { range: "2026-09-31..2026-10-02" }
 
       expect(chart_label).to end_with("last 30 days")
-      expect(custom.at_css("summary").text.squish).to eq("Pick dates")
+      expect(custom.at_css("summary .sr-only").text).to eq("Pick dates")
     end
   end
 
