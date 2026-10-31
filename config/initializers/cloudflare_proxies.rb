@@ -17,3 +17,22 @@ CLOUDFLARE_RANGES = %w[
 
 Rails.application.config.action_dispatch.trusted_proxies =
   ActionDispatch::RemoteIp::TRUSTED_PROXIES + CLOUDFLARE_RANGES.map { |range| IPAddr.new(range) }
+
+# Cloudflare and Render pass the visitor's address in X-Forwarded-For and set
+# no Client-IP, so a Client-IP header came from the visitor's side. Left in,
+# one that X-Forwarded-For does not name makes remote_ip raise
+# IpSpoofAttackError: the page answers 500, and the error's log line quotes
+# both headers, the visitor's address with them. Dropped, remote_ip reads
+# X-Forwarded-For alone, as for every other request.
+class DropClientIp
+  def initialize(app)
+    @app = app
+  end
+
+  def call(env)
+    env.delete("HTTP_CLIENT_IP")
+    @app.call(env)
+  end
+end
+
+Rails.application.config.middleware.insert_before ActionDispatch::RemoteIp, DropClientIp
