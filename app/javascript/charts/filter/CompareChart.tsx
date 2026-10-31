@@ -113,11 +113,15 @@ export default function CompareChart({ chart, numbers, lines, focus, height = ""
 // chart: its names give way first, and it sits beside the point while there
 // is room, else against the chart's nearer edge. Its samples stay in place:
 // .os-chart stretches every svg inside it over the chart. hidden: as the
-// chart has it.
+// chart has it; a value blanks while its own number is hidden, or the
+// number it sits beside, whose line is then gone.
 export function Tip({ chart, column, lines, x, hidden }: { chart: CompareChartView; column: CompareChartView["columns"][number]; lines: Lines; x: number; hidden?: Props["hidden"] }) {
   const box = useRef<HTMLDivElement>(null)
   const [left, setLeft] = useState<number | null>(null)
   const heads = chart.tips.length > 1 ? chart.tips : []
+  // Each tip's number with lines: its own, or the last before it with lines.
+  const lined = chart.tips.reduce<string[]>((keys, tip, i) => [...keys, tip.line ? tip.key : keys[i - 1] ?? tip.key], [])
+  const blank = (key: string, number: string, i: number) => [number, lined[i] ?? number].some((each) => hidden?.({ key, number: each }))
 
   useLayoutEffect(() => {
     const tip = box.current
@@ -148,7 +152,7 @@ export function Tip({ chart, column, lines, x, hidden }: { chart: CompareChartVi
                 <span className={`os-dot ${row.colorClass} mr-[7px] bg-(--project) align-[-1px] shadow-[0_0_0_1.5px_var(--color-ground)]`} />{row.name}
               </span>
               {chart.tips.map((each, i) => (
-                <span key={each.key} className="text-right font-bold whitespace-nowrap tabular-nums">{hidden?.({ key: row.key, number: each.key }) ? "–" : row.values[i]}</span>
+                <span key={each.key} className="text-right font-bold whitespace-nowrap tabular-nums">{blank(row.key, each.key, i) ? "–" : row.values[i]}</span>
               ))}
             </Fragment>
           ))}

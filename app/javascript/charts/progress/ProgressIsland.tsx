@@ -69,10 +69,11 @@ export default function ProgressIsland({ initial, endpoint, mode, defaultRange, 
 }
 
 // The dashboard's switches: a switch answers at once, and a number switched
-// off leaves the chart at once, its line and its value in the tooltip; the
-// save goes to the server, which then draws the view on screen by then
-// again, on its new scale, and Back fetches the page anew rather than
-// Turbo's copy from before the switch. A failed save puts it back.
+// off leaves the chart at once, its line and its value in the tooltip, with
+// any value beside it; the save goes to the server, which then draws the
+// view on screen by then again, on its new scale, and Back fetches the page
+// anew rather than Turbo's copy from before the switch. A failed save puts
+// it back.
 function useCellSwitches(view: ProgressView, redraw: () => void): { switches: CellSwitches; hidden: (each: ProjectNumber) => boolean; failed: boolean } {
   const [pending, setPending] = useState<Record<string, boolean>>({})
   const [failed, setFailed] = useState(false)

@@ -54,4 +54,10 @@ describe("the chart's tooltip", () => {
 
     expect(values(html)).toEqual(["12.4", "–", "2.0", "–"])
   })
+
+  test("blanks a project's value beside a number with its own, whose line is gone", () => {
+    const html = tip(chart(), (each) => each.key === "me/app" && each.number === "visits")
+
+    expect(values(html)).toEqual(["–", "–", "2.0", "–"])
+  })
 })
