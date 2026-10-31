@@ -43,6 +43,14 @@ RSpec.describe SiteVisits::RecordService do
     expect(counts.map { |_day, _kind, value, count| [ value, count ] }).to eq([ [ "(other)", 2 ], [ "/a", 2 ], [ "/b", 1 ], [ "/pricing", 1 ] ])
   end
 
+  it "counts the source and ref tag of a visitor's first page load past their fresh views, as a lost beacon or an old tab sends it" do
+    stub_const("#{described_class}::FRESH_HITS", 2)
+    3.times { record.call! }
+    record(url: "https://shipnote.app/?ref=hn", referrer: "https://news.ycombinator.com/").call!
+
+    expect(counts.filter_map { |_day, kind, value, _count| [ kind, value ] if %w[source ref].include?(kind) }).to eq([ %w[ref hn], %w[source news.ycombinator.com] ])
+  end
+
   it "keeps a visitor as a hash that changes with the day, never the IP" do
     record.call!
     travel 1.day
