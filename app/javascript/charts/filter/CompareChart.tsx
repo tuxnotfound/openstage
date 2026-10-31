@@ -113,9 +113,10 @@ export default function CompareChart({ chart, numbers, lines, focus, height = ""
 // chart: its names give way first, and it sits beside the point while there
 // is room, else against the chart's nearer edge. Its samples stay in place:
 // .os-chart stretches every svg inside it over the chart. hidden: as the
-// chart has it; a value blanks while its own number is hidden, or the
-// number it sits beside, whose line is then gone.
-export function Tip({ chart, column, lines, x, hidden }: { chart: CompareChartView; column: CompareChartView["columns"][number]; lines: Lines; x: number; hidden?: Props["hidden"] }) {
+// chart has it, passed on even when it has none, so the type check fails
+// without it; a value blanks while its own number is hidden, or the number
+// it sits beside, whose line is then gone.
+export function Tip({ chart, column, lines, x, hidden }: { chart: CompareChartView; column: CompareChartView["columns"][number]; lines: Lines; x: number; hidden: Props["hidden"] }) {
   const box = useRef<HTMLDivElement>(null)
   const [left, setLeft] = useState<number | null>(null)
   const heads = chart.tips.length > 1 ? chart.tips : []

@@ -49,13 +49,13 @@ describe("the chart's tooltip", () => {
     expect(values(html)).toEqual(["3"])
   })
 
-  test("blanks a project's value at once while the dashboard saves its switch", () => {
+  test("blanks the value of a project's number that hidden names", () => {
     const html = tip(chart(), (each) => each.key === "me/app" && each.number === "site_visitors")
 
     expect(values(html)).toEqual(["12.4", "–", "2.0", "–"])
   })
 
-  test("blanks a project's value beside a number with its own, whose line is gone", () => {
+  test("blanks too a project's value beside a number that hidden names, whose line is gone", () => {
     const html = tip(chart(), (each) => each.key === "me/app" && each.number === "visits")
 
     expect(values(html)).toEqual(["–", "–", "2.0", "–"])

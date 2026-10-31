@@ -177,6 +177,18 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       expect(tool.reload.hidden_numbers).to eq([])
     end
 
+    # The island's switches note a pending switch by the table's row and cell
+    # keys, and blank a tooltip value by its row's key and its tip's.
+    it "keys the tooltip's rows and tips as the table keys its rows and cells, so a switch blanks its own value" do
+      get "/dashboard"
+      view = JSON.parse(page.at_css("#activity-chart-props").text)["initial"]
+      cells = view["table"]["rows"].to_h { |row| [ row["key"], row["cells"].pluck("key") ] }
+      rows = view["chart"]["columns"].last["rows"].pluck("key")
+
+      expect([ rows, view["chart"]["tips"].pluck("key") ]).to eq([ %w[builder/app builder/bare], %w[commits visits site_visitors] ])
+      expect(rows.map { |key| cells.fetch(key) }).to all(include(*view["chart"]["tips"].pluck("key")))
+    end
+
     it "refuses a number a project cannot hide, a switch with no state, and someone else's project" do
       patch "/projects/#{tool.id}/numbers", params: { number: "views", shown: false }, as: :json
       expect(response).to have_http_status(:unprocessable_entity)
