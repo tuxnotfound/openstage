@@ -201,8 +201,8 @@ RSpec.describe "Analytics", type: :request do
     end
 
     it "shows where the badge and the embed were shown" do
-      user.badge_impressions.create!(kind: "badge", viewed_at: 1.day.ago, referrer: "github.com", ip_hash: "x")
-      user.badge_impressions.create!(kind: "badge", viewed_at: 1.day.ago, referrer: "example.com", ip_hash: "y")
+      user.badge_impressions.create!(kind: "badge", viewed_at: 1.day.ago, referrer: "github.com")
+      user.badge_impressions.create!(kind: "badge", viewed_at: 1.day.ago, referrer: "example.com")
 
       get "/analytics", params: { panels: "openstage" }
 

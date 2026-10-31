@@ -42,8 +42,8 @@ batches(views, ProfileView)
 pviews = (0...150_000).map { |i| at = now - rand(0..364).days - rand(0..86_000).seconds; { user_id: heavy.id, repo_name: repos.sample, viewed_at: at, referrer: hosts.sample, ip_hash: "p#{i % 30_000}", country: countries.sample, created_at: at, updated_at: at } }
 batches(pviews, ProjectView)
 linked = Entry.where(user: heavy).where.not(url: nil).limit(50).pluck(:id)
-batches((0...5000).map { |i| at = now - rand(0..364).days; { user_id: heavy.id, entry_id: linked.sample, ip_hash: "c#{i}", clicked_at: at, created_at: at, updated_at: at } }, EntryClick)
-batches((0...3000).map { |i| at = now - rand(0..364).days; { user_id: heavy.id, repo_name: repos.first(3).sample, kind: %w[visit github].sample, ip_hash: "k#{i}", clicked_at: at, created_at: at, updated_at: at } }, ProjectClick)
-batches((0...20_000).map { |i| at = now - rand(0..364).days; { user_id: heavy.id, kind: %w[badge embed].sample, viewed_at: at, referrer: "site#{i % 40}.example", ip_hash: "b#{i}", created_at: at, updated_at: at } }, BadgeImpression)
+batches((0...5000).map { at = now - rand(0..364).days; { user_id: heavy.id, entry_id: linked.sample, clicked_at: at, created_at: at, updated_at: at } }, EntryClick)
+batches((0...3000).map { at = now - rand(0..364).days; { user_id: heavy.id, repo_name: repos.first(3).sample, kind: %w[visit github].sample, clicked_at: at, created_at: at, updated_at: at } }, ProjectClick)
+batches((0...20_000).map { |i| at = now - rand(0..364).days; { user_id: heavy.id, kind: %w[badge embed].sample, viewed_at: at, referrer: "site#{i % 40}.example", created_at: at, updated_at: at } }, BadgeImpression)
 200.times { |i| heavy.subscriptions.create!(email: "s#{i}@example.com", confirmed_at: now - rand(0..364).days, github_repo: (GithubRepo.where(user: heavy).sample if i.odd?)) }
 puts "views #{ProfileView.count} project views #{ProjectView.count} entries #{Entry.count} heavy id #{heavy.id}"

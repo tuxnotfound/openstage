@@ -111,7 +111,7 @@ RSpec.describe Analytics::ReportService do
   it "reads where visitors came from and the badge's showings over the window, every day for all time" do
     create(:profile_view, user: user, viewed_at: 2.days.ago, referrer: "news.ycombinator.com", country: "PT")
     create(:profile_view, user: user, viewed_at: 100.days.ago, referrer: "x.com", country: "US")
-    user.badge_impressions.create!(kind: "badge", viewed_at: 100.days.ago, referrer: "github.com", ip_hash: "x")
+    user.badge_impressions.create!(kind: "badge", viewed_at: 100.days.ago, referrer: "github.com")
     recent = report
 
     expect([ recent.sources.map(&:first), recent.countries.map(&:first), recent.badges.first ]).to eq([ [ "Hacker News" ], [ "PT" ], [ "badge", 0, 0 ] ])

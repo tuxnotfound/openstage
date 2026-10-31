@@ -17,7 +17,6 @@ class ProjectClicksController < ApplicationController
   def record_click(user, repo)
     return if current_user == user || BotDetector.bot?(request.user_agent)
 
-    user.project_clicks.create!(repo_name: repo.full_name, kind: params[:to], clicked_at: Time.current,
-                                ip_hash: Digest::SHA256.hexdigest("#{request.remote_ip}#{Date.current}"))
+    user.project_clicks.create!(repo_name: repo.full_name, kind: params[:to], clicked_at: Time.current)
   end
 end

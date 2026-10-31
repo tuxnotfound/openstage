@@ -55,5 +55,11 @@ RSpec.describe "Embeds", type: :request do
         get "/embed/builder.js"
       }.to change { user.badge_impressions.where(kind: "embed").count }.by(1)
     end
+
+    it "keeps no hash of the viewer's IP address" do
+      get "/embed/builder.js"
+
+      expect(user.badge_impressions.pluck(Arel.sql("ip_hash"))).to eq([ nil ])
+    end
   end
 end

@@ -21,11 +21,9 @@ class EntryClicksController < ApplicationController
 
     # Record the click, skipping the entry owner's own clicks.
     unless current_user == entry.user
-      ip_hash = Digest::SHA256.hexdigest("#{request.remote_ip}#{Date.current}")
       EntryClick.create!(
         user:       entry.user,
         entry:      entry,
-        ip_hash:    ip_hash,
         clicked_at: Time.current
       )
     end

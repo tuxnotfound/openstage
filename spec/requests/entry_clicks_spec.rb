@@ -18,6 +18,12 @@ RSpec.describe "EntryClicks", type: :request do
         }.to change(EntryClick, :count).by(1)
       end
 
+      it "keeps no hash of the visitor's IP address" do
+        get entry_click_out_path(entry)
+
+        expect(EntryClick.pluck(Arel.sql("ip_hash"))).to eq([ nil ])
+      end
+
       it "records a click for signed-in non-owners" do
         sign_in_as(visitor)
         expect {

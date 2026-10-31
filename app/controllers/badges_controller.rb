@@ -21,12 +21,10 @@ class BadgesController < ApplicationController
 
   def track_impression(user)
     referrer = request.referer.present? ? (URI.parse(request.referer).host rescue nil) : nil
-    ip_hash  = Digest::SHA256.hexdigest("#{request.remote_ip}#{Date.current}")
     user.badge_impressions.create!(
       kind:      "badge",
       viewed_at: Time.current,
-      referrer:  referrer,
-      ip_hash:   ip_hash
+      referrer:  referrer
     )
   rescue ActiveRecord::ActiveRecordError
     # Don't break badge rendering if impression tracking fails.
