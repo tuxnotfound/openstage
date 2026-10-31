@@ -57,6 +57,14 @@ RSpec.describe AnalyticsViewSerializer do
     expect(json["websites"]["pages"].map { |page| page.values_at("label", "project") }).to eq([ [ "/", "me/app" ], [ "/", "acme/app" ], [ "/", "lib" ], [ "/", "me/quiet" ] ])
   end
 
+  it "shows each path as its visitors read it, not as the browser escaped it, whole escapes only and no invisible characters" do
+    repo = create(:github_repo, user: user, full_name: "me/app", name: "app", site_source: "script")
+    { "/blog/s%C3%A3o-paulo-caf%C3%A9" => 3, "/docs/How%20To+Start" => 2, "/x%E2%80%AEgpj.exe" => 1, "/cut-in-an-escape-%E" => 1 }
+      .each { |path, count| repo.site_visit_counts.create!(kind: "page", value: path, count: count, day: 1.day.ago.to_date) }
+
+    expect(view["websites"]["pages"].pluck("label")).to eq([ "/blog/são-paulo-café", "/docs/How To+Start", "/cut-in-an-escape-", "/xgpj.exe" ])
+  end
+
   it "says why the website panels are empty, with a link to set up the first project's site visits while none of the projects in view counts them" do
     repo = create(:github_repo, user: user, full_name: "me/app", name: "app")
 

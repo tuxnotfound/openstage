@@ -72,7 +72,7 @@ function WebsitePanels({ site, words, quiet }: { site: WebsitesView; words: stri
       <section className="os-panel" aria-labelledby="site-pages">
         <h2 id="site-pages" className="os-h3">Top pages</h2>
         <p className="os-xs os-muted mt-1 mb-2">Page views on your websites, by path, {words}.</p>
-        {site.pages.map((page) => <div key={`${page.project ?? ""} ${page.label}`} className="os-row py-2"><Count {...page} /></div>)}
+        {site.pages.map((page, index) => <div key={`${index} ${page.project ?? ""} ${page.label}`} className="os-row py-2"><Count {...page} /></div>)}
         {site.pages.length === 0 && <p className="os-note">No page views {quiet}.</p>}
       </section>
     </div>

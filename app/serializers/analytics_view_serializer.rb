@@ -82,7 +82,15 @@ class AnalyticsViewSerializer < ApplicationSerializer
   # two projects never share a name.
   def pages(rows)
     names = @report.rows.to_h { |row| [ row.key, row.name ] }
-    rows.map { |label, count, project| { label: label, count: number_with_delimiter(count), project: (names.fetch(project, project) if project) } }
+    rows.map { |path, count, project| { label: readable(path), count: number_with_delimiter(count), project: (names.fetch(project, project) if project) } }
+  end
+
+  # A path as its visitors read it: stored with the browser's escapes
+  # ("/blog/s%C3%A3o-paulo"), cut at 200 characters, maybe through one. Left
+  # without invisible characters, which a forged path could use to make the
+  # panel read wrong.
+  def readable(path)
+    URI.decode_uri_component(path.sub(/%\h?\z/, "")).scrub("").gsub(/[\p{Cc}\p{Cf}]/, "")
   end
 
   def empty_words(state)
