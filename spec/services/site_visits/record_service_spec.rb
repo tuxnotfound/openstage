@@ -30,8 +30,9 @@ RSpec.describe SiteVisits::RecordService do
     record(ip: "::ffff:203.0.113.7").call!
     record(ip: "::ffff:203.0.113.8").call!
     record.call!
+    record(ip: "203.0.113.8").call!
 
-    expect(repo.site_visit_days.sole).to have_attributes(visits: 6, visitors: 4)
+    expect(repo.site_visit_days.sole).to have_attributes(visits: 7, visitors: 4)
   end
 
   it "lets a visitor past their fresh views add no new page, so one address cannot fill the day's cap" do
