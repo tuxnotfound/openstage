@@ -40,6 +40,12 @@ describe("the chart's tooltip", () => {
     expect(values(html)).toEqual(["12.4", "3.1", "2.0", "–"])
   })
 
+  // From md up, three numbers drawn and one beside them head four columns of
+  // about 290px together, which a 360px box left no room to name a project.
+  test("grows to 440px before its names give way, so four columns leave them room", () => {
+    expect(tip(chart())).toContain("max-w-[min(440px,calc(100%-8px))]")
+  })
+
   test("has no heads with one column", () => {
     const one = { ...column, rows: [{ key: "me/app", name: "app", colorClass: "os-project-1", values: ["3"] }] }
     const html = tip(chart({ columns: [one], heads: ["commits"], tips: [{ key: "commits", label: "Commits", line: true }] }))

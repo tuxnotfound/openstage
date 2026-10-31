@@ -132,7 +132,7 @@ export function Tip({ chart, column, lines, x, hidden }: { chart: CompareChartVi
 
   return (
     <div ref={box} style={{ left: left ?? 0, visibility: left === null ? "hidden" : undefined }}
-         className="absolute top-2 w-max max-w-[min(360px,calc(100%-8px))] rounded-[10px] bg-ink px-3 py-2.5 text-xs/snug text-ground shadow-lg">
+         className="absolute top-2 w-max max-w-[min(440px,calc(100%-8px))] rounded-[10px] bg-ink px-3 py-2.5 text-xs/snug text-ground shadow-lg">
       <div className="opacity-70">{column.title}</div>
       {column.rows.length === 0 ? <div className="mt-1">{chart.none}</div> : (
         <div className="mt-[7px] grid items-center gap-x-3 gap-y-[3px]" style={{ gridTemplateColumns: `minmax(0, max-content) repeat(${Math.max(1, chart.tips.length)}, max-content)` }}>
