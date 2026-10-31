@@ -35,7 +35,7 @@ RSpec.describe "Marketing pages", type: :request do
         "It sets no cookie and stores nothing in your browser.",
         "It counts each page by its path, without the query string, and replaces any part of the path that looks like an email " \
         "address or a code with an asterisk.",
-        "For your first view of the day, it also counts the name of the site you came from, the ref or utm_source tag in the " \
+        "Once a day, it also counts the name of the site you came from, the ref or utm_source tag in the " \
         "page's address, and your country as Cloudflare reports it.",
         "deletes it within two days. For an IPv6 address, it hashes only the first half, the part that names your network. " \
         "It does not keep your IP address or your device."
