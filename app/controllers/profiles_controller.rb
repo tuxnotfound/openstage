@@ -64,7 +64,7 @@ class ProfilesController < ApplicationController
     return if BotDetector.bot?(request.user_agent)
 
     referrer = request.referer.present? ? URI.parse(request.referer).host : nil rescue nil
-    ip_hash  = Digest::SHA256.hexdigest("#{request.remote_ip}#{Date.current}")
+    ip_hash  = VisitorHash.of(request.remote_ip)
     # CF-IPCountry is set by Cloudflare (e.g. "US", "GB"). nil on non-CF setups.
     country  = request.headers["CF-IPCountry"].presence
 

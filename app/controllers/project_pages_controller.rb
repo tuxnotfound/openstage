@@ -24,8 +24,8 @@ class ProjectPagesController < ApplicationController
     @user.github_repos.where(included: false).find { |repo| repo.name.casecmp?(params[:project]) }
   end
 
-  # Counted for later, shown nowhere yet: never the builder's own visit, never
-  # a bot's. The IP is hashed with the day, as on the builder's page.
+  # Never the builder's own visit, never a bot's. The IP is hashed with the day
+  # and a key (VisitorHash), as on the builder's page.
   def record_view
     return if current_user == @user || BotDetector.bot?(request.user_agent)
 
@@ -33,7 +33,7 @@ class ProjectPagesController < ApplicationController
       repo_name: @focus.project.repo,
       viewed_at: Time.current,
       referrer:  referrer_host,
-      ip_hash:   Digest::SHA256.hexdigest("#{request.remote_ip}#{Date.current}"),
+      ip_hash:   VisitorHash.of(request.remote_ip),
       # CF-IPCountry is set by Cloudflare (e.g. "US", "GB"); nil without it.
       country:   request.headers["CF-IPCountry"].presence
     )

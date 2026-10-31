@@ -222,6 +222,13 @@ RSpec.describe "Project pages", type: :request do
       expect(user.profile_views.count).to eq(0)
     end
 
+    it "keeps the visitor's address hashed with the day and a key, as the builder's page does" do
+      get "/builder/side.app", headers: browser.merge("REMOTE_ADDR" => "203.0.113.7")
+
+      expect(user.project_views.last.ip_hash).to eq(VisitorHash.of("203.0.113.7"))
+      expect(user.project_views.last.ip_hash).not_to eq(Digest::SHA256.hexdigest("203.0.113.7#{Date.current}"))
+    end
+
     it "never counts the builder's own visit" do
       sign_in_as(user)
       get "/builder/side.app", headers: browser

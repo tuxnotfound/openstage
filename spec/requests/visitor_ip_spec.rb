@@ -10,20 +10,22 @@ RSpec.describe "Counting a visitor by their own address", type: :request do
     get "/builder", headers: { "HTTP_USER_AGENT" => browser, "REMOTE_ADDR" => "10.0.0.5", "HTTP_X_FORWARDED_FOR" => forwarded_for }
   end
 
-  def hash_of(ip)
-    Digest::SHA256.hexdigest("#{ip}#{Date.current}")
-  end
-
   it "looks past a Cloudflare edge to the visitor" do
     visit_from("203.0.113.7, 172.70.1.1")
     visit_from("203.0.113.7, 104.22.9.9")
 
-    expect(user.profile_views.pluck(:ip_hash)).to eq([ hash_of("203.0.113.7") ] * 2)
+    expect(user.profile_views.pluck(:ip_hash)).to eq([ VisitorHash.of("203.0.113.7") ] * 2)
   end
 
   it "stops at the first address that is not Cloudflare's, so a forged header cannot pick one" do
     visit_from("203.0.113.7, 198.51.100.9")
 
-    expect(user.profile_views.last.ip_hash).to eq(hash_of("198.51.100.9"))
+    expect(user.profile_views.last.ip_hash).to eq(VisitorHash.of("198.51.100.9"))
+  end
+
+  it "keeps the address hashed with the day and a key, never the unkeyed hash" do
+    visit_from("203.0.113.7, 172.70.1.1")
+
+    expect(user.profile_views.last.ip_hash).not_to eq(Digest::SHA256.hexdigest("203.0.113.7#{Date.current}"))
   end
 end
