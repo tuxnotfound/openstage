@@ -34,7 +34,7 @@ RSpec.describe "Api::Analytics", type: :request do
     expect(json).to include("range" => "90d", "words" => "last 90 days", "selected" => [ "builder/app" ], "drawn" => [ "views" ], "defaultShow" => [ "commits" ],
                             "changesNote" => "Changes compare each value with the 90 days before.", "quiet" => "in the last 90 days")
     expect(json["numbers"].map { |number| number.values_at("key", "group", "value") })
-      .to eq([ [ "commits", "On GitHub", "1" ], [ "visitors", "On Openstage", "2" ], [ "views", "On Openstage", "2" ] ])
+      .to eq([ [ "commits", "On GitHub", "1" ], [ "views", "On Openstage", "2" ] ])
     expect(json["chart"]["ariaLabel"]).to eq("Views per week by page, last 90 days")
     expect(json["table"]["rows"].map { |row| row.values_at("key", "name", "on") }).to eq([ [ "page", "Your stage", false ], [ "builder/app", "app", true ] ])
     expect(json["table"]["rows"].first["cells"].find { |cell| cell["key"] == "visitors" }).to include("value" => "1", "change" => { "arrow" => "±", "text" => "0%", "up" => nil })

@@ -75,7 +75,7 @@ RSpec.describe "Analytics", type: :request do
       get "/analytics"
 
       expect(toggles.css("[role='group']").map { |group| group["aria-label"] }).to eq([ "On GitHub", "On your websites", "More numbers", "On Openstage" ])
-      expect(toggles.text.squish).to eq("On GitHub Commits 1 ± 0% On your websites + Site visits 30 ▲up 200% + 2 more On Openstage + Visitors 1 + Views 1")
+      expect(toggles.text.squish).to eq("On GitHub Commits 1 ± 0% On your websites + Site visits 30 ▲up 200% + 1 more On Openstage + Views 1")
       expect(toggles.css("[aria-current='true']").map { |drawn| [ drawn.name, drawn.text.squish ] }).to eq([ [ "span", "Commits 1 ± 0%" ] ])
       expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Commits per day by page, last 30 days")
       expect(page.at_css("[aria-label='Time range'] a[aria-current='page']").text).to eq("30 days")
@@ -98,13 +98,13 @@ RSpec.describe "Analytics", type: :request do
       create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a")
 
       get "/analytics"
-      expect(toggles.at_css("details summary").text).to eq("+ 2 more")
+      expect(toggles.at_css("details summary").text).to eq("+ 1 more")
       expect(toggles.css("details [role='group']").map { |group| group["aria-label"] }).to eq([ "More numbers", "On Openstage" ])
       expect(page.at_css("[aria-label='Numbers on the chart'] + [aria-label='More numbers']")).to be_nil
 
       get "/analytics", params: { show: "commits,views" }
       expect(toggles.at_css("details")).to be_nil
-      expect(page.at_css("[aria-label='Numbers on the chart'] + [aria-label='More numbers']").text.squish).to eq("On Openstage + Visitors 1 Views 1")
+      expect(page.at_css("[aria-label='Numbers on the chart'] + [aria-label='More numbers']").text.squish).to eq("On Openstage Views 1")
     end
 
     it "lists every page under the chart in their fixed order, each value with its change, the builder's page with no commits or site visits" do
@@ -221,6 +221,30 @@ RSpec.describe "Analytics", type: :request do
       get "/api/analytics", params: { show: "visits", range: "2026-10-01..2026-10-10" }
       expect(response.parsed_body["chart"]["tips"].pluck("key")).to eq([ "visits" ])
       expect(response.body).not_to include("site_visitors")
+    end
+
+    it "never draws Openstage's own visitors, asked for or not, shows them in the tooltip right after views, and keeps their column in the table" do
+      2.times { create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a") }
+      user.project_views.create!(repo_name: "builder/app", viewed_at: 2.days.ago, ip_hash: "b")
+      user.project_clicks.create!(repo_name: "builder/app", kind: "visit", clicked_at: 2.days.ago)
+
+      get "/analytics", params: { show: "visitors" }
+      expect(drawn).to eq([ "Commits" ])
+      expect(toggles.text).not_to include("Visitors")
+      expect(page.css("[data-chart-table] thead th").map { |head| head.text.squish }).to eq([ "Pages", "Commits", "Visitors", "Views", "Clicks out" ])
+      expect(cells("page")).to eq([ "Commits –", "Visitors 1", "Views 2", "Clicks out –" ])
+
+      get "/api/analytics", params: { show: "views,clicks,visitors" }
+      expect(response.parsed_body["drawn"]).to eq(%w[views clicks])
+      expect(response.parsed_body["numbers"].pluck("key")).to eq(%w[commits views clicks])
+      chart = response.parsed_body["chart"]
+      expect([ chart["heads"], chart["tips"].pluck("key", "line") ]).to eq([ %w[views clicks], [ [ "views", true ], [ "visitors", false ], [ "clicks", true ] ] ])
+      expect(chart["paths"].pluck("number").uniq).to contain_exactly("views", "clicks")
+      expect(chart["columns"].find { |column| column["rows"].any? }["rows"].map { |row| [ row["name"], row["values"] ] })
+        .to eq([ [ "Your stage", %w[2 1 –] ], [ "app", %w[1 1 1] ] ])
+
+      get "/api/analytics", params: { metric: "visitors" }
+      expect(response.parsed_body["drawn"]).to eq([ "commits" ])
     end
 
     it "shows where the badge and the embed were shown" do

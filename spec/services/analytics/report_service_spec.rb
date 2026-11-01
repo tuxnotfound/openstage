@@ -88,6 +88,17 @@ RSpec.describe Analytics::ReportService do
       .to eq([ %w[commits], %w[commits visits], %w[commits visits site_visitors] ])
   end
 
+  it "never draws Openstage's own visitors, asked for or not, shows them in the tooltip right after views, and keeps them in the table" do
+    create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a")
+    create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "b")
+
+    service = report(show: %w[visitors views])
+    expect([ service.drawn, service.totals.map(&:number), service.chart.tips ].map { |numbers| numbers.map(&:key) }).to eq([ %w[views], %w[commits views], %w[views visitors] ])
+    expect(service.columns.map(&:key)).to eq(%w[commits visitors views])
+    expect(service.chart.columns.find { |column| column.rows.any? }.rows.map { |row| [ row.name, row.values ] }).to eq([ [ "Your stage", %w[2 2] ] ])
+    expect(report(show: %w[visitors]).drawn.map(&:key)).to eq(%w[commits])
+  end
+
   it "leaves out the numbers a project's builder hides from it, and never Openstage's own" do
     app.update!(hidden_numbers: %w[commits])
     user.project_views.create!(repo_name: "me/app", viewed_at: 1.day.ago, ip_hash: "b")

@@ -12,8 +12,8 @@ module Progress
     # pickable: a project's builder shows it or hides it; beside: for a
     # number that draws no line of its own, the key of the number with lines
     # whose tooltip shows it, and without which no row shows it (shown): site
-    # visitors, whose line would only retrace site visits', sit beside them.
-    # nil for every number with lines.
+    # visitors and visitors, whose lines would only retrace those of site
+    # visits and views, sit beside them. nil for every number with lines.
     Number = Data.define(:key, :label, :one, :group, :level, :money, :pickable, :beside) do
       def initialize(beside: nil, **fields)
         super
@@ -47,7 +47,7 @@ module Progress
       Number.new(key: "commits", label: "Commits", one: "commit", group: "On GitHub", level: false, money: false, pickable: true),
       Number.new(key: "visits", label: "Site visits", one: "site visit", group: "On your websites", level: false, money: false, pickable: true),
       Number.new(key: "site_visitors", label: "Site visitors", one: "site visitor", group: "On your websites", level: false, money: false, pickable: true, beside: "visits"),
-      Number.new(key: "visitors", label: "Visitors", one: "visitor", group: "On Openstage", level: false, money: false, pickable: false),
+      Number.new(key: "visitors", label: "Visitors", one: "visitor", group: "On Openstage", level: false, money: false, pickable: false, beside: "views"),
       Number.new(key: "views", label: "Views", one: "view", group: "On Openstage", level: false, money: false, pickable: false),
       Number.new(key: "follows", label: "New followers", one: "new follower", group: "On Openstage", level: false, money: false, pickable: false),
       Number.new(key: "clicks", label: "Clicks out", one: "click out", group: "On Openstage", level: false, money: false, pickable: false)

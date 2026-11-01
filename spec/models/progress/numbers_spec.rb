@@ -12,10 +12,11 @@ RSpec.describe Progress::Numbers do
     expect(described_class::SITE.map { |key| described_class.find(key).group }.uniq).to eq([ "On your websites" ])
   end
 
-  it "draws every number in lines of its own but site visitors, which sit beside site visits in their tooltip" do
-    expect(described_class::ALL.reject(&:drawable?).map { |number| [ number.key, number.beside ] }).to eq([ %w[site_visitors visits] ])
+  it "draws every number in lines of its own but site visitors and visitors, which sit beside site visits and views in their tooltips" do
+    expect(described_class::ALL.reject(&:drawable?).map { |number| [ number.key, number.beside ] }).to eq([ %w[site_visitors visits], %w[visitors views] ])
     expect(described_class.beside(described_class.find("visits")).map(&:key)).to eq(%w[site_visitors])
-    expect(described_class.beside(described_class.find("views"))).to be_empty
+    expect(described_class.beside(described_class.find("views")).map(&:key)).to eq(%w[visitors])
+    expect(described_class.beside(described_class.find("clicks"))).to be_empty
   end
 
   it "has a number that sits beside another shown only with that one, which has lines, the rest as given" do
