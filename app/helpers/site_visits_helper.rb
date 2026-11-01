@@ -12,11 +12,25 @@ module SiteVisitsHelper
   end
 
   # The state beside the Site visitors switch: Shown or Hidden while its
-  # site counts, else what the Site visits row says (Off, Paused).
+  # site counts, or Hidden with site visits while those are hidden, which
+  # hides them whatever their switch says (GithubRepo#hides_beside?); else
+  # what the Site visits row says (Off, Paused).
   def site_visitors_state(repo, overview)
     return site_visits_status(repo, overview).last unless overview.site_state == :counting
+    return "Hidden with site visits" if repo.hides_beside?("site_visitors")
 
     repo.picks?("site_visitors") ? "Shown" : "Hidden"
+  end
+
+  # Whether the Site visitors row has its switch: not while site visits are
+  # paused, nor while they count and are hidden, when flipping it would
+  # change nothing visitors see.
+  def site_visitors_switch?(repo, overview)
+    case overview.site_state
+    when :paused then false
+    when :counting then !repo.hides_beside?("site_visitors")
+    else true
+    end
   end
 
   # The line a builder pastes into their site's pages.

@@ -83,8 +83,35 @@ RSpec.describe "Setting up a project's site visits", type: :request do
     expect(visitors_row.text.squish).to eq("Site visitors – A visitor is one IP address, or one IPv6 network, on one day, counted with site visits. Off")
     expect(visitors_row.at_css("button[role='switch']")["aria-checked"]).to eq("true")
 
-    repo.update!(site_source: "script", site_token: "os_a")
+    repo.update!(hidden_numbers: [ "visits" ])
+    expect(visitors_row.text.squish).to end_with("Off")
+    expect(visitors_row.at_css("button[role='switch']")["aria-checked"]).to eq("true")
+
+    repo.update!(site_source: "script", site_token: "os_a", hidden_numbers: [])
     expect(visitors_row.text.squish).to end_with("Shown")
+  end
+
+  it "says site visitors are hidden with site visits, with no switch, while those count and are hidden, and gives their own switch back with them" do
+    travel_to Time.utc(2026, 10, 26, 14, 2)
+    repo.update!(site_source: "script", site_token: "os_a", site_first_visit_at: Time.current, hidden_numbers: %w[visits site_visitors])
+    repo.site_visit_days.create!(day: Date.new(2026, 10, 20), visits: 1204, visitors: 800)
+
+    expect(visitors_row.text.squish).to eq("Site visitors 800 A visitor is one IP address, or one IPv6 network, on one day, counted with site visits. Hidden with site visits")
+    expect(visitors_row.at_css("button[role='switch']")).to be_nil
+    expect(view.at_css("button[role='switch']").attributes.transform_values(&:value))
+      .to include("aria-checked" => "false", "aria-label" => "Show site visits on shipnote's page")
+
+    repo.update!(hidden_numbers: [ "visits" ])
+    expect(visitors_row.text.squish).to end_with("Hidden with site visits")
+
+    patch "/projects/#{repo.id}/numbers", params: { number: "visits", shown: "true", back: "project" }
+    expect(repo.reload.hidden_numbers).to eq([])
+    expect(visitors_row.text.squish).to end_with("Shown")
+    expect(visitors_row.at_css("button[role='switch']")["aria-checked"]).to eq("true")
+
+    repo.update!(hidden_numbers: [ "site_visitors" ])
+    expect(visitors_row.text.squish).to end_with("Hidden")
+    expect(visitors_row.at_css("button[role='switch']")["aria-checked"]).to eq("false")
   end
 
   it "asks for a website first" do
