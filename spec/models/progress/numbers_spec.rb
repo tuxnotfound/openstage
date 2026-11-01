@@ -18,6 +18,12 @@ RSpec.describe Progress::Numbers do
     expect(described_class.beside(described_class.find("views"))).to be_empty
   end
 
+  it "has a number that sits beside another shown only with that one, which has lines, the rest as given" do
+    expect(described_class.shown(%w[site_visitors commits])).to eq(%w[commits])
+    expect(described_class.shown(%w[site_visitors commits visits nope])).to eq(%w[site_visitors commits visits nope])
+    expect(described_class::ALL.reject(&:drawable?).map { |number| described_class.find(number.beside) }).to all(be_drawable)
+  end
+
   it "names site visitors apart from Openstage's own visitors" do
     site_visitors = described_class.find("site_visitors")
 

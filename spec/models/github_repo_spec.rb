@@ -82,6 +82,21 @@ RSpec.describe GithubRepo do
       expect(public_numbers.call).to eq(%w[commits])
     end
 
+    it "shows its site visitors only while it shows its site visits, whatever their own switch says, which applies again once those show" do
+      site.update!(site_first_visit_at: Time.current, hidden_numbers: [ "visits" ])
+      expect([ site.public_number?("visits"), site.public_number?("site_visitors"), site.picks?("site_visitors") ]).to eq([ false, false, true ])
+      expect([ site.hides_beside?("site_visitors"), site.hides_beside?("visits"), site.hides_beside?("commits") ]).to eq([ true, false, false ])
+
+      site.update!(hidden_numbers: %w[visits site_visitors])
+      expect(site.public_number?("site_visitors")).to be(false)
+
+      site.update!(hidden_numbers: [ "site_visitors" ])
+      expect([ site.public_number?("visits"), site.public_number?("site_visitors"), site.hides_beside?("site_visitors") ]).to eq([ true, false, false ])
+
+      site.update!(hidden_numbers: [])
+      expect(site.public_number?("site_visitors")).to be(true)
+    end
+
     it "keeps a Free builder's site visitors off every project but the one set up first" do
       user.update!(pro: false)
       first = create(:github_repo, user: user, homepage: "https://first.example", site_source: "script", site_set_up_at: 2.days.ago,

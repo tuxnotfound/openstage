@@ -48,7 +48,7 @@ RSpec.describe Progress::ChartService do
     expect([ commits.previous, visits.previous ]).to eq([ 1, nil ])
   end
 
-  it "shows site visitors as it shows site visits: once one came, while switched on, and while they count" do
+  it "shows site visitors as it shows site visits: once one came, while switched on, while they count, and only with the site visits" do
     lib.update!(homepage: "https://lib.example", site_source: "script")
     create(:entry, user: user, repo_name: "builder/lib", occurred_at: 2.days.ago)
     shown = -> { chart.rows.to_h { |row| [ row.name, row.shown ] } }
@@ -58,7 +58,7 @@ RSpec.describe Progress::ChartService do
     expect(shown.call["app"]).to eq(%w[commits visits])
 
     app.update!(hidden_numbers: [ "visits" ])
-    expect(shown.call["app"]).to eq(%w[commits site_visitors])
+    expect(shown.call["app"]).to eq(%w[commits])
 
     user.update!(pro: false)
     lib.update!(site_set_up_at: 20.days.ago)
@@ -77,15 +77,15 @@ RSpec.describe Progress::ChartService do
 
     app.update!(hidden_numbers: [ "visits" ])
     hiding = chart(show: %w[site_visitors])
-    expect([ hiding.drawn.map(&:key), hiding.chart.tips.map(&:key), hiding.columns.map(&:key) ]).to eq([ %w[commits], %w[commits], %w[commits site_visitors] ])
+    expect([ hiding.drawn.map(&:key), hiding.chart.tips.map(&:key), hiding.columns.map(&:key) ]).to eq([ %w[commits], %w[commits], %w[commits] ])
   end
 
-  it "draws nothing on a project's page that shows only its site visitors, and never falls back to them" do
+  it "shows nothing on the page of a project that hides its commits and site visits, its site visitors with them, and dates nothing from them" do
     app.update!(hidden_numbers: %w[commits visits])
     service = chart(repos: [ "builder/app" ], lone: true, show: %w[site_visitors])
 
-    expect([ service.rows.sole.shown, service.totals, service.drawn, service.chart.lines ]).to eq([ %w[site_visitors], [], [], [] ])
-    expect(service.chart.note).to eq("This project shows no number the chart draws.")
+    expect([ service.rows.sole.shown, service.totals, service.drawn, service.chart.lines, service.columns ]).to eq([ [], [], [], [], [] ])
+    expect([ service.chart.note, service.earliest ]).to eq([ "This project shows no numbers yet.", nil ])
   end
 
   it "starts the chart where the numbers drawn start" do
@@ -111,7 +111,7 @@ RSpec.describe Progress::ChartService do
     row = builder.rows.find { |each| each.name == "app" }
     expect([ row.counts?("visits"), row.shows?("visits") ]).to eq([ true, false ])
     expect(builder.cells(row).to_h { |cell| [ cell.number.key, [ cell.value, cell.pick ] ] })
-      .to eq("commits" => [ 3, true ], "visits" => [ 40, false ], "site_visitors" => [ 12, false ])
+      .to eq("commits" => [ 3, true ], "visits" => [ 40, false ], "site_visitors" => [ 12, nil ])
     expect(builder.columns.map(&:key)).to eq(%w[commits visits site_visitors])
     expect(builder.off_page.map(&:name)).to eq([ "old" ])
     expect(builder.chart.lines.map { |line| line.number.key }.uniq).to eq(%w[commits])

@@ -6,12 +6,13 @@ module Progress
   # first; color_class: the class its marks wear (ProgressChart::Palette),
   # nil past the palette; repo: its synced GithubRepo, nil with none; on: in
   # view, so in the totals; counted and shown: the numbers it counts and the
-  # ones it shows, by key; site: where its site visits stand
+  # ones it shows, by key, never one that sits beside a number it does not
+  # show (Numbers.shown); site: where its site visits stand
   # (SiteVisits::Slot#state), nil without a synced repo and on analytics,
   # which only reads its cells.
   Row = Data.define(:key, :name, :rank, :color_class, :repo, :on, :counted, :shown, :site) do
-    def initialize(site: nil, **fields)
-      super
+    def initialize(shown:, site: nil, **fields)
+      super(shown: Numbers.shown(shown), site: site, **fields)
     end
 
     # Whether it has a colour, so a box in the table and lines to draw: a
@@ -41,11 +42,12 @@ module Progress
     end
 
     # Its builder's switch for a number it counts: on while they pick it for
-    # visitors; nil without a synced repo or a count, and for site visits
-    # and site visitors that do not count now, where flipping it would
-    # change nothing visitors see.
+    # visitors; nil without a synced repo or a count, for site visits and
+    # site visitors that do not count now, and for a number beside one they
+    # hide (GithubRepo#hides_beside?), where flipping it would change
+    # nothing visitors see.
     def pick(number)
-      repo.picks?(number) if repo && counts?(number) && (Numbers::SITE.exclude?(number) || site == :counting)
+      repo.picks?(number) if repo && counts?(number) && (Numbers::SITE.exclude?(number) || site == :counting) && !repo.hides_beside?(number)
     end
 
     # What stands in the switch's place for site visits, on a synced repo:

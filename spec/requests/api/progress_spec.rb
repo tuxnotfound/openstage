@@ -149,6 +149,23 @@ RSpec.describe "Api::Progress", type: :request do
       expect(json["drawn"]).to eq([ "commits" ])
     end
 
+    it "leaves out a project's site visitors while it hides its site visits, whatever their own switch says, its page dating nothing from them" do
+      repo.update!(hidden_numbers: %w[visits])
+      repo.site_visit_days.create!(day: Date.new(2026, 9, 1), visits: 2, visitors: 1)
+
+      get "/api/progress/builder", params: { range: "30d", show: "visits" }
+      expect([ totals.keys, json["table"]["columns"].pluck("key"), json["chart"]["tips"].pluck("key") ]).to eq([ %w[commits], %w[commits], %w[commits] ])
+      expect(response.body).not_to include("site_visitors")
+
+      get "/api/progress/builder", params: { range: "30d", project: "builder/app" }
+      expect(json["calendar"]["earliest"]).to eq("2026-10-21")
+      expect(response.body).not_to include("site_visitors")
+
+      repo.update!(hidden_numbers: [])
+      get "/api/progress/builder", params: { range: "30d", project: "builder/app" }
+      expect(json["calendar"]["earliest"]).to eq("2026-09-01")
+    end
+
     it "sums site visitors over the window asked for, days picked included, in each project's cell, and never draws them, asked for or not" do
       lib = create(:github_repo, user: user, full_name: "builder/lib", name: "lib", homepage: "https://lib.example",
                                  site_source: "script", site_token: "os_l", site_first_visit_at: 30.days.ago)
@@ -180,7 +197,7 @@ RSpec.describe "Api::Progress", type: :request do
       get "/api/progress/builder", params: { range: "30d", dashboard: 1 }
       cell = json["table"]["rows"].first["cells"].find { |each| each["key"] == "visits" }
       expect(cell).to include("value" => "40", "shown" => false, "pick" => false)
-      expect(json["table"]["rows"].first["cells"].find { |each| each["key"] == "site_visitors" }).to include("value" => "12", "shown" => true, "pick" => true, "link" => nil)
+      expect(json["table"]["rows"].first["cells"].find { |each| each["key"] == "site_visitors" }).to include("value" => "12", "shown" => false, "pick" => nil, "link" => nil)
       expect(totals.keys).to eq(%w[commits])
       expect(response.headers["Cache-Control"]).to include("private")
     end

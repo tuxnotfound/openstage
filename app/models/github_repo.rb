@@ -94,8 +94,8 @@ class GithubRepo < ApplicationRecord
     (slot || SiteVisits::Slot.new(user)).counts?(self)
   end
 
-  # Its site visits or site visitors, shown on its page: switched on,
-  # counting, and counted at least once.
+  # Its site visits or site visitors, as far as they alone decide whether its
+  # page shows them: switched on, counting, and counted at least once.
   def site_number_public?(number, slot: nil)
     picks?(number) && site_first_visit_at.present? && counts_site_visits?(slot: slot)
   end
@@ -106,10 +106,22 @@ class GithubRepo < ApplicationRecord
     hidden_numbers.exclude?(number)
   end
 
+  # Whether its builder hides the number one sits beside
+  # (Progress::Numbers::Number#beside), which hides it too whatever their
+  # pick of it; that pick applies again once the other shows.
+  def hides_beside?(number)
+    other = Progress::Numbers.find(number)&.beside
+    other.present? && !picks?(other)
+  end
+
   # Whether its visitors see a number it counts: one its builder picks and,
-  # for site visits and site visitors, one that still counts.
+  # for site visits and site visitors, one that still counts; and one that
+  # sits beside another only while they see that one too
+  # (Progress::Numbers.shown).
   def public_number?(number, slot: nil)
-    Progress::Numbers::SITE.include?(number) ? site_number_public?(number, slot: slot) : picks?(number)
+    other = Progress::Numbers.find(number)&.beside
+    seen = Progress::Numbers::SITE.include?(number) ? site_number_public?(number, slot: slot) : picks?(number)
+    seen && (other.nil? || public_number?(other, slot: slot))
   end
 
   private

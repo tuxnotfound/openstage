@@ -139,12 +139,14 @@ RSpec.describe Progress::DrawService do
       expect(service.cells(app, service.shown).map(&:value)).to eq([ 3, 40, 12 ])
     end
 
-    it "are never the number a page falls back to, even where they are the only one its rows show" do
-      service = draw([ row("me/app", %w[site_visitors]) ], show: %w[site_visitors])
+    it "show for no row that leaves out site visits: no column of its table or its tooltip, and on the builder's own table their value alone" do
+      hiding = row("me/app", %w[commits site_visitors])
+      service = draw([ hiding ], show: %w[site_visitors visits])
 
-      expect([ service.shown.map(&:key), service.totals, service.drawn, service.chart.lines ]).to eq([ %w[site_visitors], [], [], [] ])
-      expect(service.chart.tips).to be_empty
-      expect(service.chart.note).to eq("No project here shows a number the chart draws.")
+      expect([ service.shown, service.totals.map(&:number), service.drawn, service.chart.tips ].map { |numbers| numbers.map(&:key) })
+        .to eq([ %w[commits], %w[commits], %w[commits], %w[commits] ])
+      expect(service.cells(hiding, Progress::Numbers.in_order(%w[site_visitors]), manage: true).sole.to_h.slice(:value, :shown, :pick))
+        .to eq(value: 12, shown: false, pick: nil)
     end
 
     it "show in the tooltip beside each row's site visits, a dash for a row that does not show them" do

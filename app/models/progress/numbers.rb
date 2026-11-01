@@ -10,9 +10,10 @@ module Progress
   class Numbers
     # one: its name inside a sentence for one of it ("site visit");
     # pickable: a project's builder shows it or hides it; beside: for a
-    # number that draws no line of its own, the key of the number whose
-    # tooltip shows it: site visitors, whose line would only retrace site
-    # visits', sit beside them. nil for every number with lines.
+    # number that draws no line of its own, the key of the number with lines
+    # whose tooltip shows it, and without which no row shows it (shown): site
+    # visitors, whose line would only retrace site visits', sit beside them.
+    # nil for every number with lines.
     Number = Data.define(:key, :label, :one, :group, :level, :money, :pickable, :beside) do
       def initialize(beside: nil, **fields)
         super
@@ -72,6 +73,14 @@ module Progress
     # order (Number#beside).
     def self.beside(number)
       ALL.select { |other| other.beside == number.key }
+    end
+
+    # Of the numbers a row would show on their own, by key, the ones it
+    # shows: one that sits beside another only while it shows that one too,
+    # as a chart shows it only in that one's tooltip.
+    def self.shown(keys)
+      keys = Array(keys)
+      keys.select { |key| (other = find(key)&.beside).nil? || keys.include?(other) }
     end
   end
 end

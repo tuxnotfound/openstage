@@ -72,14 +72,14 @@ RSpec.describe ProjectsTableSerializer do
     expect(table["rows"].flat_map { |row| row["cells"].pluck("change") }.uniq).to eq([ nil ])
   end
 
-  it "gives the builder every value with its switch, Set up where a project counts no site visits, and the projects off their page last" do
+  it "gives the builder every value with its switch, none for site visitors hidden with site visits, Set up where a project counts no site visits, and the projects off their page last" do
     app.update!(hidden_numbers: [ "visits" ])
     create(:github_repo, user: user, full_name: "me/old", name: "old", included: false)
     create(:entry, user: user, repo_name: "me/old", occurred_at: 2.days.ago)
     json = table(builder: true)
 
     expect(cells(json, "app")["visits"]).to eq("value" => "1,204", "shown" => false, "pick" => false, "link" => nil)
-    expect(cells(json, "app")["site_visitors"]).to eq("value" => "800", "shown" => true, "pick" => true, "link" => nil)
+    expect(cells(json, "app")["site_visitors"]).to eq("value" => "800", "shown" => false, "pick" => nil, "link" => nil)
     expect(cells(json, "lib")["visits"]).to eq("value" => nil, "shown" => false, "pick" => nil, "link" => set_up("lib", lib))
     expect(cells(json, "lib")["site_visitors"]).to eq("value" => nil, "shown" => false, "pick" => nil, "link" => nil)
     expect(json["columns"].map { |column| [ column["label"], column["word"] ] }).to eq([ %w[Commits commits], [ "Site visits", "site visits" ], [ "Site visitors", "site visitors" ] ])

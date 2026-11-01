@@ -77,10 +77,10 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       tool.site_visit_days.create!(day: 1.day.ago.to_date, visits: 90, visitors: 30)
     end
 
-    # The island's first view of a row's site visits cell.
-    def island_cell(repo)
+    # The island's first view of a row's site visits cell, or another's.
+    def island_cell(repo, key = "visits")
       props = JSON.parse(page.at_css("#activity-chart-props").text)
-      props["initial"]["table"]["rows"].find { |row| row["key"] == repo }["cells"].find { |cell| cell["key"] == "visits" }
+      props["initial"]["table"]["rows"].find { |row| row["key"] == repo }["cells"].find { |cell| cell["key"] == key }
     end
 
     def cells(repo)
@@ -118,7 +118,7 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       expect(tool.reload.hidden_numbers).to eq([ "visits" ])
 
       get "/dashboard"
-      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "false" ], [ "30", "true" ] ])
+      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "false" ], [ "30", nil ] ])
       expect(page.at_css("[data-chart-row='builder/app'] td:nth-last-child(2) .os-num")["class"]).to include("text-ink-3", "font-medium")
       expect(drawn).to eq(%w[commits commits])
 
@@ -175,6 +175,22 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       patch "/projects/#{tool.id}/numbers", params: { number: "site_visitors", shown: "true" }, as: :json
       expect(response).to have_http_status(:no_content)
       expect(tool.reload.hidden_numbers).to eq([])
+    end
+
+    it "lists the site visitors of a project that hides its site visits in grey with no switch, the site visits keeping theirs, and their own switch back with those" do
+      tool.update!(hidden_numbers: %w[visits site_visitors])
+      get "/dashboard"
+
+      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "false" ], [ "30", nil ] ])
+      expect(page.at_css("[data-chart-row='builder/app'] td:last-child .os-num")["class"]).to include("text-ink-3", "font-medium")
+      expect(island_cell("builder/app", "site_visitors")).to include("value" => "30", "shown" => false, "pick" => nil, "link" => nil)
+      expect(island_cell("builder/app")).to include("value" => "90", "shown" => false, "pick" => false, "link" => nil)
+      expect(tooltip).to eq([ %w[commits], { "app" => %w[0.4], "bare" => %w[0.1] } ])
+
+      patch "/projects/#{tool.id}/numbers", params: { number: "visits", shown: "true" }, as: :json
+      expect(tool.reload.hidden_numbers).to eq([ "site_visitors" ])
+      get "/dashboard"
+      expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "true" ], [ "30", "false" ] ])
     end
 
     # The island's switches note a pending switch by the table's row and cell

@@ -101,7 +101,8 @@ module Analytics
     end
 
     # A page counts a number once it has counted it on any day; a project
-    # shows the ones its builder picks, and Openstage's own always.
+    # shows the ones its builder picks, and Openstage's own always, a number
+    # that sits beside another only with that one (Progress::Row).
     def row(key, name, rank, repo, on)
       counted = Progress::Numbers::ALL.select { |number| counts.first_day(number.key, [ key ]) }
       shown = counted.select { |number| !number.pickable || repo.nil? || repo.picks?(number.key) }

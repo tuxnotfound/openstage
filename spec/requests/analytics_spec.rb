@@ -167,18 +167,29 @@ RSpec.describe "Analytics", type: :request do
       expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Commits per day by page, last 30 days")
     end
 
-    it "leaves out of the chart and the table the numbers a project's builder hides" do
+    it "leaves out of the chart and the table the numbers a project's builder hides, its site visitors with its site visits, whatever their own switch says" do
       repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
       repo.update!(hidden_numbers: %w[visits])
 
       get "/analytics", params: { show: "visits" }
       expect(toggles.text.squish).to eq("On GitHub Commits 0 ▼down 100%")
-      expect(cells("builder/app")).to eq([ "Commits 0 ▼down 100%", "Site visitors 9" ])
+      expect(cells("builder/app")).to eq([ "Commits 0 ▼down 100%" ])
+      expect(page.css("[data-chart-table] thead th").map { |head| head.text.squish }).to eq(%w[Pages Commits])
+      get "/api/analytics", params: { show: "visits" }
+      expect(response.body).not_to include("site_visitors")
 
       repo.update!(hidden_numbers: %w[visits site_visitors])
       get "/analytics", params: { show: "visits" }
       expect(toggles.text.squish).to eq("On GitHub Commits 0 ▼down 100%")
       expect(cells("builder/app")).to eq([ "Commits 0 ▼down 100%" ])
+
+      repo.update!(hidden_numbers: %w[site_visitors])
+      get "/analytics", params: { show: "visits" }
+      expect(cells("builder/app")).to eq([ "Commits 0 ▼down 100%", "Site visits 30" ])
+
+      repo.update!(hidden_numbers: [])
+      get "/analytics", params: { show: "visits" }
+      expect(cells("builder/app")).to eq([ "Commits 0 ▼down 100%", "Site visits 30", "Site visitors 9" ])
     end
 
     it "never draws site visitors, asked for or not, shows them beside site visits in the tooltip, and says a site visitor is one IP address or IPv6 network on one day" do

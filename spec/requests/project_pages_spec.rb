@@ -359,7 +359,7 @@ RSpec.describe "Project pages", type: :request do
       expect(row.css("td").map { |cell| cell.text.squish }).to eq([ "Commits 1", "Site visits 1,204", "Site visitors 800" ])
     end
 
-    it "says no project shows a number the chart draws while each shows only its site visitors, which the tables under it list" do
+    it "shows no number of projects that hide their commits and site visits, their site visitors with them, in the table or the chart" do
       other = create(:github_repo, user: user, full_name: "builder/other", name: "other", homepage: "https://other.example", site_source: "script", site_token: "os_b",
                                    site_set_up_at: 3.days.ago, site_first_visit_at: 3.days.ago)
       other.site_visit_days.create!(day: Date.current, visits: 30, visitors: 21)
@@ -368,15 +368,54 @@ RSpec.describe "Project pages", type: :request do
       get "/builder"
       page = Nokogiri::HTML(response.body)
       expect(page.css("[data-chart-row]").to_h { |row| [ row["data-chart-row"], row.css("td").map { |cell| cell.text.squish } ] })
-        .to eq("builder/side.app" => [ "Site visitors 800" ], "builder/other" => [ "Site visitors 21" ])
+        .to eq("builder/side.app" => [], "builder/other" => [])
       expect([ view["drawn"], view["chart"]["note"], page.at_css(".os-chart ~ .os-note").text ])
-        .to eq([ [], "No project here shows a number the chart draws.", "No project here shows a number the chart draws." ])
+        .to eq([ [], "No project here shows a number yet.", "No project here shows a number yet." ])
       expect(page.at_css("svg[role='img']")["aria-label"]).to start_with("Nothing to chart")
+      expect(response.body).not_to include("Site visitors", "site_visitors")
 
       sign_in_as(user)
       get "/dashboard"
       expect(JSON.parse(Nokogiri::HTML(response.body).at_css("#activity-chart-props").text)["initial"]["chart"]["note"])
-        .to eq("No project here shows a number the chart draws.")
+        .to eq("No project here shows a number yet.")
+    end
+
+    it "keeps a project's site visitors off the stage, the tooltip, the script's view and its own page while it hides its site visits, whatever their own switch says" do
+      other = create(:github_repo, user: user, full_name: "builder/other", name: "other", homepage: "https://other.example", site_source: "script", site_token: "os_b",
+                                   site_set_up_at: 50.days.ago, site_first_visit_at: 40.days.ago, hidden_numbers: [ "visits" ])
+      other.site_visit_days.create!(day: Date.current, visits: 12_000, visitors: 9_999)
+      other.site_visit_days.create!(day: 40.days.ago.to_date, visits: 3, visitors: 2)
+      # Its site visitors as the table, the toggles or the tooltip would write them.
+      hidden = [ "9,999", "9999", "1428.4" ]
+      tooltip = ->(chart) { chart["columns"].last["rows"].to_h { |row| [ row["name"], row["values"] ] } }
+      cells = ->(table) { table["rows"].to_h { |row| [ row["name"], row["cells"].to_h { |cell| [ cell["key"], cell["value"] ] } ] } }
+
+      get "/builder"
+      expect(Nokogiri::HTML(response.body).css("[data-chart-row]").to_h { |row| [ row["data-chart-row"], row.css("td").map { |cell| cell.text.squish } ] })
+        .to eq("builder/side.app" => [ "Commits 1", "Site visits 1,204", "Site visitors 800" ], "builder/other" => [ "Commits 1", "Site visits –", "Site visitors –" ])
+      expect([ cells.call(view["table"])["other"], tooltip.call(view["chart"]) ])
+        .to eq([ { "commits" => "1", "visits" => nil, "site_visitors" => nil }, { "side.app" => %w[0.1 172.0 114.3], "other" => %w[0.1 – –] } ])
+      expect(response.body).not_to include(*hidden)
+
+      get "/api/progress/builder"
+      expect([ cells.call(response.parsed_body["table"])["other"], tooltip.call(response.parsed_body["chart"])["other"] ])
+        .to eq([ { "commits" => "1", "visits" => nil, "site_visitors" => nil }, %w[0.1 – –] ])
+      expect(response.body).not_to include(*hidden)
+
+      # Its calendar starts at what its page shows, never at its first site visitor.
+      get "/builder/other"
+      expect(view["calendar"]["earliest"]).to eq(Date.current.iso8601)
+      expect(response.body).not_to include(*hidden, "site_visitors", 40.days.ago.to_date.iso8601)
+      get "/api/progress/builder", params: { project: "builder/other" }
+      expect(response.parsed_body["calendar"]["earliest"]).to eq(Date.current.iso8601)
+      expect(response.body).not_to include(*hidden, "site_visitors")
+
+      other.update!(hidden_numbers: [])
+      get "/builder"
+      expect([ cells.call(view["table"])["other"], tooltip.call(view["chart"])["other"] ])
+        .to eq([ { "commits" => "1", "visits" => "12,000", "site_visitors" => "9,999" }, %w[0.1 1714.3 1428.4] ])
+      get "/builder/other"
+      expect(view["calendar"]["earliest"]).to eq(40.days.ago.to_date.iso8601)
     end
 
     it "never puts the site visitors of a project that hides them in the page or the script's view, its tooltip saying a dash" do
