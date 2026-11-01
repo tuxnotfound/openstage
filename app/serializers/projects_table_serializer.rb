@@ -28,8 +28,11 @@ class ProjectsTableSerializer < ApplicationSerializer
     @off_page = off_page
   end
 
+  # columns: each number with its names, and the number it sits beside
+  # (Progress::Numbers::Number#beside), nil for one with lines of its own:
+  # the dashboard hides a cell at once while that number switches off.
   def attributes
-    { columns: @chart.columns.map { |number| { key: number.key, label: number.label, word: number.word } },
+    { columns: @chart.columns.map { |number| { key: number.key, label: number.label, word: number.word, beside: number.beside } },
       rows: @chart.rows.map { |row| row_of(row) } + @off_page.map { |repo| off_page_row(repo) }, stack: stack }
   end
 

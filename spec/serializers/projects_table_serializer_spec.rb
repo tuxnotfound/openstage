@@ -46,9 +46,16 @@ RSpec.describe ProjectsTableSerializer do
     app.update!(hidden_numbers: %w[visits site_visitors])
     json = table
 
-    expect(json["columns"]).to eq([ { "key" => "commits", "label" => "Commits", "word" => "commits" } ])
+    expect(json["columns"]).to eq([ { "key" => "commits", "label" => "Commits", "word" => "commits", "beside" => nil } ])
     expect(cells(json, "app")).to eq("commits" => { "value" => "1", "shown" => true, "pick" => nil, "link" => nil })
     expect(json["rows"].first).to include("edit" => nil, "page" => nil, "switch" => nil, "drawable" => true)
+  end
+
+  # The dashboard takes a cell's switch at once while the number it sits
+  # beside saves off, as the server then sends it.
+  it "names the number each column sits beside, none for one with lines of its own" do
+    expect(table(builder: true)["columns"].map { |column| column.values_at("key", "beside") })
+      .to eq([ [ "commits", nil ], [ "visits", nil ], [ "site_visitors", "visits" ] ])
   end
 
   it "gives a project past the tenth no colour and no box, and keeps its values" do

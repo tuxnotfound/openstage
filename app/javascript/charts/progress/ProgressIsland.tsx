@@ -70,10 +70,10 @@ export default function ProgressIsland({ initial, endpoint, mode, defaultRange, 
 
 // The dashboard's switches: a switch answers at once, and a number switched
 // off leaves the chart at once, its line and its value in the tooltip, with
-// any value beside it; the save goes to the server, which then draws the
-// view on screen by then again, on its new scale, and Back fetches the page
-// anew rather than Turbo's copy from before the switch. A failed save puts
-// it back.
+// any value beside it, whose cell reads hidden with no switch (pendingCells);
+// the save goes to the server, which then draws the view on screen by then
+// again, on its new scale, and Back fetches the page anew rather than
+// Turbo's copy from before the switch. A failed save puts it back.
 function useCellSwitches(view: ProgressView, redraw: () => void): { switches: CellSwitches; hidden: (each: ProjectNumber) => boolean; failed: boolean } {
   const [pending, setPending] = useState<Record<string, boolean>>({})
   const [failed, setFailed] = useState(false)
@@ -86,11 +86,12 @@ function useCellSwitches(view: ProgressView, redraw: () => void): { switches: Ce
   }, [view])
 
   const key = (row: TableRow, cell: TableCell) => `${row.key}|${cell.key}`
-  const pick = (row: TableRow, cell: TableCell) => pending[key(row, cell)] ?? cell.pick
+  const { pick, shown } = pendingCells(pending, view.table)
 
   async function flip(row: TableRow, cell: TableCell) {
-    if (!row.switch || cell.pick === null) return
-    const next = !pick(row, cell)
+    const current = pick(row, cell)
+    if (!row.switch || cell.pick === null || current === null) return
+    const next = !current
     const which = key(row, cell)
     setFailed(false)
     setPending((was) => ({ ...was, [which]: next }))
@@ -108,7 +109,7 @@ function useCellSwitches(view: ProgressView, redraw: () => void): { switches: Ce
   }
 
   return {
-    switches: { pick, shown: (row, cell) => pending[key(row, cell)] ?? cell.shown, flip: (row, cell) => { void flip(row, cell) } },
+    switches: { pick, shown, flip: (row, cell) => { void flip(row, cell) } },
     hidden: (each) => pending[`${each.key}|${each.number}`] === false,
     failed,
   }
@@ -124,6 +125,21 @@ export function stillPending(pending: Record<string, boolean>, table: TableView 
     const cell = row?.cells.find((each) => each.key === key.slice(cut + 1))
     return cell !== undefined && cell.pick !== null && cell.pick !== pick
   }))
+}
+
+// The table's cells while switches wait for their save (pending, by row and
+// cell key): each reads as its switch was flipped, and one beside a number
+// switched off reads hidden, with no switch, as the server sends it once
+// that save lands (Progress::Row#pick); a failed save brings it back.
+export function pendingCells(pending: Record<string, boolean>, table: TableView | null): Pick<CellSwitches, "pick" | "shown"> {
+  const off = (row: TableRow, cell: TableCell) => {
+    const beside = table?.columns.find((each) => each.key === cell.key)?.beside
+    return !!beside && pending[`${row.key}|${beside}`] === false
+  }
+  return {
+    pick: (row, cell) => (off(row, cell) ? null : pending[`${row.key}|${cell.key}`] ?? cell.pick),
+    shown: (row, cell) => !off(row, cell) && (pending[`${row.key}|${cell.key}`] ?? cell.shown),
+  }
 }
 
 function Shipped({ shipped }: { shipped: NonNullable<ProgressView["shipped"]> }) {
