@@ -152,17 +152,9 @@ RSpec.describe ProgressChart::Compare do
   it "says when nothing is drawn, or nothing is in the window" do
     expect(chart([], numbers: []).note).to eq("No project here shows a number yet.")
     expect(chart([], numbers: [], lone: true).note).to eq("This project shows no numbers yet.")
+    expect(chart([], numbers: []).aria_label).to eq("Nothing to chart, last 90 days")
     expect(chart([ line("app", commits, [ 0, 0 ]) ], numbers: [ commits ]).note).to eq("No commits in the last 90 days.")
     expect(chart([ line("app", commits, [ 0, 0 ]) ], numbers: [ commits ]).paths).to be_empty
-  end
-
-  it "says the rows show no number it draws while they show only numbers that sit beside another, and names none of them" do
-    visitors = Progress::Numbers.find("site_visitors")
-
-    expect(chart([], numbers: [], shown: [ visitors ]).note).to eq("No project here shows a number the chart draws.")
-    expect(chart([], numbers: [], shown: [ visitors ], lone: true).note).to eq("This project shows no number the chart draws.")
-    expect(chart([], numbers: [], shown: [ visitors ], per: "page").note).to eq("No page here shows a number the chart draws.")
-    expect(chart([], numbers: [], shown: [ visitors ]).aria_label).to eq("Nothing to chart, last 90 days")
   end
 
   it "draws no gridlines without a line, so an empty chart suggests no scale" do
