@@ -6,7 +6,7 @@ import ProjectsTable, { csrfToken, type CellSwitches } from "../filter/ProjectsT
 import WindowPills from "../filter/WindowPills"
 import { lineOrder } from "../filter/lines"
 import { useFilter } from "../filter/useFilter"
-import type { ProgressRange, ProgressView, ShippedItem, TableCell, TableRow } from "../types"
+import type { ProgressRange, ProgressView, ShippedItem, TableCell, TableRow, TableView } from "../types"
 
 // The chart filter on a builder's page, a project's page and the dashboard
 // (useFilter): the numbers above the chart, the window, the chart, and the
@@ -80,14 +80,9 @@ function useCellSwitches(view: ProgressView, redraw: () => void): { switches: Ce
   const latest = useRef(redraw)
   useLayoutEffect(() => { latest.current = redraw })
 
-  // A switch the server now agrees with is no longer pending.
+  // A switch the server settles is no longer pending.
   useEffect(() => {
-    setPending((was) => Object.fromEntries(Object.entries(was).filter(([key, pick]) => {
-      const cut = key.lastIndexOf("|")
-      const row = view.table?.rows.find((each) => each.key === key.slice(0, cut))
-      const cell = row?.cells.find((each) => each.key === key.slice(cut + 1))
-      return cell ? cell.pick !== pick : false
-    })))
+    setPending((was) => stillPending(was, view.table))
   }, [view])
 
   const key = (row: TableRow, cell: TableCell) => `${row.key}|${cell.key}`
@@ -117,6 +112,18 @@ function useCellSwitches(view: ProgressView, redraw: () => void): { switches: Ce
     hidden: (each) => pending[`${each.key}|${each.number}`] === false,
     failed,
   }
+}
+
+// The switches still pending, by row and cell key, once a view arrives: one
+// the server now agrees with is not, nor one it no longer offers, as site
+// visitors lose theirs while the site visits they sit beside are hidden.
+export function stillPending(pending: Record<string, boolean>, table: TableView | null): Record<string, boolean> {
+  return Object.fromEntries(Object.entries(pending).filter(([key, pick]) => {
+    const cut = key.lastIndexOf("|")
+    const row = table?.rows.find((each) => each.key === key.slice(0, cut))
+    const cell = row?.cells.find((each) => each.key === key.slice(cut + 1))
+    return cell !== undefined && cell.pick !== null && cell.pick !== pick
+  }))
 }
 
 function Shipped({ shipped }: { shipped: NonNullable<ProgressView["shipped"]> }) {
