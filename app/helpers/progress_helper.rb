@@ -2,6 +2,9 @@ module ProgressHelper
   # The public page's own params: its chart filter's (Progress::Filter).
   PROGRESS_PARAMS = %i[range show projects].freeze
   RANGES = { "30d" => "30 days", "90d" => "90 days", "12m" => "12 months", "all" => "All time" }.freeze
+  # An entry's badge (TallyService::Item#badge) in words, as What's new and
+  # the chart's marks write it.
+  BADGE_WORDS = { milestone: "Milestone", shipped: "Shipped", published: "Published" }.freeze
 
   # This page with some of its params changed; nil drops one.
   def progress_view_path(user, **changes)

@@ -31,7 +31,7 @@ class DashboardController < ApplicationController
   # is tagged.
   def render_frame
     case (turbo_frame_request_id if turbo_frame_request?)
-    when "entries-lists" then render(partial: "dashboard/entry_lists", locals: { tabs: entries_tabs })
+    when "entries-lists" then render(partial: "dashboard/entry_lists", locals: { tabs: load_entry_tabs })
     when "untagged"
       back = params.slice(*ProgressHelper::PROGRESS_PARAMS).permit(*ProgressHelper::PROGRESS_PARAMS).to_h.symbolize_keys
       render partial: "dashboard/untagged", locals: { **untagged, back: back }
@@ -64,7 +64,8 @@ class DashboardController < ApplicationController
     @show_pro_activated = params[:pro] == "activated"
   end
 
-  # Without JavaScript, Load more opens the tab it came from past its last row.
+  # Without JavaScript, Load more opens the tab it came from past its last row;
+  # a mark on the chart opens the list on its entry, in the page or its frame.
   def load_entry_tabs
     @entry_tabs = EntriesSection::TABS.map { |key| entries_tab(key, after: (entries_cursor if key == entries_tab_key)) }
   end

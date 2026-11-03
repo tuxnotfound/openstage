@@ -18,17 +18,19 @@ module IconsHelper
             class: css, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": 2, "stroke-linecap": "round", aria: { hidden: true })
   end
 
-  # A rocket for what shipped, a speech bubble for what was published, as the
-  # chart's script draws them (Marks.tsx); static, as .os-chart stretches
-  # every svg inside it over the chart.
+  # A flag for a milestone, a rocket for anything else shipped, a speech
+  # bubble for what was published, by an entry's badge, as the chart's
+  # script draws them (Marks.tsx); static, as .os-chart stretches every svg
+  # inside it over the chart.
   MARKS = {
+    milestone: "M3 1.5a.8.8 0 0 1 .8.8v.4h8.9c.5 0 .8.6.5 1L11.1 6.4l2.1 2.7c.3.4 0 1-.5 1H3.8v4.6a.8.8 0 0 1-1.6 0V2.3a.8.8 0 0 1 .8-.8Z",
     shipped: "M14.5 1.5c-3.4.2-6.3 1.8-8.3 4.6L4.6 8.4l3 3 2.3-1.6c2.8-2 4.4-4.9 4.6-8.3Zm-2.6 4a1.4 1.4 0 1 1-2.8 0 1.4 1.4 0 0 1 2.8 0ZM6.2 6.1 2.6 5.9 1 7.6l3.6.8ZM9.9 9.8l.2 3.6L8.4 15l-.8-3.6ZM4.1 11.1c-1.2.3-2 1.2-2.4 3.2 2-.4 2.9-1.2 3.2-2.4Z",
     published: "M3.5 2.5h9a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H7.6L4.5 14v-2.5h-1a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2Z"
   }.freeze
 
-  def mark_icon(shipped, css: "size-[13px]")
-    tag.svg(tag.path(d: MARKS.fetch(shipped ? :shipped : :published), "fill-rule": "evenodd"), class: "#{css} static flex-none", viewBox: "0 0 16 16",
-                                                                                               fill: "currentColor", aria: { hidden: true })
+  def mark_icon(badge, css: "size-[13px]")
+    tag.svg(tag.path(d: MARKS.fetch(badge.to_sym), "fill-rule": "evenodd"), class: "#{css} static flex-none", viewBox: "0 0 16 16", fill: "currentColor",
+                                                                           aria: { hidden: true })
   end
 
   def email_icon(css: "size-3.5")

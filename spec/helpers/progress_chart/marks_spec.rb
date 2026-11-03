@@ -12,8 +12,8 @@ RSpec.describe ProgressChart::Marks do
                                      total: values.sum)
   end
 
-  def item(id, day, repo: "me/app", kind: :shipped)
-    entry = Entry.new(id: id, title: "Entry #{id}", repo_name: repo)
+  def item(id, day, repo: "me/app", kind: :shipped, type: (kind == :shipped ? "shipped" : "posted"))
+    entry = Entry.new(id: id, title: "Entry #{id}", repo_name: repo, entry_type: type)
     Progress::TallyService::Item.new(entry: entry, date: Date.new(2026, 10, day), kind: kind, listed: true)
   end
 
@@ -32,12 +32,13 @@ RSpec.describe ProgressChart::Marks do
     expect(mark.top).to be < 100
   end
 
-  it "keeps one mark per project and point, newest first, shipped while any entry is" do
+  it "keeps one mark per project and point, newest first, wearing a milestone's badge first, then a shipment's, then a post's" do
     found = marks([ item(1, 23, kind: :published), item(2, 23), item(3, 23, repo: "me/lib", kind: :published),
-                    item(4, 24, kind: :published) ], lines: [ line("app", commits, Array.new(10, 2)), line("lib", commits, Array.new(10, 1), rank: 1) ])
+                    item(4, 24, kind: :published), item(5, 24, type: "milestone"), item(6, 25, type: "released") ],
+                  lines: [ line("app", commits, Array.new(10, 2)), line("lib", commits, Array.new(10, 1), rank: 1) ])
 
-    expect(found.map { |mark| [ mark.key, mark.column, mark.items.map(&:id), mark.shipped? ] })
-      .to eq([ [ "me/app", 4, [ 2, 1 ], true ], [ "me/lib", 4, [ 3 ], false ], [ "me/app", 5, [ 4 ], false ] ])
+    expect(found.map { |mark| [ mark.key, mark.column, mark.items.map(&:id), mark.badge ] })
+      .to eq([ [ "me/app", 4, [ 2, 1 ], :shipped ], [ "me/lib", 4, [ 3 ], :published ], [ "me/app", 5, [ 5, 4 ], :milestone ], [ "me/app", 6, [ 6 ], :shipped ] ])
   end
 
   it "sits on the axis in ink with no project, and in its colour where its project has no line" do

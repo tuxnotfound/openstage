@@ -46,16 +46,34 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     expect(key.css(".os-switch").map { |switch| [ switch["class"].include?(" on "), switch["aria-hidden"] ] }).to eq([ [ true, "true" ], [ false, "true" ] ])
   end
 
-  it "marks what shipped on the chart, as visitors see it, linking nowhere" do
+  it "marks what shipped on the chart, each a link to the entries opened on it" do
     milestone = create(:entry, user: user, repo_name: "builder/app", entry_type: "milestone", source: "manual", title: "Launched", occurred_at: 1.day.ago)
 
-    get "/dashboard"
+    get "/dashboard", params: { range: "90d" }
 
-    chart = page.at_css("section[aria-labelledby='your-activity'] .os-chart")
-    expect(chart.css("a[href^='#entry-']")).to be_empty
-    expect(chart.css("span[aria-hidden='true'] > svg path[fill-rule='evenodd']").size).to eq(1)
+    link = page.at_css("section[aria-labelledby='your-activity'] .os-chart a[aria-label^='Milestone: Launched']")
+    expect(link["href"]).to eq("/dashboard?entry=#{milestone.id}&range=90d#entry-#{milestone.id}")
     marks = JSON.parse(page.at_css("#activity-chart-props").text)["initial"]["chart"]["marks"]
-    expect(marks.map { |mark| [ mark["key"], mark["entries"].pluck("id") ] }).to eq([ [ "builder/app", [ milestone.id ] ] ])
+    expect(marks.map { |mark| [ mark["key"], mark["badge"], mark["entries"].pluck("id") ] }).to eq([ [ "builder/app", "milestone", [ milestone.id ] ] ])
+  end
+
+  it "opens the entries on the one a mark names, past the newer ones, with a way back to the newest" do
+    older = create(:entry, user: user, repo_name: "builder/app", entry_type: "milestone", source: "manual", title: "Old launch", occurred_at: 20.days.ago)
+    30.times { |i| create(:entry, user: user, repo_name: "builder/app", title: "Newer #{i}", occurred_at: (i + 1).hours.ago) }
+
+    get "/dashboard", params: { entry: older.id }
+
+    rows = page.css("#entries-list-timeline [id^='entry-']")
+    expect(rows.first["id"]).to eq("entry-#{older.id}")
+    back = page.css("[data-tabs-panel='timeline'] a").find { |a| a.text.squish == "Back to the newest" }
+    expect(back["href"]).to eq("/dashboard?tab=timeline#entries")
+
+    get "/dashboard", params: { entry: older.id }, headers: { "Turbo-Frame" => "entries-lists" }
+    expect(Nokogiri::HTML(response.body).css("#entries-list-timeline [id^='entry-']").first["id"]).to eq("entry-#{older.id}")
+
+    get "/dashboard"
+    expect(page.css("#entries-list-timeline [id^='entry-']").map { |row| row["id"] }).not_to include("entry-#{older.id}")
+    expect(page.css("a").map { |a| a.text.squish }).not_to include("Back to the newest")
   end
 
   it "lists every repo with work under the chart, each with Edit, and leaves out repos with none" do

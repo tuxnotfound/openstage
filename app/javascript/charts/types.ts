@@ -34,12 +34,18 @@ export type CompareChartView = {
   indexed: boolean
 }
 
+// What an entry is, by the mark it wears (TallyService::Item#badge): a
+// milestone's flag, the rocket of anything else shipped, the bubble of what
+// was published.
+export type Badge = "milestone" | "shipped" | "published"
+
 // The shipped and published entries at one point of one project
 // (ProgressChart::Marks): key, its project's row, null for none; number, the
 // line it sits on, null on the axis; left and top, where, in percent of the
-// chart from its top left; shipped, while any of its entries is; label, its
-// newest for a screen reader; entries, newest first, each with its row's
-// anchor id (entry-<id>) in the page's list.
+// chart from its top left; badge, the first of milestone, shipped and
+// published among its entries; label, its newest for a screen reader;
+// entries, newest first, each with its badge in words (kind), its row's
+// anchor id being entry-<id>.
 export type ChartMark = {
   key: string | null
   number: string | null
@@ -47,9 +53,9 @@ export type ChartMark = {
   column: number
   left: number
   top: number
-  shipped: boolean
+  badge: Badge
   label: string
-  entries: { id: number; title: string; shipped: boolean; kind: string; date: string }[]
+  entries: { id: number; title: string; badge: Badge; kind: string; date: string }[]
 }
 
 // A change against the window before, as the pages write it: the arrow

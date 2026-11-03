@@ -35,15 +35,17 @@ RSpec.describe CompareChartSerializer do
   end
 
   it "sends each mark with where it sits and its entries newest first, a screen reader's label naming the newest" do
-    item = ->(id, title, day, kind) { Progress::TallyService::Item.new(entry: Entry.new(id: id, title: title, repo_name: "me/app"), date: Date.new(2026, 10, day), kind: kind, listed: true) }
+    item = lambda do |id, title, day, type, kind|
+      Progress::TallyService::Item.new(entry: Entry.new(id: id, title: title, repo_name: "me/app", entry_type: type), date: Date.new(2026, 10, day), kind: kind, listed: true)
+    end
     chart = ProgressChart::Compare.new(window: window, lines: [ line(commits, [ 3, 1 ]) ], numbers: [ commits ],
-                                       items: [ item.call(7, "Beta", 26, :published), item.call(8, "Launch", 27, :shipped) ])
+                                       items: [ item.call(7, "Beta", 26, "posted", :published), item.call(8, "Launch", 27, "milestone", :shipped) ])
 
     mark = described_class.new(chart).as_json["marks"].sole
-    expect(mark).to include("key" => "me/app", "number" => "commits", "colorClass" => "os-project-1", "column" => 1, "shipped" => true,
-                            "label" => "Shipped: Launch, Oct 27, and 1 more")
-    expect(mark["entries"]).to eq([ { "id" => 8, "title" => "Launch", "shipped" => true, "kind" => "Shipped", "date" => "Oct 27" },
-                                    { "id" => 7, "title" => "Beta", "shipped" => false, "kind" => "Published", "date" => "Oct 26" } ])
+    expect(mark).to include("key" => "me/app", "number" => "commits", "colorClass" => "os-project-1", "column" => 1, "badge" => "milestone",
+                            "label" => "Milestone: Launch, Oct 27, and 1 more")
+    expect(mark["entries"]).to eq([ { "id" => 8, "title" => "Launch", "badge" => "milestone", "kind" => "Milestone", "date" => "Oct 27" },
+                                    { "id" => 7, "title" => "Beta", "badge" => "published", "kind" => "Published", "date" => "Oct 26" } ])
   end
 
   it "sends a chart of one number with its values on the gridlines and no note" do

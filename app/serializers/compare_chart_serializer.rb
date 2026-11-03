@@ -27,16 +27,15 @@ class CompareChartSerializer < ApplicationSerializer
       rows: column.rows.map { |row| { key: row.repo, name: row.name, color_class: row.color_class, values: row.values } } }
   end
 
-  # Its entries newest first, each kind and day as What shipped writes them;
-  # label: the newest, for a screen reader, with how many more.
+  # Its entries newest first, each badge in the words and the day What's new
+  # writes them with; label: the newest, for a screen reader, with how many
+  # more.
   def mark_of(mark)
-    entries = mark.items.map { |item| { id: item.id, title: item.title, shipped: item.shipped?, kind: kind_of(item), date: item.date.strftime("%b %-d") } }
+    entries = mark.items.map do |item|
+      { id: item.id, title: item.title, badge: item.badge.to_s, kind: ProgressHelper::BADGE_WORDS.fetch(item.badge), date: item.date.strftime("%b %-d") }
+    end
     { key: mark.key, number: mark.number, color_class: mark.color_class, column: mark.column, left: mark.left, top: mark.top,
-      shipped: mark.shipped?, label: label_of(entries), entries: entries }
-  end
-
-  def kind_of(item)
-    item.shipped? ? "Shipped" : "Published"
+      badge: mark.badge.to_s, label: label_of(entries), entries: entries }
   end
 
   def label_of(entries)

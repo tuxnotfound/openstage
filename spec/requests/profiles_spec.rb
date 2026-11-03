@@ -122,7 +122,7 @@ RSpec.describe "Profiles", type: :request do
         page = Nokogiri::HTML(response.body)
         links = page.css(".os-chart a[href^='#entry-']")
         expect(links.map { |link| link["href"] }).to contain_exactly("#entry-#{milestone.id}", "#entry-#{note.id}")
-        expect(links.map { |link| link["aria-label"] }).to contain_exactly(start_with("Shipped: #{milestone.title}, "), start_with("Published: #{note.title}, "))
+        expect(links.map { |link| link["aria-label"] }).to contain_exactly(start_with("Milestone: #{milestone.title}, "), start_with("Published: #{note.title}, "))
         expect(links.map { |link| shipped.at_css(link["href"])&.text&.squish }).to all(be_present)
       end
 

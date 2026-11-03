@@ -52,7 +52,7 @@ export default function ProgressIsland({ initial, endpoint, mode, defaultRange, 
       )}
       <p role="status" className="mt-2.5 text-[13px] font-semibold text-ink-2 empty:mt-0">{filter.notice}</p>
       <CompareChart chart={view.chart} lines={lines} focus={focus} height={mode === "dashboard" ? "h-[260px]" : ""}
-                    hidden={mode === "dashboard" ? cells.hidden : undefined} listed={mode !== "dashboard"} />
+                    hidden={mode === "dashboard" ? cells.hidden : undefined} lead={mode === "dashboard" ? "entries" : "news"} />
       {view.table && (
         <ProjectsTable table={view.table} drawn={lineOrder(lines)} lines={lines} indexed={view.chart.indexed} words={view.words}
                        focused={focus?.kind === "project" ? focus.key : null} rows={filter.rows} switches={mode === "dashboard" ? cells.switches : undefined} />

@@ -17,6 +17,14 @@ module Progress
       def shipped?
         kind == :shipped
       end
+
+      # The mark it wears on the pages: a milestone's flag, the rocket of
+      # anything else shipped, or the bubble of what was published.
+      def badge
+        return :milestone if entry.milestone?
+
+        shipped? ? :shipped : :published
+      end
     end
     # counts: commits by repo, the selected repos' only under a filter.
     Bucket = Data.define(:span, :counts, :total, :items)

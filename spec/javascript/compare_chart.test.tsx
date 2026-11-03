@@ -70,8 +70,8 @@ describe("the chart's tooltip", () => {
 
 // What shipped and was published at a point (ProgressChart::Marks).
 const mark = (view: Partial<ChartMark> = {}): ChartMark => ({
-  key: "me/app", number: "visits", colorClass: "os-project-1", column: 0, left: 95, top: 40, shipped: true, label: "Shipped: Launch, Oct 28, and 1 more",
-  entries: [{ id: 8, title: "Launch", shipped: true, kind: "Shipped", date: "Oct 28" }, { id: 7, title: "Beta notes", shipped: false, kind: "Published", date: "Oct 28" }],
+  key: "me/app", number: "visits", colorClass: "os-project-1", column: 0, left: 95, top: 40, badge: "shipped", label: "Shipped: Launch, Oct 28, and 1 more",
+  entries: [{ id: 8, title: "Launch", badge: "shipped", kind: "Shipped", date: "Oct 28" }, { id: 7, title: "Beta notes", badge: "published", kind: "Published", date: "Oct 28" }],
   ...view,
 })
 

@@ -6,14 +6,18 @@ module ProgressChart
   # no line, and for an entry with no project, which wears ink. An entry
   # before the chart's first point has no mark.
   class Marks
+    # The badges of its entries (TallyService::Item#badge), the one a mark
+    # wears first: a milestone, then something shipped, then something
+    # published.
+    BADGES = %i[milestone shipped published].freeze
+
     # key: its project's repo, nil for none; number: the key of the number
     # whose line it sits on, nil on the axis; left and top: where, in percent
     # of the chart from its top left; items: its TallyService::Items, newest
     # first.
     Mark = Data.define(:key, :number, :color_class, :column, :left, :top, :items) do
-      # Shipped while any of its entries is; published otherwise.
-      def shipped?
-        items.any?(&:shipped?)
+      def badge
+        BADGES.find { |badge| items.any? { |item| item.badge == badge } }
       end
     end
 

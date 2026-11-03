@@ -37,6 +37,7 @@ module EntriesSection
       @list = list
       @narrowed = narrowed || list
       @filtered = !narrowed.nil?
+      @after = after
       rows = page_after(after).to_a
       @more = rows.size > PER_PAGE
       @entries = rows.first(PER_PAGE)
@@ -44,6 +45,12 @@ module EntriesSection
 
     def more?
       @more
+    end
+
+    # Whether the page starts past the newest rows: Load more without
+    # JavaScript, or a mark on the chart, opened it there.
+    def past_newest?
+      !@after.nil?
     end
 
     def count
@@ -122,11 +129,21 @@ module EntriesSection
     { **entries_filter.to_params, tab: (entries_tab_key unless entries_tab_key == TABS.first) }.compact
   end
 
-  # The last row Load more showed, as "time,id"; nil for the first page.
+  # The last row Load more showed, as "time,id"; nil for the first page. A
+  # mark on the chart names an entry instead (entry), so the page opens on it.
   def entries_cursor
+    return entry_cursor(params[:entry]) if params[:entry].present?
+
     at, id = params[:before].to_s.split(",", 2)
     [ Time.iso8601(at), Integer(id, 10) ] if at && id
   rescue ArgumentError
     nil
+  end
+
+  # Just past an entry of the builder's, so it is the first row; nil for one
+  # that is not theirs.
+  def entry_cursor(id)
+    entry = current_user.entries.find_by(id: id)
+    [ entry.occurred_at, entry.id + 1 ] if entry
   end
 end

@@ -2,7 +2,7 @@ import { Fragment, useLayoutEffect, useRef, useState, type KeyboardEvent, type P
 import type { ChartMark, CompareChartView } from "../types"
 import LineKey from "./LineKey"
 import { LINE_DASHES, lineOf, pathTops, tipLeft, type Lines } from "./lines"
-import Mark, { MarkIcon } from "./Marks"
+import Mark, { MarkIcon, type Lead } from "./Marks"
 
 // Draws a chart filter's chart as the server worked it out
 // (CompareChartSerializer), as charts/_chart renders the same view: a line
@@ -36,12 +36,12 @@ type Props = {
   // tooltip, as a dashboard switch waits for its save; a mark on that line
   // waits with it.
   hidden?: (each: ProjectNumber) => boolean
-  // Whether the page lists the entries its marks stand for, so each mark
-  // links to its row there.
-  listed?: boolean
+  // Where a mark leads: the page's What's new, or the dashboard's entries;
+  // none on analytics.
+  lead?: Lead
 }
 
-export default function CompareChart({ chart, lines, focus, height = "", hidden, listed = false }: Props) {
+export default function CompareChart({ chart, lines, focus, height = "", hidden, lead }: Props) {
   const box = useRef<HTMLDivElement>(null)
   const [at, setAt] = useState<number | null>(null)
   const line = (path: Path) => lineOf(lines, path.number, chart.indexed)
@@ -102,7 +102,7 @@ export default function CompareChart({ chart, lines, focus, height = "", hidden,
                 style={{ left: `${x}%`, top: `${top}%` }} />
         ))}
         {shown.map((mark) => (
-          <Mark key={`${mark.key}|${mark.column}`} mark={mark} opacity={forward(mark) ? 1 : FADED} listed={listed} onPoint={() => setAt(mark.column)} />
+          <Mark key={`${mark.key}|${mark.column}`} mark={mark} opacity={forward(mark) ? 1 : FADED} lead={lead} onPoint={() => setAt(mark.column)} />
         ))}
         {/* Mounted before any point is, so a screen reader hears the first one too. */}
         <div role="status" aria-live="polite" className="pointer-events-none absolute inset-0 z-[5]">
@@ -153,7 +153,7 @@ export function Tip({ chart, column, lines, x, hidden, marks }: {
           {marks.flatMap((mark) => mark.entries.map((entry) => (
             <div key={entry.id} className="flex min-w-0 items-center gap-[7px]">
               <span className={`${mark.colorClass} inline-flex size-4 flex-none items-center justify-center rounded-full bg-(--project) text-(--on-project) shadow-[0_0_0_1.5px_var(--color-ground)]`}>
-                <MarkIcon shipped={entry.shipped} className="size-2.5" />
+                <MarkIcon badge={entry.badge} className="size-2.5" />
               </span>
               <span className="min-w-0 truncate font-semibold">{entry.title}</span>
             </div>
