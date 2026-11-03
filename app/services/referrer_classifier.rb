@@ -1,8 +1,9 @@
 module ReferrerClassifier
   # Matched in order. An Android app sends its package as the referrer's
   # host (android-app://com.reddit.frontpage), so an app counts as its site,
-  # and Gmail's mail as Gmail rather than as Google's search. Openstage's own
-  # pages send visitors on to a project's website.
+  # and Gmail's mail as Gmail rather than as Google's search; so does Gemini,
+  # an AI assistant like the others its answers link out from. Openstage's
+  # own pages send visitors on to a project's website.
   RULES = [
     [ "Hacker News",   %w[news.ycombinator.com] ],
     [ "Reddit",        %w[reddit.com old.reddit.com new.reddit.com m.reddit.com com.reddit.frontpage] ],
@@ -14,6 +15,12 @@ module ReferrerClassifier
     [ "Bluesky",       %w[bsky.app] ],
     [ "Dev.to",        %w[dev.to] ],
     [ "Openstage",     %w[openstage.dev] ],
+    [ "ChatGPT",       %w[chatgpt.com chat.openai.com com.openai.chatgpt] ],
+    [ "Claude",        %w[claude.ai com.anthropic.claude] ],
+    [ "Perplexity",    %w[perplexity.ai ai.perplexity.app.android] ],
+    [ "Gemini",        %w[gemini.google.com bard.google.com com.google.android.apps.bard] ],
+    [ "Copilot",       %w[copilot.microsoft.com com.microsoft.copilot] ],
+    [ "DeepSeek",      %w[chat.deepseek.com com.deepseek.chat] ],
     [ "Gmail",         %w[mail.google.com com.google.android.gm] ],
     [ "Google",        :google_match ]
   ].freeze

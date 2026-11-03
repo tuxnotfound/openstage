@@ -20,6 +20,13 @@ RSpec.describe ReferrerClassifier do
       expect(described_class.label("www.openstage.dev")).to eq("Openstage")
     end
 
+    it "names AI assistants by their sites and Android apps, Gemini apart from Google's search" do
+      expect(%w[chatgpt.com chat.openai.com com.openai.chatgpt claude.ai www.perplexity.ai gemini.google.com com.google.android.apps.bard
+                copilot.microsoft.com chat.deepseek.com].map { |host| described_class.label(host) })
+        .to eq(%w[ChatGPT ChatGPT ChatGPT Claude Perplexity Gemini Gemini Copilot DeepSeek])
+      expect(described_class.label("www.google.com")).to eq("Google")
+    end
+
     it "groups Google subdomains" do
       expect(described_class.label("google.com")).to eq("Google")
       expect(described_class.label("www.google.co.uk")).to eq("Google")
