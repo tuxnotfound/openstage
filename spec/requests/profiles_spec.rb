@@ -59,6 +59,14 @@ RSpec.describe "Profiles", type: :request do
           get "/testuser", headers: { "HTTP_USER_AGENT" => "Mozilla/5.0 (compatible; ClaudeBot/1.0; +claudebot@anthropic.com)" }
         }.not_to change { user.profile_views.count }
       end
+
+      # A page Turbo loaded as the pointer rested on a link to it would count
+      # a view nobody opened.
+      it "tells Turbo never to load a page ahead, so a view counts only when the page opens" do
+        get "/testuser"
+
+        expect(Nokogiri::HTML(response.body).at_css("head meta[name='turbo-prefetch']")["content"]).to eq("false")
+      end
     end
 
     context "when user is pro" do

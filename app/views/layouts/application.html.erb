@@ -38,6 +38,10 @@
     <% end %>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
+    <%# Turbo would load a link's page as the pointer rests on it, and that
+        page's view would count before anyone opened it; a view skipped on
+        such a load would be lost when the load is opened. So none. %>
+    <meta name="turbo-prefetch" content="false">
     <%= preload_link_tag "funnel-sans-latin.woff2" %>
     <%= preload_link_tag "funnel-display-latin.woff2" %>
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
