@@ -1,9 +1,13 @@
 module BotDetector
   # Named crawlers, including the AI agents public/robots.txt welcomes onto
-  # profile pages by name. Without this filter they inflate ProfileView, which
-  # is the metric Pro is sold on.
+  # profile pages by name, and the fetchers an AI assistant sends when someone
+  # asks it about a page (ChatGPT-User, Claude-User, Perplexity-User), whose
+  # user agents need not say bot. Without this filter they inflate
+  # ProfileView, which is the metric Pro is sold on.
   NAMED = %w[
-    gptbot claudebot claude-web anthropic-ai perplexitybot google-extended
+    gptbot oai-searchbot chatgpt-user claudebot claude-user claude-searchbot claude-web anthropic-ai
+    perplexitybot perplexity-user google-extended google-cloudvertexbot meta-externalagent meta-externalfetcher
+    mistralai-user duckassistbot youbot
     googlebot bingbot applebot yandexbot baiduspider duckduckbot slurp
     facebookexternalhit twitterbot linkedinbot slackbot discordbot telegrambot
     whatsapp pinterestbot redditbot
