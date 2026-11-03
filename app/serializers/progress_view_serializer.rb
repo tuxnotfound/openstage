@@ -2,7 +2,8 @@
 # view, as a builder's page, one of their projects' pages or their dashboard
 # shows it (ChartFilterSerializer: the toggles, the chart and, where a page
 # has several projects, the table under it; changes on the dashboard alone),
-# and What shipped. The page renders it first and the chart script asks for
+# and the builder's page's What shipped; a project's page lists its entries
+# in What's new, whatever the window. The page renders it first and the chart script asks for
 # others (Api::ProgressController); the words come from the helpers the
 # page's own partials use.
 class ProgressViewSerializer < ApplicationSerializer
@@ -18,7 +19,7 @@ class ProgressViewSerializer < ApplicationSerializer
 
   def attributes
     @attributes ||= ChartFilterSerializer.new(@chart, changes: @chart.builder.present?, table: table).attributes
-                                         .merge(shipped: (shipped unless @chart.builder))
+                                         .merge(shipped: (shipped unless @chart.builder || @chart.lone))
   end
 
   private

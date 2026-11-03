@@ -11,7 +11,7 @@ RSpec.describe Progress::FocusService do
     travel_to ProgressData::TODAY
   end
 
-  it "gathers one project's page, its card, the others and its latest highlight" do
+  it "gathers one project's page, its card, the others and its highlights, newest first" do
     service = described_class.new(user: user, slug: "Trained-On", range: "90d")
 
     expect(service.call).to be(true)
@@ -19,7 +19,8 @@ RSpec.describe Progress::FocusService do
     expect(service.page.section.selected.map(&:name)).to eq([ "trained-on" ])
     expect(service.card.repo).to eq(progress_repo(4))
     expect(service.others.map(&:repo)).not_to include(progress_repo(4))
-    expect(service.news.repo_name).to eq(progress_repo(4))
+    expect(service.news.map(&:repo_name).uniq).to eq([ progress_repo(4) ])
+    expect(service.news.map(&:occurred_at)).to eq(service.news.map(&:occurred_at).sort.reverse)
     expect(service.highlights).to eq(user.entries.highlights.where(repo_name: progress_repo(4)).count)
     expect(service.first_commit).to eq(user.entries.commits.where(repo_name: progress_repo(4)).minimum(:occurred_at))
   end

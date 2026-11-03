@@ -73,7 +73,7 @@
   <% serializer = ProgressViewSerializer.new(chart) %>
   <% view = serializer.attributes %>
   <%= react_island("progress", { initial: serializer.as_json, endpoint: api_progress_path(@user.username, project: project.repo, reveal: @revealed),
-                                 mode: "project", defaultRange: Progress::Window::DEFAULT, shippedTarget: "what-shipped-panel" }, id: "progress", class: "mt-[30px]") do %>
+                                 mode: "project", defaultRange: Progress::Window::DEFAULT }, id: "progress", class: "mt-[30px]") do %>
     <%= render "charts/filter", view: view, mode: "project",
                path_for: ->(changes) { project_page_for(@user, project, **chart_params(view, default_range: Progress::Window::DEFAULT, **changes).except(:projects)) } %>
   <% end %>
@@ -81,26 +81,43 @@
 
 <div class="flex flex-wrap items-start gap-4.5">
   <div class="os-stack min-w-0 flex-[999_1_560px]">
-    <% if (news = @focus.news) %>
+    <%# Everything it shipped and published, newest first: the latest in
+        full, the rest a row each, past the first eight folded away. Each is
+        where its mark on the chart leads (entry-<id>). %>
+    <% if (news = @focus.news).any? %>
+      <% latest, *older = news %>
+      <% kind = ->(entry) { Entry::SHIPPED_TYPES.include?(entry.entry_type) ? "Shipped" : "Published" } %>
+      <% title = lambda do |entry|
+           url = safe_external_url(entry.url)
+           url ? link_to(entry.title, entry_click_out_path(entry.id), target: "_blank", rel: "noopener", data: { turbo: false }, class: "hover:underline", title: url) : entry.title
+         end %>
       <section class="os-panel" aria-labelledby="whats-new">
         <div class="os-between">
           <h2 id="whats-new" class="os-h2">What's new</h2>
-          <span class="os-xs os-muted"><%= news.occurred_at.strftime("%b %-d") %> · <%= Entry::SHIPPED_TYPES.include?(news.entry_type) ? "Shipped" : "Published" %></span>
+          <span class="os-xs os-muted"><%= latest.occurred_at.strftime("%b %-d") %> · <%= kind.call(latest) %></span>
         </div>
-        <h3 class="os-h3 mt-3 text-[22px]">
-          <% if (url = safe_external_url(news.url)) %>
-            <%= link_to news.title, entry_click_out_path(news.id), target: "_blank", rel: "noopener", data: { turbo: false }, class: "hover:underline", title: url %>
-          <% else %>
-            <%= news.title %>
+        <div id="entry-<%= latest.id %>" class="mt-3 scroll-mt-6">
+          <h3 class="os-h3 text-[22px]"><%= title.call(latest) %></h3>
+          <% if latest.body.present? %>
+            <p class="os-p mt-2 whitespace-pre-line"><%= latest.body %></p>
           <% end %>
-        </h3>
-        <% if news.body.present? %>
-          <p class="os-p mt-2 whitespace-pre-line"><%= news.body %></p>
+        </div>
+        <% if older.any? %>
+          <div class="mt-4">
+            <% older.each_with_index do |entry, i| %>
+              <% if i == 7 %><details class="group"><summary class="os-btn2 sm mt-3 list-none group-open:hidden [&::-webkit-details-marker]:hidden">Show all <%= news.size %></summary><% end %>
+              <div id="entry-<%= entry.id %>" class="os-row os-rowflex scroll-mt-6 py-3">
+                <span class="os-sm os-muted flex-[0_0_64px]"><%= entry.occurred_at.strftime("%b %-d") %></span>
+                <span class="os-xs flex-[0_0_84px] font-bold text-ink-3"><%= kind.call(entry) %></span>
+                <span class="min-w-0 flex-[1_1_300px] text-[15px] font-semibold"><%= title.call(entry) %></span>
+              </div>
+            <% end %>
+            <% if older.size > 7 %></details><% end %>
+          </div>
         <% end %>
       </section>
     <% end %>
     <%= render "profiles/page/recent", user: @user, groups: @focus.page.recent, by_project: false if @focus.page.recent.any? %>
-    <%= render "profiles/page/shipped", section: section %>
   </div>
 
   <%# Its facts as visitors see them (FocusService#facts); then its other

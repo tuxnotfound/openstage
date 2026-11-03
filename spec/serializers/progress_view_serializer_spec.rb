@@ -53,8 +53,8 @@ RSpec.describe ProgressViewSerializer do
       expect(json["shipped"]).to be_nil
     end
 
-    it "leaves the table off a project's page" do
-      expect(view(repos: [ "me/app" ], lone: true)["table"]).to be_nil
+    it "leaves the table and What shipped off a project's page, which lists its entries in What's new" do
+      expect(view(repos: [ "me/app" ], lone: true)).to include("table" => nil, "shipped" => nil)
     end
   end
 end
