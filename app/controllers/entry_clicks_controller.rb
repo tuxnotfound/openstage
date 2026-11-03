@@ -19,8 +19,10 @@ class EntryClicksController < ApplicationController
       return
     end
 
-    # Record the click, skipping the entry owner's own clicks.
-    unless current_user == entry.user
+    # Record the click, skipping the entry owner's own clicks and bots', as a
+    # project's own buttons do (ProjectClicksController): a crawler that
+    # ignores robots.txt follows every link out.
+    unless current_user == entry.user || BotDetector.bot?(request.user_agent)
       EntryClick.create!(
         user:       entry.user,
         entry:      entry,

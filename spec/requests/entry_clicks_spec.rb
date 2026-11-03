@@ -4,6 +4,7 @@ RSpec.describe "EntryClicks", type: :request do
   let(:owner)   { create(:user) }
   let(:visitor) { create(:user) }
   let(:entry)   { create(:entry, user: owner, url: "https://example.com/post") }
+  let(:browser) { { "HTTP_USER_AGENT" => "Mozilla/5.0 (Macintosh) Safari/605.1.15" } }
 
   describe "GET /e/:id/out" do
     context "when entry exists and has a URL" do
@@ -14,12 +15,20 @@ RSpec.describe "EntryClicks", type: :request do
 
       it "records a click for anonymous visitors" do
         expect {
-          get entry_click_out_path(entry)
+          get entry_click_out_path(entry), headers: browser
         }.to change(EntryClick, :count).by(1)
       end
 
+      it "records no click from a bot, or from a request with no user agent, and still sends it on" do
+        expect {
+          get entry_click_out_path(entry), headers: { "HTTP_USER_AGENT" => "Googlebot/2.1 (+http://www.google.com/bot.html)" }
+          get entry_click_out_path(entry)
+        }.not_to change(EntryClick, :count)
+        expect(response).to redirect_to("https://example.com/post")
+      end
+
       it "keeps no hash of the visitor's IP address" do
-        get entry_click_out_path(entry)
+        get entry_click_out_path(entry), headers: browser
 
         expect(EntryClick.pluck(Arel.sql("ip_hash"))).to eq([ nil ])
       end
@@ -27,14 +36,14 @@ RSpec.describe "EntryClicks", type: :request do
       it "records a click for signed-in non-owners" do
         sign_in_as(visitor)
         expect {
-          get entry_click_out_path(entry)
+          get entry_click_out_path(entry), headers: browser
         }.to change(EntryClick, :count).by(1)
       end
 
       it "does not record a click when the owner visits their own entry" do
         sign_in_as(owner)
         expect {
-          get entry_click_out_path(entry)
+          get entry_click_out_path(entry), headers: browser
         }.not_to change(EntryClick, :count)
       end
     end
@@ -49,7 +58,7 @@ RSpec.describe "EntryClicks", type: :request do
 
       it "does not record a click" do
         expect {
-          get entry_click_out_path(entry_no_url)
+          get entry_click_out_path(entry_no_url), headers: browser
         }.not_to change(EntryClick, :count)
       end
     end
@@ -72,7 +81,7 @@ RSpec.describe "EntryClicks", type: :request do
 
       it "redirects to root without recording a click" do
         expect {
-          get entry_click_out_path(bad_entry)
+          get entry_click_out_path(bad_entry), headers: browser
         }.not_to change(EntryClick, :count)
         expect(response).to redirect_to(root_path)
       end
