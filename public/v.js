@@ -1,6 +1,8 @@
 // Openstage's visit counter, for a project's own website. One request per page
-// view, page changes inside single-page apps included. A page load's request
-// also carries the address the visitor came from. No cookie and nothing stored
+// view, page changes inside single-page apps included, as long as the path
+// changes: a filter or a tab in the query string keeps the page, as
+// mainstream counters count it. A page load's request also carries the
+// address the visitor came from. No cookie and nothing stored
 // in the browser: Openstage keeps each day's totals, not the visitor.
 // https://openstage.dev/privacy
 (function () {
@@ -14,7 +16,7 @@
 
   function send() {
     var url = location.href.split("#")[0]
-    if (url === last) return
+    if (last !== null && url.split("?")[0] === last.split("?")[0]) return
     var view = { p: project, u: url }
     // Only a page load has a referrer of its own: later page changes in a
     // single-page app keep the one it loaded with.

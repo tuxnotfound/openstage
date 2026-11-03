@@ -40,6 +40,20 @@ describe("Openstage's script on a project's website", () => {
     ])
   })
 
+  test("counts a page change only when its path changes, a filter in the query string keeping the page", () => {
+    const site = open("https://shipnote.app/dashboard", "")
+    site.history.pushState({}, "", "/dashboard?range=90d")
+    site.history.pushState({}, "", "/docs?tab=api")
+    site.history.pushState({}, "", "/docs?tab=cli")
+    site.back("https://shipnote.app/dashboard?range=90d")
+
+    expect(site.sent).toEqual([
+      { p: "os_abc123", u: "https://shipnote.app/dashboard", r: "" },
+      { p: "os_abc123", u: "https://shipnote.app/docs?tab=api" },
+      { p: "os_abc123", u: "https://shipnote.app/dashboard?range=90d" },
+    ])
+  })
+
   test("sends an empty referrer as it is, for a visitor who came from no page", () => {
     expect(open("https://shipnote.app/", "").sent).toEqual([{ p: "os_abc123", u: "https://shipnote.app/", r: "" }])
   })
