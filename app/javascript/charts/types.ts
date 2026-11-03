@@ -138,14 +138,20 @@ export type ProgressView = FilterView & {
   shipped: { heading: string; empty: string; items: ShippedItem[] } | null
 }
 
+// A row of What's new: its badge, in words (kind) and in its project's
+// colour (colorClass), and its description (body), null without one;
+// project, null on a project's own page.
 export type ShippedItem = {
   id: number
   // null for the entry a link pointed at, which shows above the page instead.
   anchor: string | null
   date: string
+  badge: Badge
   kind: string
+  colorClass: string
   title: string
   runIn: string
+  body: string | null
   url: string | null
   project: string | null
 }

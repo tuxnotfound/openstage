@@ -1,8 +1,8 @@
 module Progress
   # Everything one project's page shows: the builder's page for that project
-  # alone (GatherService), its card, the other projects' cards, and what it
-  # shipped and published, in the builder's words, newest first, whenever
-  # that was. The
+  # alone (GatherService), its card and the other projects' cards. What it
+  # shipped and published in the window is the page's section's, as on the
+  # builder's page. The
   # project is named as in its URL, by the repo's own name, matched without
   # regard to case, as GitHub matches it.
   class FocusService < ApplicationService
@@ -17,12 +17,12 @@ module Progress
     # default. reveal: a repo the builder hid, shown anyway (Entry.counted_on_page).
     attr_accessor :user, :slug, :range, :show, :reveal
     # page: the GatherService run for this project; others: the rest of the
-    # builder's cards; news: every highlight it lists, newest first;
-    # highlights: how many there are, ever, the hidden ones too; first_commit: a time, which its share card reads; facts: its
+    # builder's cards; highlights: how many it shipped and published, ever,
+    # the hidden ones too; first_commit: a time, which its share card reads; facts: its
     # Details as visitors see them, Facts; last_commit: the day of its latest
     # commit, nil while its builder hides its commits; co_builders:
     # CoBuilders, busiest first, the ones with no count shown last.
-    attr_reader :project, :page, :card, :others, :news, :highlights, :first_commit, :facts, :last_commit, :co_builders
+    attr_reader :project, :page, :card, :others, :highlights, :first_commit, :facts, :last_commit, :co_builders
 
     validates :user, :slug, presence: true
 
@@ -41,7 +41,6 @@ module Progress
 
       @page = gather
       @card, @others = split_cards(gather.cards)
-      @news = user.entries.listed_on_page(reveal: reveal).highlights.where(repo_name: project.repo).chronological.order(id: :desc).to_a
       @highlights = counted.highlights.where(repo_name: project.repo).count
       @first_commit = counted.commits.where(repo_name: project.repo).minimum(:occurred_at)
       @facts = details
@@ -54,7 +53,7 @@ module Progress
       Projects.new(counted).all.find { |project| project.repo.split("/").last.casecmp?(slug) }
     end
 
-    # What its numbers count; news, the entries it lists, reads the listed ones.
+    # What its numbers count.
     def counted
       user.entries.counted_on_page(reveal: reveal)
     end

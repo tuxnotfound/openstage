@@ -79,14 +79,14 @@ RSpec.describe "Profiles", type: :request do
       end
     end
 
-    context "what shipped" do
+    context "what's new" do
       let!(:user) { create(:user, username: "builder") }
       let!(:commit)    { create(:entry, user: user, repo_name: "builder/app", occurred_at: 3.days.ago) }
       let!(:milestone) { create(:entry, user: user, entry_type: "milestone", source: "manual", occurred_at: 2.days.ago) }
       let!(:note)      { create(:entry, user: user, entry_type: "note", source: "manual", occurred_at: 1.day.ago) }
 
       def shipped
-        Nokogiri::HTML(response.body).at_css("section[aria-labelledby='what-shipped']")
+        Nokogiri::HTML(response.body).at_css("section[aria-labelledby='whats-new']")
       end
 
       it "lists what shipped and was published in the window, newest first, and no commit" do
@@ -95,7 +95,7 @@ RSpec.describe "Profiles", type: :request do
         rows = shipped.css(".os-row").map { |row| row.text.squish }
         expect(rows.size).to eq(2)
         expect(rows.first).to include("Published", note.title)
-        expect(rows.last).to include("Shipped", milestone.title)
+        expect(rows.last).to include("Milestone", milestone.title)
         expect(shipped.text).not_to include(commit.title)
         expect(shipped.text.squish).to include("2 in the last 30 days")
       end
@@ -116,7 +116,7 @@ RSpec.describe "Profiles", type: :request do
         expect(link["data-turbo"]).to eq("false")
       end
 
-      it "marks each on the chart, a link to its row in What shipped, and no commit" do
+      it "marks each on the chart, a link to its row in What's new, and no commit" do
         get "/builder"
 
         page = Nokogiri::HTML(response.body)
@@ -131,8 +131,23 @@ RSpec.describe "Profiles", type: :request do
 
         get "/builder"
 
-        expect(shipped.at_css("details summary").text).to eq("Show all 10")
-        expect(shipped.css("details .os-row").size).to eq(2)
+        expect(shipped.at_css("details[class~='group/all'] > summary").text).to eq("Show all 10")
+        expect(shipped.css("details[class~='group/all'] > .os-row").size).to eq(2)
+      end
+
+      it "wears each entry's mark, opens a row on its description, the newest open, and keeps its title's link outside the toggle" do
+        milestone.update!(body: "What it took.")
+        linked = create(:entry, user: user, entry_type: "posted", source: "manual", title: "How I built it", body: "The long story.",
+                                url: "https://example.com/story", occurred_at: 1.hour.ago)
+
+        get "/builder"
+
+        rows = shipped.css(".os-row")
+        expect(rows.map { |row| [ row.name, row["open"], row.at_css("svg path[fill-rule='evenodd']")&.[]("d")&.slice(0, 6) ] })
+          .to eq([ [ "details", "open", "M3.5 2" ], [ "div", nil, "M3.5 2" ], [ "details", nil, "M3 1.5" ] ])
+        expect(rows.first.at_css("summary a[href='/e/#{linked.id}/out']")).to be_present
+        expect(rows.first.at_css("p").text).to eq("The long story.")
+        expect(rows.map { |row| row.at_css(".os-xs").text.squish }).to eq(%w[Published Published Milestone])
       end
     end
 

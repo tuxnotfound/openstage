@@ -69,7 +69,7 @@ module Api
 
     # What changes the view: the builder's public entries (their number, as
     # hiding a repo hides its entries in bulk, how many of them the lists
-    # show, as hiding one keeps it counted but takes it out of What shipped,
+    # show, as hiding one keeps it counted but takes it out of What's new,
     # and their last edit), their
     # repos (which numbers each shows, and their number, as deleting the one
     # Free counts site visits for hands its slot to the next), their plan,

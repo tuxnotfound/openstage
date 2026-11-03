@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import CompareChart, { type ProjectNumber } from "../filter/CompareChart"
+import { MarkIcon } from "../filter/Marks"
 import NumberToggles from "../filter/NumberToggles"
 import ProjectsTable, { csrfToken, type CellSwitches } from "../filter/ProjectsTable"
 import WindowPills from "../filter/WindowPills"
@@ -21,7 +22,7 @@ export type ProgressProps = {
   endpoint: string
   mode: "page" | "project" | "dashboard"
   defaultRange: ProgressRange
-  // The What shipped section to keep in step, by element id.
+  // The What's new section to keep in step, by element id.
   shippedTarget?: string
 }
 
@@ -142,26 +143,26 @@ export function pendingCells(pending: Record<string, boolean>, table: TableView 
   }
 }
 
-// Every row is on the page, the ones past the first eight folded away, as
-// profiles/page/_shipped has them, so a mark on the chart can open the fold
-// to reach its row (Marks.reveal).
+// What's new, as profiles/page/_whats_new draws it: every row is on the
+// page, the ones past the first eight folded away, so a mark on the chart
+// can open the fold to reach its row (Marks.reveal).
 function Shipped({ shipped }: { shipped: NonNullable<ProgressView["shipped"]> }) {
   const items = shipped.items
   return (
     <>
       <div className="os-between">
-        <h2 id="what-shipped" className="os-h2">What shipped</h2>
+        <h2 id="whats-new" className="os-h2">What's new</h2>
         <span className="os-xs os-muted">{shipped.heading}</span>
       </div>
       {items.length === 0 ? (
         <p className="os-note mt-3">{shipped.empty}</p>
       ) : (
         <div className="mt-2.5">
-          {items.slice(0, SHOWN).map((item) => <ShippedRow key={item.id} item={item} />)}
+          {items.slice(0, SHOWN).map((item, i) => <NewsRow key={item.id} item={item} open={i === 0} />)}
           {items.length > SHOWN && (
-            <details className="group">
-              <summary className="os-btn2 sm mt-3 list-none group-open:hidden [&::-webkit-details-marker]:hidden">Show all {items.length}</summary>
-              {items.slice(SHOWN).map((item) => <ShippedRow key={item.id} item={item} />)}
+            <details className="group/all">
+              <summary className="os-btn2 sm mt-3 list-none group-open/all:hidden [&::-webkit-details-marker]:hidden">Show all {items.length}</summary>
+              {items.slice(SHOWN).map((item) => <NewsRow key={item.id} item={item} open={false} />)}
             </details>
           )}
         </div>
@@ -170,16 +171,36 @@ function Shipped({ shipped }: { shipped: NonNullable<ProgressView["shipped"]> })
   )
 }
 
-function ShippedRow({ item }: { item: ShippedItem }) {
-  return (
-    <div id={item.anchor ?? undefined} className="os-row os-rowflex scroll-mt-6 py-3">
+// One entry of What's new, as profiles/page/_whats_new_row draws it: its
+// day, its mark and kind, its title (a link to its link, through the click
+// counter) and its project; with a description, a row that opens on it,
+// whose run-in shows only while closed. open: open from the start.
+export function NewsRow({ item, open }: { item: ShippedItem; open: boolean }) {
+  const line = (
+    <>
       <span className="os-sm os-muted flex-[0_0_64px]">{item.date}</span>
-      <span className="os-xs flex-[0_0_84px] font-bold text-ink-3">{item.kind}</span>
+      <span className="os-xs inline-flex flex-[0_0_104px] items-center gap-1.5 font-bold text-ink-3">
+        <span className={`${item.colorClass} inline-flex size-[18px] flex-none items-center justify-center rounded-full bg-(--project) text-(--on-project)`}>
+          <MarkIcon badge={item.badge} className="size-[11px]" />
+        </span>
+        {item.kind}
+      </span>
       <span className="min-w-0 flex-[1_1_300px] text-[15px] font-semibold">
         {item.url ? <a href={`/e/${item.id}/out`} target="_blank" rel="noopener" data-turbo="false" className="hover:underline" title={item.url}>{item.title}</a> : item.title}
-        {item.runIn && <span className="font-normal text-ink-3">{item.runIn}</span>}
+        {item.runIn && <span className="font-normal text-ink-3 group-open/row:hidden">{item.runIn}</span>}
       </span>
       {item.project && <span className="os-xs os-muted">{item.project}</span>}
-    </div>
+    </>
+  )
+  if (!item.body) return <div id={item.anchor ?? undefined} className="os-row os-rowflex scroll-mt-6 py-3">{line}</div>
+  return (
+    <details id={item.anchor ?? undefined} open={open} className="os-row group/row scroll-mt-6 py-3">
+      <summary className="os-rowflex relative cursor-pointer list-none pr-7 [&::-webkit-details-marker]:hidden">
+        {line}
+        <svg viewBox="0 0 16 16" className="absolute top-0.5 right-0 size-4 text-ink-3 transition-transform group-open/row:rotate-180" fill="none" stroke="currentColor"
+             strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
+      </summary>
+      <p className="os-sm os-ink2 mt-1.5 whitespace-pre-line">{item.body}</p>
+    </details>
   )
 }

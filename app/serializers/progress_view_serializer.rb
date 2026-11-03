@@ -2,10 +2,9 @@
 # view, as a builder's page, one of their projects' pages or their dashboard
 # shows it (ChartFilterSerializer: the toggles, the chart and, where a page
 # has several projects, the table under it; changes on the dashboard alone),
-# and the builder's page's What shipped; a project's page lists its entries
-# in What's new, whatever the window. The page renders it first and the chart script asks for
-# others (Api::ProgressController); the words come from the helpers the
-# page's own partials use.
+# and What's new on a builder's page and a project's. The page renders it
+# first and the chart script asks for others (Api::ProgressController); the
+# words come from the helpers the page's own partials use.
 class ProgressViewSerializer < ApplicationSerializer
   include ApplicationHelper
   include ProgressHelper
@@ -19,7 +18,7 @@ class ProgressViewSerializer < ApplicationSerializer
 
   def attributes
     @attributes ||= ChartFilterSerializer.new(@chart, changes: @chart.builder.present?, table: table).attributes
-                                         .merge(shipped: (shipped unless @chart.builder || @chart.lone))
+                                         .merge(shipped: (shipped unless @chart.builder))
   end
 
   private
@@ -51,10 +50,13 @@ class ProgressViewSerializer < ApplicationSerializer
     { heading: "#{items.size} #{labels.word}", empty: empty, items: items.map { |item| shipped_item(item) } }
   end
 
+  # Its badge with its words and colour, its description, and its project,
+  # left out on a project's own page (lone).
   def shipped_item(item)
     project = item.repo_name && tally.projects.find(item.repo_name)
     { id: item.id, anchor: (item.id == @linked_id ? nil : "entry-#{item.id}"), date: item.date.strftime("%b %-d"),
-      kind: item.shipped? ? "Shipped" : "Published", title: item.title, run_in: progress_run_in(item, section).to_s,
-      url: safe_external_url(item.entry.url), project: project&.name }
+      badge: item.badge.to_s, kind: ProgressHelper::BADGE_WORDS.fetch(item.badge), color_class: badge_class(project, lone: @chart.lone.present?),
+      title: item.title, run_in: progress_run_in(item, section).to_s, body: item.body.presence, url: safe_external_url(item.entry.url),
+      project: (project&.name unless @chart.lone) }
   end
 end

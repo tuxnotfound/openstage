@@ -98,7 +98,7 @@ RSpec.describe "Days picked for a chart's window", type: :request do
     it "lists what shipped between them, and keeps its one canonical address" do
       get "/builder", params: { range: range }
 
-      expect(page.at_css("section[aria-labelledby='what-shipped']").text.squish).to include("1 between 1 Sep and 30 Sep", "Shipped in September")
+      expect(page.at_css("section[aria-labelledby='whats-new']").text.squish).to include("1 between 1 Sep and 30 Sep", "Shipped in September")
       expect(page.at_css("link[rel='canonical']")["href"]).to eq("http://www.example.com/builder")
     end
 

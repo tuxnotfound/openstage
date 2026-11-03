@@ -57,7 +57,7 @@
         <% serializer = ProgressViewSerializer.new(chart, linked_id: @linked&.id) %>
         <% view = serializer.attributes %>
         <%= react_island("progress", { initial: serializer.as_json, endpoint: api_progress_path(@user.username), mode: "page",
-                                       defaultRange: Progress::Window::DEFAULT, shippedTarget: "what-shipped-panel" }, id: "progress", class: "mt-[30px]") do %>
+                                       defaultRange: Progress::Window::DEFAULT, shippedTarget: "whats-new-panel" }, id: "progress", class: "mt-[30px]") do %>
           <%= render "charts/filter", view: view, mode: "page",
                      path_for: ->(changes) { progress_view_path(@user, **chart_params(view, default_range: Progress::Window::DEFAULT, **changes)) } %>
         <% end %>
@@ -68,7 +68,7 @@
       <%= render "profiles/page/projects", user: @user, cards: @page.cards if @page.cards.any? %>
       <div class="os-grid2 items-start">
         <%= render "profiles/page/recent", user: @user, groups: @page.recent, linked: @linked if @page.recent.any? %>
-        <%= render "profiles/page/shipped", section: @page.section, linked: @linked unless @empty %>
+        <%= render "profiles/page/whats_new", section: @page.section, linked: @linked unless @empty %>
       </div>
     <% end %>
 

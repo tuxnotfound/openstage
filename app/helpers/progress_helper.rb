@@ -24,6 +24,15 @@ module ProgressHelper
     ProgressChart::Palette.project_class(rank)
   end
 
+  # The class of an entry's badge: its project's colour, ink for no project
+  # and past the palette; on a project's own page (lone), the colour it
+  # stands alone in.
+  def badge_class(project, lone: false)
+    return ProgressChart::Palette.alone_class(project&.rank) if lone
+
+    (project_class(project.rank) if project) || ProgressChart::Palette::INK_CLASS
+  end
+
   # "today", "yesterday", "3 days ago", "5 weeks ago", "4 months ago".
   def progress_ago(date, today = Date.current)
     days = (today - date).to_i

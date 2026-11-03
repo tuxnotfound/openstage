@@ -34,7 +34,7 @@ RSpec.describe "Entries the builder hid", type: :request do
 
     expect(numbers_on_chart).to eq("Commits 4")
     expect(page.at_css("main").text.squish).to include("6 entries", "2 milestones", "4-day streak")
-    expect(page.at_css("#what-shipped-panel").text.squish).to include("Shown launch")
+    expect(page.at_css("#whats-new-panel").text.squish).to include("Shown launch")
     expect(response.body).to include("Shown commit 0")
     expect_none_listed
   end
@@ -49,7 +49,7 @@ RSpec.describe "Entries the builder hid", type: :request do
     expect_none_listed
   end
 
-  it "counts them in the API's view, and leaves them out of its What shipped" do
+  it "counts them in the API's view, and leaves them out of its What's new" do
     get "/api/progress/builder", params: { range: "30d" }
 
     json = response.parsed_body

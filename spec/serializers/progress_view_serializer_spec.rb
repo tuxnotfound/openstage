@@ -44,7 +44,7 @@ RSpec.describe ProgressViewSerializer do
         .to eq([ [ "app", true, [ "2" ] ], [ "lib", true, [ "1" ] ] ])
     end
 
-    it "gives the dashboard each number's change, its own table, and no What shipped" do
+    it "gives the dashboard each number's change, its own table, and no What's new" do
       json = view(builder: true)
 
       expect(json["numbers"].first["change"]).to eq("arrow" => "▲", "text" => "200%", "up" => true)
@@ -53,8 +53,12 @@ RSpec.describe ProgressViewSerializer do
       expect(json["shipped"]).to be_nil
     end
 
-    it "leaves the table and What shipped off a project's page, which lists its entries in What's new" do
-      expect(view(repos: [ "me/app" ], lone: true)).to include("table" => nil, "shipped" => nil)
+    it "leaves the table off a project's page, and its project off each row of What's new" do
+      create(:entry, user: user, repo_name: "me/app", entry_type: "milestone", source: "manual", body: "Why.", occurred_at: 1.day.ago)
+      json = view(repos: [ "me/app" ], lone: true)
+
+      expect(json["table"]).to be_nil
+      expect(json["shipped"]["items"].sole).to include("badge" => "milestone", "kind" => "Milestone", "body" => "Why.", "project" => nil, "colorClass" => "os-project-1")
     end
   end
 end

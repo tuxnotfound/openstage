@@ -17,7 +17,7 @@ RSpec.describe "The public page's chart and what shipped" do
   end
 
   def shipped
-    Nokogiri::HTML(response.body).at_css("section[aria-labelledby='what-shipped']").text.squish
+    Nokogiri::HTML(response.body).at_css("section[aria-labelledby='whats-new']").text.squish
   end
 
   def toggles

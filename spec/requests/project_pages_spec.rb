@@ -19,31 +19,24 @@ RSpec.describe "Project pages", type: :request do
     expect(response.body).not_to include("Other work")
   end
 
-  it "lists what it shipped and published in What's new, newest first, the latest in full, each where its mark leads, and no What shipped" do
+  it "lists what it shipped and published in the window in What's new, as the builder's page does, each where its mark leads" do
     create(:entry, user: user, repo_name: "builder/side.app", title: "An older commit", occurred_at: 4.days.ago)
     older = create(:entry, user: user, repo_name: "builder/side.app", entry_type: "note", source: "manual", title: "An older note", occurred_at: 3.days.ago)
 
     get "/builder/side.app"
 
     page = Nokogiri::HTML(response.body)
-    news = page.at_css("section[aria-labelledby='whats-new']")
-    expect(news.at_css("h3").text.squish).to eq("Launched it")
-    expect(news.css(".os-row").map { |row| row.text.squish }).to eq([ "#{older.occurred_at.strftime('%b %-d')} Published An older note" ])
-    expect(page.at_css("section[aria-labelledby='what-shipped']")).to be_nil
+    news = page.at_css("section#whats-new-panel[aria-labelledby='whats-new']")
+    rows = news.css(".os-row")
+    expect(rows.map { |row| [ row.name, row["open"] ] }).to eq([ [ "details", "open" ], [ "div", nil ] ])
+    expect(rows.first.text.squish).to include("Milestone Launched it", "In my words.")
+    expect(rows.last.text.squish).to eq("#{older.occurred_at.strftime('%b %-d')} Published An older note")
+    expect(news.text).not_to include("side.app")
+    expect(page.css("section[aria-labelledby='what-shipped']")).to be_empty
     targets = page.css(".os-chart a[href^='#entry-']").map { |link| news.at_css(link["href"]) }
     expect(targets.size).to eq(2)
     expect(targets).to all(be_present)
-    expect(JSON.parse(page.at_css("#progress-props").text)).not_to include("shippedTarget")
-  end
-
-  it "folds What's new after the eighth older entry behind Show all" do
-    9.times { |i| create(:entry, user: user, repo_name: "builder/side.app", entry_type: "note", source: "manual", occurred_at: (i + 2).days.ago) }
-
-    get "/builder/side.app"
-
-    news = Nokogiri::HTML(response.body).at_css("section[aria-labelledby='whats-new']")
-    expect(news.at_css("details summary").text).to eq("Show all 10")
-    expect(news.css("details .os-row").size).to eq(2)
+    expect(JSON.parse(page.at_css("#progress-props").text)).to include("shippedTarget" => "whats-new-panel")
   end
 
   it "names the other builders whose pages show the same repo, busiest first, each linked to their page for it" do
