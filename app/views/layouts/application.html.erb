@@ -46,6 +46,9 @@
     <% if ENV["UMAMI_WEBSITE_ID"].present? %>
       <script defer src="https://cloud.umami.is/script.js" data-website-id="<%= ENV["UMAMI_WEBSITE_ID"] %>"></script>
     <% end %>
+    <% if (token = own_visits_token) %>
+      <script defer src="/v.js" data-project="<%= token %>"></script>
+    <% end %>
   </head>
 
   <body class="antialiased" <%= tag.attributes(data: { theme: color_theme }) %>>

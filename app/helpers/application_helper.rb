@@ -70,6 +70,15 @@ module ApplicationHelper
     cookies[:theme].presence_in(%w[light dark])
   end
 
+  # The token of Openstage's own project (OPENSTAGE_PROJECT_TOKEN), whose
+  # script counts this site's visits as it counts a builder's website; nil
+  # while unset, and for that project's builder, whose own visits are left
+  # out, as on their stage.
+  def own_visits_token
+    token = ENV["OPENSTAGE_PROJECT_TOKEN"].presence
+    token unless token.nil? || current_user&.github_repos&.exists?(site_token: token)
+  end
+
   def streak_emoji(streak)
     case streak
     when 1    then "🐢"
