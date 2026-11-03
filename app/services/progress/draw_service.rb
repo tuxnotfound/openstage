@@ -27,8 +27,9 @@ module Progress
     # totals_window: the Window the totals cover. show: the numbers asked for, by key
     # in line order; default_show: the page's own. average: each point a
     # 7-day average; lone: one project's page; per: what a row is, "project"
-    # or "page".
-    attr_accessor :rows, :counts, :totals_window, :show, :default_show, :average, :lone, :per
+    # or "page". items: the shipped and published entries the page lists,
+    # which the chart marks; none on analytics.
+    attr_accessor :rows, :counts, :totals_window, :show, :default_show, :average, :lone, :per, :items
     # shown: every number a row shows, in the pages' order, the table's;
     # totals: a Total of each the chart can draw, the toggles'; window: the
     # chart's points.
@@ -82,8 +83,8 @@ module Progress
     def draw
       @window = Window.new(range: totals_window.range, today: totals_window.today, first_activity: first_drawn_day)
       lines = drawn.flat_map { |number| showing(number).map { |row| line(number, row) } }
-      ProgressChart::Compare.new(window: window, lines: lines, beside: beside_lines, numbers: drawn, average: average.present?, lone: lone.present?,
-                                 per: per || "project")
+      ProgressChart::Compare.new(window: window, lines: lines, beside: beside_lines, numbers: drawn, items: Array(items), average: average.present?,
+                                 lone: lone.present?, per: per || "project")
     end
 
     # What the tooltip shows beside each number drawn (Numbers.beside), of

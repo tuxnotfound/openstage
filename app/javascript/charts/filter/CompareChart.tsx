@@ -1,7 +1,8 @@
 import { Fragment, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
-import type { CompareChartView } from "../types"
+import type { ChartMark, CompareChartView } from "../types"
 import LineKey from "./LineKey"
 import { LINE_DASHES, lineOf, pathTops, tipLeft, type Lines } from "./lines"
+import Mark, { MarkIcon } from "./Marks"
 
 // Draws a chart filter's chart as the server worked it out
 // (CompareChartSerializer), as charts/_chart renders the same view: a line
@@ -10,8 +11,10 @@ import { LINE_DASHES, lineOf, pathTops, tipLeft, type Lines } from "./lines"
 // a touch screen or moving with the arrow keys once the chart has focus
 // shows a mark on each line there and one tooltip, a row per project with
 // anything at that point and a column per number drawn, each followed by
-// any the server shows beside it. A number or a project under the pointer
-// or focus brings its lines forward.
+// any the server shows beside it. What shipped and was published sits on
+// the lines (Marks), its titles in the tooltip at its point. A number or a
+// project under the pointer or focus brings its lines forward, and the
+// marks on them.
 
 const WIDTH = 1000
 const HEIGHT = 280
@@ -30,11 +33,15 @@ type Props = {
   focus: Focus | null
   height?: string
   // A project's number to leave out at once, its line and its value in the
-  // tooltip, as a dashboard switch waits for its save.
+  // tooltip, as a dashboard switch waits for its save; a mark on that line
+  // waits with it.
   hidden?: (each: ProjectNumber) => boolean
+  // Whether the page lists the entries its marks stand for, so each mark
+  // links to its row there.
+  listed?: boolean
 }
 
-export default function CompareChart({ chart, lines, focus, height = "", hidden }: Props) {
+export default function CompareChart({ chart, lines, focus, height = "", hidden, listed = false }: Props) {
   const box = useRef<HTMLDivElement>(null)
   const [at, setAt] = useState<number | null>(null)
   const line = (path: Path) => lineOf(lines, path.number, chart.indexed)
@@ -49,6 +56,8 @@ export default function CompareChart({ chart, lines, focus, height = "", hidden 
     const top = pathTops(path.d)[index]
     return top !== undefined && top < 99.95 ? [{ path, top }] : []
   })
+  const shown = chart.marks.filter((mark) => !(mark.key && mark.number && hidden?.({ key: mark.key, number: mark.number })))
+  const forward = (mark: ChartMark) => !lit || (focus?.kind === "number" ? mark.number === focus.key : mark.key === focus?.key)
 
   function pointAt(event: PointerEvent) {
     const rect = box.current?.getBoundingClientRect()
@@ -92,9 +101,12 @@ export default function CompareChart({ chart, lines, focus, height = "", hidden 
                 className={`${path.colorClass} pointer-events-none absolute z-[3] -mt-[5px] -ml-[5px] size-2.5 rounded-full bg-(--project) shadow-[0_0_0_2px_var(--color-fill)]`}
                 style={{ left: `${x}%`, top: `${top}%` }} />
         ))}
+        {shown.map((mark) => (
+          <Mark key={`${mark.key}|${mark.column}`} mark={mark} opacity={forward(mark) ? 1 : FADED} listed={listed} onPoint={() => setAt(mark.column)} />
+        ))}
         {/* Mounted before any point is, so a screen reader hears the first one too. */}
         <div role="status" aria-live="polite" className="pointer-events-none absolute inset-0 z-[5]">
-          {column && <Tip chart={chart} column={column} lines={lines} x={x} hidden={hidden} />}
+          {column && <Tip chart={chart} column={column} lines={lines} x={x} hidden={hidden} marks={shown.filter((mark) => mark.column === index)} />}
         </div>
       </div>
       <div className="os-xlabs">
@@ -105,8 +117,9 @@ export default function CompareChart({ chart, lines, focus, height = "", hidden 
   )
 }
 
-// One tooltip for the point: a row per project and a column per tip, with
-// heads while there are two or more. A number drawn heads its column with
+// One tooltip for the point: the titles of what shipped and was published
+// there (marks), then a row per project and a column per tip, with heads
+// while there are two or more. A number drawn heads its column with
 // its line, on a phone the line alone, so the table fits; one shown beside
 // it has no line, so its name shows at every width. It never runs past the
 // chart: its names give way first, and it sits beside the point while there
@@ -115,7 +128,9 @@ export default function CompareChart({ chart, lines, focus, height = "", hidden 
 // chart has it, passed on even when it has none, so the type check fails
 // without it; a value blanks while its own number is hidden, or the number
 // it sits beside, whose line is then gone.
-export function Tip({ chart, column, lines, x, hidden }: { chart: CompareChartView; column: CompareChartView["columns"][number]; lines: Lines; x: number; hidden: Props["hidden"] }) {
+export function Tip({ chart, column, lines, x, hidden, marks }: {
+  chart: CompareChartView; column: CompareChartView["columns"][number]; lines: Lines; x: number; hidden: Props["hidden"]; marks: ChartMark[]
+}) {
   const box = useRef<HTMLDivElement>(null)
   const [left, setLeft] = useState<number | null>(null)
   const heads = chart.tips.length > 1 ? chart.tips : []
@@ -133,7 +148,19 @@ export function Tip({ chart, column, lines, x, hidden }: { chart: CompareChartVi
     <div ref={box} style={{ left: left ?? 0, visibility: left === null ? "hidden" : undefined }}
          className="absolute top-2 w-max max-w-[min(440px,calc(100%-8px))] rounded-[10px] bg-ink px-3 py-2.5 text-xs/snug text-ground shadow-lg">
       <div className="opacity-70">{column.title}</div>
-      {column.rows.length === 0 ? <div className="mt-1">{chart.none}</div> : (
+      {marks.length > 0 && (
+        <div className="mt-[7px] grid gap-y-1">
+          {marks.flatMap((mark) => mark.entries.map((entry) => (
+            <div key={entry.id} className="flex min-w-0 items-center gap-[7px]">
+              <span className={`${mark.colorClass} inline-flex size-4 flex-none items-center justify-center rounded-full bg-(--project) text-(--on-project) shadow-[0_0_0_1.5px_var(--color-ground)]`}>
+                <MarkIcon shipped={entry.shipped} className="size-2.5" />
+              </span>
+              <span className="min-w-0 truncate font-semibold">{entry.title}</span>
+            </div>
+          )))}
+        </div>
+      )}
+      {column.rows.length === 0 ? marks.length === 0 && <div className="mt-1">{chart.none}</div> : (
         <div className="mt-[7px] grid items-center gap-x-3 gap-y-[3px]" style={{ gridTemplateColumns: `minmax(0, max-content) repeat(${Math.max(1, chart.tips.length)}, max-content)` }}>
           {heads.length > 0 && (
             <>

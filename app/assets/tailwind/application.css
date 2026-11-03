@@ -284,17 +284,16 @@
   .os-xlabs { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; font-size: 12px; color: var(--color-ink-3); }
 }
 
+/* An entry a link or a mark on the chart lands on lights up, its tint a
+   little wider than its row, then fades; os-picked is the mark's, set again
+   on every click (Marks.reveal). A shadow, inset over the background and
+   spread past the edge, so a card keeps its own background after. */
 @keyframes entry-highlight {
-  0%   { background-color: theme(colors.yellow.100); }
-  100% { background-color: transparent; }
+  0%, 35% { box-shadow: inset 0 0 0 100vmax var(--color-accent-soft), 0 0 0 8px var(--color-accent-soft); }
+  100%    { box-shadow: inset 0 0 0 100vmax transparent, 0 0 0 8px transparent; }
 }
 
-[id^="entry-"]:target {
-  animation: entry-highlight 2s ease-out forwards;
+[id^="entry-"]:target, .os-picked {
+  animation: entry-highlight 2.4s ease-out;
   border-radius: theme(borderRadius.lg);
-}
-
-/* A disc on the progress chart jumps to its row in the list. */
-[id^="progress-note-"]:target {
-  animation: entry-highlight 1s ease-out forwards;
 }

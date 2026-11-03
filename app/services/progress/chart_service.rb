@@ -132,10 +132,11 @@ module Progress
       rows.select { |row| Numbers::SITE.any? { |key| builder ? row.counts?(key) : row.shows?(key) } }.map(&:repo)
     end
 
-    # Each number its projects show visitors, the numbers drawn and the chart.
+    # Each number its projects show visitors, the numbers drawn and the chart,
+    # with what the page lists as shipped and published on it.
     def draw
       service = DrawService.new(rows: rows, counts: counts, totals_window: totals_window, show: show, default_show: DEFAULT_SHOW,
-                                average: totals_window.average?, lone: lone, per: "project")
+                                items: section.tally.items, average: totals_window.average?, lone: lone, per: "project")
       @drawing = service if run(service)
     end
 

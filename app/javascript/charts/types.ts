@@ -26,11 +26,30 @@ export type CompareChartView = {
   // shows beside it, which has no line of its own (line false).
   tips: { key: string; label: string; line: boolean }[]
   axis: string[]
+  marks: ChartMark[]
   ariaLabel: string
   // Why a number drawn has no line; null when every one has.
   note: string | null
   none: string
   indexed: boolean
+}
+
+// The shipped and published entries at one point of one project
+// (ProgressChart::Marks): key, its project's row, null for none; number, the
+// line it sits on, null on the axis; left and top, where, in percent of the
+// chart from its top left; shipped, while any of its entries is; label, its
+// newest for a screen reader; entries, newest first, each with its row's
+// anchor id (entry-<id>) in the page's list.
+export type ChartMark = {
+  key: string | null
+  number: string | null
+  colorClass: string
+  column: number
+  left: number
+  top: number
+  shipped: boolean
+  label: string
+  entries: { id: number; title: string; shipped: boolean; kind: string; date: string }[]
 }
 
 // A change against the window before, as the pages write it: the arrow

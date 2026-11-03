@@ -9,7 +9,8 @@ module ProgressChart
   # The tooltip keeps the real numbers: a row per project with anything at
   # the point, a column per number with lines, each followed by the numbers
   # that sit beside it (Progress::Numbers.beside), which draw nothing. The
-  # words are CompareNote's.
+  # shipped and published entries its page lists sit on the lines (Marks).
+  # The words are CompareNote's.
   class Compare
     WIDTH = Trend::WIDTH
     HEIGHT = Trend::HEIGHT
@@ -34,11 +35,13 @@ module ProgressChart
 
     # beside: Lines of the numbers the tooltip shows beside those drawn, for
     # the projects that show them; they draw no path, set no peak or scale
-    # and name nothing in the note.
-    def initialize(window:, lines:, numbers:, beside: [], average: false, lone: false, per: "project")
+    # and name nothing in the note. items: the TallyService::Items the page
+    # lists, which the chart marks.
+    def initialize(window:, lines:, numbers:, beside: [], items: [], average: false, lone: false, per: "project")
       @window = window
       @every_line = lines
       @beside = beside
+      @items = items
       @numbers = numbers
       @average = average
       @lone = lone
@@ -108,6 +111,16 @@ module ProgressChart
     # A number's highest value in the window, over every project: its 100%.
     def peak(number)
       lines.select { |line| line.number == number }.flat_map(&:values).max.to_f
+    end
+
+    def marks
+      @marks ||= Marks.new(self, @items).all
+    end
+
+    # Where a line stands at a point, as [left, top] in percent of the chart
+    # from its top left; on the axis without a line.
+    def spot(index, line = nil)
+      [ pct(x(index)), line ? (100.0 * y(line.number, line.values[index]) / HEIGHT).round(2) : 100.0 ]
     end
 
     private

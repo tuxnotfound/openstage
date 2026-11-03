@@ -1,9 +1,11 @@
 <%# A chart filter's chart (ProgressChart::Compare, as CompareChartSerializer
     sends it): a line per project and number, in the project's colour and
     the number's line style by its place among the numbers drawn, with its
-    gridlines, axis and any note. The chart's script adds the marks, the
-    tooltip, the emphasis and the keyboard. view: a ChartFilterSerializer's
-    attributes. %>
+    gridlines, axis and any note, and a disc on the lines for what shipped
+    and was published (ProgressChart::Marks), each a link to its row where
+    the page lists them (listed). The chart's script adds the marks at the
+    point, the tooltip, the emphasis and the keyboard. view: a
+    ChartFilterSerializer's attributes. %>
 <% chart = view[:chart] %>
 <div class="mt-[18px]">
   <div class="os-chart <%= local_assigns[:height] %>">
@@ -22,6 +24,15 @@
       <% if tick[:value] %><div class="os-ylab -translate-y-1/2" style="top: <%= tick[:top] %>%"><%= tick[:value] %></div><% end %>
     <% end %>
     <div class="absolute inset-y-0 right-0 w-0.5 bg-strong" aria-hidden="true"></div>
+    <% chart[:marks].each do |mark| %>
+      <% css = "#{mark[:color_class]} absolute z-[4] -mt-[11px] -ml-[11px] inline-flex size-[22px] items-center justify-center rounded-full bg-(--project) text-(--on-project) shadow-[0_0_0_2px_var(--color-fill)]" %>
+      <% style = "left: clamp(11px, #{mark[:left]}%, calc(100% - 11px)); top: min(#{mark[:top]}%, calc(100% - 11px))" %>
+      <% if local_assigns[:listed] %>
+        <a href="#entry-<%= mark[:entries].first[:id] %>" aria-label="<%= mark[:label] %>" class="<%= css %>" style="<%= style %>"><%= mark_icon(mark[:shipped]) %></a>
+      <% else %>
+        <span aria-hidden="true" class="<%= css %>" style="<%= style %>"><%= mark_icon(mark[:shipped]) %></span>
+      <% end %>
+    <% end %>
   </div>
   <div class="os-xlabs">
     <% chart[:axis].each_with_index do |label, i| %>

@@ -19,7 +19,7 @@
     <%= render "charts/window", view: view, path_for: path_for, css: "max-md:flex max-md:w-full max-md:justify-between" %>
   </div>
 <% end %>
-<%= render "charts/chart", view: view, height: ("h-[260px]" if dashboard) %>
+<%= render "charts/chart", view: view, height: ("h-[260px]" if dashboard), listed: !dashboard %>
 <% if view[:table] %>
   <%= render "charts/table", view: view, path_for: path_for, manage: dashboard, back: local_assigns.fetch(:back, {}) %>
 <% end %>

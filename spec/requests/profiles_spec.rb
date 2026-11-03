@@ -116,6 +116,16 @@ RSpec.describe "Profiles", type: :request do
         expect(link["data-turbo"]).to eq("false")
       end
 
+      it "marks each on the chart, a link to its row in What shipped, and no commit" do
+        get "/builder"
+
+        page = Nokogiri::HTML(response.body)
+        links = page.css(".os-chart a[href^='#entry-']")
+        expect(links.map { |link| link["href"] }).to contain_exactly("#entry-#{milestone.id}", "#entry-#{note.id}")
+        expect(links.map { |link| link["aria-label"] }).to contain_exactly(start_with("Shipped: #{milestone.title}, "), start_with("Published: #{note.title}, "))
+        expect(links.map { |link| shipped.at_css(link["href"])&.text&.squish }).to all(be_present)
+      end
+
       it "folds everything after the eighth behind Show all" do
         8.times { |i| create(:entry, user: user, entry_type: "note", source: "manual", occurred_at: (i + 3).days.ago) }
 

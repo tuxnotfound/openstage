@@ -52,7 +52,7 @@ export default function ProgressIsland({ initial, endpoint, mode, defaultRange, 
       )}
       <p role="status" className="mt-2.5 text-[13px] font-semibold text-ink-2 empty:mt-0">{filter.notice}</p>
       <CompareChart chart={view.chart} lines={lines} focus={focus} height={mode === "dashboard" ? "h-[260px]" : ""}
-                    hidden={mode === "dashboard" ? cells.hidden : undefined} />
+                    hidden={mode === "dashboard" ? cells.hidden : undefined} listed={mode !== "dashboard"} />
       {view.table && (
         <ProjectsTable table={view.table} drawn={lineOrder(lines)} lines={lines} indexed={view.chart.indexed} words={view.words}
                        focused={focus?.kind === "project" ? focus.key : null} rows={filter.rows} switches={mode === "dashboard" ? cells.switches : undefined} />
@@ -142,8 +142,10 @@ export function pendingCells(pending: Record<string, boolean>, table: TableView 
   }
 }
 
+// Every row is on the page, the ones past the first eight folded away, as
+// profiles/page/_shipped has them, so a mark on the chart can open the fold
+// to reach its row (Marks.reveal).
 function Shipped({ shipped }: { shipped: NonNullable<ProgressView["shipped"]> }) {
-  const [all, setAll] = useState(false)
   const items = shipped.items
   return (
     <>
@@ -155,8 +157,13 @@ function Shipped({ shipped }: { shipped: NonNullable<ProgressView["shipped"]> })
         <p className="os-note mt-3">{shipped.empty}</p>
       ) : (
         <div className="mt-2.5">
-          {(all ? items : items.slice(0, SHOWN)).map((item) => <ShippedRow key={item.id} item={item} />)}
-          {!all && items.length > SHOWN && <button type="button" className="os-btn2 sm mt-3" onClick={() => setAll(true)}>Show all {items.length}</button>}
+          {items.slice(0, SHOWN).map((item) => <ShippedRow key={item.id} item={item} />)}
+          {items.length > SHOWN && (
+            <details className="group">
+              <summary className="os-btn2 sm mt-3 list-none group-open:hidden [&::-webkit-details-marker]:hidden">Show all {items.length}</summary>
+              {items.slice(SHOWN).map((item) => <ShippedRow key={item.id} item={item} />)}
+            </details>
+          )}
         </div>
       )}
     </>

@@ -39,6 +39,18 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     expect(activity.at_css("[data-react] p.os-note:contains('The switches set')")).to be_nil
   end
 
+  it "marks what shipped on the chart, as visitors see it, linking nowhere" do
+    milestone = create(:entry, user: user, repo_name: "builder/app", entry_type: "milestone", source: "manual", title: "Launched", occurred_at: 1.day.ago)
+
+    get "/dashboard"
+
+    chart = page.at_css("section[aria-labelledby='your-activity'] .os-chart")
+    expect(chart.css("a[href^='#entry-']")).to be_empty
+    expect(chart.css("span[aria-hidden='true'] > svg path[fill-rule='evenodd']").size).to eq(1)
+    marks = JSON.parse(page.at_css("#activity-chart-props").text)["initial"]["chart"]["marks"]
+    expect(marks.map { |mark| [ mark["key"], mark["entries"].pluck("id") ] }).to eq([ [ "builder/app", [ milestone.id ] ] ])
+  end
+
   it "lists every repo with work under the chart, each with Edit, and leaves out repos with none" do
     get "/dashboard"
 
