@@ -38,12 +38,17 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     expect(activity.text.squish).not_to include("The switches set what visitors see")
   end
 
-  it "says over the table what a switch on and off means for the stage" do
+  it "draws each switch for what visitors see as an eye, saying in its title what it does on the stage" do
+    create(:entry, user: user, repo_name: "builder/idle", occurred_at: 1.day.ago)
+    idle.update!(included: false)
     get "/dashboard"
 
-    key = page.at_css("section[aria-labelledby='your-activity'] p:has(+ [data-chart-table])")
-    expect(key.text.squish).to eq("Visitors see it on your stage Only you see it")
-    expect(key.css(".os-switch").map { |switch| [ switch["class"].include?(" on "), switch["aria-hidden"] ] }).to eq([ [ true, "true" ], [ false, "true" ] ])
+    eyes = page.css("[data-chart-table] button[role='switch']")
+    expect(eyes.map { |eye| eye["class"] }.uniq).to eq([ "os-eye" ])
+    expect(eyes.map { |eye| eye.css("svg").map { |svg| svg["class"].split.first } }.uniq).to eq([ %w[os-eye-open os-eye-shut] ])
+    expect(page_switch("builder/app")["title"]).to eq("Visitors see it on your stage. Click to hide it.")
+    expect([ page_switch("builder/idle")["aria-checked"], page_switch("builder/idle")["title"] ]).to eq([ "false", "Only you see it. Click to show it on your stage." ])
+    expect(page.at_css("section[aria-labelledby='your-activity']").text.squish).not_to include("Visitors see it on your stage")
   end
 
   it "marks what shipped on the chart, each a link to the entries opened on it" do
@@ -145,7 +150,7 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       expect(page.css("[data-chart-table] thead th").map { |head| head.text.squish }).to eq([ "Projects", "Your stage", "Commits", "Site visits", "Site visitors" ])
       expect(page.at_css("[data-chart-row='builder/bare'] a[aria-label^='Set up']")["href"]).to eq("/projects/#{bare.id}/edit?site=open#site-visits")
       activity = page.at_css("section[aria-labelledby='your-activity']").text.squish
-      expect(activity).to include("Site visits 90", "Visitors see it on your stage")
+      expect(activity).to include("Site visits 90")
       expect(drawn).to contain_exactly("commits", "commits", "visits")
     end
 

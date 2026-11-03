@@ -16,8 +16,8 @@ import { lineOf, type Lines } from "./lines"
 // the builder's page lists it, and each cell the switch for what visitors
 // see (its value grey while they do not), or Set up or Paused where site
 // visits do not count; a project hidden from the page comes last, with no
-// box. Over the dashboard's table, a key says what a switch on and off
-// means for the builder's stage. On a phone each row stacks, with only the numbers it counts, and
+// box. Each of the builder's switches is an eye (Eye), open while visitors
+// see it on the stage. On a phone each row stacks, with only the numbers it counts, and
 // below the width its columns need too (stack, the stacked variant). The
 // name column takes what the numbers leave, and a long name wraps rather
 // than widening the table. Only shows on hover, and always on a touch
@@ -62,8 +62,7 @@ export default function ProjectsTable({ table, drawn, lines, indexed, words, foc
   const on = table.rows.filter((row) => row.on).length
   return (
     <>
-      {switches && <SwitchKey />}
-      <div className={`-mx-1 ${switches ? "mt-3" : "mt-5"} overflow-x-auto px-1`} data-chart-table data-stack={table.stack}>
+      <div className="-mx-1 mt-5 overflow-x-auto px-1" data-chart-table data-stack={table.stack}>
         <table className="w-full border-collapse text-sm stacked:block">
           <caption className="sr-only">{label}: what the chart draws, and each number, {words}</caption>
           <thead className="stacked:block">
@@ -95,14 +94,28 @@ export default function ProjectsTable({ table, drawn, lines, indexed, words, foc
   )
 }
 
-// What a switch on and off means, as charts/_table writes it.
-function SwitchKey() {
+// A switch for what visitors see, as charts/_table draws it: an eye, open
+// while they see it on the stage, struck through while only the builder
+// does (.os-eye, by the switch's aria-checked), its title saying which and
+// what a click does.
+export function Eye() {
   return (
-    <p className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-ink-2">
-      <span className="inline-flex items-center gap-2"><span aria-hidden="true" className="os-switch on scale-[.8] cursor-default" />Visitors see it on your stage</span>
-      <span className="inline-flex items-center gap-2"><span aria-hidden="true" className="os-switch scale-[.8] cursor-default" />Only you see it</span>
-    </p>
+    <>
+      <svg className="os-eye-open size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <path strokeLinejoin="round" d="M2 12c1.6-4 5.4-7 10-7s8.4 3 10 7c-1.6 4-5.4 7-10 7s-8.4-3-10-7Z" /><circle cx="12" cy="12" r="3" />
+      </svg>
+      <svg className="os-eye-shut size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d={EYE_SHUT} />
+      </svg>
+    </>
   )
+}
+
+const EYE_SHUT = "M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A9.8 9.8 0 0 1 12 5c4.8 0 8.8 3.2 10 7a10.6 10.6 0 0 1-3 4.4M6.6 6.6A10.5 10.5 0 0 0 2 12c1.2 3.8 5.2 7 10 7 1.6 0 3.1-.3 4.4-.9"
+
+// An eye's title: whether visitors see it, and what a click does.
+export function eyeTitle(on: boolean): string {
+  return on ? "Visitors see it on your stage. Click to hide it." : "Only you see it. Click to show it on your stage."
 }
 
 function Row({ row, table, drawn, alone, hot, rows, switches }: {
@@ -173,8 +186,8 @@ function Cell({ row, cell, word, drawn, switches }: { row: TableRow; cell: Table
       )}
       {cell.link && <SiteLink link={cell.link} />}
       {switches && pick !== null && (
-        <button type="button" role="switch" aria-checked={pick} aria-label={`Show ${word} for ${row.name}`} className="os-switch"
-                onClick={() => switches.flip(row, cell)} />
+        <button type="button" role="switch" aria-checked={pick} aria-label={`Show ${word} for ${row.name}`} title={eyeTitle(pick)} className="os-eye"
+                onClick={() => switches.flip(row, cell)}><Eye /></button>
       )}
     </span>
   )
@@ -198,12 +211,14 @@ function ChangeLine({ change }: { change: Change }) {
 function PageSwitch({ row, page }: { row: TableRow; page: { on: boolean; path: string } }) {
   const view = new URLSearchParams(window.location.search)
   return (
-    <form method="post" action={page.path} className="inline-flex" data-turbo="false">
+    <form method="post" action={page.path} className="inline-flex align-middle" data-turbo="false">
       <input type="hidden" name="_method" value="patch" />
       <input type="hidden" name="authenticity_token" value={csrfToken()} />
       <input type="hidden" name="included" value={String(!page.on)} />
       {["range", "show", "projects"].map((key) => view.get(key) && <input key={key} type="hidden" name={key} value={view.get(key) ?? ""} />)}
-      <button type="submit" role="switch" aria-checked={page.on} aria-label={`Show ${row.name} on your stage`} className="os-switch" />
+      <button type="submit" role="switch" aria-checked={page.on} aria-label={`Show ${row.name} on your stage`} title={eyeTitle(page.on)} className="os-eye">
+        <Eye />
+      </button>
     </form>
   )
 }

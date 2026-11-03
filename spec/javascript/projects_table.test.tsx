@@ -112,8 +112,24 @@ describe("the dashboard's stage switch", () => {
 
     expect(html.match(/>Your stage</g)).toHaveLength(2)
     expect(html).toContain('aria-label="Show app on your stage"')
-    expect(html).toContain("Visitors see it on your stage</span>")
-    expect(html).toContain("Only you see it</span>")
     expect(html).not.toMatch(/your page/i)
+  })
+
+  test("draws it as an eye, its title saying what visitors see and what a click does", () => {
+    vi.stubGlobal("window", { location: { search: "" } })
+    vi.stubGlobal("document", { querySelector: () => null })
+    const commits: TableCell = { key: "commits", value: "4", shown: false, pick: false, link: null, change: null }
+    const app: TableRow = { key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true, cells: [commits], edit: null,
+                            page: { on: true, path: "/github_repos/1" }, switch: "/projects/1/numbers" }
+    const html = renderToStaticMarkup(
+      <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits", beside: null }], rows: [app], stack: "md" }} drawn={["commits"]}
+                     lines={{ commits: 0 }} indexed={false} words="last 90 days" focused={null} rows={rows}
+                     switches={{ pick: (_row, cell) => cell.pick, shown: (_row, cell) => cell.shown, flip: () => undefined }} />,
+    )
+
+    expect(html).toContain('aria-checked="true" aria-label="Show app on your stage" title="Visitors see it on your stage. Click to hide it." class="os-eye"')
+    expect(html).toContain('aria-checked="false" aria-label="Show commits for app" title="Only you see it. Click to show it on your stage." class="os-eye"')
+    expect(html.match(/class="os-eye-open/g)).toHaveLength(2)
+    expect(html).not.toContain("os-switch")
   })
 })

@@ -6,9 +6,8 @@
     project past the palette has no colour, so no box, and keeps its values
     in grey; a row with no box tells a screen reader it draws no line. On
     the dashboard (manage) a row also has Edit and whether the builder's page
-    lists it, and each cell the switch for what visitors see, under a key of
-    what a switch on and off means; a project hidden from the page comes
-    last, with no box. Where site visits do not
+    lists it, and each cell the switch for what visitors see, each an eye
+    (charts/_eye); a project hidden from the page comes last, with no box. Where site visits do not
     count, Set up or Paused stands in place of the switch, after the value
     when the window has any. On a phone each row stacks, with only the
     numbers it counts, and below the width its columns need too (stack,
@@ -25,13 +24,7 @@
 <% label = local_assigns.fetch(:label, "Projects") %>
 <% columns = table[:columns].index_by { |column| column[:key] } %>
 <% on = table[:rows].count { |row| row[:on] } %>
-<% if local_assigns[:manage] && table[:rows].any? %>
-  <p class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-ink-2">
-    <span class="inline-flex items-center gap-2"><span aria-hidden="true" class="os-switch on scale-[.8] cursor-default"></span>Visitors see it on your stage</span>
-    <span class="inline-flex items-center gap-2"><span aria-hidden="true" class="os-switch scale-[.8] cursor-default"></span>Only you see it</span>
-  </p>
-<% end %>
-<div class="-mx-1 <%= local_assigns[:manage] && table[:rows].any? ? 'mt-3' : 'mt-5' %> overflow-x-auto px-1" data-chart-table data-stack="<%= table[:stack] %>">
+<div class="-mx-1 mt-5 overflow-x-auto px-1" data-chart-table data-stack="<%= table[:stack] %>">
   <% if table[:rows].empty? %>
     <p class="os-sm os-ink2">No repo has commits here yet. Your public repos appear once the first sync is done.</p>
   <% else %>
@@ -94,10 +87,11 @@
               <td class="py-2.5 pl-[18px] text-right stacked:p-0 stacked:text-left">
                 <span class="os-xs os-muted mb-1 hidden stacked:block">Your stage</span>
                 <% if row[:page] %>
-                  <%= form_with url: row[:page][:path], method: :patch, class: "inline-flex", data: { turbo: false } do %>
+                  <%= form_with url: row[:page][:path], method: :patch, class: "inline-flex align-middle", data: { turbo: false } do %>
                     <%= hidden_field_tag :included, (!row[:page][:on]).to_s, id: nil %>
                     <% back.each do |key, value| %><%= hidden_field_tag key, value, id: nil %><% end %>
-                    <button type="submit" role="switch" aria-checked="<%= row[:page][:on] %>" aria-label="Show <%= row[:name] %> on your stage" class="os-switch"></button>
+                    <button type="submit" role="switch" aria-checked="<%= row[:page][:on] %>" aria-label="Show <%= row[:name] %> on your stage"
+                            title="<%= eye_title(row[:page][:on]) %>" class="os-eye"><%= render "charts/eye" %></button>
                   <% end %>
                 <% end %>
               </td>
@@ -121,9 +115,9 @@
                           class: "inline-flex min-h-6 items-center text-[13px] font-bold text-accent-ink underline underline-offset-3" %>
                   <% end %>
                   <% unless cell[:pick].nil? %>
-                    <%= button_to "", row[:switch], method: :patch, params: back.merge(number: cell[:key], shown: (!cell[:pick]).to_s),
-                          role: "switch", aria: { checked: cell[:pick], label: "Show #{column[:word]} for #{row[:name]}" }, class: "os-switch",
-                          form: { data: { turbo: false } } %>
+                    <%= button_to row[:switch], method: :patch, params: back.merge(number: cell[:key], shown: (!cell[:pick]).to_s),
+                          role: "switch", aria: { checked: cell[:pick], label: "Show #{column[:word]} for #{row[:name]}" }, title: eye_title(cell[:pick]),
+                          class: "os-eye", form: { data: { turbo: false } } do %><%= render "charts/eye" %><% end %>
                   <% end %>
                 </span>
               </td>

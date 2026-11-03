@@ -8,6 +8,12 @@ module ChartFilterHelper
   # The same three as a toggle's or a column's sample.
   KEY_DASHES = [ nil, "0.1 5.5", "7 4.5" ].freeze
 
+  # A dashboard eye's title (charts/_eye): whether visitors see it, and what
+  # a click does, as the chart's script words it (eyeTitle).
+  def eye_title(on)
+    on ? "Visitors see it on your stage. Click to hide it." : "Only you see it. Click to show it on your stage."
+  end
+
   # The view's params with some changed, for a link: the window, the numbers
   # drawn in line order and the projects in view, each left out at the
   # page's default.

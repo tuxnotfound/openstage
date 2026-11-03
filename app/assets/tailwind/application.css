@@ -242,6 +242,15 @@
     background: radial-gradient(circle at 11px 50%, #FFFFFF 7.5px, transparent 8px), var(--color-line); }
   .os-switch.on, .os-switch:checked, .os-switch[aria-checked="true"] {
     background: radial-gradient(circle at 29px 50%, var(--color-on-accent) 7.5px, transparent 8px), var(--color-accent); }
+  /* A switch for what visitors see, drawn as an eye: open while they see
+     it, struck through while only the builder does (aria-checked); it holds
+     both, and shows one. */
+  .os-eye { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; flex: none; margin: -5px 0; padding: 0; border: 0;
+    border-radius: 8px; background: transparent; color: var(--color-ink-3); cursor: pointer; }
+  .os-eye:hover { background: var(--color-line); color: var(--color-ink); }
+  .os-eye[aria-checked="true"] { color: var(--color-accent-ink); }
+  .os-eye .os-eye-open, .os-eye[aria-checked="true"] .os-eye-shut { display: none; }
+  .os-eye[aria-checked="true"] .os-eye-open { display: block; }
 
   /* Fields */
   .os-fieldset { display: flex; flex-direction: column; gap: 6px; }
