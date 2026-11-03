@@ -110,8 +110,8 @@ RSpec.describe Progress::DrawService do
   end
 
   it "words its chart by what its rows are" do
-    expect(draw(per: "page").chart.note).to eq("Commits per week, one line per page.")
-    expect(draw.chart.note).to eq("Commits per week, one line per project.")
+    expect(draw(per: "page").chart.aria_label).to start_with("Commits per week by page, ")
+    expect(draw.chart.aria_label).to start_with("Commits per week by project, ")
   end
 
   describe "site visitors, which sit beside site visits" do

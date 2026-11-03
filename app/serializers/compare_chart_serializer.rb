@@ -1,23 +1,21 @@
 # A chart filter's chart as the browser draws it (ProgressChart::Compare),
 # from the object the server's chart partial renders (charts/_chart): each
 # line with its project, the class of its colour and its number, which the
-# browser gives its line style; the numbers with lines (heads), whose styles
-# the note names; the gridlines and the axis; and a tooltip per point, a row
-# per project and a column per tip: each number with lines, then any that
-# sits beside it, which has none (line).
+# browser gives its line style; the gridlines and the axis; a tooltip per
+# point, a row per project and a column per tip: each number with lines,
+# then any that sits beside it, which has none (line); and the note, nil
+# unless a number drawn has no line.
 class CompareChartSerializer < ApplicationSerializer
   def initialize(chart)
     @chart = chart
   end
 
   def attributes
-    before, after = @chart.note_parts
     {
       paths: @chart.paths.map { |d, color_class, number, key| { d: d, color_class: color_class, number: number, key: key } },
       ticks: @chart.ticks.map { |tick| { value: tick.value, top: tick.top } },
-      columns: @chart.columns.map { |column| column_of(column) }, heads: @chart.lined.map(&:key), tips: tips, axis: @chart.axis,
-      aria_label: @chart.aria_label, note: @chart.note, note_parts: ({ before: before, after: after } if @chart.indexed?),
-      none: @chart.none, indexed: @chart.indexed?
+      columns: @chart.columns.map { |column| column_of(column) }, tips: tips, axis: @chart.axis,
+      aria_label: @chart.aria_label, note: @chart.note, none: @chart.none, indexed: @chart.indexed?
     }
   end
 

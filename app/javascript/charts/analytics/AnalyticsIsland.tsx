@@ -54,7 +54,7 @@ export default function AnalyticsIsland({ initial, endpoint, defaultRange }: Ana
         <section className="os-panel" aria-label="Numbers">
           <NumberToggles numbers={view.numbers} lines={lines} indexed={view.chart.indexed} changes groups {...filter.numbers} />
           <p role="status" className="mt-2.5 text-[13px] font-semibold text-ink-2 empty:mt-0">{filter.notice}</p>
-          <CompareChart chart={view.chart} numbers={view.numbers} lines={lines} focus={focus} height="h-[260px]" />
+          <CompareChart chart={view.chart} lines={lines} focus={focus} height="h-[260px]" />
           {view.changesNote && <p className="os-xs os-muted mt-5.5">{view.changesNote}</p>}
           {view.table && (
             <ProjectsTable table={view.table} drawn={lineOrder(lines)} lines={lines} indexed={view.chart.indexed} words={view.words}
@@ -65,7 +65,6 @@ export default function AnalyticsIsland({ initial, endpoint, defaultRange }: Ana
               That view did not load. <button type="button" className="os-link text-[13px]" onClick={filter.retry}>Try again</button>
             </p>
           )}
-          <p className="os-note mt-0 border-t border-line pt-2.5">Commits: yours, public, merges and dependency bumps left out. On a project's own website, counted by Openstage's script: site visits are page views; a site visitor is one IP address, or one IPv6 network, on one day. On Openstage, your stage and your project pages: a visitor is one IP address on one day; views count every page load; new followers confirmed by email, for your stage or one project; clicks out are a project's Visit and View on GitHub buttons and the links in your entries. Bots are left out, and on Openstage your own visits too.</p>
         </section>
 
         <AnalyticsPanels view={view} panels={panels} flip={flip} />

@@ -1,7 +1,7 @@
 import { Fragment, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
-import type { CompareChartView, NumberView } from "../types"
+import type { CompareChartView } from "../types"
 import LineKey from "./LineKey"
-import { LINE_DASHES, lineOf, noteOf, pathTops, tipLeft, type Lines } from "./lines"
+import { LINE_DASHES, lineOf, pathTops, tipLeft, type Lines } from "./lines"
 
 // Draws a chart filter's chart as the server worked it out
 // (CompareChartSerializer), as charts/_chart renders the same view: a line
@@ -26,7 +26,6 @@ export type ProjectNumber = Pick<Path, "key" | "number">
 
 type Props = {
   chart: CompareChartView
-  numbers: NumberView[]
   lines: Lines
   focus: Focus | null
   height?: string
@@ -35,7 +34,7 @@ type Props = {
   hidden?: (each: ProjectNumber) => boolean
 }
 
-export default function CompareChart({ chart, numbers, lines, focus, height = "", hidden }: Props) {
+export default function CompareChart({ chart, lines, focus, height = "", hidden }: Props) {
   const box = useRef<HTMLDivElement>(null)
   const [at, setAt] = useState<number | null>(null)
   const line = (path: Path) => lineOf(lines, path.number, chart.indexed)
@@ -76,7 +75,7 @@ export default function CompareChart({ chart, numbers, lines, focus, height = ""
            onPointerDown={pointAt} onPointerMove={pointAt} onPointerCancel={() => setAt(null)}
            onPointerLeave={(event) => { if (event.pointerType === "mouse") setAt(null) }}
            onKeyDown={move} onFocus={() => setAt((was) => was ?? chart.columns.length - 1)} onBlur={() => setAt(null)}>
-        {chart.ticks.map((tick) => <div key={`grid-${tick.value}`} className="os-gridline" style={{ top: `${tick.top}%` }} />)}
+        {chart.ticks.map((tick) => <div key={`grid-${tick.top}`} className="os-gridline" style={{ top: `${tick.top}%` }} />)}
         <div className="os-axis" />
         <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} preserveAspectRatio="none" aria-hidden="true">
           {paths.map((path) => (
@@ -85,7 +84,7 @@ export default function CompareChart({ chart, numbers, lines, focus, height = ""
                   strokeDasharray={LINE_DASHES[line(path)] || undefined} style={{ opacity: hot(path) ? 1 : FADED }} />
           ))}
         </svg>
-        {chart.ticks.map((tick) => <div key={`label-${tick.value}`} className="os-ylab -translate-y-1/2" style={{ top: `${tick.top}%` }}>{tick.value}</div>)}
+        {chart.ticks.map((tick) => tick.value && <div key={`label-${tick.top}`} className="os-ylab -translate-y-1/2" style={{ top: `${tick.top}%` }}>{tick.value}</div>)}
         <div className="absolute inset-y-0 right-0 w-0.5 bg-strong" aria-hidden="true" />
         {column && <div className="pointer-events-none absolute inset-y-0 z-[1] w-px bg-ink-3" style={{ left: `${x}%` }} aria-hidden="true" />}
         {marks.map(({ path, top }) => (
@@ -101,7 +100,7 @@ export default function CompareChart({ chart, numbers, lines, focus, height = ""
       <div className="os-xlabs">
         {chart.axis.map((label, i) => <span key={`axis-${i}`} className={i === chart.axis.length - 1 ? "font-bold text-ink" : ""}>{label}</span>)}
       </div>
-      <p className="os-note mt-2">{noteOf(chart, numbers, lines)}</p>
+      {chart.note && <p className="os-note mt-2">{chart.note}</p>}
     </div>
   )
 }

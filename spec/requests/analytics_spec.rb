@@ -202,15 +202,13 @@ RSpec.describe "Analytics", type: :request do
       expect(toggles.text).not_to include("Site visitors")
       expect(page.at_css("svg[role='img']")["aria-label"]).to start_with("Commits per day by page")
       expect(cells("builder/app")).to include("Site visitors 9")
-      expect(response.body).to include("On a project's own website, counted by Openstage's script: site visits are page views; a site visitor is one IP " \
-                                       "address, or one IPv6 network, on one day. On Openstage, your stage and your project pages: a visitor is one IP address " \
-                                       "on one day;")
+      expect(response.body).not_to include("a site visitor is one IP address")
 
       get "/api/analytics", params: { show: "visits,site_visitors", range: "2026-10-01..2026-10-10" }
       expect(response.parsed_body).to include("drawn" => [ "visits" ])
       expect(response.parsed_body["numbers"].pluck("key")).not_to include("site_visitors")
       chart = response.parsed_body["chart"]
-      expect([ chart["heads"], chart["tips"].pluck("key", "line") ]).to eq([ [ "visits" ], [ [ "visits", true ], [ "site_visitors", false ] ] ])
+      expect(chart["tips"].pluck("key", "line")).to eq([ [ "visits", true ], [ "site_visitors", false ] ])
       expect(chart["paths"].pluck("number")).to eq([ "visits" ])
       expect(chart["columns"].first["rows"].map { |row| [ row["name"], row["values"] ] }).to eq([ [ "app", %w[30 9] ] ])
 
@@ -238,7 +236,7 @@ RSpec.describe "Analytics", type: :request do
       expect(response.parsed_body["drawn"]).to eq(%w[views clicks])
       expect(response.parsed_body["numbers"].pluck("key")).to eq(%w[commits views clicks])
       chart = response.parsed_body["chart"]
-      expect([ chart["heads"], chart["tips"].pluck("key", "line") ]).to eq([ %w[views clicks], [ [ "views", true ], [ "visitors", false ], [ "clicks", true ] ] ])
+      expect(chart["tips"].pluck("key", "line")).to eq([ [ "views", true ], [ "visitors", false ], [ "clicks", true ] ])
       expect(chart["paths"].pluck("number").uniq).to contain_exactly("views", "clicks")
       expect(chart["columns"].find { |column| column["rows"].any? }["rows"].map { |row| [ row["name"], row["values"] ] })
         .to eq([ [ "Your stage", %w[2 1 –] ], [ "app", %w[1 1 1] ] ])

@@ -115,7 +115,7 @@ RSpec.describe Analytics::ReportService do
 
     expect([ service.totals_window.range, service.drawn.map(&:key), commits.value, commits.previous ]).to eq([ "30d", %w[commits], 3, 1 ])
     expect(service.chart.lines.map(&:repo)).to contain_exactly("me/app", "me/lib")
-    expect([ service.chart.average?, service.chart.note ]).to eq([ false, "Commits per day, one line per page." ])
+    expect([ service.chart.average?, service.chart.note, service.chart.aria_label ]).to eq([ false, nil, "Commits per day by page, last 30 days" ])
     expect(service.cells(service.rows.last).find { |cell| cell.number.key == "commits" }.previous).to be_nil
   end
 

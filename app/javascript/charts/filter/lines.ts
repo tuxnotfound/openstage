@@ -1,18 +1,14 @@
-import type { CompareChartView, NumberView } from "../types"
-
 // The chart filter's own rules in the browser, as the canvas boards drew
 // them (chartkit.js): which line each drawn number takes, what a toggle's
-// click does, the note's line styles, the addresses of a view, where a line
-// stands at a point, where the tooltip sits, and how many toggles fit a
-// row. Every number and colour comes from the server; this only arranges
-// what it sent.
+// click does, the addresses of a view, where a line stands at a point,
+// where the tooltip sits, and how many toggles fit a row. Every number and
+// colour comes from the server; this only arranges what it sent.
 
 export const MAX_DRAWN = 3
 // A number's line by its place in the line order: solid, dotted, dashed.
 export const LINE_DASHES = ["", "2 9", "14 10"]
 // The same three as a toggle's, a column's or the tooltip's sample.
 export const KEY_DASHES = ["", "0.1 5.5", "7 4.5"]
-const STYLES = ["solid", "dotted", "dashed"]
 // The chart's box, as ProgressChart::Compare draws in it.
 const HEIGHT = 280
 
@@ -79,23 +75,6 @@ export function boxed(key: string, projects: string[], all: string[]): string[] 
   const after = inView.includes(key) ? inView.filter((each) => each !== key) : all.filter((each) => inView.includes(each) || each === key)
   if (after.length === 0) return null
   return after.length === all.length ? [] : after
-}
-
-// The note under the chart; one that compares numbers names each number's
-// line by this page's own line order, between the server's words.
-export function noteOf(chart: CompareChartView, numbers: NumberView[], lines: Lines): string {
-  if (!chart.indexed || !chart.noteParts) return chart.note
-  const names = chart.heads.map((key, i) => {
-    const number = numbers.find((each) => each.key === key)
-    return `${(i === 0 ? number?.label : number?.word) ?? key} ${STYLES[lines[key] ?? 0]}`
-  })
-  return `${chart.noteParts.before}${sentence(names)}${chart.noteParts.after}`
-}
-
-// "a", "a and b", "a, b and c".
-export function sentence(words: string[]): string {
-  if (words.length <= 1) return words.join("")
-  return `${words.slice(0, -1).join(", ")} and ${words[words.length - 1]}`
 }
 
 // Where a line stands at each point, in percent from the chart's top, read

@@ -12,7 +12,7 @@ const column = {
   rows: [{ key: "me/app", name: "app", colorClass: "os-project-1", values: ["12.4", "3.1"] }, { key: "me/lib", name: "lib", colorClass: "os-project-2", values: ["2.0", "–"] }],
 }
 const chart = (view: Partial<CompareChartView> = {}): CompareChartView => ({
-  paths: [], ticks: [], columns: [column], heads: ["visits"], tips, axis: [], ariaLabel: "", note: "", noteParts: null, none: "Nothing this day", indexed: false, ...view,
+  paths: [], ticks: [], columns: [column], tips, axis: [], ariaLabel: "", note: null, none: "Nothing this day", indexed: false, ...view,
 })
 
 function tip(view: CompareChartView, hidden?: (each: ProjectNumber) => boolean): string {
@@ -48,7 +48,7 @@ describe("the chart's tooltip", () => {
 
   test("has no heads with one column", () => {
     const one = { ...column, rows: [{ key: "me/app", name: "app", colorClass: "os-project-1", values: ["3"] }] }
-    const html = tip(chart({ columns: [one], heads: ["commits"], tips: [{ key: "commits", label: "Commits", line: true }] }))
+    const html = tip(chart({ columns: [one], tips: [{ key: "commits", label: "Commits", line: true }] }))
 
     expect(heads(html)).toEqual([])
     expect(html).not.toContain("Commits")

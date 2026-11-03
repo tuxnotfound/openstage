@@ -1,9 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { apiUrl, boxed, fitting, lineOf, lineOrder, linesFrom, noteOf, pageUrl, pathTops, reconcile, sentence, tipLeft, toggled, within } from "../../app/javascript/charts/filter/lines"
-import type { CompareChartView, NumberView } from "../../app/javascript/charts/types"
-
-const number = (key: string, label: string): NumberView => ({ key, label, word: label.toLowerCase(), group: "On GitHub", value: "1", split: [], change: null })
-const numbers = [number("commits", "Commits"), number("visits", "Site visits"), number("stars", "Stars")]
+import { apiUrl, boxed, fitting, lineOf, lineOrder, linesFrom, pageUrl, pathTops, reconcile, tipLeft, toggled, within } from "../../app/javascript/charts/filter/lines"
 
 describe("the lines of the numbers drawn", () => {
   test("follow the order the page names them in", () => {
@@ -35,28 +31,6 @@ describe("the lines of the numbers drawn", () => {
   test("are solid for a number drawn alone on its own axis", () => {
     expect(lineOf({ visits: 1 }, "visits", false)).toBe(0)
     expect(lineOf({ visits: 1 }, "visits", true)).toBe(1)
-  })
-})
-
-describe("the note under a chart that compares numbers", () => {
-  // Site visitors show in the tooltip beside site visits, with no line.
-  const chart = {
-    indexed: true, heads: ["commits", "visits"], note: "Commits solid and site visits dotted, as the server drew them.",
-    tips: [{ key: "commits", label: "Commits", line: true }, { key: "visits", label: "Site visits", line: true }, { key: "site_visitors", label: "Site visitors", line: false }],
-    noteParts: { before: "7-day averages. ", after: ", each against its own peak in the window; 100% is 3 commits a day and 40 site visits a day." },
-  } as CompareChartView
-
-  test("names each line by this page's own line order, and no number without one", () => {
-    expect(noteOf(chart, numbers, { visits: 0, commits: 2 }))
-      .toBe("7-day averages. Commits dashed and site visits solid, each against its own peak in the window; 100% is 3 commits a day and 40 site visits a day.")
-  })
-
-  test("is the server's when the chart draws one number", () => {
-    expect(noteOf({ ...chart, indexed: false, noteParts: null }, numbers, {})).toBe(chart.note)
-  })
-
-  test("joins words as the app writes them", () => {
-    expect([sentence(["a"]), sentence(["a", "b"]), sentence(["a", "b", "c"])]).toEqual(["a", "a and b", "a, b and c"])
   })
 })
 

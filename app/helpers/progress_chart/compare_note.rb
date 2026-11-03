@@ -1,28 +1,19 @@
 module ProgressChart
   # The words of a Compare chart: what it shows, for screen readers; the note
-  # under it, which names each number's line style and gives each one's peak
-  # when the chart compares numbers, and says which numbers drawn have no
-  # line; and its amounts, as the tooltip, the axis and the note write them.
+  # under it, only when a number drawn has no line, to say why, or nothing
+  # is drawn; and its amounts, as the tooltip and the axis write them. The
+  # toggles name the numbers and their line styles, and the tooltip gives
+  # the real values, so a chart that draws everything asked for has no note.
   class CompareNote
-    # A number's line by its place in the line order.
-    STYLES = %w[solid dotted dashed].freeze
-
     def initialize(chart)
       @chart = chart
     end
 
-    # The line styles named by the numbers' places among those drawn.
+    # Why a number drawn has no line; nil when every one has.
     def note
       return empty if chart.numbers.empty?
-      return "#{before}#{styles}#{after}" if chart.indexed?
 
-      "#{one}#{rest}".strip
-    end
-
-    # The note around the line styles' names, so the browser can name them by
-    # its own line order; nil unless the chart compares numbers.
-    def note_parts
-      [ before, after ] if chart.indexed?
+      rest.strip.presence
     end
 
     def aria_label
@@ -38,7 +29,7 @@ module ProgressChart
       "Nothing this #{labels.unit_word}"
     end
 
-    # A value as the tooltip and the note write it: to a tenth when averaged.
+    # A value as the tooltip writes it: to a tenth when averaged.
     def amount(number, value)
       text = chart.average? ? format("%.1f", value) : ActiveSupport::NumberHelper.number_to_delimited(value.round)
       "#{'$' if number&.money?}#{text}"
@@ -55,31 +46,6 @@ module ProgressChart
 
     def labels
       chart.window.labels
-    end
-
-    def before
-      chart.average? ? "7-day averages. " : ""
-    end
-
-    def styles
-      sentence(chart.lined.each_with_index.map { |number, i| "#{i.zero? ? number.label : number.word} #{STYLES.fetch(chart.numbers.index(number))}" })
-    end
-
-    def after
-      ", each against its own peak in the window; 100% is #{sentence(chart.lined.map { |number| peak_words(number) })}.#{rest}"
-    end
-
-    def peak_words(number)
-      text = amount(number, chart.peak(number))
-      "#{text} #{number.word_after(text)}#{" a #{labels.unit_word}" unless number.level?}"
-    end
-
-    def one
-      number = chart.lined.first
-      return "" unless number
-
-      per_line = chart.lone ? "" : ", one line per #{chart.per}"
-      chart.average? ? "A 7-day average of #{number.word} per day#{per_line}." : "#{number.label} per #{labels.unit_word}#{per_line}."
     end
 
     # The numbers drawn with no line, and why.

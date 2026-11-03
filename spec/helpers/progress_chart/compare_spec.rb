@@ -27,7 +27,7 @@ RSpec.describe ProgressChart::Compare do
     compare = chart([ line("app", commits, [ 3, 1 ]), line("app", visits, [ 0, 400 ]) ])
 
     expect(compare.paths.map { |path| path.drop(1) }).to eq([ [ "os-project-1", "visits", "builder/app" ], [ "os-project-1", "commits", "builder/app" ] ])
-    expect(compare.ticks.map(&:value)).to eq(%w[50% 100%])
+    expect(compare.ticks.map(&:value)).to eq([ nil, nil ])
     expect(tops(compare.paths).uniq.size).to eq(1)
   end
 
@@ -85,24 +85,22 @@ RSpec.describe ProgressChart::Compare do
     end
   end
 
-  it "names each line style by the numbers' places among those drawn, and gives each number's peak" do
+  it "has no note while every number drawn has a line, and tells a screen reader each is against its own peak" do
     compare = chart([ line("app", commits, [ 3, 1 ]), line("app", visits, [ 0, 400 ]) ], numbers: [ visits, commits ])
 
-    after = ", each against its own peak in the window; 100% is 3 commits a week and 400 site visits a week."
-    expect(compare.note).to eq("Commits dotted and site visits solid#{after}")
-    expect(compare.note_parts).to eq([ "", after ])
+    expect(compare.note).to be_nil
     expect(compare.aria_label).to eq("Commits and site visits per week by project, each against its own peak, last 90 days")
+    expect(chart([ line("app", commits, [ 3, 1 ]) ], numbers: [ commits ]).note).to be_nil
   end
 
   it "draws one number on its own axis, and says which numbers drawn have no line, and why" do
     quiet = chart([ line("app", commits, [ 3, 1 ]), line("app", visits, [ 0, 0 ]) ])
     expect(quiet.indexed?).to be(false)
     expect(quiet.ticks.map(&:value)).to eq(%w[2 4])
-    expect(quiet.note).to eq("Commits per week, one line per project. No site visits in the last 90 days.")
-    expect(quiet.note_parts).to be_nil
+    expect(quiet.note).to eq("No site visits in the last 90 days.")
 
     missing = chart([ line("app", commits, [ 3, 1 ]) ], lone: true)
-    expect(missing.note).to eq("Commits per week. None of the projects in view counts site visits.")
+    expect(missing.note).to eq("None of the projects in view counts site visits.")
   end
 
   it "leaves out a project with no colour: no line, no row in the tooltip and no part in the scale" do
@@ -118,19 +116,13 @@ RSpec.describe ProgressChart::Compare do
     quiet = described_class::Line.new(repo: "builder/quiet", name: "quiet", rank: 10, color_class: nil, number: visits, values: [ 0, 90 ], total: 90)
 
     expect(chart([ line("app", commits, [ 3, 1 ]), quiet ]).note)
-      .to eq("Commits per week, one line per project. Only projects past the tenth count site visits, and the chart draws ten projects at most.")
-  end
-
-  it "gives a peak of one in the singular" do
-    compare = chart([ line("app", commits, [ 1, 0 ]), line("app", visits, [ 0, 400 ]) ])
-
-    expect(compare.note).to end_with("100% is 1 commit a week and 400 site visits a week.")
+      .to eq("Only projects past the tenth count site visits, and the chart draws ten projects at most.")
   end
 
   it "averages the 30-day view to a tenth, its tooltip saying so" do
     compare = chart([ line("app", commits, [ 0, 0, 0, 0, 0, 0, 0, 0, 0.5, 1.5 ]) ], numbers: [ commits ], range: "30d", average: true)
 
-    expect(compare.note).to eq("A 7-day average of commits per day, one line per project.")
+    expect(compare.note).to be_nil
     expect(compare.aria_label).to eq("7-day average of commits per day by project, last 30 days")
     expect(compare.ticks.map(&:value)).to eq([ "0.5", "1", "1.5" ])
     expect(compare.columns.last).to have_attributes(title: "Wed, Oct 28 · 7-day average")
@@ -144,7 +136,7 @@ RSpec.describe ProgressChart::Compare do
 
     compare = chart([ line("app", commits, [ 3, 1 ]) ], per: "page")
 
-    expect(compare.note).to eq("Commits per week, one line per page. None of the pages in view counts site visits.")
+    expect(compare.note).to eq("None of the pages in view counts site visits.")
     expect(compare.aria_label).to eq("Commits per week by page, last 90 days")
     expect(chart([], numbers: [], per: "page").note).to eq("No page here shows a number yet.")
   end

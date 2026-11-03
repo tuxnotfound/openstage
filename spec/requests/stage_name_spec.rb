@@ -29,7 +29,7 @@ RSpec.describe "The builder's stage, by name", type: :request do
     expect_stage_only("On your stage", "Its page is public, and it shows on your stage.", "Show app on your stage")
 
     get "/analytics", params: { range: "30d" }
-    expect_stage_only("Show only Your stage", "On Openstage, your stage and your project pages")
+    expect_stage_only("Show only Your stage")
 
     get "/embed/builder/preview"
     expect_stage_only("links back to your stage.")

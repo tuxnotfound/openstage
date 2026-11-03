@@ -1,7 +1,7 @@
 <%# A chart filter's chart (ProgressChart::Compare, as CompareChartSerializer
     sends it): a line per project and number, in the project's colour and
     the number's line style by its place among the numbers drawn, with its
-    gridlines, axis and note. The chart's script adds the marks, the
+    gridlines, axis and any note. The chart's script adds the marks, the
     tooltip, the emphasis and the keyboard. view: a ChartFilterSerializer's
     attributes. %>
 <% chart = view[:chart] %>
@@ -19,7 +19,7 @@
       <% end %>
     </svg>
     <% chart[:ticks].each do |tick| %>
-      <div class="os-ylab -translate-y-1/2" style="top: <%= tick[:top] %>%"><%= tick[:value] %></div>
+      <% if tick[:value] %><div class="os-ylab -translate-y-1/2" style="top: <%= tick[:top] %>%"><%= tick[:value] %></div><% end %>
     <% end %>
     <div class="absolute inset-y-0 right-0 w-0.5 bg-strong" aria-hidden="true"></div>
   </div>
@@ -28,5 +28,5 @@
       <span class="<%= 'font-bold text-ink' if i == chart[:axis].size - 1 %>"><%= label %></span>
     <% end %>
   </div>
-  <p class="os-note mt-2"><%= chart[:note] %></p>
+  <% if chart[:note] %><p class="os-note mt-2"><%= chart[:note] %></p><% end %>
 </div>

@@ -108,7 +108,7 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       expect(page.css("[data-chart-table] thead th").map { |head| head.text.squish }).to eq([ "Projects", "Your stage", "Commits", "Site visits", "Site visitors" ])
       expect(page.at_css("[data-chart-row='builder/bare'] a[aria-label^='Set up']")["href"]).to eq("/projects/#{bare.id}/edit?site=open#site-visits")
       activity = page.at_css("section[aria-labelledby='your-activity']").text.squish
-      expect(activity).to include("Site visits 90", "and this chart follows them;", "Commits solid and site visits dotted")
+      expect(activity).to include("Site visits 90", "and this chart follows them;")
       expect(drawn).to contain_exactly("commits", "commits", "visits")
     end
 
@@ -160,7 +160,6 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       get "/dashboard", params: { show: "site_visitors" }
       expect(switch.call["aria-checked"]).to eq("true")
       expect(drawn).to contain_exactly("commits", "commits", "visits")
-      expect(page.at_css("section[aria-labelledby='your-activity']").text.squish).to include("Commits solid and site visits dotted")
       expect(tooltip).to eq([ %w[commits visits site_visitors], { "app" => %w[0.4 12.9 4.3], "bare" => %w[0.1 – –] } ])
 
       patch "/projects/#{tool.id}/numbers", params: { number: "site_visitors", shown: "false", show: "site_visitors" }

@@ -30,7 +30,7 @@ module ProgressChart
     # or, on analytics, "page".
     attr_reader :window, :numbers, :every_line, :lone, :per
 
-    delegate :note, :note_parts, :aria_label, :none, to: :words
+    delegate :note, :aria_label, :none, to: :words
 
     # beside: Lines of the numbers the tooltip shows beside those drawn, for
     # the projects that show them; they draw no path, set no peak or scale
@@ -80,10 +80,12 @@ module ProgressChart
       end
     end
 
-    # None without a line, so an empty chart suggests no scale.
+    # None without a line, so an empty chart suggests no scale. Comparing
+    # numbers, each on its own peak, the gridlines carry no value (nil): the
+    # tooltip gives the real ones.
     def ticks
       return [] if lines.empty?
-      return [ PEAK / 2, PEAK ].map { |value| Trend::Tick.new(value: "#{value.to_i}%", top: top(value)) } if indexed?
+      return [ PEAK / 2, PEAK ].map { |value| Trend::Tick.new(value: nil, top: top(value)) } if indexed?
 
       scale.drop(1).map { |value| Trend::Tick.new(value: words.tick(lined.first, value), top: top(value)) }
     end

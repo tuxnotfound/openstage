@@ -51,7 +51,7 @@ export default function ProgressIsland({ initial, endpoint, mode, defaultRange, 
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">{toggles}{pills}</div>
       )}
       <p role="status" className="mt-2.5 text-[13px] font-semibold text-ink-2 empty:mt-0">{filter.notice}</p>
-      <CompareChart chart={view.chart} numbers={view.numbers} lines={lines} focus={focus} height={mode === "dashboard" ? "h-[260px]" : ""}
+      <CompareChart chart={view.chart} lines={lines} focus={focus} height={mode === "dashboard" ? "h-[260px]" : ""}
                     hidden={mode === "dashboard" ? cells.hidden : undefined} />
       {view.table && (
         <ProjectsTable table={view.table} drawn={lineOrder(lines)} lines={lines} indexed={view.chart.indexed} words={view.words}

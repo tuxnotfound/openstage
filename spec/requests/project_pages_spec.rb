@@ -269,13 +269,13 @@ RSpec.describe "Project pages", type: :request do
     it "puts a toggle per number above the chart, commits and site visits drawn, the chart comparing them" do
       get "/builder/side.app"
       expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ] ])
-      expect(response.body).to include("Commits solid and site visits dotted, each against its own peak in the window")
+      expect(Nokogiri::HTML(response.body).css(".os-chart ~ .os-note")).to be_empty
 
       get "/builder/side.app", params: { show: "visits", range: "30d" }
       page = Nokogiri::HTML(response.body)
       expect(toggles).to eq([ [ "+ Commits 1", false ], [ "Site visits 1,204", true ] ])
       expect(page.css(".os-big")).to be_empty
-      expect(response.body).to include("A 7-day average of site visits per day.")
+      expect(page.css(".os-chart ~ .os-note")).to be_empty
       props = JSON.parse(page.at_css("#progress-props").text)
       expect(props).to include("mode" => "project", "endpoint" => "/api/progress/builder?project=builder%2Fside.app")
       expect(props["initial"]).to include("drawn" => [ "visits" ], "defaultShow" => %w[commits visits])
@@ -320,7 +320,6 @@ RSpec.describe "Project pages", type: :request do
       get "/builder/side.app", params: { show: "site_visitors", range: "30d" }
       expect(toggles).to eq([ [ "Commits 1", true ], [ "Site visits 1,204", true ] ])
       expect(drawn).to contain_exactly("commits", "visits")
-      expect(response.body).to include("Commits solid and site visits dotted")
       expect(view["chart"]["tips"]).to eq([ { "key" => "commits", "label" => "Commits", "line" => true }, { "key" => "visits", "label" => "Site visits", "line" => true },
                                             { "key" => "site_visitors", "label" => "Site visitors", "line" => false } ])
       expect(view["chart"]["columns"].last["rows"].sole["values"]).to eq(%w[0.1 172.0 114.3])
