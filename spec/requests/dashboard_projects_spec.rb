@@ -35,8 +35,15 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     expect(quarter["href"]).to eq("/dashboard?q=work&range=90d")
     only = activity.at_css("[data-chart-row='builder/bare'] a[aria-label='Show only bare']")
     expect(only["href"]).to eq("/dashboard?projects=builder%2Fbare&q=work")
-    expect(activity.css("p.os-note").map(&:text).grep(/The switches set what visitors see/).size).to eq(1)
-    expect(activity.at_css("[data-react] p.os-note:contains('The switches set')")).to be_nil
+    expect(activity.text.squish).not_to include("The switches set what visitors see")
+  end
+
+  it "says over the table what a switch on and off means for the stage" do
+    get "/dashboard"
+
+    key = page.at_css("section[aria-labelledby='your-activity'] p:has(+ [data-chart-table])")
+    expect(key.text.squish).to eq("Visitors see it on your stage Only you see it")
+    expect(key.css(".os-switch").map { |switch| [ switch["class"].include?(" on "), switch["aria-hidden"] ] }).to eq([ [ true, "true" ], [ false, "true" ] ])
   end
 
   it "marks what shipped on the chart, as visitors see it, linking nowhere" do
@@ -120,7 +127,7 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       expect(page.css("[data-chart-table] thead th").map { |head| head.text.squish }).to eq([ "Projects", "Your stage", "Commits", "Site visits", "Site visitors" ])
       expect(page.at_css("[data-chart-row='builder/bare'] a[aria-label^='Set up']")["href"]).to eq("/projects/#{bare.id}/edit?site=open#site-visits")
       activity = page.at_css("section[aria-labelledby='your-activity']").text.squish
-      expect(activity).to include("Site visits 90", "and this chart follows them;")
+      expect(activity).to include("Site visits 90", "Visitors see it on your stage")
       expect(drawn).to contain_exactly("commits", "commits", "visits")
     end
 

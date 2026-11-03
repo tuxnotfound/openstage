@@ -19,7 +19,7 @@ RSpec.describe "The builder's stage, by name", type: :request do
 
     get "/dashboard"
     expect_stage_only("Your stage ", "Put your stage in a README", "Shows on your stage and on its project's page.",
-                      "what visitors see on your stage and your project pages", ">Your stage</th>", "Show app on your stage")
+                      "Visitors see it on your stage", ">Your stage</th>", "Show app on your stage")
 
     get "/settings"
     expect_stage_only(">Your stage</h2>", "Show on your stage", "with a link to your stage.", "shows on your stage, marked with its branch",

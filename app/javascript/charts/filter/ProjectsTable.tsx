@@ -16,7 +16,8 @@ import { lineOf, type Lines } from "./lines"
 // the builder's page lists it, and each cell the switch for what visitors
 // see (its value grey while they do not), or Set up or Paused where site
 // visits do not count; a project hidden from the page comes last, with no
-// box. On a phone each row stacks, with only the numbers it counts, and
+// box. Over the dashboard's table, a key says what a switch on and off
+// means for the builder's stage. On a phone each row stacks, with only the numbers it counts, and
 // below the width its columns need too (stack, the stacked variant). The
 // name column takes what the numbers leave, and a long name wraps rather
 // than widening the table. Only shows on hover, and always on a touch
@@ -60,34 +61,47 @@ export default function ProjectsTable({ table, drawn, lines, indexed, words, foc
   }
   const on = table.rows.filter((row) => row.on).length
   return (
-    <div className="-mx-1 mt-5 overflow-x-auto px-1" data-chart-table data-stack={table.stack}>
-      <table className="w-full border-collapse text-sm stacked:block">
-        <caption className="sr-only">{label}: what the chart draws, and each number, {words}</caption>
-        <thead className="stacked:block">
-          <tr className="text-xs text-ink-3 stacked:flex">
-            <th scope="col" className="w-full min-w-45 max-w-0 pt-1.5 pb-2 text-left font-bold stacked:max-w-none">
-              <span className="flex items-center gap-3">
-                {label}
-                {rows.all && <button type="button" className="os-link inline-flex min-h-7 items-center rounded-md px-1.5 text-[13px] no-underline" onClick={rows.all.go} onPointerEnter={rows.all.warm} onFocus={rows.all.warm}>Show all</button>}
-              </span>
-            </th>
-            {switches && <th scope="col" className="w-px whitespace-nowrap pt-1.5 pb-2 pl-[18px] text-right font-bold stacked:hidden">Your stage</th>}
-            {table.columns.map((column) => (
-              <th key={column.key} scope="col" className={`whitespace-nowrap pt-1.5 pb-2 pl-[18px] text-right font-bold stacked:hidden ${drawn.includes(column.key) ? "text-ink" : ""}`}>
-                <span className="inline-flex items-center gap-[7px]">
-                  <span className={drawn.includes(column.key) ? "" : "invisible"}><LineKey line={lineOf(lines, column.key, indexed)} /></span>{column.label}
+    <>
+      {switches && <SwitchKey />}
+      <div className={`-mx-1 ${switches ? "mt-3" : "mt-5"} overflow-x-auto px-1`} data-chart-table data-stack={table.stack}>
+        <table className="w-full border-collapse text-sm stacked:block">
+          <caption className="sr-only">{label}: what the chart draws, and each number, {words}</caption>
+          <thead className="stacked:block">
+            <tr className="text-xs text-ink-3 stacked:flex">
+              <th scope="col" className="w-full min-w-45 max-w-0 pt-1.5 pb-2 text-left font-bold stacked:max-w-none">
+                <span className="flex items-center gap-3">
+                  {label}
+                  {rows.all && <button type="button" className="os-link inline-flex min-h-7 items-center rounded-md px-1.5 text-[13px] no-underline" onClick={rows.all.go} onPointerEnter={rows.all.warm} onFocus={rows.all.warm}>Show all</button>}
                 </span>
               </th>
+              {switches && <th scope="col" className="w-px whitespace-nowrap pt-1.5 pb-2 pl-[18px] text-right font-bold stacked:hidden">Your stage</th>}
+              {table.columns.map((column) => (
+                <th key={column.key} scope="col" className={`whitespace-nowrap pt-1.5 pb-2 pl-[18px] text-right font-bold stacked:hidden ${drawn.includes(column.key) ? "text-ink" : ""}`}>
+                  <span className="inline-flex items-center gap-[7px]">
+                    <span className={drawn.includes(column.key) ? "" : "invisible"}><LineKey line={lineOf(lines, column.key, indexed)} /></span>{column.label}
+                  </span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="stacked:block">
+            {table.rows.map((row) => (
+              <Row key={row.key} row={row} table={table} drawn={drawn} alone={row.on && on === 1} hot={focused === row.key} rows={rows} switches={switches} />
             ))}
-          </tr>
-        </thead>
-        <tbody className="stacked:block">
-          {table.rows.map((row) => (
-            <Row key={row.key} row={row} table={table} drawn={drawn} alone={row.on && on === 1} hot={focused === row.key} rows={rows} switches={switches} />
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </tbody>
+        </table>
+      </div>
+    </>
+  )
+}
+
+// What a switch on and off means, as charts/_table writes it.
+function SwitchKey() {
+  return (
+    <p className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-ink-2">
+      <span className="inline-flex items-center gap-2"><span aria-hidden="true" className="os-switch on scale-[.8] cursor-default" />Visitors see it on your stage</span>
+      <span className="inline-flex items-center gap-2"><span aria-hidden="true" className="os-switch scale-[.8] cursor-default" />Only you see it</span>
+    </p>
   )
 }
 

@@ -112,6 +112,8 @@ describe("the dashboard's stage switch", () => {
 
     expect(html.match(/>Your stage</g)).toHaveLength(2)
     expect(html).toContain('aria-label="Show app on your stage"')
+    expect(html).toContain("Visitors see it on your stage</span>")
+    expect(html).toContain("Only you see it</span>")
     expect(html).not.toMatch(/your page/i)
   })
 })
