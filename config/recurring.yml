@@ -31,3 +31,7 @@ production:
   forget_site_visitors:
     class: ForgetSiteVisitorsJob
     schedule: every day at 3am
+  # Each builder's days that ended, into their totals (Analytics::RollUpService).
+  roll_up:
+    class: RollUpFanoutJob
+    schedule: every day at 2am

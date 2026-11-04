@@ -25,6 +25,9 @@ class User < ApplicationRecord
   has_many :project_clicks, dependent: :delete_all
   has_many :entry_clicks, dependent: :destroy
   has_many :badge_impressions, dependent: :destroy
+  has_many :page_days, dependent: :delete_all
+  has_many :page_counts, dependent: :delete_all
+  has_many :entry_click_days, dependent: :delete_all
 
   scope :active, -> { where(deleted_at: nil) }
   # Everyone but the owner, by owner?'s rule, so the feed shows the others.

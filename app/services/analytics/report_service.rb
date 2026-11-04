@@ -6,13 +6,11 @@ module Analytics
   # project also its commits, site visits and site visitors, as its builder
   # shows them; what Progress::DrawService makes of their counts, each
   # number's total and change for the pages in view and the one chart of the
-  # numbers drawn; where views of those pages came from, the links
-  # followed and where the badge and embed showed; and the panels of the
-  # builder's websites (GatherWebsitesService).
+  # numbers drawn; and the panels of those pages (GatherPagesService) and of
+  # the builder's websites (GatherWebsitesService).
   class ReportService < ApplicationService
     # It opens on commits alone, over the window every chart page opens on.
     DEFAULT_SHOW = %w[commits].freeze
-    Link = Data.define(:title, :page, :count)
     TOP = 6
     TOP_COUNTRIES = 5
     # The last row of a ranked panel: everything its list leaves out, so its
@@ -25,10 +23,12 @@ module Analytics
     attr_accessor :user, :range, :show, :pages
     # totals_window: the Window the totals cover; rows: a Progress::Row per page, in
     # the pages' fixed order; drawing: the DrawService of the totals and the chart.
-    # websites: the GatherWebsitesService of the website panels.
-    attr_reader :totals_window, :rows, :counts, :drawing, :sources, :countries, :links, :badges, :websites
+    # websites: the GatherWebsitesService of the website panels; on_pages: the
+    # GatherPagesService of the panels of their pages.
+    attr_reader :totals_window, :rows, :counts, :drawing, :websites, :on_pages
 
     delegate :totals, :drawn, :default_drawn, :window, :chart, :earliest, to: :drawing
+    delegate :sources, :countries, :links, :badges, to: :on_pages
 
     validates :user, presence: true
 
@@ -68,9 +68,7 @@ module Analytics
       @rows = page_rows
       return unless draw
 
-      read_visits
-      @links = top_links
-      @badges = badges_seen
+      read_pages
       read_websites
     end
 
@@ -115,63 +113,10 @@ module Analytics
       @drawing = service if run(service)
     end
 
-    # Sources named as the website panels name them (Hacker News, Direct,
-    # indiehackers.com...), and the countries Cloudflare names, busiest
-    # first, then Other.
-    def read_visits
-      views = [ (user.profile_views if page_for(CountService::PAGE)), user.project_views.where(repo_name: selected.map(&:key)) ].compact
-      views = views.map { |scope| scope.where(viewed_at: times) }
-      @sources = ranked(tally(views.flat_map { |scope| scope.group(:referrer).count.to_a }) { |host| source_label(host) }, TOP)
-      countries = views.flat_map { |scope| scope.where.not(country: [ nil, "", *SiteVisits::PageView::NO_COUNTRY ]).group(:country).count.to_a }
-      @countries = ranked(tally(countries, &:itself), TOP_COUNTRIES)
-    end
-
-    def tally(pairs)
-      pairs.each_with_object(Hash.new(0)) { |(key, count), sums| sums[yield(key)] += count }.sort_by { |key, count| [ -count, key ] }
-    end
-
-    # A host that names no site, an address or a machine on someone's network
-    # (pedros-macbook-pro.local), goes in Other: the website panels never
-    # show one, because the script does not keep it.
-    def source_label(host)
-      host.blank? || SiteVisits::PageView.site?(host) ? ReferrerClassifier.label(host) : OTHER
-    end
-
-    # The busiest, at most top of them, then OTHER while the list leaves
-    # anything out, the hosts source_label sends there included.
-    def ranked(sorted, top)
-      shown = sorted.reject { |label, _count| label == OTHER }.first(top)
-      rest = sorted.sum(&:last) - shown.sum(&:last)
-      rest.positive? ? shown + [ [ OTHER, rest ] ] : shown
-    end
-
-    # Entry links and project buttons, together, busiest first.
-    def top_links
-      (entry_links + button_links).sort_by { |link| [ -link.count, link.title ] }.first(TOP)
-    end
-
-    def entry_links
-      clicks = user.entry_clicks.joins(:entry).where(clicked_at: times).group(:entry_id).count
-      user.entries.where(id: clicks.keys).filter_map do |entry|
-        page = page_for(entry.repo_name || CountService::PAGE)
-        Link.new(title: entry.title, page: page, count: clicks[entry.id]) if page
-      end
-    end
-
-    def button_links
-      repos = user.github_repos.index_by(&:full_name)
-      user.project_clicks.where(clicked_at: times).group(:repo_name, :kind).count.filter_map do |(repo, kind), count|
-        page = page_for(repo)
-        host = host_of(repos[repo]&.outbound_url("visit"))
-        title = kind == "visit" ? "Visit #{host || 'the website'}" : "View on GitHub"
-        Link.new(title: title, page: page, count: count) if page
-      end
-    end
-
-    # [kind, times shown, sites] for the README badge and the embed.
-    def badges_seen
-      seen = user.badge_impressions.where(viewed_at: times)
-      %w[badge embed].map { |kind| [ kind, seen.where(kind: kind).count, seen.where(kind: kind).distinct.count(:referrer) ] }
+    def read_pages
+      split = Split.new(user, first: totals_window.span&.first, last: totals_window.last)
+      service = GatherPagesService.new(user: user, pages: selected, split: split)
+      @on_pages = service if run(service)
     end
 
     # Every project of the builder's while all are in view, those with no row
@@ -180,22 +125,6 @@ module Analytics
       repos = selected_keys.empty? ? user.github_repos : selected.filter_map(&:repo)
       service = GatherWebsitesService.new(user: user, repos: repos, days: totals_window.span)
       @websites = service if run(service)
-    end
-
-    def host_of(url)
-      URI(url).host if url
-    rescue URI::InvalidURIError
-      nil
-    end
-
-    def page_for(key)
-      selected.find { |row| row.key == key }
-    end
-
-    # The window's days in the builder's zone; every day up to today for all time.
-    def times
-      first = totals_window.span&.first
-      (first&.in_time_zone(user.zone))..(totals_window.last.in_time_zone(user.zone).end_of_day)
     end
 
     def run(service)

@@ -1,6 +1,7 @@
 class Entry < ApplicationRecord
   belongs_to :user
   has_many :entry_clicks, dependent: :destroy
+  has_many :entry_click_days, dependent: :delete_all
 
   enum :entry_type, {
     shipped: "shipped",

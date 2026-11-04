@@ -1,7 +1,7 @@
 # A visitor to a page on Openstage (ProfileView, ProjectView): their IP
-# address hashed with the day, so Analytics::CountService counts each one
-# once a day. Keyed with the app's secret: with the database alone, no one can
-# hash every address until one matches.
+# address hashed with the day, so Analytics counts each one once a day. Keyed
+# with the app's secret: with the database alone, no one can hash every
+# address until one matches.
 module VisitorHash
   # The key's purpose. KeyVisitorHashes, the migration that keyed the hashes
   # stored before, derives the same key from its own copy of it.

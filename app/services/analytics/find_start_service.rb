@@ -15,10 +15,20 @@ module Analytics
     private
 
     def execute
-      views = days(earliest(own(user.profile_views.minimum(:viewed_at)), user.project_views.group(:repo_name).minimum(:viewed_at)))
+      views = first_views
       visits, visitors = site_visits
       @firsts = { "commits" => commits, "visits" => visits, "site_visitors" => visitors, "visitors" => views, "views" => views,
                   "follows" => follows, "clicks" => clicks }
+    end
+
+    def first_views
+      earliest(user.page_days.group(:page).minimum(:day),
+               days(earliest(own(split.raw(user.profile_views, :viewed_at).minimum(:viewed_at)),
+                             split.raw(user.project_views, :viewed_at).group(:repo_name).minimum(:viewed_at))))
+    end
+
+    def split
+      @split ||= Split.new(user)
     end
 
     # As the public page counts them: public, merges and dependency bumps left out.
@@ -44,8 +54,14 @@ module Analytics
     # A project's Visit and View on GitHub buttons, and the links in the
     # builder's entries: an entry's for its project, or their page with none.
     def clicks
-      on_entries = user.entry_clicks.joins(:entry).group("entries.repo_name").minimum(:clicked_at).transform_keys { |repo| repo || CountService::PAGE }
-      days(earliest(on_entries, user.project_clicks.group(:repo_name).minimum(:clicked_at)))
+      on_entries = split.raw(user.entry_clicks.joins(:entry), :clicked_at).group("entries.repo_name").minimum(:clicked_at)
+      earliest(page_keys(user.entry_click_days.joins(:entry).group("entries.repo_name").minimum(:day)),
+               user.page_counts.buttons.group(:page).minimum(:day),
+               days(earliest(page_keys(on_entries), split.raw(user.project_clicks, :clicked_at).group(:repo_name).minimum(:clicked_at))))
+    end
+
+    def page_keys(by_repo)
+      by_repo.transform_keys { |repo| repo || CountService::PAGE }
     end
 
     def own(time)

@@ -23,13 +23,10 @@ module Analytics
         "commits" => commits,
         "visits" => visits,
         "site_visitors" => visitors,
-        "visitors" => merge(daily(user.profile_views, "profile_views.viewed_at", distinct: "profile_views.ip_hash"),
-                            daily(user.project_views, "project_views.viewed_at", "project_views.repo_name", distinct: "project_views.ip_hash")),
-        "views" => merge(daily(user.profile_views, "profile_views.viewed_at"),
-                         daily(user.project_views, "project_views.viewed_at", "project_views.repo_name")),
+        "visitors" => visitors_of_pages,
+        "views" => views,
         "follows" => follows,
-        "clicks" => merge(daily(user.project_clicks, "project_clicks.clicked_at", "project_clicks.repo_name"),
-                          daily(user.entry_clicks.joins(:entry), "entry_clicks.clicked_at", "entries.repo_name"))
+        "clicks" => clicks
       }
     end
 
@@ -48,6 +45,37 @@ module Analytics
       [ merge(sums.to_h { |page, date, visits, _| [ [ page, date ], visits ] }), merge(sums.to_h { |page, date, _, visitors| [ [ page, date ], visitors ] }) ]
     end
 
+    # A visitor is a distinct IP hash, which changes daily, so each day counts
+    # its own.
+    def visitors_of_pages
+      merge(page_days.to_h { |page, date, _, visitors| [ [ page, date ], visitors ] },
+            by_day(split.raw(user.profile_views, "profile_views.viewed_at"), "profile_views.viewed_at", distinct: "profile_views.ip_hash"),
+            by_day(split.raw(user.project_views, "project_views.viewed_at"), "project_views.viewed_at", "project_views.repo_name", distinct: "project_views.ip_hash"))
+    end
+
+    def views
+      merge(page_days.to_h { |page, date, views, _| [ [ page, date ], views ] },
+            by_day(split.raw(user.profile_views, "profile_views.viewed_at"), "profile_views.viewed_at"),
+            by_day(split.raw(user.project_views, "project_views.viewed_at"), "project_views.viewed_at", "project_views.repo_name"))
+    end
+
+    def page_days
+      @page_days ||= split.totals(user.page_days).pluck(:page, :day, :views, :visitors)
+    end
+
+    # A project's buttons and the links in its entries; an entry with no
+    # project counts on the builder's page.
+    def clicks
+      merge(split.totals(user.page_counts.buttons).group(:page, :day).sum(:count),
+            split.totals(user.entry_click_days).joins(:entry).group("entries.repo_name", :day).sum(:clicks).transform_keys { |repo, date| [ repo || PAGE, date ] },
+            by_day(split.raw(user.project_clicks, "project_clicks.clicked_at"), "project_clicks.clicked_at", "project_clicks.repo_name"),
+            by_day(split.raw(user.entry_clicks.joins(:entry), "entry_clicks.clicked_at"), "entry_clicks.clicked_at", "entries.repo_name"))
+    end
+
+    def split
+      @split ||= Split.new(user, first: from)
+    end
+
     # Confirmed: for the builder's page, or for one project.
     def follows
       confirmed = user.subscriptions.confirmed
@@ -55,11 +83,13 @@ module Analytics
             daily(confirmed.projects.joins(:github_repo), "subscriptions.confirmed_at", "github_repos.full_name"))
     end
 
+    def daily(scope, at, page = nil)
+      by_day(from ? scope.where(at => from.in_time_zone(user.zone)..) : scope, at, page)
+    end
+
     # {[page, date] => count}. Without a page column every row is the
-    # builder's page; an entry with no project counts there too. A visitor is
-    # a distinct IP hash, which changes daily, so each day counts its own.
-    def daily(scope, at, page = nil, distinct: nil)
-      scope = scope.where(at => from.in_time_zone(user.zone)..) if from
+    # builder's page; an entry with no project counts there too.
+    def by_day(scope, at, page = nil, distinct: nil)
       grouped = scope.group(*[ page, day(at) ].compact.map { |sql| Arel.sql(sql) })
       counted = distinct ? grouped.distinct.count(distinct) : grouped.count
       counted.transform_keys { |key| page ? [ key.first || PAGE, key.last ] : [ PAGE, key ] }

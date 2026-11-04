@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_04_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_04_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -62,6 +62,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_04_000001) do
     t.index ["user_id", "occurred_at"], name: "index_entries_on_user_id_and_occurred_at"
     t.index ["user_id", "pinned"], name: "index_entries_on_user_id_and_pinned"
     t.index ["user_id"], name: "index_entries_on_user_id"
+  end
+
+  create_table "entry_click_days", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "entry_id", null: false
+    t.date "day", null: false
+    t.integer "clicks", default: 0, null: false
+    t.index ["entry_id", "day"], name: "index_entry_click_days_on_entry_id_and_day", unique: true
+    t.index ["user_id", "day"], name: "index_entry_click_days_on_user_id_and_day"
   end
 
   create_table "entry_clicks", force: :cascade do |t|
@@ -144,6 +153,25 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_04_000001) do
     t.index ["user_id"], name: "index_github_repos_on_user_id"
   end
 
+  create_table "page_counts", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "page", null: false
+    t.string "kind", null: false
+    t.date "day", null: false
+    t.string "value", null: false
+    t.integer "count", default: 0, null: false
+    t.index ["user_id", "kind", "day", "page", "value"], name: "index_page_counts_once_a_day", unique: true
+  end
+
+  create_table "page_days", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "page", null: false
+    t.date "day", null: false
+    t.integer "views", default: 0, null: false
+    t.integer "visitors", default: 0, null: false
+    t.index ["user_id", "day", "page"], name: "index_page_days_on_user_id_and_day_and_page", unique: true
+  end
+
   create_table "profile_views", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.datetime "viewed_at", null: false
@@ -155,6 +183,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_04_000001) do
     t.index ["user_id", "country"], name: "index_profile_views_on_user_id_and_country"
     t.index ["user_id", "viewed_at"], name: "index_profile_views_on_user_id_and_viewed_at"
     t.index ["user_id"], name: "index_profile_views_on_user_id"
+    t.index ["viewed_at"], name: "index_profile_views_holding_a_hash", where: "(ip_hash IS NOT NULL)"
   end
 
   create_table "project_clicks", force: :cascade do |t|
@@ -164,6 +193,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_04_000001) do
     t.datetime "clicked_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["user_id", "clicked_at"], name: "index_project_clicks_on_user_id_and_clicked_at"
     t.index ["user_id", "repo_name", "clicked_at"], name: "index_project_clicks_on_user_id_and_repo_name_and_clicked_at"
   end
 
@@ -177,6 +207,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_04_000001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id", "repo_name", "viewed_at"], name: "index_project_views_on_user_id_and_repo_name_and_viewed_at"
+    t.index ["user_id", "viewed_at"], name: "index_project_views_on_user_id_and_viewed_at"
+    t.index ["viewed_at"], name: "index_project_views_holding_a_hash", where: "(ip_hash IS NOT NULL)"
   end
 
   create_table "site_visit_counts", force: :cascade do |t|
@@ -389,6 +421,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_04_000001) do
     t.string "x_username"
     t.boolean "show_email", default: false, null: false
     t.boolean "show_x_username", default: false, null: false
+    t.datetime "rolled_up_to"
     t.index ["github_uid"], name: "index_users_on_github_uid", unique: true
     t.index ["signup_ref"], name: "index_users_on_signup_ref"
     t.index ["username"], name: "index_users_on_username", unique: true
@@ -414,6 +447,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_04_000001) do
   add_foreign_key "badge_impressions", "users"
   add_foreign_key "dismissed_commits", "users", on_delete: :cascade
   add_foreign_key "entries", "users"
+  add_foreign_key "entry_click_days", "entries", on_delete: :cascade
+  add_foreign_key "entry_click_days", "users", on_delete: :cascade
   add_foreign_key "entry_clicks", "entries"
   add_foreign_key "entry_clicks", "users"
   add_foreign_key "events", "users"
@@ -421,6 +456,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_04_000001) do
   add_foreign_key "github_activities", "users", on_delete: :cascade
   add_foreign_key "github_repo_star_counts", "github_repos", on_delete: :cascade
   add_foreign_key "github_repos", "users"
+  add_foreign_key "page_counts", "users", on_delete: :cascade
+  add_foreign_key "page_days", "users", on_delete: :cascade
   add_foreign_key "profile_views", "users"
   add_foreign_key "project_clicks", "users", on_delete: :cascade
   add_foreign_key "project_views", "users", on_delete: :cascade
