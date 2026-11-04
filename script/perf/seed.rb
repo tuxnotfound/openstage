@@ -61,4 +61,8 @@ GithubRepo.where(user: heavy).order(:id).first(3).each_with_index do |repo, i|
   end
   batches(counts, SiteVisitCount)
 end
+
+# As the nightly jobs leave them: the days that ended in their totals, their hashes gone.
+User.find_each { |user| Analytics::RollUpService.new(user: user).call! }
+Analytics::ForgetVisitorsService.new.call!
 puts "views #{ProfileView.count} project views #{ProjectView.count} entries #{Entry.count} heavy id #{heavy.id}"
