@@ -11,7 +11,7 @@ key = Rails.application.config.session_options[:key]
 req.cookie_jar.encrypted[key] = { value: { "session_id" => SecureRandom.hex(16), "user_id" => user.id } }
 signed_cookie = Rack::Utils.escape(req.cookie_jar[key])
 
-paths = ARGV.empty? ? %w[/ /heavy /heavy?range=all /heavy/project-1 /api/progress/heavy?range=12m /api/progress/heavy?range=all /dashboard /analytics /api/analytics?range=90d /feed] : ARGV
+paths = ARGV.empty? ? %w[/ /heavy /heavy?range=all /heavy/project-1 /api/progress/heavy?range=12m /api/progress/heavy?range=all /dashboard /analytics /analytics?range=12m /analytics?range=all /api/analytics?range=90d /api/analytics?range=12m /api/analytics?range=all /feed] : ARGV
 paths.each do |path|
   signed = path.start_with?("/dashboard", "/analytics", "/api/analytics")
   session = ActionDispatch::Integration::Session.new(Rails.application)
@@ -35,5 +35,5 @@ paths.each do |path|
   _, queries, bytes, status = runs.last
   sql_ms = queries.sum(&:last)
   puts format("%-34s %3d %7.0fms  %3d queries %6.0fms sql  %6.1fKB", path, status, ms, queries.size, sql_ms, bytes / 1024.0)
-  queries.sort_by { |_, t| -t }.first(3).each { |sql, t| puts format("      %6.1fms  %s", t, sql.gsub(/\s+/, " ")[0, 150]) } if ENV["TOP"]
+  queries.sort_by { |_, t| -t }.first((ENV["TOP"] || 3).to_i.clamp(3, 50)).each { |sql, t| puts format("      %6.1fms  %s", t, sql.gsub(/\s+/, " ")[0, 150]) } if ENV["TOP"]
 end

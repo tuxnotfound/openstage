@@ -1,5 +1,6 @@
 # A heavy builder for performance measurements: three years, 10 projects,
-# about 27,000 commits and 350,000 page views, among 50 other builders.
+# about 27,000 commits, 350,000 page views and a year of site visits on three
+# projects, among 50 other builders.
 # Writes thousands of rows, so it runs only on a database named for it:
 #   DATABASE_URL=postgres:///openstage_perf bin/rails db:create db:schema:load
 #   DATABASE_URL=postgres:///openstage_perf bin/rails runner script/perf/seed.rb
@@ -46,4 +47,18 @@ batches((0...5000).map { at = now - rand(0..364).days; { user_id: heavy.id, entr
 batches((0...3000).map { at = now - rand(0..364).days; { user_id: heavy.id, repo_name: repos.first(3).sample, kind: %w[visit github].sample, clicked_at: at, created_at: at, updated_at: at } }, ProjectClick)
 batches((0...20_000).map { |i| at = now - rand(0..364).days; { user_id: heavy.id, kind: %w[badge embed].sample, viewed_at: at, referrer: "site#{i % 40}.example", created_at: at, updated_at: at } }, BadgeImpression)
 200.times { |i| heavy.subscriptions.create!(email: "s#{i}@example.com", confirmed_at: now - rand(0..364).days, github_repo: (GithubRepo.where(user: heavy).sample if i.odd?)) }
+
+# A year of visits to three projects' websites, as Openstage's script counts them.
+paths = %w[/ /pricing /docs /blog /about /changelog]
+GithubRepo.where(user: heavy).order(:id).first(3).each_with_index do |repo, i|
+  repo.update!(site_source: "script", site_token: "perf-token-#{i}", site_set_up_at: now - 365.days, site_first_visit_at: now - 364.days)
+  days = (0..364).map { |back| (now - back.days).in_time_zone(heavy.zone).to_date }
+  batches(days.map { |day| views = rand(20..400); { github_repo_id: repo.id, day: day, visits: views, visitors: views / 2, created_at: now, updated_at: now } }, SiteVisitDay)
+  counts = days.flat_map do |day|
+    paths.map { |path| { github_repo_id: repo.id, kind: "page", day: day, value: path, count: rand(1..80) } } +
+      hosts.compact.first(5).map { |host| { github_repo_id: repo.id, kind: "source", day: day, value: host, count: rand(1..40) } } +
+      countries.uniq.first(6).map { |code| { github_repo_id: repo.id, kind: "country", day: day, value: code, count: rand(1..30) } }
+  end
+  batches(counts, SiteVisitCount)
+end
 puts "views #{ProfileView.count} project views #{ProjectView.count} entries #{Entry.count} heavy id #{heavy.id}"
