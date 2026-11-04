@@ -1,5 +1,5 @@
 <% content_for :title do %><%= @user.display_name %> (@<%= @user.username %>) — Openstage<% end %>
-<% content_for :meta_description do %><%= @user.bio.presence || "#{@user.display_name} is building in public on Openstage — #{@total_entries} entries, #{@repos_synced} repos, #{@milestones} milestones." %><% end %>
+<% content_for :meta_description do %><%= @user.bio.presence || "#{@user.display_name} is building in public on Openstage — #{pluralize(@total_entries, "entry")}, #{pluralize(@repos_synced, "repo")}, #{pluralize(@milestones, "milestone")}." %><% end %>
 <% content_for :canonical, profile_url(@user.username) %>
 <% content_for :og_type, "profile" %>
 <% content_for :og_image, share_card(og_builder_url(@user.username)) %>

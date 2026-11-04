@@ -10,6 +10,15 @@ RSpec.describe "Profiles", type: :request do
         expect(response).to have_http_status(:success)
       end
 
+      it "counts one of each in the singular in the description of a builder with no bio" do
+        create(:entry, user: user, entry_type: "milestone", source: "manual")
+        create(:github_repo, user: user)
+        get "/testuser"
+
+        description = Nokogiri::HTML(response.body).at_css("meta[name='description']")["content"]
+        expect(description).to end_with("1 entry, 1 repo, 1 milestone.")
+      end
+
       it "does not show README badge snippet" do
         get "/testuser"
         expect(response.body).not_to include("README badge")
@@ -184,7 +193,7 @@ RSpec.describe "Profiles", type: :request do
         get "/builder"
 
         expect(facts).to include("1 entry", "1-day streak")
-        expect(description).to include("1 entries")
+        expect(description).to include("1 entry,")
       end
 
       it "keeps the page of a builder whose public work is all hidden commits, its project and its chart, and counts none" do
