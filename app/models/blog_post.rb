@@ -6,6 +6,14 @@
 class BlogPost
   POSTS = [
     {
+      slug: "rebuilt-around-projects",
+      title: "Product Hunt sent about 150 visits and no signups. So I rebuilt Openstage around projects.",
+      description: "The launch page showed a commit log. Now each project has a page of its own, with visits to its website beside its commits, and Openstage has numbers to reach by November 30.",
+      published_on: Date.new(2026, 11, 4),
+      reading_minutes: 3,
+      chart: "tuxnotfound/openstage"
+    },
+    {
       slug: "rebuilt-on-itself",
       title: "My build-in-public tool showed I had quit. So I rebuilt it on itself.",
       description: "Openstage's own timeline showed 82 days of nothing from its founder. What the page exposed, what was broken underneath, and what the relaunch changed, with the honest numbers.",
