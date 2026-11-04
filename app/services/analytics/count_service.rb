@@ -4,7 +4,8 @@ module Analytics
   # new followers and clicks out on Openstage, by their keys in
   # Progress::Numbers.
   # A page is the builder's own, PAGE, or a project's, by its repo's full
-  # name. Days are in the builder's zone.
+  # name. Days are in the builder's zone. Openstage's own numbers come from
+  # the daily totals, and from the raw rows since (Split).
   class CountService < ApplicationService
     PAGE = "page".freeze
 
