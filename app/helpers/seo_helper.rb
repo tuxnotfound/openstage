@@ -10,8 +10,14 @@ module SeoHelper
     content_for?(:title) ? content_for(:title) : DEFAULT_TITLE
   end
 
+  # Search results show about 160 characters, and Bing flags a longer
+  # description as an error. The cut works on the text, not on content_for's
+  # escaped HTML, so it never splits an entity or escapes it twice.
+  DESCRIPTION_LIMIT = 160
+
   def meta_description
-    content_for?(:meta_description) ? content_for(:meta_description) : DEFAULT_DESCRIPTION
+    text = content_for?(:meta_description) ? CGI.unescapeHTML(content_for(:meta_description).to_str) : DEFAULT_DESCRIPTION
+    text.truncate(DESCRIPTION_LIMIT, separator: " ", omission: "…")
   end
 
   # Defaults to the current path without query string, which collapses
