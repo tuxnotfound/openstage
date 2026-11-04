@@ -45,11 +45,5 @@ RSpec.describe "Badges", type: :request do
         get "/badge/builder"
       }.to change { user.badge_impressions.where(kind: "badge").count }.by(1)
     end
-
-    it "keeps no hash of the viewer's IP address" do
-      get "/badge/builder"
-
-      expect(user.badge_impressions.pluck(Arel.sql("ip_hash"))).to eq([ nil ])
-    end
   end
 end

@@ -20,12 +20,6 @@ RSpec.describe "Project page buttons", type: :request do
     expect(user.project_clicks.last).to have_attributes(repo_name: "builder/side.app", kind: "visit")
   end
 
-  it "keeps no hash of the visitor's IP address" do
-    get "/builder/side.app/visit", headers: browser
-
-    expect(user.project_clicks.pluck(Arel.sql("ip_hash"))).to eq([ nil ])
-  end
-
   it "counts a click on View on GitHub and sends the visitor to the repo" do
     get "/builder/SIDE.APP/github", headers: browser
 

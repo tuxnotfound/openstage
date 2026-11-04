@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_31_093035) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_04_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -19,7 +19,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_31_093035) do
     t.string "kind", null: false
     t.datetime "viewed_at", null: false
     t.string "referrer"
-    t.string "ip_hash"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id", "kind", "viewed_at"], name: "index_badge_impressions_on_user_id_and_kind_and_viewed_at"
@@ -68,7 +67,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_31_093035) do
   create_table "entry_clicks", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "entry_id", null: false
-    t.string "ip_hash"
     t.datetime "clicked_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -163,7 +161,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_31_093035) do
     t.bigint "user_id", null: false
     t.string "repo_name", null: false
     t.string "kind", null: false
-    t.string "ip_hash"
     t.datetime "clicked_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

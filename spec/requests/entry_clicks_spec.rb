@@ -27,12 +27,6 @@ RSpec.describe "EntryClicks", type: :request do
         expect(response).to redirect_to("https://example.com/post")
       end
 
-      it "keeps no hash of the visitor's IP address" do
-        get entry_click_out_path(entry), headers: browser
-
-        expect(EntryClick.pluck(Arel.sql("ip_hash"))).to eq([ nil ])
-      end
-
       it "records a click for signed-in non-owners" do
         sign_in_as(visitor)
         expect {
