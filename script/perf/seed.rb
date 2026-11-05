@@ -38,9 +38,9 @@ end
 
 hosts = [ "news.ycombinator.com", "x.com", "github.com", nil, "www.google.com", "bsky.app", "reddit.com", "linkedin.com" ]
 countries = %w[US US US DE GB PT IN FR BR CA NL ES IT JP AU PL SE]
-views = (0...200_000).map { |i| at = now - rand(0..364).days - rand(0..86_000).seconds; { user_id: heavy.id, viewed_at: at, referrer: hosts.sample, ip_hash: "h#{i % 40_000}", country: countries.sample, created_at: at, updated_at: at } }
+views = (0...200_000).map { |i| at = now - rand(0..364).days - rand(0..86_000).seconds; { user_id: heavy.id, viewed_at: at, referrer: hosts.sample, ip_hash: "h#{i % 40_000}-#{at.to_date}", country: countries.sample, created_at: at, updated_at: at } }
 batches(views, ProfileView)
-pviews = (0...150_000).map { |i| at = now - rand(0..364).days - rand(0..86_000).seconds; { user_id: heavy.id, repo_name: repos.sample, viewed_at: at, referrer: hosts.sample, ip_hash: "p#{i % 30_000}", country: countries.sample, created_at: at, updated_at: at } }
+pviews = (0...150_000).map { |i| at = now - rand(0..364).days - rand(0..86_000).seconds; { user_id: heavy.id, repo_name: repos.sample, viewed_at: at, referrer: hosts.sample, ip_hash: "p#{i % 30_000}-#{at.to_date}", country: countries.sample, created_at: at, updated_at: at } }
 batches(pviews, ProjectView)
 linked = Entry.where(user: heavy).where.not(url: nil).limit(50).pluck(:id)
 batches((0...5000).map { at = now - rand(0..364).days; { user_id: heavy.id, entry_id: linked.sample, clicked_at: at, created_at: at, updated_at: at } }, EntryClick)
