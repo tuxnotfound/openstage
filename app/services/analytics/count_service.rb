@@ -46,12 +46,12 @@ module Analytics
       [ merge(sums.to_h { |page, date, visits, _| [ [ page, date ], visits ] }), merge(sums.to_h { |page, date, _, visitors| [ [ page, date ], visitors ] }) ]
     end
 
-    # A visitor is a distinct IP hash, which changes daily, so each day counts
-    # its own.
+    # A visitor is a distinct PageVisitor, which changes daily, so each day
+    # counts its own.
     def visitors_of_pages
       merge(page_days.to_h { |page, date, _, visitors| [ [ page, date ], visitors ] },
-            by_day(split.raw(user.profile_views, "profile_views.viewed_at"), "profile_views.viewed_at", distinct: "profile_views.ip_hash"),
-            by_day(split.raw(user.project_views, "project_views.viewed_at"), "project_views.viewed_at", "project_views.repo_name", distinct: "project_views.ip_hash"))
+            by_day(split.raw(user.profile_views, "profile_views.viewed_at"), "profile_views.viewed_at", distinct: PageVisitor.of("profile_views")),
+            by_day(split.raw(user.project_views, "project_views.viewed_at"), "project_views.viewed_at", "project_views.repo_name", distinct: PageVisitor.of("project_views")))
     end
 
     def views

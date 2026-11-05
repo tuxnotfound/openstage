@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_04_000003) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_05_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -180,6 +180,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_04_000003) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "country"
+    t.uuid "visitor"
     t.index ["user_id", "country"], name: "index_profile_views_on_user_id_and_country"
     t.index ["user_id", "viewed_at"], name: "index_profile_views_on_user_id_and_viewed_at"
     t.index ["user_id"], name: "index_profile_views_on_user_id"
@@ -206,6 +207,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_04_000003) do
     t.string "country"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "visitor"
     t.index ["user_id", "repo_name", "viewed_at"], name: "index_project_views_on_user_id_and_repo_name_and_viewed_at"
     t.index ["user_id", "viewed_at"], name: "index_project_views_on_user_id_and_viewed_at"
     t.index ["viewed_at"], name: "index_project_views_holding_a_hash", where: "(ip_hash IS NOT NULL)"

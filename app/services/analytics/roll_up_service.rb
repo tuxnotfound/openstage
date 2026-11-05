@@ -42,7 +42,7 @@ module Analytics
 
     def add_days(views, page, day, table)
       columns = [ page, day ].map { |sql| Arel.sql(sql) }
-      rows = views.group(*columns).pluck(*columns, Arel.sql("COUNT(*)"), Arel.sql("COUNT(DISTINCT #{table}.ip_hash)"))
+      rows = views.group(*columns).pluck(*columns, Arel.sql("COUNT(*)"), Arel.sql("COUNT(DISTINCT #{PageVisitor.of(table)})"))
       PageDay.add(rows.map { |name, date, views_on_day, visitors| { user_id: user.id, page: name, day: date, views: views_on_day, visitors: visitors } })
     end
 

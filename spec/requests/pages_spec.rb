@@ -50,7 +50,8 @@ RSpec.describe "Marketing pages", type: :request do
       expect(own_pages).to include(
         "and a hash of your IP address with the date, not the address itself. The hash is made with a secret key, so " \
         "without that key it cannot be turned back into the address.",
-        "Openstage deletes it within three days, once the day's visitors are counted.",
+        "Openstage deletes it within three days and keeps a random ID in its place, which says only which of that day's " \
+        "visits came from the same visitor.",
         "A click on a page's links records the link and the time.",
         "Openstage's request log leaves out your IP address, on its own pages and for the script's page views."
       )

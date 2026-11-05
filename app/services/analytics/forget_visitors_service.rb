@@ -1,8 +1,9 @@
 module Analytics
   # Deletes the hashes of page visitors on days that are over everywhere,
   # before yesterday in UTC, as SiteVisits::ForgetVisitorsService does for
-  # websites. A hash goes only once the rollup has counted it: without it the
-  # day's visitors could never be counted.
+  # websites. A random id takes each one's place, for that builder alone, so
+  # the raw rows can still count the day's visitors. A hash kept would lead
+  # back to the address: anyone with the key could try every one.
   class ForgetVisitorsService < ApplicationService
     attr_reader :forgotten
 
@@ -14,8 +15,14 @@ module Analytics
     end
 
     def forget(views)
-      views.joins(:user).where(viewed_at: ...@before).where.not(ip_hash: nil)
-           .where("#{views.table_name}.viewed_at < users.rolled_up_to").update_all(ip_hash: nil)
+      table = views.table_name
+      held = views.where(viewed_at: ...@before).where.not(ip_hash: nil)
+      ids = held.group(:user_id, :ip_hash).select(:user_id, :ip_hash, "gen_random_uuid() AS visitor")
+      views.connection.update(<<~SQL.squish)
+        UPDATE #{table} SET visitor = ids.visitor, ip_hash = NULL FROM (#{ids.to_sql}) ids
+        WHERE #{table}.user_id = ids.user_id AND #{table}.ip_hash = ids.ip_hash
+          AND #{table}.ip_hash IS NOT NULL AND #{table}.viewed_at < #{views.connection.quote(@before)}
+      SQL
     end
   end
 end
