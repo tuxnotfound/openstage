@@ -27,7 +27,7 @@ production:
   purge_deleted_users:
     class: PurgeDeletedUsersJob
     schedule: every day at 4am
-  # The privacy page promises a visitor's hash goes within two days.
+  # The privacy page promises a visitor's hash goes within three days.
   forget_site_visitors:
     class: ForgetSiteVisitorsJob
     schedule: every day at 3am
@@ -36,7 +36,7 @@ production:
     class: RollUpFanoutJob
     schedule: every day at 2am
   # After the rollup: a hash it has not counted stays for the next night. The
-  # privacy page promises it goes within two days.
+  # privacy page promises it goes within three days.
   forget_page_visitors:
     class: ForgetPageVisitorsJob
     schedule: every day at 3am

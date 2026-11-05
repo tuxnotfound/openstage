@@ -16,7 +16,7 @@ RSpec.describe "Marketing pages", type: :request do
       get "/privacy"
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("On a builder's website", "deletes it within two days")
+      expect(response.body).to include("On a builder's website", "deletes it within three days")
       expect(Nokogiri::HTML(response.body).text.squish).to include(
         "Openstage does not count views from bots, from sites other than the project's own, or on a project's site while its counting is off or paused."
       )
@@ -37,7 +37,7 @@ RSpec.describe "Marketing pages", type: :request do
         "like an email address, and most that look like a long id or token.",
         "Once a day, it also counts the name of the site you came from, the ref or utm_source tag in the " \
         "page's address, and your country as Cloudflare reports it.",
-        "deletes it within two days. For an IPv6 address, it hashes only the first half, the part that names your network. " \
+        "deletes it within three days. For an IPv6 address, it hashes only the first half, the part that names your network. " \
         "It does not keep your IP address or your device."
       )
     end
@@ -50,12 +50,12 @@ RSpec.describe "Marketing pages", type: :request do
       expect(own_pages).to include(
         "and a hash of your IP address with the date, not the address itself. The hash is made with a secret key, so " \
         "without that key it cannot be turned back into the address.",
-        "Openstage deletes it within two days, once the day's visitors are counted.",
+        "Openstage deletes it within three days, once the day's visitors are counted.",
         "A click on a page's links records the link and the time.",
         "Openstage's request log leaves out your IP address, on its own pages and for the script's page views."
       )
       expect(own_pages).not_to include("the same hash")
-      expect(page.text.squish).to include("Updated November 4, 2026.")
+      expect(page.text.squish).to include("Updated November 5, 2026.")
     end
   end
 
