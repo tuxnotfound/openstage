@@ -42,6 +42,8 @@ class User < ApplicationRecord
   # the owner digest and the gates.
   scope :counted, -> { active.where(internal: false) }
 
+  normalizes :time_zone, with: ->(zone) { ActiveSupport::TimeZone[zone.to_s] ? zone.to_s : nil }
+
   validates :github_uid, presence: true, uniqueness: true
   validates :username, presence: true, uniqueness: { case_sensitive: false },
                        format: { with: /\A[a-zA-Z0-9_-]+\z/, message: "only allows letters, numbers, hyphens, and underscores" },

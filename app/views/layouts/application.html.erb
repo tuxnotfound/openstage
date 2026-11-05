@@ -67,6 +67,7 @@
 
     <% unless content_for?(:minimal_page) %>
       <%= render "layouts/footer" %>
+      <%= tag.div(hidden: true, data: { controller: "zone", zone_url_value: settings_zone_path }) if user_signed_in? && current_user.time_zone.blank? %>
     <% end %>
   </body>
 </html>

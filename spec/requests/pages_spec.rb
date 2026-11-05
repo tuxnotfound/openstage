@@ -42,6 +42,12 @@ RSpec.describe "Marketing pages", type: :request do
       )
     end
 
+    it "says a builder's time zone is saved, and where it changes" do
+      get "/privacy"
+
+      expect(Nokogiri::HTML(response.body).text.squish).to include("Openstage also saves your browser's time zone to count your days in it, and you can change it in Settings.")
+    end
+
     it "says what a visit and a click on Openstage's own pages keep, and that its request log leaves out the address" do
       get "/privacy"
 

@@ -98,6 +98,7 @@ Rails.application.routes.draw do
   get "/settings", to: "settings#show",            as: :settings
   patch "/settings", to: "settings#update"
   patch "/settings/username", to: "settings#update_username", as: :settings_username
+  patch "/settings/zone", to: "settings#update_zone", as: :settings_zone
   delete "/settings", to: "settings#destroy"
 
   # Health check

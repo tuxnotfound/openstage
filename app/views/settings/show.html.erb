@@ -70,6 +70,10 @@
             <%= f.check_box field, class: "os-switch mt-1" %>
           </div>
         <% end %>
+        <div class="os-row flex items-center justify-between gap-[18px] py-3.5">
+          <%= f.label :time_zone, "Time zone", class: "font-bold" %>
+          <%= f.select :time_zone, zone_options(current_user.time_zone), { include_blank: current_user.time_zone.blank? }, class: "os-field w-auto min-w-0" %>
+        </div>
         <div class="pt-3"><%= f.submit "Save changes", class: "os-btn" %></div>
       </section>
     <% end %>

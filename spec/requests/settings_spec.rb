@@ -189,6 +189,62 @@ RSpec.describe "Settings", type: :request do
     end
   end
 
+  describe "PATCH /settings/zone" do
+    it "needs a builder" do
+      patch settings_zone_path, params: { time_zone: "Asia/Tokyo" }
+
+      expect(response).to redirect_to(root_path)
+    end
+
+    context "when signed in" do
+      before { sign_in_as(user) }
+
+      it "saves the zone the browser reports, and only the first" do
+        patch settings_zone_path, params: { time_zone: "Asia/Tokyo" }
+        expect(response).to have_http_status(:no_content)
+        expect(user.reload.time_zone).to eq("Asia/Tokyo")
+
+        patch settings_zone_path, params: { time_zone: "Europe/Lisbon" }
+        expect(user.reload.time_zone).to eq("Asia/Tokyo")
+      end
+
+      it "leaves out a zone that does not exist" do
+        patch settings_zone_path, params: { time_zone: "Mars/Olympus" }
+
+        expect(response).to have_http_status(:no_content)
+        expect(user.reload.time_zone).to be_nil
+      end
+    end
+  end
+
+  describe "the builder's zone" do
+    before { sign_in_as(user) }
+
+    it "is asked of the browser only while they have none" do
+      get settings_path
+      expect(response.body).to include('data-controller="zone"')
+
+      user.update!(time_zone: "Asia/Tokyo")
+      get settings_path
+      expect(response.body).not_to include('data-controller="zone"')
+    end
+
+    it "changes in Settings, and the form keeps one the list leaves out" do
+      patch settings_path, params: { user: { time_zone: "America/New_York" } }
+      expect(user.reload.time_zone).to eq("America/New_York")
+
+      user.update!(time_zone: "Asia/Calcutta")
+      get settings_path
+      expect(Nokogiri::HTML(response.body).at_css("select#user_time_zone option[selected]")["value"]).to eq("Asia/Calcutta")
+    end
+
+    it "stays empty when the form is saved without one, so the browser can still set it" do
+      patch settings_path, params: { user: { display_name: "New Name", time_zone: "" } }
+
+      expect(user.reload.time_zone).to be_nil
+    end
+  end
+
   describe "PATCH /settings/username" do
     context "when signed in and username change is allowed" do
       before { sign_in_as(user) }

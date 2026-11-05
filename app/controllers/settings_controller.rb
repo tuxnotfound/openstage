@@ -34,6 +34,13 @@ class SettingsController < ApplicationController
     end
   end
 
+  # What the builder's browser reports, until they have a zone. After that it
+  # changes only in Settings.
+  def update_zone
+    current_user.update(time_zone: params[:time_zone]) if current_user.time_zone.blank?
+    head :no_content
+  end
+
   def destroy
     service = Users::DeleteService.new(user: current_user)
     return redirect_to(settings_path, alert: service.errors.full_messages.to_sentence) unless service.call
@@ -56,6 +63,6 @@ class SettingsController < ApplicationController
 
   def profile_params
     params.require(:user).permit(:display_name, :bio, :website_url, :building_since, :email, :show_email, :x_username, :show_x_username,
-                                 :weekly_email, :branch_commits)
+                                 :weekly_email, :branch_commits, :time_zone)
   end
 end
