@@ -64,6 +64,19 @@ RSpec.describe "Analytics after the rollup" do
     expect(shown).to eq(raw)
   end
 
+  it "shows a builder who moved zone what the raw rows show there, with the hashes gone" do
+    user.update!(time_zone: "Asia/Tokyo")
+    in_tokyo = shown
+    user.update!(time_zone: "America/Los_Angeles")
+
+    Analytics::RollUpService.new(user: user).call!
+    Analytics::ForgetVisitorsService.new.call!
+    user.update!(time_zone: "Asia/Tokyo")
+    Analytics::RollUpService.new(user: user).call!
+
+    expect(shown).to eq(in_tokyo)
+  end
+
   it "counts a click for the project its entry moved to, and drops it with the entry" do
     Analytics::RollUpService.new(user: user).call!
     clicks_on = ->(page) { Analytics::CountService.new(user: User.find(user.id), from: nil).tap(&:call!).counts["clicks"].fetch(page, {}).values.sum }

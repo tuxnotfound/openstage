@@ -76,18 +76,21 @@ RSpec.describe Analytics::RollUpService do
     expect(user.rolled_up_to).to eq(Time.utc(2026, 10, 24, 7))
   end
 
-  it "adds the rest of a day a move to another zone left open, and never goes back" do
-    create(:profile_view, user: user, viewed_at: Time.utc(2026, 10, 25, 2), ip_hash: "a") # the 24th in Los Angeles
+  it "counts every past day again after a move to another zone, the hashes gone too" do
+    2.times { create(:profile_view, user: user, viewed_at: Time.utc(2026, 10, 23, 6), ip_hash: "a", referrer: "x.com") } # the 22nd there, the 23rd in Tokyo
+    entry = create(:entry, user: user, entry_type: "milestone", source: "manual", url: "https://a.example")
+    EntryClick.create!(user: user, entry: entry, clicked_at: Time.utc(2026, 10, 23, 6))
     roll_up
+    expect(user.page_days.pluck(:day, :views, :visitors)).to eq([ [ day - 1, 2, 1 ] ])
+
+    Analytics::ForgetVisitorsService.new.call!
     user.update!(time_zone: "Asia/Tokyo")
-    create(:profile_view, user: user, viewed_at: Time.utc(2026, 10, 25, 8), ip_hash: "b") # the 25th in Tokyo
-
     roll_up
-    expect([ user.page_days.count, user.rolled_up_to ]).to eq([ 1, Time.utc(2026, 10, 25, 7) ])
 
-    travel 1.day
-    roll_up
-    expect(user.page_days.order(:day).pluck(:day, :views)).to eq([ [ day + 1, 1 ], [ day + 2, 1 ] ])
+    expect(user.page_days.pluck(:day, :views, :visitors)).to eq([ [ day, 2, 1 ] ])
+    expect(user.page_counts.pluck(:day, :count)).to eq([ [ day, 2 ] ])
+    expect(user.entry_click_days.pluck(:day, :clicks)).to eq([ [ day, 1 ] ])
+    expect([ user.rolled_up_to, user.rolled_up_zone ]).to eq([ Time.utc(2026, 10, 24, 15), "Asia/Tokyo" ])
   end
 
   it "goes with the builder" do

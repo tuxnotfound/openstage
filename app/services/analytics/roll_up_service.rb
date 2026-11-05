@@ -2,8 +2,9 @@ module Analytics
   # Adds the builder's days that are over to their totals (PageDay, PageCount,
   # EntryClickDay), on the builder's day, and moves User#rolled_up_to past
   # them, in one transaction, so each row is added once however often this
-  # runs. A builder who moves zone keeps the days already added as they
-  # counted them, as site visits do. Their first run adds their whole history.
+  # runs. Their first run adds their whole history. A builder's days are those
+  # of their zone now, so after a move the next run starts over from the raw
+  # rows. Site visits keep no raw rows, so theirs stay as they were counted.
   class RollUpService < ApplicationService
     # A view can still be saving as its day ends.
     SETTLING = 5.minutes
@@ -18,9 +19,15 @@ module Analytics
 
     def execute
       user.with_lock do
+        start_over if user.rolled_up_zone != user.zone.name
         @until = SETTLING.ago.in_time_zone(user.zone).beginning_of_day
         add_everything if user.rolled_up_to.nil? || user.rolled_up_to < @until
       end
+    end
+
+    def start_over
+      [ user.page_days, user.page_counts, user.entry_click_days ].each(&:delete_all)
+      user.update_columns(rolled_up_to: nil)
     end
 
     def add_everything
@@ -29,7 +36,7 @@ module Analytics
       add_buttons
       add_badges
       add_entry_clicks
-      user.update_columns(rolled_up_to: @until)
+      user.update_columns(rolled_up_to: @until, rolled_up_zone: user.zone.name)
     end
 
     def add_views(all, page)
