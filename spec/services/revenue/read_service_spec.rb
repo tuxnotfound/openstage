@@ -1,0 +1,66 @@
+require "rails_helper"
+
+RSpec.describe Revenue::ReadService do
+  let(:user) { create(:user, time_zone: "UTC") }
+  let(:account) { user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok") }
+  let(:last_page) { { data: [], has_more: false } }
+
+  def line(subscription, from, to, amount: 1900, price: "price_m")
+    { object: "line_item", amount: amount, currency: "usd", discount_amounts: [],
+      parent: { type: "subscription_item_details", subscription_item_details: { subscription: subscription, proration: false } },
+      pricing: { type: "price_details", price_details: { price: price, product: "prod_1" } },
+      period: { start: Time.utc(*from).to_i, end: Time.utc(*to).to_i } }
+  end
+
+  def invoice(id, *lines, more: false)
+    { id: id, object: "invoice", status: "paid", lines: { object: "list", data: lines, has_more: more } }
+  end
+
+  before do
+    travel_to Time.utc(2026, 11, 7, 5)
+    allow(StripeGateway).to receive(:products).and_return(data: [ { id: "prod_1", name: "Shipnote Pro", active: true } ], has_more: false)
+    allow(StripeGateway).to receive(:prices)
+      .and_return(data: [ { id: "price_m", recurring: { interval: "month", interval_count: 1 } } ], has_more: false)
+    allow(StripeGateway).to receive(:subscriptions).with("rk_test_ok", status: "all", limit: 100)
+                                                   .and_return(data: [ { id: "sub_1", ended_at: nil } ], has_more: false)
+  end
+
+  def days
+    RevenueDay.order(:day).pluck(:day, :mrr, :subscriptions)
+  end
+
+  it "reads every paid invoice into the product's days, from the first sale to today" do
+    allow(StripeGateway).to receive(:invoices).with("rk_test_ok", status: "paid", limit: 100)
+                                              .and_return(data: [ invoice("in_2", line("sub_1", [ 2026, 11, 1 ], [ 2026, 12, 1 ])) ], has_more: true)
+    allow(StripeGateway).to receive(:invoices).with("rk_test_ok", status: "paid", limit: 100, starting_after: "in_2")
+                                              .and_return(data: [ invoice("in_1", line("sub_1", [ 2026, 10, 1 ], [ 2026, 11, 1 ])) ], has_more: false)
+
+    described_class.new(account: account).call!
+
+    expect(days.first).to eq([ Date.new(2026, 10, 1), 1900, 1 ])
+    expect(days.last).to eq([ Date.new(2026, 11, 7), 1900, 1 ])
+    expect(days.size).to eq(38)
+    expect(account.reload.read_at).to eq(Time.current)
+    expect(RevenueDay.first.revenue_product).to eq(account.revenue_products.sole)
+  end
+
+  it "reads the rest of an invoice's lines when it carries only the first" do
+    allow(StripeGateway).to receive(:invoices).and_return(data: [ invoice("in_1", more: true) ], has_more: false)
+    allow(StripeGateway).to receive(:invoice_lines).with("rk_test_ok", "in_1", limit: 100)
+                                                   .and_return(data: [ line("sub_1", [ 2026, 11, 1 ], [ 2026, 12, 1 ]).merge(id: "il_1") ], has_more: false)
+
+    described_class.new(account: account).call!
+
+    expect(days.last).to eq([ Date.new(2026, 11, 7), 1900, 1 ])
+  end
+
+  it "replaces what the last read wrote" do
+    allow(StripeGateway).to receive(:invoices).and_return(data: [ invoice("in_1", line("sub_1", [ 2026, 11, 1 ], [ 2026, 12, 1 ])) ], has_more: false)
+    described_class.new(account: account).call!
+    allow(StripeGateway).to receive(:invoices).and_return(last_page)
+
+    described_class.new(account: account).call!
+
+    expect(RevenueDay.count).to eq(0)
+  end
+end

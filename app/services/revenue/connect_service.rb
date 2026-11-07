@@ -3,8 +3,8 @@ module Revenue
   # it. Only a restricted key is taken: a secret key can also charge and
   # refund. Before it is kept, it must read everything MRR is made of, and a
   # key that misses a read is refused, naming it. Outside production a test
-  # key works too. Connecting again replaces the key. Its products are read
-  # next, in the background.
+  # key works too. Connecting again replaces the key. Its products and
+  # revenue are read next, in the background.
   class ConnectService < ApplicationService
     # What the key must read, as Stripe's key settings name them.
     READS = %w[Products Prices Subscriptions Invoices].freeze
@@ -27,7 +27,7 @@ module Revenue
       @account.update(api_key: api_key)
       return unless absorb_errors(@account)
 
-      after_commit { ImportRevenueProductsJob.perform_later(@account.id) }
+      after_commit { ReadRevenueJob.perform_later(@account.id) }
     end
 
     # The reads the key lacks, a 403 each. A 401 is a key Stripe does not

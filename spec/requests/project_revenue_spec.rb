@@ -43,6 +43,21 @@ RSpec.describe "A project's Revenue (MRR) row", type: :request do
     expect(row.text).to include("Verified with Stripe, from Shipnote monthly.")
   end
 
+  it "shows the project's MRR and paying customers on the last day read, and each product's own" do
+    account = connect
+    account.update!(read_at: Time.current)
+    monthly = account.revenue_products.create!(external_id: "prod_m", name: "Shipnote monthly", github_repo: shipnote)
+    yearly = account.revenue_products.create!(external_id: "prod_y", name: "Shipnote yearly", github_repo: shipnote)
+    today = Time.current.in_time_zone(user.zone).to_date
+    monthly.revenue_days.create!(day: today, currency: "usd", mrr: 361_000, subscriptions: 190)
+    yearly.revenue_days.create!(day: today, currency: "usd", mrr: 60_000, subscriptions: 40)
+    yearly.revenue_days.create!(day: today - 1, currency: "usd", mrr: 1, subscriptions: 1)
+
+    section = row
+    expect(section.at_css(".os-row .os-num").text).to eq("$4,210")
+    expect(section.text.squish).to include("Paying customers 230", "$3,610 MRR · 190 subscriptions", "$600 MRR · 40 subscriptions")
+  end
+
   it "says the products are on their way until Stripe's are read" do
     connect.update!(products_read_at: nil)
 

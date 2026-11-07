@@ -3,7 +3,7 @@ module Revenue
   # their subscriptions can still pay. A product's name follows Stripe's, and
   # the project it counts for stays. A product gone from Stripe goes here too.
   class ImportProductsService < ApplicationService
-    PAGE = 100
+    include Paging
 
     attr_accessor :account
 
@@ -12,24 +12,12 @@ module Revenue
     private
 
     def execute
-      products = read_all
+      products = all_items(->(params) { StripeGateway.products(account.api_key, **params) })
       transaction do
         keep(products)
         account.revenue_products.where.not(external_id: products.pluck(:id)).delete_all
         account.update!(products_read_at: Time.current)
       end
-    end
-
-    def read_all
-      products = []
-      loop do
-        params = { limit: PAGE }
-        params[:starting_after] = products.last[:id] if products.any?
-        page = StripeGateway.products(account.api_key, **params)
-        products.concat(page[:data])
-        break unless page[:has_more]
-      end
-      products
     end
 
     def keep(products)

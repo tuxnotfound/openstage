@@ -1,15 +1,17 @@
-<%# A project's Revenue (MRR) row: where its MRR comes from and who sees it.
-    Change products opens its Stripe products under it, each with a switch;
-    one counted for another project is shown off and locked. Without Stripe
+<%# A project's Revenue (MRR) row: its MRR on the last day read, where it
+    comes from and who sees it, and under it its paying customers. Change
+    products opens its Stripe products under it, each with its own MRR and a
+    switch; one counted for another project is shown off and locked. Without Stripe
     connected, the row leads to Integrations; while Free counts another
     project, Go Pro stands in its place. %>
 <% account = overview.revenue_account %>
 <% line, state = revenue_status(repo, overview) %>
+<% figure, paying = revenue_now(repo, overview) %>
 <div id="revenue" class="scroll-mt-6" data-controller="toggle" data-toggle-open-value="<%= params[:revenue] == "open" %>">
   <div class="os-row flex items-center gap-3.5 py-3">
     <span class="min-w-0 flex-auto">
       <span class="font-bold">Revenue (MRR)</span>
-      <span class="os-num os-muted text-sm">–</span>
+      <span class="os-num os-muted text-sm"><%= figure || "–" %></span>
       <span class="os-xs os-muted block"><%= line %></span>
     </span>
     <% if account.nil? %>
@@ -41,7 +43,7 @@
         <p class="os-label m-0">Stripe products that belong to <%= repo.name %></p>
         <% overview.revenue_products.each do |product| %>
           <% on = product.github_repo_id == repo.id %>
-          <% note = revenue_product_note(repo, product) %>
+          <% note = revenue_product_note(repo, product, overview) %>
           <div class="os-row flex items-center gap-3 py-2.5">
             <span class="min-w-0 flex-auto">
               <span class="font-semibold"><%= product.name %></span>
@@ -59,6 +61,17 @@
           </div>
         <% end %>
       <% end %>
+    </div>
+  <% end %>
+
+  <% if figure %>
+    <div class="os-row flex items-center gap-3.5 py-3">
+      <span class="min-w-0 flex-auto">
+        <span class="font-bold">Paying customers</span>
+        <span class="os-num os-muted text-sm"><%= number_with_delimiter(paying) %></span>
+        <span class="os-xs os-muted block">Active subscriptions, from the same Stripe products.</span>
+      </span>
+      <% if state.present? %><span class="os-xs os-muted whitespace-nowrap"><%= state %></span><% end %>
     </div>
   <% end %>
 </div>

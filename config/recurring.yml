@@ -39,3 +39,7 @@ production:
   forget_page_visitors:
     class: ForgetPageVisitorsJob
     schedule: every day at 3am
+  # Every connected Stripe account, read again into each product's daily MRR.
+  read_revenue:
+    class: ReadRevenueFanoutJob
+    schedule: every day at 5am

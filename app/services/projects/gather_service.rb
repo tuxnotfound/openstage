@@ -14,9 +14,10 @@ module Projects
     # Free's slot instead of this one, nil when this one can count.
     # revenue_account: the builder's Stripe account, nil until connected;
     # revenue_products: its products, listed; revenue_slot_project: as
-    # slot_project, for MRR (Revenue::Slot).
+    # slot_project, for MRR (Revenue::Slot); revenue_days: each product's
+    # RevenueDays on the last day read, by product id.
     attr_reader :project, :commits, :last_commit, :site_visits, :site_visitors, :last_site_visit, :site_state, :slot_project,
-                :revenue_account, :revenue_products, :revenue_slot_project
+                :revenue_account, :revenue_products, :revenue_slot_project, :revenue_days
 
     validates :repo, presence: true
 
@@ -55,6 +56,8 @@ module Projects
       @revenue_account = user.revenue_accounts.find_by(provider: "stripe")
       @revenue_products = @revenue_account ? @revenue_account.revenue_products.listed.includes(:github_repo).to_a : []
       @revenue_slot_project = Revenue::Slot.new(user).instead_of(repo)
+      read_day = @revenue_account&.read_at&.in_time_zone(user.zone)&.to_date
+      @revenue_days = read_day ? RevenueDay.where(revenue_product_id: @revenue_products.map(&:id), day: read_day).group_by(&:revenue_product_id) : {}
     end
   end
 end

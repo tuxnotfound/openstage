@@ -1,4 +1,4 @@
-class ImportRevenueProductsJob < ApplicationJob
+class ReadRevenueJob < ApplicationJob
   queue_as :default
 
   # Stripe's outages and rate limits pass; a key revoked or gone fails for
@@ -8,6 +8,6 @@ class ImportRevenueProductsJob < ApplicationJob
 
   def perform(account_id)
     account = RevenueAccount.find_by(id: account_id)
-    Revenue::ImportProductsService.new(account: account).call! if account
+    Revenue::ReadService.new(account: account).call! if account
   end
 end

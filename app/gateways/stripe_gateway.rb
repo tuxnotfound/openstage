@@ -46,6 +46,11 @@ class StripeGateway < ApplicationGateway
     page(api_key) { |client| client.v1.invoices.list(params) }
   end
 
+  # The lines of one invoice, past the first ones it carries.
+  def self.invoice_lines(api_key, invoice_id, **params)
+    page(api_key) { |client| client.v1.invoices.line_items.list(invoice_id, params) }
+  end
+
   def self.page(api_key)
     list = yield Stripe::StripeClient.new(api_key)
     { data: list.data.map(&:to_hash), has_more: list.has_more }
