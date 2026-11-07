@@ -34,6 +34,28 @@ RSpec.describe StripeGateway do
     end
   end
 
+  describe ".products" do
+    it "reads a page of the builder's products with their own key, as hashes" do
+      stub_request(:get, "https://api.stripe.com/v1/products?limit=1")
+        .with(headers: { "Authorization" => "Bearer rk_test_builder" })
+        .to_return(status: 200, headers: json, body: { object: "list", has_more: true, url: "/v1/products",
+                                                       data: [ { id: "prod_1", object: "product", name: "Shipnote Pro" } ] }.to_json)
+
+      page = described_class.products("rk_test_builder", limit: 1)
+
+      expect(page).to eq(data: [ { id: "prod_1", object: "product", name: "Shipnote Pro" } ], has_more: true)
+    end
+
+    it "turns a read the key lacks into Unauthorized, with Stripe's 403" do
+      stub_request(:get, "https://api.stripe.com/v1/products?limit=1")
+        .to_return(status: 403, headers: json, body: { error: { message: "The provided key does not have the required permissions.",
+                                                                type: "invalid_request_error" } }.to_json)
+
+      expect { described_class.products("rk_test_builder", limit: 1) }
+        .to raise_error(ApplicationGateway::Unauthorized) { |error| expect(error.status).to eq(403) }
+    end
+  end
+
   describe ".billing_portal_url" do
     it "opens the customer's billing page and returns its address" do
       stub_request(:post, "https://api.stripe.com/v1/billing_portal/sessions")

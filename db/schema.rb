@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_05_000002) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_07_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -211,6 +211,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_05_000002) do
     t.index ["user_id", "repo_name", "viewed_at"], name: "index_project_views_on_user_id_and_repo_name_and_viewed_at"
     t.index ["user_id", "viewed_at"], name: "index_project_views_on_user_id_and_viewed_at"
     t.index ["viewed_at"], name: "index_project_views_holding_a_hash", where: "(ip_hash IS NOT NULL)"
+  end
+
+  create_table "revenue_accounts", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "provider", null: false
+    t.text "api_key", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "provider"], name: "index_revenue_accounts_on_user_id_and_provider", unique: true
   end
 
   create_table "site_visit_counts", force: :cascade do |t|
@@ -464,6 +473,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_05_000002) do
   add_foreign_key "profile_views", "users"
   add_foreign_key "project_clicks", "users", on_delete: :cascade
   add_foreign_key "project_views", "users", on_delete: :cascade
+  add_foreign_key "revenue_accounts", "users", on_delete: :cascade
   add_foreign_key "site_visit_counts", "github_repos", on_delete: :cascade
   add_foreign_key "site_visit_days", "github_repos", on_delete: :cascade
   add_foreign_key "site_visitors", "github_repos", on_delete: :cascade

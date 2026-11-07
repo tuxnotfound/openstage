@@ -59,6 +59,9 @@ Rails.application.routes.draw do
     resource :numbers, only: :update, module: :projects
   end
 
+  # A payment provider connected for projects' MRR, on Settings' Integrations tab.
+  resources :revenue_accounts, only: [ :create, :destroy ]
+
   # Repo management. index is the Settings frame that checks GitHub first.
   resources :github_repos, only: [ :index, :update ]
 
