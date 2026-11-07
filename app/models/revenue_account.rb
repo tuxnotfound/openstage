@@ -5,6 +5,8 @@ class RevenueAccount < ApplicationRecord
   PROVIDERS = %w[stripe].freeze
 
   belongs_to :user
+  # The database deletes them with the account too.
+  has_many :revenue_products, dependent: :delete_all
 
   encrypts :api_key
 

@@ -12,7 +12,11 @@ module Projects
     # last_site_visit: when the latest counted; site_state: :counting,
     # :paused, :off or :no_website; slot_project: the project that holds
     # Free's slot instead of this one, nil when this one can count.
-    attr_reader :project, :commits, :last_commit, :site_visits, :site_visitors, :last_site_visit, :site_state, :slot_project
+    # revenue_account: the builder's Stripe account, nil until connected;
+    # revenue_products: its products, listed; revenue_slot_project: as
+    # slot_project, for MRR (Revenue::Slot).
+    attr_reader :project, :commits, :last_commit, :site_visits, :site_visitors, :last_site_visit, :site_state, :slot_project,
+                :revenue_account, :revenue_products, :revenue_slot_project
 
     validates :repo, presence: true
 
@@ -30,6 +34,7 @@ module Projects
       slot = SiteVisits::Slot.new(user)
       @slot_project = slot.instead_of(repo)
       @site_state = site_state_now(slot.state(repo))
+      gather_revenue
     end
 
     def user
@@ -44,6 +49,12 @@ module Projects
     # script has nowhere to count without one.
     def site_state_now(state)
       state != :paused && repo.site_host.nil? ? :no_website : state
+    end
+
+    def gather_revenue
+      @revenue_account = user.revenue_accounts.find_by(provider: "stripe")
+      @revenue_products = @revenue_account ? @revenue_account.revenue_products.listed.includes(:github_repo).to_a : []
+      @revenue_slot_project = Revenue::Slot.new(user).instead_of(repo)
     end
   end
 end

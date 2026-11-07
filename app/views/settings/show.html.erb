@@ -147,8 +147,11 @@
 
     <%# Each payment provider gets Connect once it is built. %>
     <section class="os-panel" aria-labelledby="revenue">
-      <h2 id="revenue" class="os-h3">Revenue</h2>
-      <p class="os-sm os-muted mt-1.5 mb-1">Show a project's MRR and paying customers, verified with your payment provider. Openstage keeps daily totals only, never a customer's record. Free shows one project, and Pro every project. You pick each project's products on its page.</p>
+      <div class="os-between">
+        <h2 id="revenue" class="os-h3">Revenue</h2>
+        <% unless current_user.pro? %><span class="os-tag pro">✦ Pro</span><% end %>
+      </div>
+      <p class="os-sm os-muted mt-1.5 mb-1">Show a project's MRR and paying customers on its page, verified with your payment provider. Openstage keeps daily totals only, never a customer's record. Pro shows them for every project; Free counts one project's, and only you see them. You pick each project's products on its own view.</p>
       <div class="os-row flex flex-wrap items-center gap-3 py-3">
         <span class="min-w-0 flex-auto">
           <span class="font-bold">Stripe</span>

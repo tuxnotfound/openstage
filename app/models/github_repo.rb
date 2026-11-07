@@ -9,6 +9,8 @@ class GithubRepo < ApplicationRecord
   has_many :site_visit_days, dependent: :delete_all
   has_many :site_visit_counts, dependent: :delete_all
   has_many :site_visitors, dependent: :delete_all
+  # The database leaves them uncounted with the repo gone, as this does.
+  has_many :revenue_products, dependent: :nullify
 
   validates :github_repo_id, presence: true, uniqueness: { scope: :user_id }
   validates :name, presence: true
@@ -27,6 +29,9 @@ class GithubRepo < ApplicationRecord
   # Every project ever set up for site visits, the first set up first: the
   # one Free counts (SiteVisits::Slot) leads.
   scope :site_set_up_first, -> { where.not(site_set_up_at: nil).order(:site_set_up_at, :id) }
+  # Every project ever given a product, the first first: the one Free counts
+  # MRR for (Revenue::Slot) leads.
+  scope :revenue_set_up_first, -> { where.not(revenue_set_up_at: nil).order(:revenue_set_up_at, :id) }
   # Repos with work on Openstage, shown or hidden: the projects a builder
   # chooses between on the dashboard.
   scope :with_entries, -> {

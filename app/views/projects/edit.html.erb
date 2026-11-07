@@ -63,6 +63,7 @@
         <button type="submit" role="switch" aria-checked="<%= @repo.picks?("commits") %>" aria-label="Show commits on <%= @repo.name %>'s page" class="os-switch"></button>
       <% end %>
     </div>
+    <%= render "projects/revenue", repo: @repo, overview: overview %>
     <%= render "projects/site_visits", repo: @repo, overview: overview %>
     <%= render "projects/site_visitors", repo: @repo, overview: overview %>
 

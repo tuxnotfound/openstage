@@ -54,6 +54,8 @@ Rails.application.routes.draw do
   # what counts its site visits.
   resources :projects, only: [ :edit, :update ] do
     resource :site_visits, only: :update, module: :projects
+    # The Stripe products whose revenue counts for it.
+    resources :revenue_products, only: :update, module: :projects
     # The numbers its visitors see, switched in the dashboard's table and on
     # its own view.
     resource :numbers, only: :update, module: :projects

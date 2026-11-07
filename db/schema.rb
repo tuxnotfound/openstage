@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_07_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_07_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -148,6 +148,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_07_000001) do
     t.datetime "site_first_visit_at"
     t.jsonb "hidden_numbers", default: [], null: false
     t.datetime "site_set_up_at"
+    t.datetime "revenue_set_up_at"
     t.index ["site_token"], name: "index_github_repos_on_site_token", unique: true
     t.index ["user_id", "github_repo_id"], name: "index_github_repos_on_user_id_and_github_repo_id", unique: true
     t.index ["user_id"], name: "index_github_repos_on_user_id"
@@ -219,7 +220,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_07_000001) do
     t.text "api_key", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "products_read_at"
     t.index ["user_id", "provider"], name: "index_revenue_accounts_on_user_id_and_provider", unique: true
+  end
+
+  create_table "revenue_products", force: :cascade do |t|
+    t.bigint "revenue_account_id", null: false
+    t.bigint "github_repo_id"
+    t.string "external_id", null: false
+    t.string "name", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["github_repo_id"], name: "index_revenue_products_on_github_repo_id"
+    t.index ["revenue_account_id", "external_id"], name: "index_revenue_products_on_revenue_account_id_and_external_id", unique: true
   end
 
   create_table "site_visit_counts", force: :cascade do |t|
@@ -474,6 +488,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_07_000001) do
   add_foreign_key "project_clicks", "users", on_delete: :cascade
   add_foreign_key "project_views", "users", on_delete: :cascade
   add_foreign_key "revenue_accounts", "users", on_delete: :cascade
+  add_foreign_key "revenue_products", "github_repos", on_delete: :nullify
+  add_foreign_key "revenue_products", "revenue_accounts", on_delete: :cascade
   add_foreign_key "site_visit_counts", "github_repos", on_delete: :cascade
   add_foreign_key "site_visit_days", "github_repos", on_delete: :cascade
   add_foreign_key "site_visitors", "github_repos", on_delete: :cascade

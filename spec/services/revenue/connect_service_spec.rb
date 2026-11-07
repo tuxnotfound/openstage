@@ -24,6 +24,11 @@ RSpec.describe Revenue::ConnectService do
     expect(service.account).to eq(user.revenue_accounts.sole)
   end
 
+  it "reads the account's products next, in the background" do
+    expect { connect("rk_test_ok").call! }.to have_enqueued_job(ImportRevenueProductsJob).with(kind_of(Integer))
+    expect { connect("sk_live_full").call }.not_to have_enqueued_job(ImportRevenueProductsJob)
+  end
+
   it "replaces the key when the builder connects again" do
     connect("rk_test_old").call!
     connect("rk_test_new").call!
