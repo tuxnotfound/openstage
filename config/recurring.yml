@@ -43,3 +43,7 @@ production:
   read_revenue:
     class: ReadRevenueFanoutJob
     schedule: every day at 5am
+  # The ECB publishes its rates at about 16:00 Frankfurt time.
+  read_rates:
+    class: ReadRatesJob
+    schedule: every day at 4pm

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_07_000003) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_08_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -94,6 +94,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_07_000003) do
     t.index ["name", "day"], name: "index_events_on_name_and_day"
     t.index ["user_id", "name", "detail", "day"], name: "index_events_once_per_user_per_day", unique: true
     t.index ["user_id"], name: "index_events_on_user_id"
+  end
+
+  create_table "exchange_rates", force: :cascade do |t|
+    t.string "currency", null: false
+    t.date "day", null: false
+    t.decimal "per_euro", precision: 18, scale: 6, null: false
+    t.index ["currency", "day"], name: "index_exchange_rates_on_currency_and_day", unique: true
   end
 
   create_table "github_activities", force: :cascade do |t|
