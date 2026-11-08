@@ -1,7 +1,8 @@
 module Revenue
   # What a builder's Stripe account holds for their projects, as the pages read
   # it: the last day read, the first day each project had revenue, and its days
-  # in one currency (Levels). Only products counted for a project read here.
+  # in one currency (Levels). Only products counted for a project read here, and
+  # nothing while Stripe refuses the key, so no stale figure stands as verified.
   class Book
     def initialize(user)
       @user = user
@@ -13,6 +14,10 @@ module Revenue
       @account = @user.revenue_accounts.find_by(provider: "stripe")
     end
 
+    def live?
+      account.present? && account.refused_at.nil?
+    end
+
     # The last day read, in the builder's zone; nil before the first read.
     def read_day
       account&.read_at&.in_time_zone(@user.zone)&.to_date
@@ -20,7 +25,7 @@ module Revenue
 
     # { repo id => its first day with revenue }.
     def firsts
-      @firsts ||= account ? counted_days.group("revenue_products.github_repo_id").minimum(:day) : {}
+      @firsts ||= live? ? counted_days.group("revenue_products.github_repo_id").minimum(:day) : {}
     end
 
     # Levels of these projects, from a day on; nil from for every day.

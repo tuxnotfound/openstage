@@ -18,6 +18,10 @@ RSpec.describe "MRR on the chart pages", type: :request do
     JSON.parse(response.body)
   end
 
+  def figure
+    Nokogiri::HTML(response.body).at_css("[data-revenue]")
+  end
+
   def number(key)
     view["numbers"].find { |each| each["key"] == key }
   end
@@ -46,6 +50,73 @@ RSpec.describe "MRR on the chart pages", type: :request do
     RevenueDay.delete_all
 
     expect(number("mrr")).to be_nil
+  end
+
+  it "takes them off the pages when Stripe refuses the key, past the page's cache" do
+    allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+    expect(number("mrr")["value"]).to eq("$4,210")
+
+    user.revenue_accounts.first.update!(refused_at: Time.current)
+
+    expect(number("mrr")).to be_nil
+    get "/builder/shipnote"
+    expect(figure).to be_nil
+  end
+
+  describe "the project's page" do
+    it "says its MRR and paying customers under its description, verified" do
+      get "/builder/shipnote"
+
+      expect(figure.at_css(".os-num").text).to eq("$4,210")
+      expect(figure.text.squish).to eq("$4,210 MRR · 230 paying customers · Verified with Stripe")
+    end
+
+    it "says only paying customers for a builder who hides MRR" do
+      repo.update!(hidden_numbers: %w[mrr])
+
+      get "/builder/shipnote"
+
+      expect(figure.text.squish).to eq("230 paying customers · Verified with Stripe")
+    end
+
+    it "says one paying customer, as one" do
+      RevenueDay.where(day: today).update_all(subscriptions: 1)
+      repo.update!(hidden_numbers: %w[mrr])
+
+      get "/builder/shipnote"
+
+      expect(figure.text.squish).to eq("1 paying customer · Verified with Stripe")
+    end
+
+    it "says nothing on Free, nor for a builder who hides both" do
+      user.update!(pro: false)
+      get "/builder/shipnote"
+      expect(figure).to be_nil
+
+      user.update!(pro: true)
+      repo.update!(hidden_numbers: %w[mrr customers])
+      get "/builder/shipnote"
+      expect(figure).to be_nil
+    end
+  end
+
+  it "lists MRR and paying customers in the dashboard's table, in money, each with its switch" do
+    sign_in_as(user)
+
+    get "/api/progress/builder", params: { range: "30d", dashboard: 1 }
+
+    cells = JSON.parse(response.body).dig("table", "rows").first["cells"].to_h { |cell| [ cell["key"], cell ] }
+    expect(cells["mrr"]).to include("value" => "$4,210", "pick" => true)
+    expect(cells["customers"]).to include("value" => "230", "pick" => true)
+  end
+
+  it "keeps them off the dashboard on Free too, whose one project shows them on its own view" do
+    user.update!(pro: false)
+    sign_in_as(user)
+
+    get "/api/progress/builder", params: { range: "30d", dashboard: 1 }
+
+    expect(JSON.parse(response.body).dig("table", "columns").map { |column| column["key"] }).not_to include("mrr", "customers")
   end
 
   it "shows a new read at once, past the page's cache" do

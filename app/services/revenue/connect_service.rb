@@ -24,7 +24,7 @@ module Revenue
       return refuse(unread) if unread.any?
 
       @account = user.revenue_accounts.find_or_initialize_by(provider: provider)
-      @account.update(api_key: api_key)
+      @account.update(api_key: api_key, refused_at: nil)
       return unless absorb_errors(@account)
 
       after_commit { ReadRevenueJob.perform_later(@account.id) }

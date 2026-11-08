@@ -29,6 +29,14 @@ RSpec.describe Revenue::Book do
     expect(book.firsts).to eq(repo.id => Date.new(2026, 5, 1))
   end
 
+  it "holds nothing for the pages while Stripe refuses the key" do
+    product("prod_a").revenue_days.create!(day: Date.new(2026, 5, 1), currency: "usd", mrr: 100, subscriptions: 1)
+    account.update!(refused_at: Time.current)
+
+    expect(book).not_to be_live
+    expect(book.firsts).to eq({})
+  end
+
   it "reads a project's levels from a day on" do
     counted = product("prod_a")
     counted.revenue_days.create!(day: Date.new(2026, 5, 1), currency: "usd", mrr: 100, subscriptions: 1)

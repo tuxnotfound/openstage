@@ -15,9 +15,10 @@ module Projects
     # revenue_account: the builder's Stripe account, nil until connected;
     # revenue_products: its products, listed; revenue_slot_project: as
     # slot_project, for MRR (Revenue::Slot); revenue_days: each product's
-    # RevenueDays on the last day read, by product id.
+    # RevenueDays on the last day read, by product id; revenue_levels: the
+    # project's Revenue::Levels on that day, nil while it has nothing to show.
     attr_reader :project, :commits, :last_commit, :site_visits, :site_visitors, :last_site_visit, :site_state, :slot_project,
-                :revenue_account, :revenue_products, :revenue_slot_project, :revenue_days
+                :revenue_account, :revenue_products, :revenue_slot_project, :revenue_days, :revenue_levels
 
     validates :repo, presence: true
 
@@ -53,11 +54,13 @@ module Projects
     end
 
     def gather_revenue
-      @revenue_account = user.revenue_accounts.find_by(provider: "stripe")
+      book = Revenue::Book.new(user)
+      @revenue_account = book.account
       @revenue_products = @revenue_account ? @revenue_account.revenue_products.listed.includes(:github_repo).to_a : []
       @revenue_slot_project = Revenue::Slot.new(user).instead_of(repo)
-      read_day = @revenue_account&.read_at&.in_time_zone(user.zone)&.to_date
+      read_day = book.read_day
       @revenue_days = read_day ? RevenueDay.where(revenue_product_id: @revenue_products.map(&:id), day: read_day).group_by(&:revenue_product_id) : {}
+      @revenue_levels = book.levels([ repo ], from: read_day) if read_day && book.live? && @revenue_slot_project.nil?
     end
   end
 end

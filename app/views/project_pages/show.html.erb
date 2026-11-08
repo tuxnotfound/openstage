@@ -47,6 +47,13 @@
       <% if card&.description %>
         <p class="os-p mt-3 max-w-[62ch] text-[19px]/[1.5] text-ink"><%= card.description %></p>
       <% end %>
+      <% figure, words = revenue_on_page(@focus.page.chart) %>
+      <% if figure %>
+        <p class="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1" data-revenue>
+          <span class="os-num text-[30px]"><%= figure %></span>
+          <span class="os-sm os-ink2"><%= words %> · <b class="text-ink">Verified with Stripe</b></span>
+        </p>
+      <% end %>
       <div class="mt-5 flex flex-wrap gap-2.5">
         <% slug = project.repo.split("/").last %>
         <% if website && card.github_repo.outbound_url("visit") %>

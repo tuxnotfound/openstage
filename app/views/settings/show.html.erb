@@ -158,12 +158,16 @@
           <span class="os-xs os-muted block">A restricted key that only reads products, prices, subscriptions and invoices.</span>
         </span>
         <% if @stripe_account %>
-          <span class="os-sm font-bold text-up">Connected · key ending <%= @stripe_account.key_ending %></span>
+          <% if @stripe_account.refused_at %>
+            <span class="os-sm font-bold text-down">Stripe refuses the key ending <%= @stripe_account.key_ending %></span>
+          <% else %>
+            <span class="os-sm font-bold text-up">Connected · key ending <%= @stripe_account.key_ending %></span>
+          <% end %>
           <%= button_to "Disconnect", revenue_account_path(@stripe_account), method: :delete, class: "os-link text-[13px]",
                 data: { turbo_confirm: "Disconnect Stripe? Openstage deletes the key and everything it read with it." } %>
         <% end %>
       </div>
-      <% unless @stripe_account %>
+      <% if @stripe_account.nil? || @stripe_account.refused_at %>
         <%= form_with url: revenue_accounts_path, id: "stripe-connect", class: "os-stack gap-2.5 pb-3" do |f| %>
           <%= f.hidden_field :provider, value: "stripe" %>
           <p class="os-sm">In Stripe, under Developers and API keys, create a restricted key with Read on Products, Prices, Subscriptions and Invoices, and None on everything else.

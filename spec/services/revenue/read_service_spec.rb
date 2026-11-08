@@ -63,4 +63,24 @@ RSpec.describe Revenue::ReadService do
 
     expect(RevenueDay.count).to eq(0)
   end
+
+  it "records a key Stripe refuses, keeps what it read, and fails nothing" do
+    product = account.revenue_products.create!(external_id: "prod_1", name: "Shipnote Pro")
+    product.revenue_days.create!(day: Date.new(2026, 11, 1), currency: "usd", mrr: 100, subscriptions: 1)
+    allow(StripeGateway).to receive(:products).and_raise(ApplicationGateway::Unauthorized.new(status: 401))
+
+    expect(described_class.new(account: account).call).to be(true)
+
+    expect(account.reload.refused_at).to eq(Time.current)
+    expect(RevenueDay.count).to eq(1)
+  end
+
+  it "clears it on the next read that works" do
+    account.update!(refused_at: 1.day.ago)
+    allow(StripeGateway).to receive(:invoices).and_return(last_page)
+
+    described_class.new(account: account).call!
+
+    expect(account.reload.refused_at).to be_nil
+  end
 end

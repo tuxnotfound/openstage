@@ -1,8 +1,8 @@
 class ReadRevenueJob < ApplicationJob
   queue_as :default
 
-  # Stripe's outages and rate limits pass; a key revoked or gone fails for
-  # good, and shows in F4's failed-job count.
+  # Stripe's outages and rate limits pass. A key revoked or gone fails nothing:
+  # Revenue::ReadService records it.
   retry_on ApplicationGateway::ServerError, ApplicationGateway::ConnectionFailed, ApplicationGateway::RateLimited,
            wait: :polynomially_longer, attempts: 10
 

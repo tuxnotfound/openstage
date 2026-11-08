@@ -58,6 +58,60 @@ RSpec.describe "A project's Revenue (MRR) row", type: :request do
     expect(section.text.squish).to include("Paying customers 230", "$3,610 MRR · 190 subscriptions", "$600 MRR · 40 subscriptions")
   end
 
+  it "converts a project's other currencies at each day's rate, into the one most of it is in" do
+    account = connect
+    account.update!(read_at: Time.current)
+    product = account.revenue_products.create!(external_id: "prod_m", name: "Monthly", github_repo: shipnote)
+    today = Time.current.in_time_zone(user.zone).to_date
+    ExchangeRate.create!(currency: "usd", day: today, per_euro: 2)
+    product.revenue_days.create!(day: today, currency: "usd", mrr: 10_000, subscriptions: 2)
+    product.revenue_days.create!(day: today, currency: "eur", mrr: 100_000, subscriptions: 3)
+
+    expect(row.at_css(".os-row .os-num").text).to eq("€1,050")
+    expect(row.text.squish).to include("Paying customers 5")
+  end
+
+  it "says which currency it left out, having no ECB rate" do
+    account = connect
+    account.update!(read_at: Time.current)
+    product = account.revenue_products.create!(external_id: "prod_m", name: "Monthly", github_repo: shipnote)
+    today = Time.current.in_time_zone(user.zone).to_date
+    product.revenue_days.create!(day: today, currency: "eur", mrr: 100_000, subscriptions: 3)
+    product.revenue_days.create!(day: today, currency: "ngn", mrr: 500, subscriptions: 1)
+
+    expect(row.text).to include("NGN has no ECB rate, so it is left out.")
+  end
+
+  it "offers a switch for MRR and for paying customers once there is a figure, each shown until hidden" do
+    account = connect
+    account.update!(read_at: Time.current)
+    product = account.revenue_products.create!(external_id: "prod_m", name: "Monthly", github_repo: shipnote)
+    product.revenue_days.create!(day: Time.current.in_time_zone(user.zone).to_date, currency: "usd", mrr: 700, subscriptions: 1)
+    shipnote.update!(hidden_numbers: %w[customers])
+
+    section = row
+    switches = section.css("form[action='/projects/#{shipnote.id}/numbers'] button[role='switch']")
+
+    expect(switches.map { |each| [ each["aria-label"], each["aria-checked"] ] })
+      .to eq([ [ "Show MRR on shipnote's page", "true" ], [ "Show paying customers on shipnote's page", "false" ] ])
+    expect(section.text).to include("Shown", "Hidden")
+  end
+
+  it "takes the figure off and leads to Integrations when Stripe refuses the key" do
+    account = connect
+    account.update!(read_at: Time.current, refused_at: Time.current)
+    product = account.revenue_products.create!(external_id: "prod_m", name: "Monthly", github_repo: shipnote)
+    product.revenue_days.create!(day: Time.current.in_time_zone(user.zone).to_date, currency: "usd", mrr: 700, subscriptions: 1)
+
+    section = row
+
+    expect(section.at_css(".os-row .os-num").text).to eq("–")
+    expect(section.text).to include("Stripe refuses your key")
+    expect(section.at_css("a[href='/settings?tab=integrations#revenue']").text).to eq("Connect Stripe")
+    expect(section.at_css("#revenue-products")).to be_nil
+    expect(section.css("button[role='switch']")).to be_empty
+  end
+
   it "says the products are on their way until Stripe's are read" do
     connect.update!(products_read_at: nil)
 
@@ -83,6 +137,19 @@ RSpec.describe "A project's Revenue (MRR) row", type: :request do
 
       expect(row.text).to include("Verified with Stripe, from Shipnote monthly. Only you see it: Pro shows it on its page.", "Only you")
       expect(row.at_css("[data-free-notice]").text.squish).to start_with("Free counts MRR for one project only")
+    end
+
+    it "has no switch: only its builder sees it" do
+      account = connect
+      account.update!(read_at: Time.current)
+      product = account.revenue_products.create!(external_id: "prod_m", name: "Monthly", github_repo: shipnote)
+      shipnote.update!(revenue_set_up_at: Time.current)
+      product.revenue_days.create!(day: Time.current.in_time_zone(user.zone).to_date, currency: "usd", mrr: 700, subscriptions: 1)
+
+      section = row
+
+      expect(section.at_css(".os-row .os-num").text).to eq("$7")
+      expect(section.css("form[action='/projects/#{shipnote.id}/numbers']")).to be_empty
     end
 
     it "keeps only Go Pro on another project, and says why" do

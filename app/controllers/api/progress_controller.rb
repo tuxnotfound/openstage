@@ -89,7 +89,8 @@ module Api
       return [] unless user.pro?
 
       user.revenue_accounts.left_joins(:revenue_products)
-          .pick(Arel.sql("MAX(revenue_accounts.read_at)"), Arel.sql("COUNT(revenue_products.github_repo_id)"), Arel.sql("MAX(revenue_products.updated_at)"))
+          .pick(Arel.sql("MAX(revenue_accounts.read_at)"), Arel.sql("MAX(revenue_accounts.refused_at)"),
+                Arel.sql("COUNT(revenue_products.github_repo_id)"), Arel.sql("MAX(revenue_products.updated_at)"))
     end
 
     def site_stamp(user)

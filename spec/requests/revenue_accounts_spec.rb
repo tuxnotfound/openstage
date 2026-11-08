@@ -72,4 +72,17 @@ RSpec.describe "Connecting a payment provider for MRR", type: :request do
       expect(RevenueAccount.exists?(other.id)).to be(true)
     end
   end
+
+  it "says when Stripe refuses the key, offers to connect a new one, and takes the new one" do
+    account = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_gone", refused_at: Time.current)
+    sign_in_as(user)
+
+    section = revenue_section
+    expect(section.text).to include("Stripe refuses the key ending gone")
+    expect(section.at_css("#stripe-connect")).to be_present
+
+    post "/revenue_accounts", params: { provider: "stripe", api_key: "rk_test_good" }
+
+    expect(account.reload).to have_attributes(api_key: "rk_test_good", refused_at: nil)
+  end
 end

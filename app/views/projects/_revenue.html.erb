@@ -1,12 +1,14 @@
 <%# A project's Revenue (MRR) row: its MRR on the last day read, where it
-    comes from and who sees it, and under it its paying customers. Change
-    products opens its Stripe products under it, each with its own MRR and a
-    switch; one counted for another project is shown off and locked. Without Stripe
-    connected, the row leads to Integrations; while Free counts another
-    project, Go Pro stands in its place. %>
+    comes from and who sees it, and under it its paying customers, each with
+    the switch that shows it on its page, on Pro. Change products opens its
+    Stripe products under it, each with its own MRR and a switch; one counted
+    for another project is shown off and locked. Without Stripe connected, or
+    with a key Stripe refuses, the row leads to Integrations; while Free
+    counts another project, Go Pro stands in its place. %>
 <% account = overview.revenue_account %>
 <% line, state = revenue_status(repo, overview) %>
 <% figure, paying = revenue_now(repo, overview) %>
+<% switches = figure && repo.user.pro? %>
 <div id="revenue" class="scroll-mt-6" data-controller="toggle" data-toggle-open-value="<%= params[:revenue] == "open" %>">
   <div class="os-row flex items-center gap-3.5 py-3">
     <span class="min-w-0 flex-auto">
@@ -14,7 +16,7 @@
       <span class="os-num os-muted text-sm"><%= figure || "–" %></span>
       <span class="os-xs os-muted block"><%= line %></span>
     </span>
-    <% if account.nil? %>
+    <% if account.nil? || account.refused_at %>
       <%= link_to "Connect Stripe", settings_path(tab: "integrations", anchor: "revenue"), class: "os-link whitespace-nowrap text-[13px]" %>
     <% elsif overview.revenue_slot_project %>
       <%= link_to "Go Pro", pricing_path, class: "os-link whitespace-nowrap text-[13px]" %>
@@ -24,10 +26,11 @@
         <span data-toggle-target="openIcon">Change products</span><span data-toggle-target="closeIcon" class="hidden">Close</span>
       </button>
     <% end %>
-    <% if state.present? %><span class="os-xs os-muted whitespace-nowrap"><%= state %></span><% end %>
+    <span class="os-xs os-muted whitespace-nowrap"><%= state %></span>
+    <% if switches %><%= render "projects/number_switch", repo: repo, number: "mrr", word: "MRR" %><% end %>
   </div>
 
-  <% if account && !overview.revenue_slot_project %>
+  <% if revenue_products_open?(overview) %>
     <div id="revenue-products" data-toggle-target="content" class="os-card mb-3 hidden">
       <% unless repo.user.pro? %>
         <p class="os-sm mt-0 mb-3" data-free-notice>
@@ -71,7 +74,8 @@
         <span class="os-num os-muted text-sm"><%= number_with_delimiter(paying) %></span>
         <span class="os-xs os-muted block">Active subscriptions, from the same Stripe products.</span>
       </span>
-      <% if state.present? %><span class="os-xs os-muted whitespace-nowrap"><%= state %></span><% end %>
+      <span class="os-xs os-muted whitespace-nowrap"><%= revenue_state(repo, "customers") %></span>
+      <% if switches %><%= render "projects/number_switch", repo: repo, number: "customers", word: "paying customers" %><% end %>
     </div>
   <% end %>
 </div>
