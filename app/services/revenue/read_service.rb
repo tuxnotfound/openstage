@@ -1,7 +1,7 @@
 module Revenue
   # Reads a builder's Stripe account again from its first sale: its products,
-  # then every paid invoice, into each product's daily MRR and paying
-  # subscriptions (Tally), in place of what the last read wrote. Reading it
+  # then every invoice, into each product's daily MRR and paying subscriptions
+  # (MrrLines, Tally), in place of what the last read wrote. Reading it
   # all every night keeps no invoice, and mends any night the read missed. A
   # key Stripe refuses is no failure of ours: it is recorded, which takes the
   # account's figures off the pages (Book#live?), and the next read that works
@@ -21,21 +21,19 @@ module Revenue
       return unless absorb_errors(import)
 
       tally = Tally.new(today: Time.current.in_time_zone(zone).to_date)
-      each_paid_line { |line| tally.add(line) }
+      each_counted_line { |line| tally.add(line) }
       save(tally.rows)
     rescue ApplicationGateway::Unauthorized
       account.update!(refused_at: Time.current)
     end
 
-    def each_paid_line
-      lines = PaidLines.new(products: account.revenue_products.pluck(:external_id, :id).to_h, recurring: recurring_prices,
-                            endings: subscription_endings, zone: zone)
-      each_item(->(params) { StripeGateway.invoices(key, status: "paid", **params) }) do |invoice|
-        lines_of(invoice).each do |line|
-          tally_line = lines.tally_line(line)
-          yield tally_line if tally_line
-        end
+    def each_counted_line(&block)
+      lines = MrrLines.new(products: account.revenue_products.pluck(:external_id, :id).to_h, recurring: recurring_prices,
+                           subscriptions: subscriptions, zone: zone)
+      each_item(->(params) { StripeGateway.invoices(key, **params) }) do |invoice|
+        lines_of(invoice).each { |line| lines.read(line, invoice[:status], &block) }
       end
+      lines.read_held(&block)
     end
 
     # Only what MRR needs of each price and subscription is kept while reading.
@@ -45,10 +43,10 @@ module Revenue
       recurring
     end
 
-    def subscription_endings
-      endings = {}
-      each_item(->(params) { StripeGateway.subscriptions(key, status: "all", **params) }) { |subscription| endings[subscription[:id]] = subscription[:ended_at] }
-      endings
+    def subscriptions
+      subscriptions = {}
+      each_item(->(params) { StripeGateway.subscriptions(key, status: "all", **params) }) { |subscription| subscriptions[subscription[:id]] = StripeSubscription.new(subscription) }
+      subscriptions
     end
 
     # An invoice carries its first lines; one with more is read for the rest.

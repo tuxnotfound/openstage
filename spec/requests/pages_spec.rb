@@ -16,7 +16,7 @@ RSpec.describe "Marketing pages", type: :request do
       get "/privacy"
 
       section = Nokogiri::HTML(response.body).at_css("#stripe").text.squish
-      expect(section).to include("read the account's products, prices, subscriptions and paid invoices")
+      expect(section).to include("read the account's products, prices, subscriptions and invoices")
       expect(section).to include("It keeps those daily totals, and each product's name, Stripe id and whether it is archived.")
       expect(section).to include("no invoice, no subscription and no customer's record is kept")
       expect(section).to include("Disconnecting Stripe in Settings deletes the key and everything read with it at once.")
@@ -92,6 +92,7 @@ RSpec.describe "Marketing pages", type: :request do
       page = Nokogiri::HTML(response.body).text.squish
       expect(page).to include("One project's MRR from Stripe, seen only by you")
       expect(page).to include("MRR and paying customers on every project's page.", "Verified with Stripe. Hide either one whenever you like.")
+      expect(page).to include("How does Openstage count MRR?", "A refund does not change it.")
     end
 
     it "shows the upgrade CTA for signed-out visitors" do

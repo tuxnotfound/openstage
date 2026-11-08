@@ -1,11 +1,11 @@
 module Revenue
-  # Each product's daily totals from the paid lines covering each day: its MRR,
+  # Each product's daily totals from the counted lines covering each day: its MRR,
   # the sum of their monthly amounts, and the subscriptions paying. Lines are
   # added one by one as they are read, and only the changes they make are
-  # kept, so a long history stays small. Days run up to today; a day without
-  # revenue has no row.
+  # kept, so a long history stays small. Days run up to today; a day with no
+  # MRR and nobody paying has no row.
   class Tally
-    # A paid period of one subscription's product: from its first day to the
+    # A counted period of one subscription's product: from its first day to the
     # day after its last (to), monthly in the currency's smallest unit.
     Line = Data.define(:product_id, :currency, :subscription, :from, :to, :monthly)
 
@@ -24,7 +24,7 @@ module Revenue
       @spans[key][line.subscription] << (line.from...line.to)
     end
 
-    # Rows for RevenueDay: each product and currency, from its first paid day.
+    # Rows for RevenueDay: each product and currency, from its first counted day.
     def rows
       @amounts.flat_map { |key, changes| rows_for(key, changes, paying_changes(@spans[key])) }
     end
@@ -37,7 +37,7 @@ module Revenue
       (changes.keys.min..@today).filter_map do |day|
         mrr += changes.fetch(day, 0)
         subscriptions += paying.fetch(day, 0)
-        { revenue_product_id: product_id, day: day, currency: currency, mrr: mrr.round, subscriptions: subscriptions } if mrr.round.positive?
+        { revenue_product_id: product_id, day: day, currency: currency, mrr: mrr.round, subscriptions: subscriptions } if mrr.round.positive? || subscriptions.positive?
       end
     end
 
