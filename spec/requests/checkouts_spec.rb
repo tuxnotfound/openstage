@@ -18,8 +18,53 @@ RSpec.describe "Checkout", type: :request do
 
     expect(response).to redirect_to("https://checkout.stripe.com/c/pay/cs_test")
     expect(StripeGateway).to have_received(:checkout_url)
-      .with(price: "price_monthly", user_id: user.id, success_url: "http://www.example.com/dashboard?pro=activated",
+      .with(price: "price_monthly", user_id: user.id, success_url: "http://www.example.com/checkout/confirm?session_id={CHECKOUT_SESSION_ID}",
             cancel_url: "http://www.example.com/dashboard")
+  end
+
+  describe "the return from Stripe's page" do
+    let(:checkout) { { user_id: user.id.to_s, paid: true, customer: "cus_1", subscription: "sub_1", subscription_status: "active" } }
+
+    before { sign_in_as(user) }
+
+    it "makes the builder Pro and says so" do
+      allow(StripeGateway).to receive(:checkout_session).with("cs_1").and_return(checkout)
+
+      get "/checkout/confirm", params: { session_id: "cs_1" }
+
+      expect(response).to redirect_to("/dashboard?pro=activated")
+      expect(user.reload).to be_pro
+      follow_redirect!
+      expect(response.body).to include("You're Pro!")
+    end
+
+    it "tells a builder Stripe has not confirmed not to pay again, and leaves them on Free" do
+      allow(StripeGateway).to receive(:checkout_session).and_return(checkout.merge(paid: false))
+
+      get "/checkout/confirm", params: { session_id: "cs_1" }
+
+      expect(flash[:alert]).to eq(Billing::ConfirmCheckoutService::NOT_CONFIRMED)
+      expect(user.reload).not_to be_pro
+    end
+
+    it "says the same when Stripe does not answer, and reports it" do
+      allow(StripeGateway).to receive(:checkout_session).and_raise(ApplicationGateway::ConnectionFailed, "timeout")
+      allow(Rails.error).to receive(:report)
+
+      get "/checkout/confirm", params: { session_id: "cs_1" }
+
+      expect(response).to redirect_to("/dashboard")
+      expect(flash[:alert]).to eq(Billing::ConfirmCheckoutService::NOT_CONFIRMED)
+      expect(Rails.error).to have_received(:report)
+    end
+  end
+
+  it "never says You're Pro to a builder who is not, whatever the address says" do
+    sign_in_as(user)
+
+    get "/dashboard", params: { pro: "activated" }
+
+    expect(response.body).not_to include("You're Pro!")
   end
 
   it "offers no lifetime deal, even to a page cached from before" do

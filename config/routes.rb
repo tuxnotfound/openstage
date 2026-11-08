@@ -75,6 +75,7 @@ Rails.application.routes.draw do
 
   # Checkout / Billing
   post "/checkout", to: "checkouts#create", as: :checkout
+  get "/checkout/confirm", to: "checkouts#confirm", as: :checkout_confirm
   get "/billing", to: "checkouts#billing_portal", as: :billing_portal
 
   # Stripe webhook

@@ -32,12 +32,7 @@ class WebhooksController < ApplicationController
     user = User.find_by(id: session.metadata["user_id"])
     return unless user
 
-    user.update!(
-      pro: true,
-      stripe_customer_id: session.customer,
-      stripe_subscription_id: session.subscription,
-      pro_since: Time.current
-    )
+    Billing::StartProService.new(user: user, customer_id: session.customer, subscription_id: session.subscription).call!
   end
 
   def handle_subscription_deleted(subscription)

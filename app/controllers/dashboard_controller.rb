@@ -61,7 +61,7 @@ class DashboardController < ApplicationController
     @chart = activity_chart
     @activity = @chart&.section
     @untagged = untagged
-    @show_pro_activated = params[:pro] == "activated"
+    @show_pro_activated = params[:pro] == "activated" && current_user.pro?
   end
 
   # Without JavaScript, Load more opens the tab it came from past its last row;

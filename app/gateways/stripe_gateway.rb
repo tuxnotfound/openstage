@@ -10,6 +10,16 @@ class StripeGateway < ApplicationGateway
     raise translate(error)
   end
 
+  # A Pro checkout, as far as Stripe knows it: who started it, whether it is
+  # paid, and its subscription now.
+  def self.checkout_session(session_id)
+    session = Stripe::Checkout::Session.retrieve({ id: session_id, expand: [ "subscription" ] })
+    { user_id: session.metadata["user_id"], paid: session.payment_status == "paid", customer: session.customer,
+      subscription: session.subscription&.id, subscription_status: session.subscription&.status }
+  rescue Stripe::StripeError => error
+    raise translate(error)
+  end
+
   # The address of Stripe's page where a customer manages their billing.
   def self.billing_portal_url(customer:, return_url:)
     Stripe::BillingPortal::Session.create(customer: customer, return_url: return_url).url

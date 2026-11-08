@@ -8,8 +8,22 @@ class CheckoutsController < ApplicationController
   # with the price on Stripe's own page.
   def create
     url = StripeGateway.checkout_url(price: ENV["STRIPE_MONTHLY_PRICE_ID"], user_id: current_user.id,
-                                     success_url: dashboard_url(pro: "activated"), cancel_url: dashboard_url)
+                                     success_url: "#{checkout_confirm_url}?session_id={CHECKOUT_SESSION_ID}", cancel_url: dashboard_url)
     redirect_to url, allow_other_host: true
+  end
+
+  # Stripe's page comes back here. A builder who has paid must never read "try
+  # again" from Stripe not answering, so this one says the webhook still comes.
+  def confirm
+    service = Billing::ConfirmCheckoutService.new(user: current_user, session_id: params[:session_id])
+    if service.call
+      redirect_to dashboard_path(pro: "activated")
+    else
+      redirect_to dashboard_path, alert: service.errors.full_messages.to_sentence
+    end
+  rescue ApplicationGateway::Error => error
+    Rails.error.report(error, handled: true)
+    redirect_to dashboard_path, alert: Billing::ConfirmCheckoutService::NOT_CONFIRMED
   end
 
   def billing_portal
