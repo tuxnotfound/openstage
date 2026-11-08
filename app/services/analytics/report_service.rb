@@ -3,11 +3,11 @@ module Analytics
   # and the pages in view, on the chart filter every chart page shares: a row
   # per page, the builder's own and one per project, as the public page
   # orders and colours them, each counting Openstage's own four numbers and a
-  # project also its commits, site visits and site visitors, as its builder
-  # shows them; what Progress::DrawService makes of their counts, each
-  # number's total and change for the pages in view and the one chart of the
-  # numbers drawn; and the panels of those pages (GatherPagesService) and of
-  # the builder's websites (GatherWebsitesService).
+  # project also its commits, MRR, paying customers, site visits and site
+  # visitors, as its builder shows them; what Progress::DrawService makes of
+  # their counts, each number's total and change for the pages in view and the
+  # one chart of the numbers drawn; and the panels of those pages
+  # (GatherPagesService) and of the builder's websites (GatherWebsitesService).
   class ReportService < ApplicationService
     # It opens on commits alone, over the window every chart page opens on.
     DEFAULT_SHOW = %w[commits].freeze
@@ -82,7 +82,7 @@ module Analytics
       return unless run(start)
 
       service = CountService.new(user: user, from: totals_window.span_before&.first)
-      @counts = Progress::Counts.new(days: service.counts, firsts: start.firsts) if run(service)
+      @counts = Progress::Counts.new(days: service.counts, firsts: start.firsts, through: service.through, currency: service.currency) if run(service)
     end
 
     # The builder's page first, then each project, as far as the pages asked

@@ -37,6 +37,14 @@ RSpec.describe Revenue::Book do
     expect(book.firsts).to eq({})
   end
 
+  it "names the projects with revenue, and each one's first day for both numbers" do
+    product("prod_a").revenue_days.create!(day: Date.new(2026, 5, 1), currency: "usd", mrr: 100, subscriptions: 1)
+    create(:github_repo, user: user)
+
+    expect(book.repos).to eq([ repo ])
+    expect(book.first_days).to eq("mrr" => { repo.full_name => Date.new(2026, 5, 1) }, "customers" => { repo.full_name => Date.new(2026, 5, 1) })
+  end
+
   it "keeps the currency of revenue that ended before the day asked for" do
     product("prod_a").revenue_days.create!(day: Date.new(2026, 5, 1), currency: "eur", mrr: 100, subscriptions: 1)
 

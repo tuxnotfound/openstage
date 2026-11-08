@@ -1,8 +1,8 @@
 module Analytics
-  # Each page's numbers per day, from a first day on: each project's commits
-  # and the visits and visitors to its own website, then the visitors, views,
-  # new followers and clicks out on Openstage, by their keys in
-  # Progress::Numbers.
+  # Each page's numbers per day, from a first day on: each project's commits,
+  # its MRR and paying customers, and the visits and visitors to its own
+  # website, then the visitors, views, new followers and clicks out on
+  # Openstage, by their keys in Progress::Numbers.
   # A page is the builder's own, PAGE, or a project's, by its repo's full
   # name. Days are in the builder's zone. Openstage's own numbers come from
   # the daily totals, and from the raw rows since (Split).
@@ -11,8 +11,9 @@ module Analytics
 
     # from: the first day needed; nil for every day.
     attr_accessor :user, :from
-    # {number's key => {page => {date => count}}}
-    attr_reader :counts
+    # counts: {number's key => {page => {date => count}}}; through and currency,
+    # of the revenue, as Progress::Counts takes them, nil with none.
+    attr_reader :counts, :through, :currency
 
     validates :user, presence: true
 
@@ -27,8 +28,20 @@ module Analytics
         "visitors" => visitors_of_pages,
         "views" => views,
         "follows" => follows,
-        "clicks" => clicks
+        "clicks" => clicks,
+        **revenue
       }
+    end
+
+    def revenue
+      book = Revenue::Book.new(user)
+      repos = book.repos
+      return {} if repos.empty?
+
+      levels = book.levels(repos, from: from)
+      @through = book.read_day
+      @currency = levels.currency
+      levels.days(repos)
     end
 
     # As the public page counts them: public, merges and dependency bumps left out.

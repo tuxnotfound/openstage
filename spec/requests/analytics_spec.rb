@@ -82,6 +82,51 @@ RSpec.describe "Analytics", type: :request do
       expect(response.body).to include("Changes compare each value with the 30 days before.")
     end
 
+    context "with revenue" do
+      before do
+        account = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok", read_at: Time.current)
+        product = account.revenue_products.create!(external_id: "prod_m", name: "Monthly", github_repo: repo)
+        product.revenue_days.create!(day: Date.new(2026, 9, 20), currency: "usd", mrr: 200_000, subscriptions: 100)
+        product.revenue_days.create!(day: Date.new(2026, 10, 24), currency: "usd", mrr: 421_000, subscriptions: 230)
+      end
+
+      def number(key)
+        get "/api/analytics", params: { range: "30d" }
+        JSON.parse(response.body)["numbers"].find { |each| each["key"] == key }
+      end
+
+      it "groups MRR and paying customers on Stripe, what they stand at now, against where they stood as the window began" do
+        get "/analytics"
+
+        stripe = toggles.at_css("[aria-label='On Stripe']")
+        expect(stripe.text.squish).to include("MRR $4,210", "Paying customers 230")
+        expect(number("mrr")["value"]).to eq("$4,210")
+        expect(number("customers")["value"]).to eq("230")
+      end
+
+      it "draws MRR, in money, when asked for" do
+        get "/analytics", params: { show: "mrr" }
+
+        expect(page.at_css("svg[role='img']")["aria-label"]).to eq("MRR per day by page, last 30 days")
+        expect(page.css(".os-ylab").map(&:text)).to all(start_with("$"))
+        expect(cells("builder/app")).to include(a_string_including("$4,210"))
+      end
+
+      it "leaves out what its builder hides, as it does a project's site visits" do
+        repo.update!(hidden_numbers: %w[mrr])
+
+        expect(number("mrr")).to be_nil
+        expect(number("customers")["value"]).to eq("230")
+      end
+
+      it "takes both off while Stripe refuses the key" do
+        user.revenue_accounts.first.update!(refused_at: Time.current)
+
+        expect(number("mrr")).to be_nil
+        expect(number("customers")).to be_nil
+      end
+    end
+
     it "says each change's direction in words to a screen reader, the arrow only to the eye" do
       repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
       repo.site_visit_days.create!(day: Date.new(2026, 9, 10), visits: 10, visitors: 9)

@@ -64,4 +64,21 @@ RSpec.describe Analytics::CountService do
   it "refuses without a builder" do
     expect(described_class.new(from: nil).call).to be(false)
   end
+
+  it "counts each project's MRR and paying customers, says what it read through and in which currency, and reads none without revenue" do
+    service = described_class.new(user: user, from: Date.new(2026, 10, 1)).tap(&:call!)
+    expect(service.counts.keys).not_to include("mrr", "customers")
+    expect([ service.through, service.currency ]).to eq([ nil, nil ])
+
+    repo = create(:github_repo, user: user, full_name: "me/app")
+    account = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok", read_at: Time.current)
+    product = account.revenue_products.create!(external_id: "prod_a", name: "A", github_repo: repo)
+    product.revenue_days.create!(day: Date.new(2026, 10, 24), currency: "eur", mrr: 1000, subscriptions: 2)
+
+    service = described_class.new(user: user, from: Date.new(2026, 10, 1)).tap(&:call!)
+
+    expect(service.counts["mrr"]).to eq("me/app" => { Date.new(2026, 10, 24) => 10.0 })
+    expect(service.counts["customers"]).to eq("me/app" => { Date.new(2026, 10, 24) => 2 })
+    expect([ service.through, service.currency ]).to eq([ Date.new(2026, 10, 24), "eur" ])
+  end
 end

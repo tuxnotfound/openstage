@@ -54,4 +54,14 @@ RSpec.describe Analytics::FindStartService do
   it "refuses without a builder" do
     expect(described_class.new.call).to be(false)
   end
+
+  it "finds each project's first sale, for MRR and paying customers both" do
+    repo = create(:github_repo, user: user, full_name: "me/app")
+    account = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok")
+    product = account.revenue_products.create!(external_id: "prod_a", name: "A", github_repo: repo)
+    product.revenue_days.create!(day: Date.new(2026, 5, 1), currency: "usd", mrr: 100, subscriptions: 1)
+
+    expect(firsts["mrr"]).to eq("me/app" => Date.new(2026, 5, 1))
+    expect(firsts["customers"]).to eq("me/app" => Date.new(2026, 5, 1))
+  end
 end

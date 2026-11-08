@@ -26,23 +26,10 @@ module Progress
       visit_days, visitor_days = site_days
       visit_firsts, visitor_firsts = site_firsts
       levels = revenue.levels(revenue_repos, from: from) if revenue_repos.present?
-      @counts = Counts.new(days: { "commits" => counted_commits, "visits" => visit_days, "site_visitors" => visitor_days, **revenue_days(levels) },
-                           firsts: { "commits" => commit_firsts, "visits" => visit_firsts, "site_visitors" => visitor_firsts, **revenue_firsts },
+      @counts = Counts.new(days: { "commits" => counted_commits, "visits" => visit_days, "site_visitors" => visitor_days, **levels&.days(revenue_repos).to_h },
+                           firsts: { "commits" => commit_firsts, "visits" => visit_firsts, "site_visitors" => visitor_firsts,
+                                     **revenue&.first_days(Array(revenue_repos)).to_h },
                            through: revenue&.read_day, currency: levels&.currency)
-    end
-
-    # Each number's days by project, for the projects whose revenue counts.
-    def revenue_days(levels)
-      return {} unless levels
-
-      { "mrr" => revenue_repos.to_h { |repo| [ repo.full_name, levels.mrr(repo.id) ] },
-        "customers" => revenue_repos.to_h { |repo| [ repo.full_name, levels.customers(repo.id) ] } }
-    end
-
-    # MRR and paying customers begin together, at a project's first sale.
-    def revenue_firsts
-      firsts = Array(revenue_repos).filter_map { |repo| [ repo.full_name, revenue.firsts[repo.id] ] if revenue.firsts.key?(repo.id) }.to_h
-      { "mrr" => firsts, "customers" => firsts }
     end
 
     # {repo => {date => count}} for the repos whose commits count.

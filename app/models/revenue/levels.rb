@@ -20,6 +20,12 @@ module Revenue
       @left_out.uniq!
     end
 
+    # { number's key => { repo's full name => its days } }, of these projects.
+    def days(repos)
+      { "mrr" => repos.to_h { |repo| [ repo.full_name, mrr(repo.id) ] },
+        "customers" => repos.to_h { |repo| [ repo.full_name, customers(repo.id) ] } }
+    end
+
     # { date => units } for a project.
     def mrr(repo_id)
       @mrr.fetch(repo_id, {})

@@ -1,10 +1,10 @@
 module Analytics
   # The first day each page counted each number, ever, in the builder's zone:
-  # each project's first public commit and first visit and visitor to its
-  # website, and the first visitor, follower and click out on the builder's
-  # own page (CountService::PAGE) and on each project's page. A chart starts
-  # where the numbers it draws start, and a number compares with the window
-  # before only once it counted before the window began.
+  # each project's first public commit, first sale and first visit and visitor
+  # to its website, and the first visitor, follower and click out on the
+  # builder's own page (CountService::PAGE) and on each project's page. A chart
+  # starts where the numbers it draws start, and a number compares with the
+  # window before only once it counted before the window began.
   class FindStartService < ApplicationService
     attr_accessor :user
     # firsts: {number's key => {page => date}}.
@@ -18,7 +18,7 @@ module Analytics
       views = first_views
       visits, visitors = site_visits
       @firsts = { "commits" => commits, "visits" => visits, "site_visitors" => visitors, "visitors" => views, "views" => views,
-                  "follows" => follows, "clicks" => clicks }
+                  "follows" => follows, "clicks" => clicks, **Revenue::Book.new(user).first_days }
     end
 
     def first_views

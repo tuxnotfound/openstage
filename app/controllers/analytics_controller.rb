@@ -1,7 +1,7 @@
 # The Pro builder's numbers, for their page and each project's: the chart
-# filter every chart page shares, with commits, site visits and Openstage's
-# own visitors, views, new followers and clicks out, then the panels of
-# their websites or of their pages on Openstage.
+# filter every chart page shares, with commits, MRR, paying customers, site
+# visits and Openstage's own visitors, views, new followers and clicks out,
+# then the panels of their websites or of their pages on Openstage.
 class AnalyticsController < ApplicationController
   before_action :require_authentication
   before_action :require_pro

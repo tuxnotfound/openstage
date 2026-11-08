@@ -28,6 +28,18 @@ module Revenue
       @firsts ||= live? ? counted_days.group("revenue_products.github_repo_id").minimum(:day) : {}
     end
 
+    # The projects with revenue.
+    def repos
+      @user.github_repos.where(id: firsts.keys).to_a
+    end
+
+    # { number's key => { repo's full name => its first day } }, of these
+    # projects: MRR and paying customers begin together, at the first sale.
+    def first_days(some = repos)
+      days = some.filter_map { |repo| [ repo.full_name, firsts[repo.id] ] if firsts.key?(repo.id) }.to_h
+      Progress::Numbers::REVENUE.index_with { days }
+    end
+
     # Levels of these projects, from a day on; nil from for every day. With no
     # day since then, their revenue has ended: they stand at nothing, in the
     # currency it last was in.
