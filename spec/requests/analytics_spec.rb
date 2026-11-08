@@ -112,10 +112,10 @@ RSpec.describe "Analytics", type: :request do
         expect(cells("builder/app")).to include(a_string_including("$4,210"))
       end
 
-      it "leaves out what its builder hides, as it does a project's site visits" do
-        repo.update!(hidden_numbers: %w[mrr])
+      it "keeps what its builder hides from visitors" do
+        repo.update!(hidden_numbers: %w[mrr customers])
 
-        expect(number("mrr")).to be_nil
+        expect(number("mrr")["value"]).to eq("$4,210")
         expect(number("customers")["value"]).to eq("230")
       end
 
@@ -212,29 +212,26 @@ RSpec.describe "Analytics", type: :request do
       expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Commits per day by page, last 30 days")
     end
 
-    it "leaves out of the chart and the table the numbers a project's builder hides, its site visitors with its site visits, whatever their own switch says" do
+    it "keeps on the chart and the table the numbers a project's builder hides from visitors, whatever their switches say" do
+      repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
+
+      [ %w[commits visits site_visitors], %w[visits], %w[site_visitors], [] ].each do |hidden|
+        repo.update!(hidden_numbers: hidden)
+
+        get "/analytics", params: { show: "visits" }
+
+        expect(cells("builder/app")).to eq([ "Commits 0 ▼down 100%", "Site visits 30", "Site visitors 9" ])
+        expect(page.css("[data-chart-table] thead th").map { |head| head.text.squish }).to include("Site visits", "Site visitors")
+      end
+    end
+
+    it "changes nothing visitors see: a number hidden here stays off the project's page" do
       repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
       repo.update!(hidden_numbers: %w[visits])
 
-      get "/analytics", params: { show: "visits" }
-      expect(toggles.text.squish).to eq("On GitHub Commits 0 ▼down 100%")
-      expect(cells("builder/app")).to eq([ "Commits 0 ▼down 100%" ])
-      expect(page.css("[data-chart-table] thead th").map { |head| head.text.squish }).to eq(%w[Pages Commits])
-      get "/api/analytics", params: { show: "visits" }
-      expect(response.body).not_to include("site_visitors")
+      get "/api/progress/builder", params: { project: "builder/app", range: "30d" }
 
-      repo.update!(hidden_numbers: %w[visits site_visitors])
-      get "/analytics", params: { show: "visits" }
-      expect(toggles.text.squish).to eq("On GitHub Commits 0 ▼down 100%")
-      expect(cells("builder/app")).to eq([ "Commits 0 ▼down 100%" ])
-
-      repo.update!(hidden_numbers: %w[site_visitors])
-      get "/analytics", params: { show: "visits" }
-      expect(cells("builder/app")).to eq([ "Commits 0 ▼down 100%", "Site visits 30" ])
-
-      repo.update!(hidden_numbers: [])
-      get "/analytics", params: { show: "visits" }
-      expect(cells("builder/app")).to eq([ "Commits 0 ▼down 100%", "Site visits 30", "Site visitors 9" ])
+      expect(response.parsed_body["numbers"].pluck("key")).not_to include("visits")
     end
 
     it "never draws site visitors, asked for or not, shows them beside site visits in the tooltip, and says a site visitor is one IP address or IPv6 network on one day" do
@@ -262,8 +259,7 @@ RSpec.describe "Analytics", type: :request do
 
       repo.update!(hidden_numbers: %w[site_visitors])
       get "/api/analytics", params: { show: "visits", range: "2026-10-01..2026-10-10" }
-      expect(response.parsed_body["chart"]["tips"].pluck("key")).to eq([ "visits" ])
-      expect(response.body).not_to include("site_visitors")
+      expect(response.parsed_body["chart"]["tips"].pluck("key")).to eq(%w[visits site_visitors])
     end
 
     it "never draws Openstage's own visitors, asked for or not, shows them in the tooltip right after views, and keeps their column in the table" do

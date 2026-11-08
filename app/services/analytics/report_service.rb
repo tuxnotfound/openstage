@@ -4,10 +4,11 @@ module Analytics
   # per page, the builder's own and one per project, as the public page
   # orders and colours them, each counting Openstage's own four numbers and a
   # project also its commits, MRR, paying customers, site visits and site
-  # visitors, as its builder shows them; what Progress::DrawService makes of
-  # their counts, each number's total and change for the pages in view and the
-  # one chart of the numbers drawn; and the panels of those pages
-  # (GatherPagesService) and of the builder's websites (GatherWebsitesService).
+  # visitors, those its builder hides from visitors too; what
+  # Progress::DrawService makes of their counts, each number's total and change
+  # for the pages in view and the one chart of the numbers drawn; and the panels
+  # of those pages (GatherPagesService) and of the builder's websites
+  # (GatherWebsitesService).
   class ReportService < ApplicationService
     # It opens on commits alone, over the window every chart page opens on.
     DEFAULT_SHOW = %w[commits].freeze
@@ -98,14 +99,13 @@ module Analytics
       @projects ||= Progress::Projects.new(user.entries.publicly_counted.without_tooling_noise).all
     end
 
-    # A page counts a number once it has counted it on any day; a project
-    # shows the ones its builder picks, and Openstage's own always, a number
-    # that sits beside another only with that one (Progress::Row).
+    # A page counts a number once it has counted it on any day, and shows every
+    # one it counts: this page is its builder's alone, and a project's switches
+    # only say what visitors see.
     def row(key, name, rank, repo, on)
-      counted = Progress::Numbers::ALL.select { |number| counts.first_day(number.key, [ key ]) }
-      shown = counted.select { |number| !number.pickable || repo.nil? || repo.picks?(number.key) }
+      counted = Progress::Numbers::ALL.map(&:key).select { |number| counts.first_day(number, [ key ]) }
       Progress::Row.new(key: key, name: name, rank: rank, color_class: ProgressChart::Palette.project_class(rank), repo: repo, on: on,
-                        counted: counted.map(&:key), shown: shown.map(&:key))
+                        counted: counted, shown: counted)
     end
 
     def draw

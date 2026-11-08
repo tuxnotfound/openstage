@@ -70,22 +70,17 @@ RSpec.describe Analytics::ReportService do
     expect([ service.drawn.map(&:key), service.chart.tips.map(&:key) ]).to eq([ %w[visits], %w[visits site_visitors] ])
     expect(service.chart.columns.find { |column| column.rows.any? }.rows.map { |row| [ row.name, row.values ] }).to eq([ [ "app", %w[30 9] ] ])
     expect(report(show: %w[site_visitors]).drawn.map(&:key)).to eq(%w[commits])
-
-    app.update!(hidden_numbers: %w[site_visitors])
-    expect(report(show: %w[visits]).chart.tips.map(&:key)).to eq(%w[visits])
   end
 
-  it "shows a project's site visitors only while it shows its site visits, whatever their own pick, which applies again once those show" do
+  it "shows a project's site visits and site visitors whatever its builder hides from visitors" do
     app.site_visit_days.create!(day: 2.days.ago.to_date, visits: 30, visitors: 9)
-    hiding = lambda do |hidden|
-      app.update!(hidden_numbers: hidden)
-      report(show: %w[visits])
-    end
 
-    service = hiding.call(%w[visits])
-    expect([ service.rows.find(&:repo).shown, service.columns.map(&:key), service.chart.tips.map(&:key) ]).to eq([ %w[commits], %w[commits], %w[commits] ])
-    expect([ %w[visits site_visitors], %w[site_visitors], [] ].map { |hidden| hiding.call(hidden).rows.find(&:repo).shown })
-      .to eq([ %w[commits], %w[commits visits], %w[commits visits site_visitors] ])
+    [ %w[visits], %w[site_visitors], %w[visits site_visitors], [] ].each do |hidden|
+      app.update!(hidden_numbers: hidden)
+      service = report(show: %w[visits])
+
+      expect([ service.rows.find(&:repo).shown, service.chart.tips.map(&:key) ]).to eq([ %w[commits visits site_visitors], %w[visits site_visitors] ])
+    end
   end
 
   it "never draws Openstage's own visitors, asked for or not, shows them in the tooltip right after views, and keeps them in the table" do
@@ -99,14 +94,14 @@ RSpec.describe Analytics::ReportService do
     expect(report(show: %w[visitors]).drawn.map(&:key)).to eq(%w[commits])
   end
 
-  it "leaves out the numbers a project's builder hides from it, and never Openstage's own" do
+  it "keeps the numbers a project's builder hides from visitors, since only the builder sees this page" do
     app.update!(hidden_numbers: %w[commits])
     user.project_views.create!(repo_name: "me/app", viewed_at: 1.day.ago, ip_hash: "b")
     service = report
     row = service.rows.find { |each| each.name == "app" }
 
-    expect([ row.counted, row.shown ]).to eq([ %w[commits visitors views], %w[visitors views] ])
-    expect(total(service, "commits").split.map { |each, count| [ each.name, count ] }).to eq([ [ "lib", 1 ] ])
+    expect([ row.counted, row.shown ]).to eq([ %w[commits visitors views], %w[commits visitors views] ])
+    expect(total(service, "commits").split.map { |each, _| each.name }).to include("app", "lib")
   end
 
   it "opens on the last 30 days and commits alone, each point its own count, against the window before" do
