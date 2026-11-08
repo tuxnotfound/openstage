@@ -18,8 +18,11 @@ module Analytics
       table = views.table_name
       held = views.where(viewed_at: ...@before).where.not(ip_hash: nil)
       ids = held.group(:user_id, :ip_hash).select(:user_id, :ip_hash, "gen_random_uuid() AS visitor")
+      # Materialized, so each id is made once: a plan that rescans a subquery
+      # would give one visitor a new id per row, and count them that many times.
       views.connection.update(<<~SQL.squish)
-        UPDATE #{table} SET visitor = ids.visitor, ip_hash = NULL FROM (#{ids.to_sql}) ids
+        WITH ids AS MATERIALIZED (#{ids.to_sql})
+        UPDATE #{table} SET visitor = ids.visitor, ip_hash = NULL FROM ids
         WHERE #{table}.user_id = ids.user_id AND #{table}.ip_hash = ids.ip_hash
           AND #{table}.ip_hash IS NOT NULL AND #{table}.viewed_at < #{views.connection.quote(@before)}
       SQL
