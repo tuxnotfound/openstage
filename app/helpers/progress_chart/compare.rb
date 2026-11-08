@@ -19,8 +19,14 @@ module ProgressChart
     # rank: its row's place in the table; color_class: the class it wears
     # (Palette), nil past the palette; number: a Progress::Numbers::Number;
     # values: one per point; total: its count over the window's days. Without
-    # a colour or a total it draws no line.
-    Line = Data.define(:repo, :name, :rank, :color_class, :number, :values, :total)
+    # a colour or a total it draws no line. start: the point it starts on, its
+    # number's first for its project, so it never says zero for the days
+    # before it counted.
+    Line = Data.define(:repo, :name, :rank, :color_class, :number, :values, :total, :start) do
+      def initialize(start: 0, **fields)
+        super
+      end
+    end
     # values: one per column of the tooltip (tips); "–" where the project
     # shows none of it.
     Row = Data.define(:repo, :name, :color_class, :values)
@@ -74,12 +80,11 @@ module ProgressChart
       @average
     end
 
-    # [d, color class, number's key, repo]: the later numbers in line order
-    # first, and each number's busiest line last, so it draws on top.
+    # [d, color class, number's key, repo, start]: the later numbers in line
+    # order first, and each number's busiest line last, so it draws on top.
     def paths
       lines.sort_by { |line| [ -numbers.index(line.number).to_i, line.values.sum ] }.map do |line|
-        d = line.values.each_with_index.map { |value, i| "#{i.zero? ? 'M' : 'L'}#{num(x(i))} #{num(y(line.number, value))}" }.join(" ")
-        [ d, line.color_class, line.number.key, line.repo ]
+        [ path_of(line), line.color_class, line.number.key, line.repo, line.start ]
       end
     end
 
@@ -129,6 +134,14 @@ module ProgressChart
 
     def words
       @words ||= CompareNote.new(self)
+    end
+
+    # A vertex per point from its start. A lone point repeats, as a path of one
+    # vertex draws nothing: a number that began on the last day shows as a dot.
+    def path_of(line)
+      points = (line.start...line.values.size).map { |i| "#{num(x(i))} #{num(y(line.number, line.values[i]))}" }
+      points << points.first if points.one?
+      "M#{points.join(' L')}"
     end
 
     # Whether a project with lines of a number shows another beside it.

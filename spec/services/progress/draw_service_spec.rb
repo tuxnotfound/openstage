@@ -44,6 +44,22 @@ RSpec.describe Progress::DrawService do
     expect(draw(show: %w[commits visits commits]).drawn.map(&:key)).to eq(%w[commits visits])
   end
 
+  it "starts each line on its own first day, so a number added later never draws zero before it counted" do
+    service = draw([ app ], show: %w[commits visits])
+    by_number = service.chart.paths.to_h { |d, _, number, _, start| [ number, [ d, start ] ] }
+
+    expect(by_number["commits"].last).to eq(0)
+    expect(by_number["visits"].last).to eq(service.window.buckets.size - 1)
+    expect(by_number["commits"].first.scan(/[ML]/).size).to eq(service.window.buckets.size)
+  end
+
+  it "draws a number that began on the last point as a dot, since one vertex draws nothing" do
+    d, = draw([ app ], show: %w[visits]).chart.paths.first
+
+    expect(d).to match(/\AM[\d.]+ [\d.]+ L[\d.]+ [\d.]+\z/)
+    expect(d.split(" L").map { |point| point.delete("M") }.uniq.size).to eq(1)
+  end
+
   it "leaves a row out of view out of the totals and the chart, and keeps its value for the table" do
     service = draw([ app, row("me/lib", %w[commits], on: false, rank: 1) ])
 

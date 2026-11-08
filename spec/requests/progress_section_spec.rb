@@ -56,7 +56,7 @@ RSpec.describe "The public page's chart and what shipped" do
       get "/tux", params: { range: range }
 
       expect(panel.at_css("svg[role='img']")["aria-label"]).to eq(label)
-      expect(panel.at_css("svg[role='img'] path")["d"].scan(/[ML]/).size).to eq(points)
+      expect(panel.css("svg[role='img'] path").map { |path| path["d"].scan(/[ML]/).size }.max).to eq(points)
     end
   end
 

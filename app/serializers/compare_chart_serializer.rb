@@ -1,11 +1,11 @@
 # A chart filter's chart as the browser draws it (ProgressChart::Compare),
 # from the object the server's chart partial renders (charts/_chart): each
-# line with its project, the class of its colour and its number, which the
-# browser gives its line style; the gridlines and the axis; a tooltip per
-# point, a row per project and a column per tip: each number with lines,
-# then any that sits beside it, which has none (line); the marks of the
-# entries shipped and published (ProgressChart::Marks); and the note, nil
-# unless a number drawn has no line.
+# line with its project, the class of its colour, its number, which the
+# browser gives its line style, and the point it starts on; the gridlines and
+# the axis; a tooltip per point, a row per project and a column per tip: each
+# number with lines, then any that sits beside it, which has none (line); the
+# marks of the entries shipped and published (ProgressChart::Marks); and the
+# note, nil unless a number drawn has no line.
 class CompareChartSerializer < ApplicationSerializer
   def initialize(chart)
     @chart = chart
@@ -13,7 +13,7 @@ class CompareChartSerializer < ApplicationSerializer
 
   def attributes
     {
-      paths: @chart.paths.map { |d, color_class, number, key| { d: d, color_class: color_class, number: number, key: key } },
+      paths: @chart.paths.map { |d, color_class, number, key, start| { d: d, color_class: color_class, number: number, key: key, start: start } },
       ticks: @chart.ticks.map { |tick| { value: tick.value, top: tick.top } },
       columns: @chart.columns.map { |column| column_of(column) }, tips: tips, axis: @chart.axis, marks: @chart.marks.map { |mark| mark_of(mark) },
       aria_label: @chart.aria_label, note: @chart.note, none: @chart.none, indexed: @chart.indexed?

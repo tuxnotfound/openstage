@@ -77,8 +77,8 @@ export function boxed(key: string, projects: string[], all: string[]): string[] 
   return after.length === all.length ? [] : after
 }
 
-// Where a line stands at each point, in percent from the chart's top, read
-// from the path the server drew: one vertex per point.
+// Where a line stands at each point from its start, in percent from the
+// chart's top, read from the path the server drew: one vertex per point.
 export function pathTops(d: string, height = HEIGHT): number[] {
   return [...d.matchAll(/[ML]\s*-?[\d.]+\s+(-?[\d.]+)/g)].map((match) => (100 * Number(match[1])) / height)
 }

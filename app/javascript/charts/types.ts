@@ -16,8 +16,9 @@ export type CalendarView = { today: string; earliest: string | null; picked: { f
 // project, its colour and its number, and the browser gives it its number's
 // line style.
 export type CompareChartView = {
-  // key: the row's (TableRow); number: the number's.
-  paths: { d: string; colorClass: string; number: string; key: string }[]
+  // key: the row's (TableRow); number: the number's; start: the point its
+  // first vertex stands on.
+  paths: { d: string; colorClass: string; number: string; key: string; start: number }[]
   // value: null on a chart that compares numbers, each on its own peak.
   ticks: { value: string | null; top: number }[]
   // values: one per tip, "–" where the project shows none of it.

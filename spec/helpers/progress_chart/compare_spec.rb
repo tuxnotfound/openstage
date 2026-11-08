@@ -26,7 +26,7 @@ RSpec.describe ProgressChart::Compare do
   it "draws a line per project and number, each carrying its colour and its number, every number against its own peak" do
     compare = chart([ line("app", commits, [ 3, 1 ]), line("app", visits, [ 0, 400 ]) ])
 
-    expect(compare.paths.map { |path| path.drop(1) }).to eq([ [ "os-project-1", "visits", "builder/app" ], [ "os-project-1", "commits", "builder/app" ] ])
+    expect(compare.paths.map { |path| path[1..3] }).to eq([ [ "os-project-1", "visits", "builder/app" ], [ "os-project-1", "commits", "builder/app" ] ])
     expect(compare.ticks.map(&:value)).to eq([ nil, nil ])
     expect(tops(compare.paths).uniq.size).to eq(1)
   end
@@ -103,11 +103,20 @@ RSpec.describe ProgressChart::Compare do
     expect(missing.note).to eq("None of the projects in view counts site visits.")
   end
 
+  it "starts a line on its start, and sends the point it starts on" do
+    late = described_class::Line.new(repo: "builder/app", name: "app", rank: 0, color_class: "os-project-1", number: commits, values: [ 0, 0, 3 ], total: 3, start: 1)
+
+    d, _, _, _, start = chart([ late ], numbers: [ commits ]).paths.first
+
+    expect(d.scan(/[ML]/).size).to eq(2)
+    expect(start).to eq(1)
+  end
+
   it "leaves out a project with no colour: no line, no row in the tooltip and no part in the scale" do
     quiet = described_class::Line.new(repo: "builder/quiet", name: "quiet", rank: 10, color_class: nil, number: commits, values: [ 0, 90 ], total: 90)
     compare = chart([ line("app", commits, [ 3, 1 ]), quiet ], numbers: [ commits ])
 
-    expect(compare.paths.map(&:last)).to eq([ "builder/app" ])
+    expect(compare.paths.map { |path| path[3] }).to eq([ "builder/app" ])
     expect(compare.columns.last.rows.map(&:name)).to eq([ "app" ])
     expect(compare.ticks.map(&:value)).to eq(%w[2 4])
   end

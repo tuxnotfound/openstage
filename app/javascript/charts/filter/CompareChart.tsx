@@ -53,7 +53,7 @@ export default function CompareChart({ chart, lines, focus, height = "", hidden,
   const column = index === null ? undefined : chart.columns[index]
   const x = column ? column.left + (column.width * column.mark) / 100 : 0
   const marks = index === null ? [] : paths.filter(hot).flatMap((path) => {
-    const top = pathTops(path.d)[index]
+    const top = pathTops(path.d)[index - path.start]
     return top !== undefined && top < 99.95 ? [{ path, top }] : []
   })
   const shown = chart.marks.filter((mark) => !(mark.key && mark.number && hidden?.({ key: mark.key, number: mark.number })))

@@ -112,7 +112,14 @@ module Progress
     def line(number, row)
       ProgressChart::Compare::Line.new(repo: row.key, name: row.name, rank: row.rank, color_class: row.color_class, number: number,
                                        values: counts.per_point(number.key, row.key, window.buckets, average: average.present?),
-                                       total: counts.sum(number.key, row.key, window.days))
+                                       total: counts.sum(number.key, row.key, window.days), start: first_point(number, row))
+    end
+
+    # The point holding the row's first counted day of the number; the chart's
+    # first with none known.
+    def first_point(number, row)
+      first = counts.first_day(number.key, [ row.key ])
+      (window.buckets.index { |bucket| bucket.last >= first } if first) || 0
     end
 
     # A row's count of a number over the window.
