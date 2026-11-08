@@ -9,9 +9,10 @@ module Revenue
 
     attr_reader :currency, :left_out
 
-    def initialize(rows)
+    # ended_in: the currency to write nothing in, with no rows.
+    def initialize(rows, ended_in: nil)
       @rates = rates_for(rows)
-      @currency = most_in(rows)
+      @currency = most_in(rows) || ended_in
       @left_out = []
       @mrr = {}
       @customers = {}

@@ -37,6 +37,15 @@ RSpec.describe Revenue::Book do
     expect(book.firsts).to eq({})
   end
 
+  it "keeps the currency of revenue that ended before the day asked for" do
+    product("prod_a").revenue_days.create!(day: Date.new(2026, 5, 1), currency: "eur", mrr: 100, subscriptions: 1)
+
+    levels = book.levels([ repo ], from: Date.new(2026, 10, 1))
+
+    expect(levels.currency).to eq("eur")
+    expect(levels.mrr(repo.id)).to eq({})
+  end
+
   it "reads a project's levels from a day on" do
     counted = product("prod_a")
     counted.revenue_days.create!(day: Date.new(2026, 5, 1), currency: "usd", mrr: 100, subscriptions: 1)

@@ -28,13 +28,15 @@ module Revenue
       @firsts ||= live? ? counted_days.group("revenue_products.github_repo_id").minimum(:day) : {}
     end
 
-    # Levels of these projects, from a day on; nil from for every day.
+    # Levels of these projects, from a day on; nil from for every day. With no
+    # day since then, their revenue has ended: they stand at nothing, in the
+    # currency it last was in.
     def levels(repos, from: nil)
       days = counted_days.where(revenue_products: { github_repo_id: repos.map(&:id) })
-      days = days.where(day: from..) if from
-      Levels.new(days.pluck("revenue_products.github_repo_id", :day, :currency, :mrr, :subscriptions).map do |repo_id, day, currency, mrr, subscriptions|
+      rows = (from ? days.where(day: from..) : days).pluck("revenue_products.github_repo_id", :day, :currency, :mrr, :subscriptions).map do |repo_id, day, currency, mrr, subscriptions|
         Levels::Row.new(repo_id: repo_id, day: day, currency: currency, mrr: mrr, subscriptions: subscriptions)
-      end)
+      end
+      Levels.new(rows, ended_in: (days.order(day: :desc).pick(:currency) if rows.empty?))
     end
 
     private

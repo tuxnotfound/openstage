@@ -22,6 +22,11 @@ RSpec.describe "MRR on the chart pages", type: :request do
     Nokogiri::HTML(response.body).at_css("[data-revenue]")
   end
 
+  def response_status_of_view
+    view
+    response.status
+  end
+
   def number(key)
     view["numbers"].find { |each| each["key"] == key }
   end
@@ -117,6 +122,19 @@ RSpec.describe "MRR on the chart pages", type: :request do
     get "/api/progress/builder", params: { range: "30d", dashboard: 1 }
 
     expect(JSON.parse(response.body).dig("table", "columns").map { |column| column["key"] }).not_to include("mrr", "customers")
+  end
+
+  it "writes a project whose revenue ended before the window at nothing, in its last currency" do
+    RevenueDay.delete_all
+    product = RevenueProduct.find_by!(external_id: "prod_m")
+    product.revenue_days.create!(day: today - 200, currency: "eur", mrr: 90_000, subscriptions: 9)
+
+    expect(response_status_of_view).to eq(200)
+    expect(number("mrr")["value"]).to eq("€0")
+    expect(number("customers")["value"]).to eq("0")
+
+    get "/builder/shipnote"
+    expect(figure.text.squish).to eq("€0 MRR · 0 paying customers · Verified with Stripe")
   end
 
   it "shows a new read at once, past the page's cache" do
