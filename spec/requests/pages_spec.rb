@@ -12,6 +12,16 @@ RSpec.describe "Marketing pages", type: :request do
   end
 
   describe "GET /privacy" do
+    it "says what connecting Stripe reads, what it keeps and how it goes" do
+      get "/privacy"
+
+      section = Nokogiri::HTML(response.body).at_css("#stripe").text.squish
+      expect(section).to include("read the account's products, prices, subscriptions and paid invoices")
+      expect(section).to include("It keeps those daily totals, and each product's name, Stripe id and whether it is archived.")
+      expect(section).to include("no invoice, no subscription and no customer's record is kept")
+      expect(section).to include("Disconnecting Stripe in Settings deletes the key and everything read with it at once.")
+    end
+
     it "says what the script counts on builders' sites, linked from every page's footer" do
       get "/privacy"
 
@@ -62,7 +72,7 @@ RSpec.describe "Marketing pages", type: :request do
         "Openstage's request log leaves out your IP address, on its own pages and for the script's page views."
       )
       expect(own_pages).not_to include("the same hash")
-      expect(page.text.squish).to include("Updated November 5, 2026.")
+      expect(page.text.squish).to include("Updated November 8, 2026.")
     end
   end
 
@@ -74,6 +84,14 @@ RSpec.describe "Marketing pages", type: :request do
       expect(response.body).to include("Pro is $7 a month")
       expect(response.body).not_to include("$49")
       expect(response.body).to include("application/ld+json")
+    end
+
+    it "says MRR shows on project pages on Pro, and only to its builder on Free" do
+      get "/pricing"
+
+      page = Nokogiri::HTML(response.body).text.squish
+      expect(page).to include("One project's MRR from Stripe, seen only by you")
+      expect(page).to include("MRR and paying customers on every project's page.", "Verified with Stripe. Hide either one whenever you like.")
     end
 
     it "shows the upgrade CTA for signed-out visitors" do

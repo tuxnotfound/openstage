@@ -85,4 +85,21 @@ RSpec.describe "Connecting a payment provider for MRR", type: :request do
 
     expect(account.reload).to have_attributes(api_key: "rk_test_good", refused_at: nil)
   end
+
+  it "disconnecting deletes the key and everything read with it, as the privacy page says" do
+    account = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok")
+    product = account.revenue_products.create!(external_id: "prod_1", name: "Pro")
+    product.revenue_days.create!(day: Date.current, currency: "usd", mrr: 700, subscriptions: 1)
+    sign_in_as(user)
+
+    delete "/revenue_accounts/#{account.id}"
+
+    expect([ RevenueAccount.count, RevenueProduct.count, RevenueDay.count ]).to eq([ 0, 0, 0 ])
+  end
+
+  it "links to what it reads and keeps from the form" do
+    sign_in_as(user)
+
+    expect(revenue_section.at_css("#stripe-connect a[href='/privacy#stripe']").text).to eq("What it reads and keeps")
+  end
 end
