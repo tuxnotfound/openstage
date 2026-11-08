@@ -13,6 +13,17 @@ RSpec.describe Revenue::ReadRatesService do
     expect(EcbGateway).not_to have_received(:recent_rates)
   end
 
+  it "keeps nothing of a first read cut short, so the next read fetches the whole history" do
+    cut_short = Enumerator.new do |rates|
+      1001.times { |days| rates << rate.merge(day: rate[:day] - days) }
+      raise ApplicationGateway::Error, "The ECB sent broken XML"
+    end
+    allow(EcbGateway).to receive(:all_rates).and_return(cut_short)
+
+    expect { described_class.new.call! }.to raise_error(ApplicationGateway::Error)
+    expect(ExchangeRate.exists?).to be(false)
+  end
+
   it "reads the last 90 days after that, and takes a rate the ECB corrected" do
     ExchangeRate.create!(currency: "usd", day: Date.new(2026, 11, 6), per_euro: 1)
     allow(EcbGateway).to receive(:recent_rates).and_return([ rate, rate.merge(day: Date.new(2026, 11, 5)) ])

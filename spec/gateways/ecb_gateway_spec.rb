@@ -17,22 +17,40 @@ RSpec.describe EcbGateway do
   it "reads the last 90 days' rates per euro, each currency as Stripe writes it" do
     stub_request(:get, "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml").to_return(status: 200, headers: { "Content-Type" => "text/xml" }, body: xml)
 
-    expect(described_class.recent_rates).to eq([ { currency: "usd", day: Date.new(2026, 11, 6), per_euro: "1.0842".to_d },
-                                                 { currency: "jpy", day: Date.new(2026, 11, 6), per_euro: "162.12".to_d },
-                                                 { currency: "usd", day: Date.new(2026, 11, 5), per_euro: "1.0801".to_d } ])
+    expect(described_class.recent_rates.to_a).to eq([ { currency: "usd", day: Date.new(2026, 11, 6), per_euro: "1.0842".to_d },
+                                                      { currency: "jpy", day: Date.new(2026, 11, 6), per_euro: "162.12".to_d },
+                                                      { currency: "usd", day: Date.new(2026, 11, 5), per_euro: "1.0801".to_d } ])
   end
 
   it "reads every rate from the whole history" do
     stub = stub_request(:get, "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml").to_return(status: 200, headers: { "Content-Type" => "text/xml" }, body: xml)
 
-    expect(described_class.all_rates.size).to eq(3)
+    expect(described_class.all_rates.count).to eq(3)
     expect(stub).to have_been_requested
   end
 
   it "raises on a page with no rates, so a night without them shows as a failed job" do
     stub_request(:get, %r{/eurofxref-hist-90d.xml}).to_return(status: 200, headers: { "Content-Type" => "text/html" }, body: "<html>Down for maintenance</html>")
 
-    expect { described_class.recent_rates }.to raise_error(ApplicationGateway::Error, "The ECB sent no rates")
+    expect { described_class.recent_rates.to_a }.to raise_error(ApplicationGateway::Error, "The ECB sent no rates")
+  end
+
+  it "gives each rate as it reads it, so the whole history never sits in memory" do
+    stub_request(:get, %r{/eurofxref-hist-90d.xml}).to_return(status: 200, headers: { "Content-Type" => "text/xml" }, body: xml.sub("</gesmes:Envelope>", ""))
+
+    expect(described_class.recent_rates.first).to eq({ currency: "usd", day: Date.new(2026, 11, 6), per_euro: "1.0842".to_d })
+  end
+
+  it "raises on a file cut short, so a read stops rather than keeping part of it" do
+    stub_request(:get, %r{/eurofxref-hist-90d.xml}).to_return(status: 200, headers: { "Content-Type" => "text/xml" }, body: xml.sub("</gesmes:Envelope>", ""))
+
+    expect { described_class.recent_rates.to_a }.to raise_error(ApplicationGateway::Error, /broken XML/)
+  end
+
+  it "raises on a page that is not XML" do
+    stub_request(:get, %r{/eurofxref-hist-90d.xml}).to_return(status: 200, headers: { "Content-Type" => "text/html" }, body: "<html><br>Down for maintenance</html>")
+
+    expect { described_class.recent_rates.to_a }.to raise_error(ApplicationGateway::Error, /broken XML/)
   end
 
   it "raises the gateway's error on an outage" do
