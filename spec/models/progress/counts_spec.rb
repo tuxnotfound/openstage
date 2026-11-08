@@ -29,4 +29,37 @@ RSpec.describe Progress::Counts do
     expect(counts.per_point("commits", "me/app", [ week, day ])).to eq([ 7, 5 ])
     expect(counts.per_point("commits", "me/app", [ day ], average: true)).to eq([ 1.0 ])
   end
+  describe "a level" do
+    let(:may) { Date.new(2026, 5, 1) }
+    let(:june) { Date.new(2026, 6, 1) }
+    let(:counts) do
+      described_class.new(days: { "mrr" => { "me/app" => { may => 10.0, june => 30.0 } } }, firsts: { "mrr" => { "me/app" => may } },
+                          through: june, currency: "usd")
+    end
+
+    it "stands at its last day's value over some days, never their sum, and stood at nothing on a day with no revenue" do
+      expect(counts.sum("mrr", "me/app", may..may)).to eq(10.0)
+      expect(counts.sum("mrr", "me/app", may..june)).to eq(30.0)
+      expect(counts.sum("mrr", "me/app", (may + 1)..(may + 2))).to eq(0)
+    end
+
+    it "carries the last read to the days after it, and stands there with no days named" do
+      expect(counts.sum("mrr", "me/app", june..(june + 9))).to eq(30.0)
+      expect(counts.sum("mrr", "me/app")).to eq(30.0)
+    end
+
+    it "gives each point what it stood at on the point's last day, however it is averaged" do
+      bucket = Struct.new(:first, :last)
+      points = [ bucket.new(may - 10, may - 5), bucket.new(may, may + 20), bucket.new(june, june + 5) ]
+
+      expect(counts.per_point("mrr", "me/app", points, average: true)).to eq([ 0, 0, 30.0 ])
+      expect(counts.per_point("mrr", "me/app", [ bucket.new(may, may) ])).to eq([ 10.0 ])
+    end
+
+    it "writes money in its currency, and any other number with its thousands" do
+      expect(counts.written(Progress::Numbers.find("mrr"), 4210.4)).to eq("$4,210")
+      expect(counts.written(Progress::Numbers.find("customers"), 1230)).to eq("1,230")
+      expect(counts.written(Progress::Numbers.find("commits"), 1230)).to eq("1,230")
+    end
+  end
 end

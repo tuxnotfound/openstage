@@ -1,0 +1,41 @@
+module Revenue
+  # What a builder's Stripe account holds for their projects, as the pages read
+  # it: the last day read, the first day each project had revenue, and its days
+  # in one currency (Levels). Only products counted for a project read here.
+  class Book
+    def initialize(user)
+      @user = user
+    end
+
+    def account
+      return @account if defined?(@account)
+
+      @account = @user.revenue_accounts.find_by(provider: "stripe")
+    end
+
+    # The last day read, in the builder's zone; nil before the first read.
+    def read_day
+      account&.read_at&.in_time_zone(@user.zone)&.to_date
+    end
+
+    # { repo id => its first day with revenue }.
+    def firsts
+      @firsts ||= account ? counted_days.group("revenue_products.github_repo_id").minimum(:day) : {}
+    end
+
+    # Levels of these projects, from a day on; nil from for every day.
+    def levels(repos, from: nil)
+      days = counted_days.where(revenue_products: { github_repo_id: repos.map(&:id) })
+      days = days.where(day: from..) if from
+      Levels.new(days.pluck("revenue_products.github_repo_id", :day, :currency, :mrr, :subscriptions).map do |repo_id, day, currency, mrr, subscriptions|
+        Levels::Row.new(repo_id: repo_id, day: day, currency: currency, mrr: mrr, subscriptions: subscriptions)
+      end)
+    end
+
+    private
+
+    def counted_days
+      RevenueDay.joins(:revenue_product).where(revenue_products: { revenue_account_id: account.id }).where.not(revenue_products: { github_repo_id: nil })
+    end
+  end
+end

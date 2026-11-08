@@ -56,4 +56,24 @@ RSpec.describe Progress::CountService do
   it "needs a builder" do
     expect(described_class.new(commit_repos: [ "me/app" ]).call).to be(false)
   end
+
+  it "counts the MRR and paying customers of the projects whose revenue counts, as levels carried from the last read, and the first day of each" do
+    account = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok", read_at: Time.utc(2026, 10, 27, 12))
+    product = account.revenue_products.create!(external_id: "prod_a", name: "A", github_repo: repo)
+    product.revenue_days.create!(day: Date.new(2026, 10, 1), currency: "usd", mrr: 1000, subscriptions: 2)
+    product.revenue_days.create!(day: Date.new(2026, 10, 27), currency: "usd", mrr: 3000, subscriptions: 4)
+
+    counted = counts(revenue_repos: [ repo ], revenue: Revenue::Book.new(user))
+
+    expect(counted.sum("mrr", "me/app", Date.new(2026, 10, 1)..Date.new(2026, 10, 1))).to eq(10.0)
+    expect(counted.sum("mrr", "me/app", Date.new(2026, 10, 28)..Date.new(2026, 10, 28))).to eq(30.0)
+    expect(counted.sum("customers", "me/app")).to eq(4)
+    expect(counted.first_day("mrr", [ "me/app" ])).to eq(Date.new(2026, 10, 1))
+    expect(counted.first_day("customers", [ "me/app" ])).to eq(Date.new(2026, 10, 1))
+    expect(counted.currency).to eq("usd")
+  end
+
+  it "reads no revenue for a page with no project that counts it" do
+    expect(counts(revenue_repos: [], revenue: Revenue::Book.new(user)).sum("mrr", "me/app")).to eq(0)
+  end
 end

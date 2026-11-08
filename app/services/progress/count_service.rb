@@ -1,18 +1,20 @@
 module Progress
   # Counts a builder's numbers per project and day, in their zone, over the
   # days a chart needs: their public commits, as their pages count them, and
-  # the visits and visitors to each project's website. Also the first day
-  # each project counted each one, ever, since a chart starts where its
-  # numbers start. The commits come read with the page's section
-  # (TallyService#commit_days, Projects#first_commits), so a page reads them
-  # once.
+  # the visits and visitors to each project's website, and each project's MRR
+  # and paying customers. Also the first day each project counted each one,
+  # ever, since a chart starts where its numbers start. The commits come read
+  # with the page's section (TallyService#commit_days, Projects#first_commits),
+  # so a page reads them once.
   class CountService < ApplicationService
     # commit_repos: the full names of the repos whose commits count;
     # visit_repos: the GithubRepos whose visits count; from: the first day
     # needed, nil for every day. commit_days: the builder's commits by day
     # and project, {[date, repo] => count}, from that day on at least;
     # first_commits: the time of each project's first commit, ever.
-    attr_accessor :user, :commit_repos, :visit_repos, :from, :commit_days, :first_commits
+    # revenue_repos: the GithubRepos whose MRR and paying customers count;
+    # revenue: the builder's Revenue::Book.
+    attr_accessor :user, :commit_repos, :visit_repos, :from, :commit_days, :first_commits, :revenue_repos, :revenue
     # counts: a Progress::Counts.
     attr_reader :counts
 
@@ -23,8 +25,24 @@ module Progress
     def execute
       visit_days, visitor_days = site_days
       visit_firsts, visitor_firsts = site_firsts
-      @counts = Counts.new(days: { "commits" => counted_commits, "visits" => visit_days, "site_visitors" => visitor_days },
-                           firsts: { "commits" => commit_firsts, "visits" => visit_firsts, "site_visitors" => visitor_firsts })
+      levels = revenue.levels(revenue_repos, from: from) if revenue_repos.present?
+      @counts = Counts.new(days: { "commits" => counted_commits, "visits" => visit_days, "site_visitors" => visitor_days, **revenue_days(levels) },
+                           firsts: { "commits" => commit_firsts, "visits" => visit_firsts, "site_visitors" => visitor_firsts, **revenue_firsts },
+                           through: revenue&.read_day, currency: levels&.currency)
+    end
+
+    # Each number's days by project, for the projects whose revenue counts.
+    def revenue_days(levels)
+      return {} unless levels
+
+      { "mrr" => revenue_repos.to_h { |repo| [ repo.full_name, levels.mrr(repo.id) ] },
+        "customers" => revenue_repos.to_h { |repo| [ repo.full_name, levels.customers(repo.id) ] } }
+    end
+
+    # MRR and paying customers begin together, at a project's first sale.
+    def revenue_firsts
+      firsts = Array(revenue_repos).filter_map { |repo| [ repo.full_name, revenue.firsts[repo.id] ] if revenue.firsts.key?(repo.id) }.to_h
+      { "mrr" => firsts, "customers" => firsts }
     end
 
     # {repo => {date => count}} for the repos whose commits count.

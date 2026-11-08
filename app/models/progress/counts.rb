@@ -1,17 +1,28 @@
 module Progress
   # A builder's numbers per project and day, as their pages count them, and
   # the first day each project counted each one, ever. Days are in the
-  # builder's zone; a project is its repo's full name.
+  # builder's zone; a project is its repo's full name. A level
+  # (Numbers::Number#level?) stands at a point in time: over some days it is
+  # what it stood at on the last, never their sum.
   class Counts
+    # currency: the one the money numbers are in, in its units.
+    attr_reader :currency
+
     # days: {number's key => {repo => {date => count}}};
-    # firsts: {number's key => {repo => date}}.
-    def initialize(days: {}, firsts: {})
+    # firsts: {number's key => {repo => date}}; through: the last day the levels
+    # were read, whose value stands for the days after it; a day before it
+    # with no value stood at nothing.
+    def initialize(days: {}, firsts: {}, through: nil, currency: nil)
       @days = days
       @firsts = firsts
+      @through = through
+      @currency = currency
     end
 
     # A project's count over some days; nil days for every day counted.
     def sum(key, repo, days = nil)
+      return at(key, repo, days&.last || @through) if level?(key)
+
       daily = daily(key, repo)
       days ? daily.sum { |date, count| days.cover?(date) ? count : 0 } : daily.values.sum
     end
@@ -24,6 +35,8 @@ module Progress
     # A project's count at each point: the sum of its days, or, averaged,
     # each day's 7-day average, as a window drawn by day draws commits.
     def per_point(key, repo, buckets, average: false)
+      return buckets.map { |bucket| at(key, repo, bucket.last) } if level?(key)
+
       daily = daily(key, repo)
       span = Window::AVERAGE
       buckets.map do |bucket|
@@ -33,7 +46,22 @@ module Progress
       end
     end
 
+    # A value of a number as the pages write it.
+    def written(number, value)
+      return Revenue::Money.write(value, currency) if number.money?
+
+      ActiveSupport::NumberHelper.number_to_delimited(value)
+    end
+
     private
+
+    def level?(key)
+      Numbers.find(key).level?
+    end
+
+    def at(key, repo, day)
+      daily(key, repo).fetch([ day, @through ].compact.min, 0)
+    end
 
     def daily(key, repo)
       @days.dig(key, repo) || {}

@@ -44,6 +44,48 @@ RSpec.describe Progress::DrawService do
     expect(draw(show: %w[commits visits commits]).drawn.map(&:key)).to eq(%w[commits visits])
   end
 
+  context "with a level" do
+    let(:may) { Date.new(2026, 5, 1) }
+    let(:counts) do
+      Progress::Counts.new(days: { "commits" => { "me/app" => { today - 1 => 3 } }, "mrr" => { "me/app" => { may => 10.0, Date.new(2026, 8, 2) => 20.0, today => 30.0 } } },
+                           firsts: { "commits" => { "me/app" => today - 1 }, "mrr" => { "me/app" => may } }, through: today, currency: "usd")
+    end
+    let(:level) { row("me/app", %w[commits mrr]) }
+
+    it "totals what it stands at as the window ends, against where it stood as the window began" do
+      expect(totals(draw([ level ]))["mrr"]).to eq([ 30.0, 20.0, [ [ "app", 30.0 ] ] ])
+    end
+
+    it "draws each point at what it stood at, in money, and never averages it" do
+      thirty = Progress::Window.new(range: "30d", today: today, first_activity: nil)
+      service = described_class.new(rows: [ level ], counts: counts, totals_window: thirty, show: %w[mrr], average: true).tap(&:call!)
+      last = service.chart.columns.last
+
+      expect(service.chart).not_to be_average
+      expect(last.title).not_to include("average")
+      expect(last.rows.first.values).to eq([ "$30" ])
+      expect(service.chart.ticks.map(&:value)).to all(start_with("$"))
+    end
+
+    it "says which numbers are averaged when a level stands beside them" do
+      thirty = Progress::Window.new(range: "30d", today: today, first_activity: nil)
+      service = described_class.new(rows: [ level ], counts: counts, totals_window: thirty, show: %w[commits mrr], average: true).tap(&:call!)
+
+      expect(service.chart.columns.last.title).to end_with(" · 7-day average of commits")
+      expect(service.chart.columns.last.rows.first.values).to eq([ "0.4", "$30" ])
+      expect(service.chart.aria_label).to start_with("MRR and 7-day average of commits per day by project")
+    end
+
+    it "draws a level that fell to nothing by the window's end" do
+      stood = ((today - 50)..(today - 40)).to_h { |day| [ day, 10.0 ] }
+      gone = Progress::Counts.new(days: { "mrr" => { "me/app" => stood } }, firsts: { "mrr" => { "me/app" => today - 50 } }, through: today, currency: "usd")
+      service = described_class.new(rows: [ row("me/app", %w[mrr]) ], counts: gone, totals_window: totals_window, show: %w[mrr]).tap(&:call!)
+
+      expect(service.chart.paths.size).to eq(1)
+      expect(service.totals.first.value).to eq(0)
+    end
+  end
+
   it "starts each line on its own first day, so a number added later never draws zero before it counted" do
     service = draw([ app ], show: %w[commits visits])
     by_number = service.chart.paths.to_h { |d, _, number, _, start| [ number, [ d, start ] ] }

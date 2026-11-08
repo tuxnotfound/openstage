@@ -83,8 +83,8 @@ module Progress
     def draw
       @window = Window.new(range: totals_window.range, today: totals_window.today, first_activity: first_drawn_day)
       lines = drawn.flat_map { |number| showing(number).map { |row| line(number, row) } }
-      ProgressChart::Compare.new(window: window, lines: lines, beside: beside_lines, numbers: drawn, items: Array(items), average: average.present?,
-                                 lone: lone.present?, per: per || "project")
+      ProgressChart::Compare.new(window: window, lines: lines, beside: beside_lines, numbers: drawn, items: Array(items),
+                                 average: average? && drawn.any? { |number| !number.level? }, lone: lone.present?, per: per || "project", currency: counts.currency)
     end
 
     # What the tooltip shows beside each number drawn (Numbers.beside), of
@@ -109,10 +109,16 @@ module Progress
       Array(rows).select { |row| row.on && row.shows?(number.key) }
     end
 
+    def average?
+      average.present?
+    end
+
+    # A level's total is its peak: it draws its line while it stood at anything
+    # in the window, even if it ends at nothing.
     def line(number, row)
-      ProgressChart::Compare::Line.new(repo: row.key, name: row.name, rank: row.rank, color_class: row.color_class, number: number,
-                                       values: counts.per_point(number.key, row.key, window.buckets, average: average.present?),
-                                       total: counts.sum(number.key, row.key, window.days), start: first_point(number, row))
+      values = counts.per_point(number.key, row.key, window.buckets, average: average?)
+      ProgressChart::Compare::Line.new(repo: row.key, name: row.name, rank: row.rank, color_class: row.color_class, number: number, values: values,
+                                       total: number.level? ? values.max : counts.sum(number.key, row.key, window.days), start: first_point(number, row))
     end
 
     # The point holding the row's first counted day of the number; the chart's
@@ -137,13 +143,15 @@ module Progress
     end
 
     # Some rows' count of a number over the window before, only while it
-    # counted before the window began; nil otherwise.
+    # counted before the window began; nil otherwise. A level's is where it
+    # stood as the window began, so its change is the one since then.
     def previous(number, some)
       before = totals_window.span_before
       first = counts.first_day(number.key, some.map(&:key))
       return unless before && first && first < totals_window.span.first
 
-      some.sum { |row| counts.sum(number.key, row.key, before) }
+      day_before = totals_window.span.first - 1
+      some.sum { |row| counts.sum(number.key, row.key, number.level? ? day_before..day_before : before) }
     end
   end
 end

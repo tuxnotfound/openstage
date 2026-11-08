@@ -6,8 +6,6 @@
 # chart; and the table of rows under it. filter: a Progress::ChartService or
 # an Analytics::ReportService.
 class ChartFilterSerializer < ApplicationSerializer
-  include ActionView::Helpers::NumberHelper
-
   # changes: whether the toggles carry their change; table: the
   # ProjectsTableSerializer of the rows under the chart, nil without one.
   def initialize(filter, changes:, table: nil)
@@ -48,7 +46,7 @@ class ChartFilterSerializer < ApplicationSerializer
   # the palette (nil) leaves its share empty.
   def number_of(total)
     number = total.number
-    { key: number.key, label: number.label, word: number.word, group: number.group, value: total.value ? number_with_delimiter(total.value) : "–",
+    { key: number.key, label: number.label, word: number.word, group: number.group, value: total.value ? @filter.counts.written(number, total.value) : "–",
       split: total.split.map { |row, count| { key: row.key, color_class: row.color_class, value: count } },
       change: (Progress::Change.of(total.value, total.previous)&.to_h if @changes) }
   end

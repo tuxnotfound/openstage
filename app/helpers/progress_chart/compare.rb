@@ -34,8 +34,8 @@ module ProgressChart
 
     # numbers: the numbers drawn, in line order. average: each point a 7-day
     # average. lone: one project's page. per: what a line's row is, "project"
-    # or, on analytics, "page".
-    attr_reader :window, :numbers, :every_line, :lone, :per
+    # or, on analytics, "page". currency: the one a money number is in.
+    attr_reader :window, :numbers, :every_line, :lone, :per, :currency
 
     delegate :note, :aria_label, :none, to: :words
 
@@ -43,7 +43,7 @@ module ProgressChart
     # the projects that show them; they draw no path, set no peak or scale
     # and name nothing in the note. items: the TallyService::Items the page
     # lists, which the chart marks.
-    def initialize(window:, lines:, numbers:, beside: [], items: [], average: false, lone: false, per: "project")
+    def initialize(window:, lines:, numbers:, beside: [], items: [], average: false, lone: false, per: "project", currency: nil)
       @window = window
       @every_line = lines
       @beside = beside
@@ -52,6 +52,7 @@ module ProgressChart
       @average = average
       @lone = lone
       @per = per
+      @currency = currency
     end
 
     # The lines with anything in the window and a colour: a project past the
@@ -155,7 +156,7 @@ module ProgressChart
       from = i.zero? ? 0 : (x(i - 1) + x(i)) / 2
       to = i == count - 1 ? WIDTH : (x(i) + x(i + 1)) / 2
       Column.new(left: pct(from), width: pct(to - from), mark: (100.0 * (x(i) - from) / (to - from)).round(1),
-                 title: "#{window.labels.bucket_title(bucket)}#{' · 7-day average' if average?}", rows: rows_at(i))
+                 title: "#{window.labels.bucket_title(bucket)}#{words.averaged}", rows: rows_at(i))
     end
 
     # A row per project with anything at the point, in the table's order:

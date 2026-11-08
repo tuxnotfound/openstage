@@ -5,8 +5,8 @@ module Progress
   # it is money, and whether a chart draws it or only shows it beside
   # another number in its tooltip. A project's builder picks which of its
   # numbers its visitors see (GithubRepo#hidden_numbers); Openstage's own
-  # numbers are analytics' alone, and no project picks them. MRR, stars and
-  # pull requests join as rows here.
+  # numbers are analytics' alone, and no project picks them. Stars and pull
+  # requests join as rows here.
   class Numbers
     # one: its name inside a sentence for one of it ("site visit");
     # pickable: a project's builder shows it or hides it; beside: for a
@@ -45,6 +45,8 @@ module Progress
 
     ALL = [
       Number.new(key: "commits", label: "Commits", one: "commit", group: "On GitHub", level: false, money: false, pickable: true),
+      Number.new(key: "mrr", label: "MRR", one: "MRR", group: "On Stripe", level: true, money: true, pickable: true),
+      Number.new(key: "customers", label: "Paying customers", one: "paying customer", group: "On Stripe", level: true, money: false, pickable: true),
       Number.new(key: "visits", label: "Site visits", one: "site visit", group: "On your websites", level: false, money: false, pickable: true),
       Number.new(key: "site_visitors", label: "Site visitors", one: "site visitor", group: "On your websites", level: false, money: false, pickable: true, beside: "visits"),
       Number.new(key: "visitors", label: "Visitors", one: "visitor", group: "On Openstage", level: false, money: false, pickable: false, beside: "views"),
@@ -58,6 +60,9 @@ module Progress
     # The numbers Openstage's script counts on a project's website: visitors
     # see them only while it counts there (GithubRepo#public_number?).
     SITE = %w[visits site_visitors].freeze
+    # The numbers read from a builder's payment provider, which a project
+    # counts on Pro alone (Progress::ChartService).
+    REVENUE = %w[mrr customers].freeze
 
     def self.find(key)
       ALL.find { |number| number.key == key.to_s }

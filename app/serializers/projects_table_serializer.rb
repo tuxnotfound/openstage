@@ -13,7 +13,6 @@
 # switch or a link (DrawService#cells) is the chart's to say; this only
 # writes it.
 class ProjectsTableSerializer < ApplicationSerializer
-  include ActionView::Helpers::NumberHelper
   include Rails.application.routes.url_helpers
 
   WIDE = 5
@@ -62,7 +61,7 @@ class ProjectsTableSerializer < ApplicationSerializer
   # pick: the cell's switch, on while visitors see the number; nil without
   # one. link: what stands in its place (link_of).
   def cell_of(cell, row)
-    { key: cell.number.key, value: (number_with_delimiter(cell.value) if cell.value), shown: cell.shown, pick: cell.pick,
+    { key: cell.number.key, value: (@chart.counts.written(cell.number, cell.value) if cell.value), shown: cell.shown, pick: cell.pick,
       link: (link_of(cell.link, row) if cell.link),
       change: (Progress::Change.of(cell.value, cell.previous)&.to_h if @changes && cell.shown) }
   end

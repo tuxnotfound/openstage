@@ -11,7 +11,7 @@ module Progress
   class ChartService < ApplicationService
     # A builder's page, a project's page and the dashboard open on these, as
     # far as their projects show them; analytics opens on its own.
-    DEFAULT_SHOW = %w[commits visits].freeze
+    DEFAULT_SHOW = %w[commits mrr visits].freeze
 
     # repos: the projects in view, none for all of them; show: the numbers
     # asked for, by key in line order, none for the default. reveal: a repo
@@ -104,10 +104,21 @@ module Progress
     end
 
     def row(project, repo, slot)
-      counted = [ ("commits" if project.commits.positive?), *(Numbers::SITE if repo&.site_first_visit_at) ].compact
+      counted = [ ("commits" if project.commits.positive?), *(Numbers::REVENUE if revenue_on?(repo)), *(Numbers::SITE if repo&.site_first_visit_at) ].compact
       Row.new(key: project.repo, name: project.name, rank: project.rank, color_class: color_class(project), repo: repo,
               on: !section.filtered? || section.selected.include?(project), counted: counted,
               shown: counted.select { |key| repo.nil? || repo.public_number?(key, slot: slot) }, site: (slot.state(repo) if repo))
+    end
+
+    # Whether its MRR and paying customers count: read once it has revenue, and
+    # on Pro alone. Free's one project shows them only on its own view
+    # (Projects::GatherService), never on a chart.
+    def revenue_on?(repo)
+      repo && user.pro? && revenue.firsts.key?(repo.id)
+    end
+
+    def revenue
+      @revenue ||= Revenue::Book.new(user)
     end
 
     # A project's colour by rank. Past the palette it has none, so no box
@@ -121,15 +132,15 @@ module Progress
     def count
       tally = section.tally
       service = CountService.new(user: user, from: count_from, commit_days: tally.commit_days, first_commits: tally.projects.first_commits,
-                                 commit_repos: rows.select { |row| row.counts?("commits") }.map(&:key), visit_repos: visit_repos)
+                                 commit_repos: rows.select { |row| row.counts?("commits") }.map(&:key), visit_repos: repos_reading(Numbers::SITE),
+                                 revenue_repos: repos_reading(Numbers::REVENUE), revenue: revenue)
       @counts = service.counts if run(service)
     end
 
-    # The projects whose site visits or site visitors the page reads: the
-    # ones that count them on the builder's own view, else the ones that
-    # show either.
-    def visit_repos
-      rows.select { |row| Numbers::SITE.any? { |key| builder ? row.counts?(key) : row.shows?(key) } }.map(&:repo)
+    # The projects whose numbers among these the page reads: the ones that
+    # count them on the builder's own view, else the ones that show any.
+    def repos_reading(keys)
+      rows.select { |row| keys.any? { |key| builder ? row.counts?(key) : row.shows?(key) } }.map(&:repo)
     end
 
     # Each number its projects show visitors, the numbers drawn and the chart,

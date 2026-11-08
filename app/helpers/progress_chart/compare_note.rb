@@ -19,9 +19,16 @@ module ProgressChart
     def aria_label
       return "Nothing to chart, #{labels.words}" if chart.numbers.empty?
 
-      named = sentence((chart.lined.presence || chart.numbers).map(&:word))
-      what = chart.average? ? "7-day average of #{named} per day" : "#{named.upcase_first} per #{labels.unit_word}"
-      "#{what} by #{chart.per}, #{'each against its own peak, ' if chart.indexed?}#{labels.words}"
+      "#{what.upcase_first} by #{chart.per}, #{'each against its own peak, ' if chart.indexed?}#{labels.words}"
+    end
+
+    # What a point's title adds on an averaged chart. A level is never
+    # averaged, so beside one it names the numbers that are.
+    def averaged
+      return unless chart.average?
+
+      flows = chart.lined.reject(&:level?)
+      " · 7-day average#{" of #{sentence(flows.map(&:word))}" if flows.size < chart.lined.size}"
     end
 
     # A tooltip's words for a point where no project has anything.
@@ -31,13 +38,17 @@ module ProgressChart
 
     # A value as the tooltip writes it: to a tenth when averaged.
     def amount(number, value)
-      text = chart.average? ? format("%.1f", value) : ActiveSupport::NumberHelper.number_to_delimited(value.round)
-      "#{'$' if number&.money?}#{text}"
+      return Revenue::Money.write(value, chart.currency) if number&.money?
+      return format("%.1f", value) if chart.average? && !number&.level?
+
+      ActiveSupport::NumberHelper.number_to_delimited(value.round)
     end
 
     # A gridline's value, a whole count or a step such as 0.5.
     def tick(number, value)
-      "#{'$' if number&.money?}#{value.is_a?(Integer) ? ActiveSupport::NumberHelper.number_to_delimited(value) : value.to_f}"
+      return Revenue::Money.write(value, chart.currency) if number&.money?
+
+      value.is_a?(Integer) ? ActiveSupport::NumberHelper.number_to_delimited(value) : value.to_f.to_s
     end
 
     private
@@ -46,6 +57,15 @@ module ProgressChart
 
     def labels
       chart.window.labels
+    end
+
+    # The numbers it draws, per point: an average of the flows, with any level
+    # named apart, as it is never averaged.
+    def what
+      levels, flows = (chart.lined.presence || chart.numbers).partition(&:level?)
+      return "#{sentence((levels + flows).map(&:word))} per #{labels.unit_word}" unless chart.average?
+
+      [ sentence(levels.map(&:word)).presence, "7-day average of #{sentence(flows.map(&:word))} per day" ].compact.join(" and ")
     end
 
     # The numbers drawn with no line, and why.

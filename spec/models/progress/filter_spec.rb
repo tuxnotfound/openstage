@@ -12,7 +12,7 @@ RSpec.describe Progress::Filter do
   end
 
   it "leaves out what it does not know: a window, a number, a blank" do
-    view = filter(range: "7d", show: "visits, mrr,visits", projects: " ,")
+    view = filter(range: "7d", show: "visits, nope,visits", projects: " ,")
 
     expect([ view.range, view.show, view.projects ]).to eq([ nil, %w[visits], [] ])
   end

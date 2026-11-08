@@ -73,15 +73,23 @@ module Api
     # and their last edit), their
     # repos (which numbers each shows, and their number, as deleting the one
     # Free counts site visits for hands its slot to the next), their plan,
-    # their zone and today in it, their site visits every few minutes, and
-    # the view asked for.
+    # their zone and today in it, their site visits every few minutes, their
+    # revenue (each read, and which products count), and the view asked for.
     def cache_key(user, reveal)
       entries = user.entries.publicly_counted.pick(Arel.sql("COUNT(*)"), Arel.sql("COUNT(*) FILTER (WHERE NOT entries.hidden)"),
                                                    Arel.sql("MAX(entries.updated_at)"))
       repos_now = user.github_repos.pick(Arel.sql("COUNT(*)"), Arel.sql("MAX(github_repos.updated_at)"))
       today = Time.current.in_time_zone(user.zone).to_date
       [ "progress-view/v9", user.id, *entries, *repos_now, user.pro?, user.zone.tzinfo.identifier, today,
-        site_stamp(user), filter.range, reveal, dashboard?(user), lone?, "show", *asked, "projects", *repos.sort ]
+        site_stamp(user), *revenue_stamp(user), filter.range, reveal, dashboard?(user), lone?, "show", *asked, "projects", *repos.sort ]
+    end
+
+    # On Pro alone, which is all that shows revenue.
+    def revenue_stamp(user)
+      return [] unless user.pro?
+
+      user.revenue_accounts.left_joins(:revenue_products)
+          .pick(Arel.sql("MAX(revenue_accounts.read_at)"), Arel.sql("COUNT(revenue_products.github_repo_id)"), Arel.sql("MAX(revenue_products.updated_at)"))
     end
 
     def site_stamp(user)
