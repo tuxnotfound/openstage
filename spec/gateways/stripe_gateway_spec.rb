@@ -74,6 +74,22 @@ RSpec.describe StripeGateway do
     end
   end
 
+  describe ".price" do
+    it "reads one price by its id, as a hash, for an inline one on no list" do
+      stub_request(:get, "https://api.stripe.com/v1/prices/price_inline")
+        .to_return(status: 200, headers: { "Content-Type" => "application/json" }, body: { id: "price_inline", object: "price", recurring: { interval: "month", interval_count: 1 } }.to_json)
+
+      expect(described_class.price("rk_test_builder", "price_inline")).to include(id: "price_inline", recurring: include(interval: "month"))
+    end
+
+    it "says when Stripe has no such price" do
+      stub_request(:get, "https://api.stripe.com/v1/prices/price_gone")
+        .to_return(status: 404, headers: { "Content-Type" => "application/json" }, body: { error: { message: "No such price", type: "invalid_request_error" } }.to_json)
+
+      expect { described_class.price("rk_test_builder", "price_gone") }.to raise_error(ApplicationGateway::NotFound)
+    end
+  end
+
   describe ".billing_portal_url" do
     it "opens the customer's billing page and returns its address" do
       stub_request(:post, "https://api.stripe.com/v1/billing_portal/sessions")

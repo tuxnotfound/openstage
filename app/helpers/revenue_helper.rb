@@ -29,13 +29,12 @@ module RevenueHelper
 
   # A project's MRR and paying subscriptions on the last day read, in one
   # currency (Revenue::Levels): [figure, count], the figure nil before any
-  # revenue is read.
+  # revenue is read. With nothing that day it stands at nothing, as on its page.
   def revenue_now(repo, overview)
     levels = overview.revenue_levels
-    return [ nil, 0 ] unless levels
+    return [ nil, 0 ] unless levels&.currency
 
-    amounts = levels.mrr(repo.id).values
-    [ (Revenue::Money.write(amounts.sum, levels.currency) if amounts.any?), levels.customers(repo.id).values.sum ]
+    [ Revenue::Money.write(levels.mrr(repo.id).values.sum, levels.currency), levels.customers(repo.id).values.sum ]
   end
 
   # What a project's page says of its revenue, under its description, of what

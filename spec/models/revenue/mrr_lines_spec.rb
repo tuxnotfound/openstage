@@ -15,28 +15,29 @@ RSpec.describe Revenue::MrrLines do
       "sub_ending" => stripe_subscription("active", canceled_at: cancelled_at, cancel_at_period_end: true),
       "sub_ended" => stripe_subscription("canceled", ended_at: cancelled_at),
       "sub_discounted" => stripe_subscription("active", discounts: [ "di_lasting" ]),
-      "sub_item_discounted" => stripe_subscription("active", items: { data: [ { discounts: [ "di_on_item" ] } ] }) }
+      "sub_item_discounted" => stripe_subscription("active", items: { data: [ { id: "si_d", discounts: [ "di_on_item" ], price: {} } ] }) }
+      .merge(charging)
   end
+  # Subscriptions an example gives its current items.
+  let(:charging) { {} }
 
   def stripe_subscription(status, **fields)
     Revenue::StripeSubscription.new({ status: status }.merge(fields))
   end
 
-  def stripe_line(price: "price_m", amount: 1900, subscription: "sub_1", proration: false, product: "prod_1", discounts: [], taxes: [],
+  def stripe_line(price: "price_m", amount: 1900, subscription: "sub_1", proration: false, product: "prod_1", discounts: [], taxes: [], item: nil,
                   from: Time.utc(2026, 10, 10, 23, 30), to: Time.utc(2026, 11, 10, 23, 30))
     { object: "line_item", amount: amount, currency: "usd", discount_amounts: discounts, taxes: taxes,
-      parent: { type: "subscription_item_details", subscription_item_details: { subscription: subscription, proration: proration } },
+      parent: { type: "subscription_item_details", subscription_item_details: { subscription: subscription, proration: proration, subscription_item: item } },
       pricing: { type: "price_details", price_details: { price: price, product: product } },
       period: { start: from.to_i, end: to.to_i } }
   end
 
-  # The lines one read of these invoice lines gives, in order.
-  def counted(*lines, status: "paid")
-    reader = described_class.new(products: { "prod_1" => 7 }, recurring: recurring, subscriptions: subscriptions, zone: zone)
-    [].tap do |given|
-      lines.each { |line| reader.read(line, status) { |tally_line| given << tally_line } }
-      reader.read_held { |tally_line| given << tally_line }
-    end
+  # The lines one read of these invoice lines gives, oldest first.
+  def counted(*lines, status: "paid", today: Date.new(2026, 12, 1))
+    reader = described_class.new(products: { "prod_1" => 7 }, recurring: recurring, subscriptions: subscriptions, zone: zone, today: today)
+    lines.each { |line| reader.read(line, status) }
+    [].tap { |given| reader.each_line { |tally_line| given << tally_line } }
   end
 
   def monthly(line)
@@ -126,6 +127,144 @@ RSpec.describe Revenue::MrrLines do
 
     it "does not count a customer who used nothing" do
       expect(counted(stripe_line(price: "price_usage", amount: 0))).to be_empty
+    end
+  end
+
+  describe "a plan change" do
+    let(:monthly) { { interval: "month", interval_count: 1, usage_type: "licensed" } }
+    let(:yearly) { { interval: "year", interval_count: 1, usage_type: "licensed" } }
+
+    def current(id: "si_1", price: "price_m", recurring: monthly, unit_amount: 1900, quantity: 1, created: Time.utc(2026, 1, 1), currency: "usd", **rest)
+      { id: id, price: { id: price, product: "prod_1", recurring: recurring, unit_amount: unit_amount, currency: currency }, quantity: quantity, created: created.to_i, **rest }
+    end
+
+    def on(*items, status: "active", **fields)
+      { "sub_now" => stripe_subscription(status, currency: "usd", items: { data: items, has_more: false }, **fields) }
+    end
+
+    def paid(from, to, **fields)
+      stripe_line(subscription: "sub_now", item: "si_1", from: Time.utc(*from), to: Time.utc(*to), **fields)
+    end
+
+    # Each line as [its first day, the day after its last, its monthly amount].
+    def spans(*lines, **options)
+      counted(*lines, **options).sort_by(&:from).map { |line| [ line.from, line.to, line.monthly ] }
+    end
+
+    context "with no current items, as a subscription with too many for Stripe's answer" do
+      let(:charging) { on(current, current(id: "si_2")).merge("sub_now" => stripe_subscription("active", currency: "usd", items: { data: [ current ], has_more: true })) }
+
+      it "goes by its invoices alone" do
+        expect(spans(paid([ 2026, 1, 1 ], [ 2026, 2, 1 ]), today: Date.new(2026, 1, 15))).to eq([ [ Date.new(2026, 1, 1), Date.new(2026, 2, 1), 1900 ] ])
+      end
+    end
+
+    it "counts one line at a time for an item, so a new billing date does not double it" do
+      first = stripe_line(item: "si_1", from: Time.utc(2026, 1, 1), to: Time.utc(2026, 2, 1))
+      switched = stripe_line(item: "si_1", price: "price_y", amount: 22_800, from: Time.utc(2026, 1, 11), to: Time.utc(2027, 1, 11))
+
+      expect(counted(first, switched).map { |line| [ line.from, line.to, line.monthly ] })
+        .to eq([ [ Date.new(2026, 1, 1), Date.new(2026, 1, 11), 1900 ], [ Date.new(2026, 1, 11), Date.new(2027, 1, 11), 1900 ] ])
+    end
+
+    context "when a price changes with no new invoice" do
+      let(:charging) { on(current(unit_amount: 500, quantity: 3)) }
+
+      it "reads today at what it charges now, and the days before at what was invoiced" do
+        expect(spans(paid([ 2026, 1, 1 ], [ 2026, 2, 1 ]), today: Date.new(2026, 1, 11)))
+          .to eq([ [ Date.new(2026, 1, 1), Date.new(2026, 1, 11), 1900 ], [ Date.new(2026, 1, 11), Date.new(2026, 1, 12), 1500 ] ])
+      end
+    end
+
+    context "when no invoice covers the days since the last one, as a switch to yearly in flexible billing" do
+      let(:charging) { on(current(price: "price_y", recurring: yearly, unit_amount: 22_800)) }
+
+      it "fills them with what it charges now" do
+        expect(spans(paid([ 2026, 1, 1 ], [ 2026, 2, 1 ]), today: Date.new(2026, 2, 15)))
+          .to eq([ [ Date.new(2026, 1, 1), Date.new(2026, 2, 1), 1900 ], [ Date.new(2026, 2, 1), Date.new(2026, 2, 16), 1900 ] ])
+      end
+    end
+
+    context "with an item not invoiced yet" do
+      let(:charging) { on(current(created: Time.utc(2026, 1, 20))) }
+
+      it "counts from the day it was added" do
+        expect(spans(today: Date.new(2026, 1, 25))).to eq([ [ Date.new(2026, 1, 20), Date.new(2026, 1, 26), 1900 ] ])
+      end
+    end
+
+    context "with an item replaced by another" do
+      let(:charging) { on(current(id: "si_2", unit_amount: 2000, created: Time.utc(2026, 1, 11))) }
+
+      it "ends the old one where the new one began" do
+        expect(spans(paid([ 2026, 1, 1 ], [ 2026, 2, 1 ]), today: Date.new(2026, 1, 20)))
+          .to eq([ [ Date.new(2026, 1, 1), Date.new(2026, 1, 11), 1900 ], [ Date.new(2026, 1, 11), Date.new(2026, 1, 21), 2000 ] ])
+      end
+    end
+
+    context "with a discount and tax" do
+      let(:charging) { on(current(unit_amount: 2000, discounts: [ "di_on" ])) }
+      let(:discounted) { [ { amount: 1000, discount: "di_on" } ] }
+
+      it "keeps a discount its subscription still carries, and the tax's share" do
+        line = paid([ 2026, 1, 1 ], [ 2026, 2, 1 ], amount: 2000, discounts: discounted, taxes: [ { amount: 187, tax_behavior: "inclusive" } ])
+
+        expect(spans(line, today: Date.new(2026, 1, 11)).last.last).to eq(813)
+      end
+    end
+
+    context "with a discount that has run out since its last invoice" do
+      let(:charging) { on(current(unit_amount: 2000)) }
+
+      it "reads today at the full price" do
+        line = paid([ 2026, 1, 1 ], [ 2026, 2, 1 ], amount: 2000, discounts: [ { amount: 1000, discount: "di_gone" } ])
+
+        expect(spans(line, today: Date.new(2026, 1, 11)).last.last).to eq(2000)
+      end
+    end
+
+    context "with a price of no one amount" do
+      let(:charging) { on(current(unit_amount: nil)) }
+
+      it "reads today at what its last invoice charged, its tiers together" do
+        first = paid([ 2026, 1, 1 ], [ 2026, 2, 1 ], amount: 1000)
+        second = paid([ 2026, 1, 1 ], [ 2026, 2, 1 ], amount: 500)
+
+        expect(spans(first, second, today: Date.new(2026, 1, 11)).map(&:last)).to eq([ 1000, 500, 1500 ])
+      end
+    end
+
+    context "with a price in another currency than its subscription" do
+      let(:charging) { on(current(unit_amount: 9999, currency: "eur")) }
+
+      it "reads today at what its last invoice charged" do
+        expect(spans(paid([ 2026, 1, 1 ], [ 2026, 2, 1 ]), today: Date.new(2026, 1, 11)).last.last).to eq(1900)
+      end
+    end
+
+    context "with a usage-based price" do
+      let(:charging) { on(current(price: "price_usage", recurring: { interval: "month", interval_count: 1, usage_type: "metered" }, unit_amount: nil, quantity: nil)) }
+
+      it "adds nothing, and its customer is paying now, before any bill" do
+        expect(counted(today: Date.new(2026, 1, 11)).sole).to have_attributes(monthly: 0, to: Date.new(2026, 1, 12))
+      end
+    end
+
+    context "with a free price" do
+      let(:charging) { on(current(unit_amount: 0)) }
+
+      it "counts nothing" do
+        expect(counted(today: Date.new(2026, 1, 11))).to be_empty
+      end
+    end
+
+    it "gives nothing now while it is in a trial, unpaid, paused, or going away" do
+      [ on(current, status: "trialing"), on(current, status: "unpaid"), on(current, status: "incomplete"), on(current, status: "canceled", canceled_at: Time.utc(2026, 1, 5).to_i),
+        on(current, pause_collection: { behavior: "void" }), on(current, canceled_at: Time.utc(2026, 1, 5).to_i, cancel_at_period_end: true) ].each do |subscription|
+        reader = described_class.new(products: { "prod_1" => 7 }, recurring: recurring, subscriptions: subscription, zone: zone, today: Date.new(2026, 1, 11))
+
+        expect(reader.enum_for(:each_line).to_a).to be_empty
+      end
     end
   end
 

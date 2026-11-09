@@ -48,6 +48,13 @@ class StripeGateway < ApplicationGateway
     page(api_key) { |client| client.v1.prices.list(params) }
   end
 
+  # One price, as a hash: an inline one is on no list.
+  def self.price(api_key, id)
+    Stripe::StripeClient.new(api_key).v1.prices.retrieve(id).to_hash
+  rescue Stripe::StripeError => error
+    raise translate(error)
+  end
+
   def self.subscriptions(api_key, **params)
     page(api_key) { |client| client.v1.subscriptions.list(params) }
   end

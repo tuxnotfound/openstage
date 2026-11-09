@@ -44,6 +44,44 @@ RSpec.describe Revenue::ReadService do
     expect(RevenueDay.first.revenue_product).to eq(account.revenue_products.sole)
   end
 
+  describe "an inline price" do
+    let(:inline) { line("sub_gone", [ 2026, 10, 1 ], [ 2026, 10, 15 ], price: "price_inline") }
+
+    before do
+      allow(StripeGateway).to receive(:subscriptions).and_return(data: [ { id: "sub_gone", status: "canceled", ended_at: Time.utc(2026, 10, 15).to_i } ], has_more: false)
+      allow(StripeGateway).to receive(:invoices).and_return(data: [ invoice("in_1", inline) ], has_more: false)
+    end
+
+    it "reads one on no list by its id, once" do
+      allow(StripeGateway).to receive(:price).with("rk_test_ok", "price_inline").and_return(recurring: { interval: "month", interval_count: 1 })
+
+      described_class.new(account: account).call!
+
+      expect(days.first).to eq([ Date.new(2026, 10, 1), 1900, 1 ])
+      expect(StripeGateway).to have_received(:price).once
+    end
+
+    it "leaves it out if Stripe no longer has it" do
+      allow(StripeGateway).to receive(:price).and_raise(ApplicationGateway::NotFound.new(status: 404))
+
+      described_class.new(account: account).call!
+
+      expect(days).to be_empty
+    end
+
+    it "takes a current one from its subscription, with no asking" do
+      item = { id: "si_1", quantity: 1, created: Time.utc(2026, 11, 1).to_i, price: { id: "price_inline", product: "prod_1", currency: "usd", unit_amount: 900, recurring: { interval: "month", interval_count: 1 } } }
+      allow(StripeGateway).to receive(:subscriptions).and_return(data: [ { id: "sub_now", status: "active", currency: "usd", items: { data: [ item ], has_more: false } } ], has_more: false)
+      allow(StripeGateway).to receive(:invoices).and_return(last_page)
+      allow(StripeGateway).to receive(:price)
+
+      described_class.new(account: account).call!
+
+      expect(days.last).to eq([ Date.new(2026, 11, 7), 900, 1 ])
+      expect(StripeGateway).not_to have_received(:price)
+    end
+  end
+
   it "keeps counting a past-due subscription on its open invoice, and not a void one" do
     allow(StripeGateway).to receive(:subscriptions).and_return(data: [ { id: "sub_1", status: "past_due" } ], has_more: false)
     allow(StripeGateway).to receive(:invoices).and_return(data: [ invoice("in_2", line("sub_1", [ 2026, 11, 1 ], [ 2026, 12, 1 ]), status: "open"),

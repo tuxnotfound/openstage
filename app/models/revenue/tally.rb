@@ -1,5 +1,5 @@
 module Revenue
-  # Each product's daily totals from the counted lines covering each day: its MRR,
+  # Each product's daily totals from the lines covering each day (MrrLines): its MRR,
   # the sum of their monthly amounts, and the subscriptions paying. Lines are
   # added one by one as they are read, and only the changes they make are
   # kept, so a long history stays small. Days run up to today; a day with no

@@ -21,6 +21,22 @@ RSpec.describe "A project's Revenue (MRR) row", type: :request do
     expect(row.text).to include("From Stripe, once you connect it on Integrations.")
   end
 
+  describe "a Pro project that has never sold" do
+    let(:account) { connect.tap { |each| each.update!(read_at: Time.current) } }
+
+    before do
+      user.update!(pro: true)
+      product = account.revenue_products.create!(external_id: "prod_m", name: "Shipnote monthly", github_repo: shipnote)
+      product.revenue_days.create!(day: 3.days.ago.to_date, currency: "usd", mrr: 0, subscriptions: 0)
+    end
+
+    it "says $0, and keeps the switches that hide it" do
+      expect(row.text).to include("$0")
+      expect(row.css("button[role='switch'], input[type='checkbox']").size).to be >= 1
+      expect(row.text).to include("Paying customers")
+    end
+  end
+
   it "lists the account's products with a switch each, and locks one another project counts" do
     account = connect
     account.revenue_products.create!(external_id: "prod_m", name: "Shipnote monthly")
