@@ -72,7 +72,7 @@ RSpec.describe "Marketing pages", type: :request do
         "Openstage's request log leaves out your IP address, on its own pages and for the script's page views."
       )
       expect(own_pages).not_to include("the same hash")
-      expect(page.text.squish).to include("Updated November 8, 2026.")
+      expect(page.text.squish).to include("Updated November 9, 2026.")
     end
   end
 
