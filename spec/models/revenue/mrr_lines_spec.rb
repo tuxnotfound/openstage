@@ -156,11 +156,8 @@ RSpec.describe Revenue::MrrLines do
   end
 
   describe "usage-based prices" do
-    it "adds nothing to MRR, and its period still counts its customer as paying" do
-      expect(monthly(stripe_line(price: "price_usage", amount: 3000))).to eq(0)
-    end
-
-    it "does not count a customer who used nothing" do
+    it "adds nothing to MRR, and does not count a customer on usage alone as paying, billed or not" do
+      expect(counted(stripe_line(price: "price_usage", amount: 3000))).to be_empty
       expect(counted(stripe_line(price: "price_usage", amount: 0))).to be_empty
     end
   end
@@ -313,10 +310,24 @@ RSpec.describe Revenue::MrrLines do
     end
 
     context "with a usage-based price" do
-      let(:charging) { on(current(price: "price_usage", recurring: { interval: "month", interval_count: 1, usage_type: "metered" }, unit_amount: nil, quantity: nil)) }
+      let(:metered) { { interval: "month", interval_count: 1, usage_type: "metered" } }
 
-      it "adds nothing, and its customer is paying now, before any bill" do
-        expect(counted(today: Date.new(2026, 1, 11)).sole).to have_attributes(monthly: 0, to: Date.new(2026, 1, 12))
+      context "alone" do
+        let(:charging) { on(current(price: "price_usage", recurring: metered, unit_amount: nil, quantity: nil)) }
+
+        it "counts nothing, and no customer" do
+          expect(counted(today: Date.new(2026, 1, 11))).to be_empty
+        end
+      end
+
+      context "beside a price charged per month" do
+        let(:charging) { on(current, current(id: "si_2", price: "price_usage", recurring: metered, unit_amount: nil, quantity: nil)) }
+
+        it "counts the customer, and only that price's MRR" do
+          lines = [ paid([ 2026, 1, 1 ], [ 2026, 2, 1 ]), stripe_line(subscription: "sub_now", item: "si_2", price: "price_usage", amount: 3000, from: Time.utc(2026, 1, 1), to: Time.utc(2026, 2, 1)) ]
+
+          expect(spans(*lines, today: Date.new(2026, 1, 11)).map(&:last)).to eq([ 1900, 1900 ])
+        end
       end
     end
 

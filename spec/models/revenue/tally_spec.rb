@@ -20,8 +20,8 @@ RSpec.describe Revenue::Tally do
     expect(on("2026-10-10")).to eq([ { revenue_product_id: 1, currency: "usd", mrr: 1900, subscriptions: 1 } ])
   end
 
-  it "keeps a day with a customer paying and no MRR, as on a usage-based price" do
-    tally.add(line("2026-10-01", "2026-11-01", 0))
+  it "keeps a day with a customer paying less than the smallest unit, which rounds to nothing" do
+    tally.add(line("2026-10-01", "2026-11-01", Rational(1, 12)))
 
     expect(on("2026-10-06")).to eq([ { revenue_product_id: 1, currency: "usd", mrr: 0, subscriptions: 1 } ])
   end

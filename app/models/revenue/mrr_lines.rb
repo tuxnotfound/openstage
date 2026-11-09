@@ -1,7 +1,8 @@
 module Revenue
   # A Stripe account's MRR as lines for the Tally, by Stripe's rules: per
   # month, without tax, a yearly plan a twelfth of its price, a weekly one 52
-  # twelfths. A usage-based price adds nothing, though its customer is paying.
+  # twelfths. A usage-based price adds nothing, and a customer on usage alone is
+  # not paying, since Stripe counts only subscribers with MRR.
   # A refund changes nothing. Today is what each subscription charges now, as
   # Stripe counts it, since a plan change does not always make an invoice. The
   # days before are its invoices' periods, never a proration or a one-off item,
@@ -105,13 +106,13 @@ module Revenue
       @subscriptions[subscription_id]&.customer || subscription_id
     end
 
-    # nil for a period that charges nothing.
+    # nil for a period that adds no MRR.
     def monthly_of(period)
+      return if metered?(period.recurring)
+
       kept = period.amount - period.discounts.sum { |discount, amount| lasting?(discount, period) ? amount : 0 }
       amount = kept * (1 - period.tax_share)
-      return unless amount.positive?
-
-      metered?(period.recurring) ? 0 : per_month(period.recurring, amount)
+      per_month(period.recurring, amount) if amount.positive?
     end
 
     # Stripe leaves a one-off discount out of MRR and subtracts one that lasts,
@@ -177,8 +178,7 @@ module Revenue
     # where its subscription still carries them. A price with no one amount,
     # as tiers, or in another currency: what its last invoice charged.
     def monthly_now(subscription, item)
-      return unless item.recurring
-      return 0 if metered?(item.recurring)
+      return if item.recurring.nil? || metered?(item.recurring)
 
       last = @periods.fetch(item.id, []).then { |periods| periods.select { |period| period.from == periods.last.from } }
       return last.sum { |period| monthly_of(period) || 0 }.then { |sum| sum if sum.positive? } unless priced?(subscription, item)

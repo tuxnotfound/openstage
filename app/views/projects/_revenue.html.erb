@@ -72,7 +72,7 @@
       <span class="min-w-0 flex-auto">
         <span class="font-bold">Paying customers</span>
         <span class="os-num os-muted text-sm"><%= number_with_delimiter(paying) %></span>
-        <span class="os-xs os-muted block">Customers with an active subscription, from the same Stripe products.</span>
+        <span class="os-xs os-muted block">Customers with MRR, from the same Stripe products.</span>
       </span>
       <span class="os-xs os-muted whitespace-nowrap"><%= revenue_state(repo, "customers") %></span>
       <% if switches %><%= render "projects/number_switch", repo: repo, number: "customers", word: "paying customers" %><% end %>
