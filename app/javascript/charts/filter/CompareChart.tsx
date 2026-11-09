@@ -77,6 +77,9 @@ export default function CompareChart({ chart, lines, focus, height = "", hidden,
     return undefined
   }
 
+  // Nothing to draw and nothing to say, as for a visitor: no empty plot.
+  if (chart.paths.length === 0 && !chart.note) return null
+
   return (
     <div className="mt-[18px]">
       <div ref={box} tabIndex={0} role="group" aria-roledescription="chart" aria-label={`${chart.ariaLabel}. Arrow keys move from point to point.`}

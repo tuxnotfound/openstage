@@ -8,6 +8,8 @@
     The chart's script adds the marks at the point, the tooltip, the
     emphasis and the keyboard. view: a ChartFilterSerializer's attributes. %>
 <% chart = view[:chart] %>
+<%# Nothing to draw and nothing to say, as for a visitor: no empty plot. %>
+<% if chart[:paths].any? || chart[:note] %>
 <div class="mt-[18px]">
   <div class="os-chart <%= local_assigns[:height] %>">
     <% chart[:ticks].each do |tick| %>
@@ -45,3 +47,4 @@
   </div>
   <% if chart[:note] %><p class="os-note mt-2"><%= chart[:note] %></p><% end %>
 </div>
+<% end %>

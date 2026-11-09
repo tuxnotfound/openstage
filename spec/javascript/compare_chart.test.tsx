@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, test } from "vitest"
-import { Tip, type ProjectNumber } from "../../app/javascript/charts/filter/CompareChart"
+import CompareChart, { Tip, type ProjectNumber } from "../../app/javascript/charts/filter/CompareChart"
 import type { ChartMark, CompareChartView } from "../../app/javascript/charts/types"
 
 // A point of a chart that draws site visits alone, as the server sends it
@@ -89,5 +89,20 @@ describe("the tooltip at a point with marks", () => {
 
     expect(tip(chart({ columns: [empty], marks: [mark()] }))).not.toContain("Nothing this day")
     expect(tip(chart({ columns: [empty] }))).toContain("Nothing this day")
+  })
+})
+
+describe("a chart with nothing to draw", () => {
+  const drawn = (view: CompareChartView) => renderToStaticMarkup(<CompareChart chart={view} lines={{}} focus={null} />)
+
+  test("draws no empty plot with nothing to say, as for a visitor", () => {
+    expect(drawn(chart({ note: null }))).toBe("")
+  })
+
+  test("keeps the plot and its note for a builder", () => {
+    const html = drawn(chart({ note: "No commits in the last 30 days." }))
+
+    expect(html).toContain("os-chart")
+    expect(html).toContain("No commits in the last 30 days.")
   })
 })

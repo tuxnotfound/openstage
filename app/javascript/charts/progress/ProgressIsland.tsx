@@ -24,11 +24,15 @@ export type ProgressProps = {
   defaultRange: ProgressRange
   // The What's new section to keep in step, by element id.
   shippedTarget?: string
+  // What its builder can do while the chart has nothing to draw, on their own
+  // pages alone (chart_step). The page sends it, not the view, which a shared
+  // cache holds for everyone.
+  step?: { text: string; label: string; href: string } | null
 }
 
 const SHOWN = 8
 
-export default function ProgressIsland({ initial, endpoint, mode, defaultRange, shippedTarget }: ProgressProps) {
+export default function ProgressIsland({ initial, endpoint, mode, defaultRange, shippedTarget, step }: ProgressProps) {
   // A builder's page drops its old repo[]; the dashboard's repo filters its entries.
   const filter = useFilter(initial, { endpoint, defaultRange, named: mode !== "project", dropped: mode === "page" ? ["repo", "repo[]"] : [] })
   const { view, busy, failed, lines, focus } = filter
@@ -54,6 +58,9 @@ export default function ProgressIsland({ initial, endpoint, mode, defaultRange, 
       <p role="status" className="mt-2.5 text-[13px] font-semibold text-ink-2 empty:mt-0">{filter.notice}</p>
       <CompareChart chart={view.chart} lines={lines} focus={focus} height={mode === "dashboard" ? "h-[260px]" : ""}
                     hidden={mode === "dashboard" ? cells.hidden : undefined} lead={mode === "dashboard" ? "entries" : "news"} />
+      {step && view.chart.paths.length === 0 && (
+        <p className="os-note mt-2" data-chart-step>{step.text} <a className="os-link text-[13px]" href={step.href} data-turbo="false">{step.label}</a></p>
+      )}
       {view.table && (
         <ProjectsTable table={view.table} drawn={lineOrder(lines)} lines={lines} indexed={view.chart.indexed} words={view.words}
                        focused={focus?.kind === "project" ? focus.key : null} rows={filter.rows} switches={mode === "dashboard" ? cells.switches : undefined} />

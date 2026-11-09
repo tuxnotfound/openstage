@@ -79,9 +79,10 @@
   <% chart = @focus.page.chart %>
   <% serializer = ProgressViewSerializer.new(chart) %>
   <% view = serializer.attributes %>
-  <%= react_island("progress", { initial: serializer.as_json, endpoint: api_progress_path(@user.username, project: project.repo, reveal: @revealed),
+  <% step = chart_step(@user, view, repo: chart.rows.first&.repo) %>
+  <%= react_island("progress", { initial: serializer.as_json, endpoint: api_progress_path(@user.username, project: project.repo, reveal: @revealed), step: step,
                                  mode: "project", defaultRange: Progress::Window::DEFAULT, shippedTarget: "whats-new-panel" }, id: "progress", class: "mt-[30px]") do %>
-    <%= render "charts/filter", view: view, mode: "project",
+    <%= render "charts/filter", view: view, mode: "project", step: step,
                path_for: ->(changes) { project_page_for(@user, project, **chart_params(view, default_range: Progress::Window::DEFAULT, **changes).except(:projects)) } %>
   <% end %>
 </section>

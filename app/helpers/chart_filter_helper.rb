@@ -3,6 +3,19 @@
 # and Show all each link to the view they switch to, and each number wears
 # its line. view: a ChartFilterSerializer's attributes.
 module ChartFilterHelper
+  # What a builder is asked to do under a chart with nothing to draw, on their
+  # own pages alone: a visitor can connect nothing here. repo: a project's page's.
+  def chart_step(user, view, repo: nil)
+    return unless current_user == user
+
+    case Progress::ChartStep.new(user, repo: repo, nothing_shown: view[:numbers].empty?).key
+    when :repos then { text: "Connect your repos to see your commits here.", label: "Connect GitHub", href: new_github_installation_path }
+    when :hidden then { text: "You hide every number here.", label: "Choose what shows", href: repo ? edit_project_path(repo) : dashboard_path }
+    when :site then { text: "Connect your site to count its visits.", label: "Set up site visits", href: repo ? edit_project_path(repo) : settings_path(tab: "integrations") }
+    when :stripe then { text: "Connect Stripe to show your MRR.", label: "Connect Stripe", href: settings_path(tab: "integrations") }
+    end
+  end
+
   # A number's line by its place in the line order: solid, dotted, dashed.
   LINE_DASHES = [ nil, "2 9", "14 10" ].freeze
   # The same three as a toggle's or a column's sample.

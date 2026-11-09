@@ -5,7 +5,8 @@
     window beside Your activity, adds each number's change, and its table is
     where the builder picks what visitors see.
     view: a ProgressViewSerializer's attributes; mode: "page", "project" or
-    "dashboard"; path_for: the page's address for some params changed. %>
+    "dashboard"; path_for: the page's address for some params changed; step:
+    what its builder can do while the chart has nothing to draw (chart_step). %>
 <% dashboard = mode == "dashboard" %>
 <% if dashboard %>
   <div class="os-between">
@@ -20,6 +21,9 @@
   </div>
 <% end %>
 <%= render "charts/chart", view: view, height: ("h-[260px]" if dashboard), lead: (dashboard ? "entries" : "news") %>
+<% if (step = local_assigns[:step]) && view[:chart][:paths].empty? %>
+  <p class="os-note mt-2" data-chart-step><%= step[:text] %> <%= link_to step[:label], step[:href], class: "os-link text-[13px]", data: { turbo: false } %></p>
+<% end %>
 <% if view[:table] %>
   <%= render "charts/table", view: view, path_for: path_for, manage: dashboard, back: local_assigns.fetch(:back, {}) %>
 <% end %>
