@@ -2,7 +2,7 @@
 
 # Openstage
 
-Openstage is a Rails app for building in public with a shareable profile timeline.
+Openstage is the live public record of what you're building, project by project.
 
 ## README Badge
 
