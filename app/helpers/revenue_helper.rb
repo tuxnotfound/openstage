@@ -4,6 +4,7 @@ module RevenueHelper
   def revenue_status(repo, overview)
     if overview.revenue_account.nil? then [ "From Stripe, once you connect it on Integrations.", "Off" ]
     elsif overview.revenue_account.refused_at then [ "Stripe refuses your key, so its figures are off your pages. Connect a new one on Integrations.", "Off" ]
+    elsif overview.revenue_account.stale? then [ "Openstage has not read Stripe since #{overview.revenue_account.last_read.strftime('%b %-d')}, so its figures are off your pages. It tries again every night.", "Off" ]
     elsif overview.revenue_slot_project
       [ "You already count MRR on #{overview.revenue_slot_project.name}, the one project Free counts.", "Off" ]
     elsif (names = counted_products(repo, overview).map(&:name).to_sentence(last_word_connector: " and ")).empty?
@@ -27,15 +28,14 @@ module RevenueHelper
     repo.picks?(number) ? "Shown" : "Hidden"
   end
 
-  # A project's MRR and paying subscriptions on the last day read, in one
+  # A project's MRR and paying customers on the last day read, in one
   # currency (Revenue::Levels): [figure, count], the figure nil before any
-  # revenue is read.
+  # revenue is read. With nothing that day it stands at nothing, as on its page.
   def revenue_now(repo, overview)
     levels = overview.revenue_levels
-    return [ nil, 0 ] unless levels
+    return [ nil, 0 ] unless levels&.currency
 
-    amounts = levels.mrr(repo.id).values
-    [ (Revenue::Money.write(amounts.sum, levels.currency) if amounts.any?), levels.customers(repo.id).values.sum ]
+    [ Revenue::Money.write(levels.mrr(repo.id).values.sum, levels.currency), levels.customers(repo.id).values.sum ]
   end
 
   # What a project's page says of its revenue, under its description, of what

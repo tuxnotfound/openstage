@@ -1,4 +1,5 @@
 require "rails_helper"
+require "support/revenue_data"
 
 RSpec.describe "Connecting a payment provider for MRR", type: :request do
   let(:user) { create(:user, username: "builder") }
@@ -73,6 +74,16 @@ RSpec.describe "Connecting a payment provider for MRR", type: :request do
     end
   end
 
+  it "says since when it has not read a key that still works" do
+    user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok", read_at: 4.days.ago, read_through: 4.days.ago.to_date)
+    sign_in_as(user)
+
+    get "/settings", params: { tab: "integrations" }
+
+    expect(response.body).to include("Not read since #{4.days.ago.strftime('%b %-d')}")
+    expect(Nokogiri::HTML(response.body).at_css("#stripe-connect")).to be_nil
+  end
+
   it "says when Stripe refuses the key, offers to connect a new one, and takes the new one" do
     account = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_gone", refused_at: Time.current)
     sign_in_as(user)
@@ -89,12 +100,12 @@ RSpec.describe "Connecting a payment provider for MRR", type: :request do
   it "disconnecting deletes the key and everything read with it, as the privacy page says" do
     account = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok")
     product = account.revenue_products.create!(external_id: "prod_1", name: "Pro")
-    product.revenue_days.create!(day: Date.current, currency: "usd", mrr: 700, subscriptions: 1)
+    revenue_day(product, day: Date.current, currency: "usd", mrr: 700, subscriptions: 1)
     sign_in_as(user)
 
     delete "/revenue_accounts/#{account.id}"
 
-    expect([ RevenueAccount.count, RevenueProduct.count, RevenueDay.count ]).to eq([ 0, 0, 0 ])
+    expect([ RevenueAccount.count, RevenueProduct.count, RevenueDay.count, RevenueCustomerDay.count ]).to eq([ 0, 0, 0, 0 ])
   end
 
   it "links to what it reads and keeps from the form" do

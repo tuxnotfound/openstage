@@ -1,21 +1,22 @@
 module Revenue
-  # Some projects' MRR and paying subscriptions by day, in one currency: the one
+  # Some projects' MRR and paying customers by day, in one currency: the one
   # most of their revenue is in on the latest day read, the rest converted at
   # each day's ECB rate (Rates). MRR comes in that currency's units. A currency
   # with no ECB rate cannot join another: it is left out and named (left_out),
   # unless it is the one most of it is in.
   class Levels
-    Row = Data.define(:repo_id, :day, :currency, :mrr, :subscriptions)
+    Row = Data.define(:repo_id, :day, :currency, :mrr)
 
     attr_reader :currency, :left_out
 
-    # ended_in: the currency to write nothing in, with no rows.
-    def initialize(rows, ended_in: nil)
+    # customers: { repo id => { date => paying customers } }; ended_in: the
+    # currency to write nothing in, with no rows.
+    def initialize(rows, customers: {}, ended_in: nil)
       @rates = rates_for(rows)
       @currency = most_in(rows) || ended_in
       @left_out = []
       @mrr = {}
-      @customers = {}
+      @customers = customers
       rows.each { |row| count(row) }
       @left_out.uniq!
     end
@@ -31,7 +32,7 @@ module Revenue
       @mrr.fetch(repo_id, {})
     end
 
-    # { date => paying subscriptions } for a project.
+    # { date => paying customers } for a project.
     def customers(repo_id)
       @customers.fetch(repo_id, {})
     end
@@ -55,14 +56,11 @@ module Revenue
     end
 
     def count(row)
-      add(@customers, row, row.subscriptions)
       amount = @rates.convert(Money.units(row.mrr, row.currency), row.currency, currency, row.day)
-      amount ? add(@mrr, row, amount) : @left_out << row.currency
-    end
+      return @left_out << row.currency unless amount
 
-    def add(totals, row, value)
-      days = totals[row.repo_id] ||= {}
-      days[row.day] = days.fetch(row.day, 0) + value
+      days = @mrr[row.repo_id] ||= {}
+      days[row.day] = days.fetch(row.day, 0) + amount
     end
   end
 end

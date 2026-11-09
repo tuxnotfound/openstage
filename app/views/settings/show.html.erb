@@ -160,6 +160,8 @@
         <% if @stripe_account %>
           <% if @stripe_account.refused_at %>
             <span class="os-sm font-bold text-down">Stripe refuses the key ending <%= @stripe_account.key_ending %></span>
+          <% elsif @stripe_account.stale? %>
+            <span class="os-sm font-bold text-down">Not read since <%= @stripe_account.last_read.strftime("%b %-d") %> · key ending <%= @stripe_account.key_ending %></span>
           <% else %>
             <span class="os-sm font-bold text-up">Connected · key ending <%= @stripe_account.key_ending %></span>
           <% end %>

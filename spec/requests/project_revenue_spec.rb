@@ -1,4 +1,5 @@
 require "rails_helper"
+require "support/revenue_data"
 
 RSpec.describe "A project's Revenue (MRR) row", type: :request do
   let(:user) { create(:user, username: "builder", pro: true) }
@@ -8,7 +9,7 @@ RSpec.describe "A project's Revenue (MRR) row", type: :request do
   before { sign_in_as(user) }
 
   def connect
-    user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok", products_read_at: Time.current)
+    user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok", products_read_at: Time.current, read_through: Time.current.in_time_zone(user.zone).to_date)
   end
 
   def row(repo = shipnote)
@@ -19,6 +20,22 @@ RSpec.describe "A project's Revenue (MRR) row", type: :request do
   it "leads to Integrations until Stripe is connected" do
     expect(row.at_css("a[href='/settings?tab=integrations#revenue']").text).to eq("Connect Stripe")
     expect(row.text).to include("From Stripe, once you connect it on Integrations.")
+  end
+
+  describe "a Pro project that has never sold" do
+    let(:account) { connect.tap { |each| each.update!(read_at: Time.current, read_through: Time.current.in_time_zone(user.zone).to_date) } }
+
+    before do
+      user.update!(pro: true)
+      product = account.revenue_products.create!(external_id: "prod_m", name: "Shipnote monthly", github_repo: shipnote)
+      revenue_day(product, day: 3.days.ago.to_date, currency: "usd", mrr: 0, subscriptions: 0)
+    end
+
+    it "says $0, and keeps the switches that hide it" do
+      expect(row.text).to include("$0")
+      expect(row.css("button[role='switch'], input[type='checkbox']").size).to be >= 1
+      expect(row.text).to include("Paying customers")
+    end
   end
 
   it "lists the account's products with a switch each, and locks one another project counts" do
@@ -45,13 +62,13 @@ RSpec.describe "A project's Revenue (MRR) row", type: :request do
 
   it "shows the project's MRR and paying customers on the last day read, and each product's own" do
     account = connect
-    account.update!(read_at: Time.current)
+    account.update!(read_at: Time.current, read_through: Time.current.in_time_zone(user.zone).to_date)
     monthly = account.revenue_products.create!(external_id: "prod_m", name: "Shipnote monthly", github_repo: shipnote)
     yearly = account.revenue_products.create!(external_id: "prod_y", name: "Shipnote yearly", github_repo: shipnote)
     today = Time.current.in_time_zone(user.zone).to_date
-    monthly.revenue_days.create!(day: today, currency: "usd", mrr: 361_000, subscriptions: 190)
-    yearly.revenue_days.create!(day: today, currency: "usd", mrr: 60_000, subscriptions: 40)
-    yearly.revenue_days.create!(day: today - 1, currency: "usd", mrr: 1, subscriptions: 1)
+    revenue_day(monthly, day: today, currency: "usd", mrr: 361_000, subscriptions: 190)
+    revenue_day(yearly, day: today, currency: "usd", mrr: 60_000, subscriptions: 40)
+    revenue_day(yearly, day: today - 1, currency: "usd", mrr: 1, subscriptions: 1)
 
     section = row
     expect(section.at_css(".os-row .os-num").text).to eq("$4,210")
@@ -60,12 +77,12 @@ RSpec.describe "A project's Revenue (MRR) row", type: :request do
 
   it "converts a project's other currencies at each day's rate, into the one most of it is in" do
     account = connect
-    account.update!(read_at: Time.current)
+    account.update!(read_at: Time.current, read_through: Time.current.in_time_zone(user.zone).to_date)
     product = account.revenue_products.create!(external_id: "prod_m", name: "Monthly", github_repo: shipnote)
     today = Time.current.in_time_zone(user.zone).to_date
     ExchangeRate.create!(currency: "usd", day: today, per_euro: 2)
-    product.revenue_days.create!(day: today, currency: "usd", mrr: 10_000, subscriptions: 2)
-    product.revenue_days.create!(day: today, currency: "eur", mrr: 100_000, subscriptions: 3)
+    revenue_day(product, day: today, currency: "usd", mrr: 10_000, subscriptions: 2)
+    revenue_day(product, day: today, currency: "eur", mrr: 100_000, subscriptions: 3)
 
     expect(row.at_css(".os-row .os-num").text).to eq("€1,050")
     expect(row.text.squish).to include("Paying customers 5")
@@ -73,20 +90,20 @@ RSpec.describe "A project's Revenue (MRR) row", type: :request do
 
   it "says which currency it left out, having no ECB rate" do
     account = connect
-    account.update!(read_at: Time.current)
+    account.update!(read_at: Time.current, read_through: Time.current.in_time_zone(user.zone).to_date)
     product = account.revenue_products.create!(external_id: "prod_m", name: "Monthly", github_repo: shipnote)
     today = Time.current.in_time_zone(user.zone).to_date
-    product.revenue_days.create!(day: today, currency: "eur", mrr: 100_000, subscriptions: 3)
-    product.revenue_days.create!(day: today, currency: "ngn", mrr: 500, subscriptions: 1)
+    revenue_day(product, day: today, currency: "eur", mrr: 100_000, subscriptions: 3)
+    revenue_day(product, day: today, currency: "ngn", mrr: 500, subscriptions: 1)
 
     expect(row.text).to include("NGN has no ECB rate, so it is left out.")
   end
 
   it "offers a switch for MRR and for paying customers once there is a figure, each shown until hidden" do
     account = connect
-    account.update!(read_at: Time.current)
+    account.update!(read_at: Time.current, read_through: Time.current.in_time_zone(user.zone).to_date)
     product = account.revenue_products.create!(external_id: "prod_m", name: "Monthly", github_repo: shipnote)
-    product.revenue_days.create!(day: Time.current.in_time_zone(user.zone).to_date, currency: "usd", mrr: 700, subscriptions: 1)
+    revenue_day(product, day: Time.current.in_time_zone(user.zone).to_date, currency: "usd", mrr: 700, subscriptions: 1)
     shipnote.update!(hidden_numbers: %w[customers])
 
     section = row
@@ -99,9 +116,9 @@ RSpec.describe "A project's Revenue (MRR) row", type: :request do
 
   it "takes the figure off and leads to Integrations when Stripe refuses the key" do
     account = connect
-    account.update!(read_at: Time.current, refused_at: Time.current)
+    account.update!(read_at: Time.current, read_through: Time.current.in_time_zone(user.zone).to_date, refused_at: Time.current)
     product = account.revenue_products.create!(external_id: "prod_m", name: "Monthly", github_repo: shipnote)
-    product.revenue_days.create!(day: Time.current.in_time_zone(user.zone).to_date, currency: "usd", mrr: 700, subscriptions: 1)
+    revenue_day(product, day: Time.current.in_time_zone(user.zone).to_date, currency: "usd", mrr: 700, subscriptions: 1)
 
     section = row
 
@@ -110,6 +127,31 @@ RSpec.describe "A project's Revenue (MRR) row", type: :request do
     expect(section.at_css("a[href='/settings?tab=integrations#revenue']").text).to eq("Connect Stripe")
     expect(section.at_css("#revenue-products")).to be_nil
     expect(section.css("button[role='switch']")).to be_empty
+  end
+
+  it "takes the figure off and says so once reads have failed for days, leaving the products to change" do
+    account = connect
+    account.update!(read_at: 4.days.ago, read_through: 4.days.ago.to_date)
+    product = account.revenue_products.create!(external_id: "prod_m", name: "Monthly", github_repo: shipnote)
+    revenue_day(product, day: 4.days.ago.to_date, currency: "usd", mrr: 700, subscriptions: 1)
+
+    section = row
+
+    expect(section.at_css(".os-row .os-num").text).to eq("–")
+    expect(section.text).to include("Openstage has not read Stripe since #{4.days.ago.strftime('%b %-d')}", "Off")
+    expect(section.css("button[role='switch'][aria-label^='Show']")).to be_empty
+    expect(section.at_css("#revenue-products")).to be_present
+  end
+
+  it "shows the day the read counted, not two days added, after the builder changes zone" do
+    account = connect
+    read = Time.current.in_time_zone(user.zone).to_date
+    account.update!(read_at: (read - 1).in_time_zone(user.zone).noon, read_through: read)
+    product = account.revenue_products.create!(external_id: "prod_m", name: "Monthly", github_repo: shipnote)
+    revenue_day(product, day: read - 1, currency: "usd", mrr: 700, subscriptions: 1)
+    revenue_day(product, day: read, currency: "usd", mrr: 900, subscriptions: 2)
+
+    expect(row.at_css(".os-row .os-num").text).to eq("$9")
   end
 
   it "says the products are on their way until Stripe's are read" do
@@ -141,10 +183,10 @@ RSpec.describe "A project's Revenue (MRR) row", type: :request do
 
     it "has no switch: only its builder sees it" do
       account = connect
-      account.update!(read_at: Time.current)
+      account.update!(read_at: Time.current, read_through: Time.current.in_time_zone(user.zone).to_date)
       product = account.revenue_products.create!(external_id: "prod_m", name: "Monthly", github_repo: shipnote)
       shipnote.update!(revenue_set_up_at: Time.current)
-      product.revenue_days.create!(day: Time.current.in_time_zone(user.zone).to_date, currency: "usd", mrr: 700, subscriptions: 1)
+      revenue_day(product, day: Time.current.in_time_zone(user.zone).to_date, currency: "usd", mrr: 700, subscriptions: 1)
 
       section = row
 

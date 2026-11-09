@@ -88,9 +88,10 @@ module Api
     def revenue_stamp(user)
       return [] unless user.pro?
 
-      user.revenue_accounts.left_joins(:revenue_products)
-          .pick(Arel.sql("MAX(revenue_accounts.read_at)"), Arel.sql("MAX(revenue_accounts.refused_at)"),
-                Arel.sql("COUNT(revenue_products.github_repo_id)"), Arel.sql("MAX(revenue_products.updated_at)"))
+      read_at, *rest = user.revenue_accounts.left_joins(:revenue_products)
+                           .pick(Arel.sql("MAX(revenue_accounts.read_at)"), Arel.sql("MAX(revenue_accounts.refused_at)"),
+                                 Arel.sql("COUNT(revenue_products.github_repo_id)"), Arel.sql("MAX(revenue_products.updated_at)"))
+      [ read_at, read_at && read_at < RevenueAccount::READ_LASTS.ago, *rest ]
     end
 
     def site_stamp(user)

@@ -1,4 +1,5 @@
 require "rails_helper"
+require "support/revenue_data"
 
 RSpec.describe "Analytics", type: :request do
   let(:user) { create(:user, pro: true, username: "builder") }
@@ -84,10 +85,10 @@ RSpec.describe "Analytics", type: :request do
 
     context "with revenue" do
       before do
-        account = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok", read_at: Time.current)
+        account = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok", read_at: Time.current, read_through: Time.current.in_time_zone(user.zone).to_date)
         product = account.revenue_products.create!(external_id: "prod_m", name: "Monthly", github_repo: repo)
-        product.revenue_days.create!(day: Date.new(2026, 9, 20), currency: "usd", mrr: 200_000, subscriptions: 100)
-        product.revenue_days.create!(day: Date.new(2026, 10, 24), currency: "usd", mrr: 421_000, subscriptions: 230)
+        revenue_day(product, day: Date.new(2026, 9, 20), currency: "usd", mrr: 200_000, subscriptions: 100)
+        revenue_day(product, day: Date.new(2026, 10, 24), currency: "usd", mrr: 421_000, subscriptions: 230)
       end
 
       def number(key)

@@ -1,4 +1,5 @@
 require "rails_helper"
+require "support/revenue_data"
 
 RSpec.describe Analytics::CountService do
   let(:user) { create(:user, time_zone: "Europe/Lisbon") }
@@ -71,9 +72,9 @@ RSpec.describe Analytics::CountService do
     expect([ service.through, service.currency ]).to eq([ nil, nil ])
 
     repo = create(:github_repo, user: user, full_name: "me/app")
-    account = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok", read_at: Time.current)
+    account = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok", read_at: Time.current, read_through: Time.current.in_time_zone(user.zone).to_date)
     product = account.revenue_products.create!(external_id: "prod_a", name: "A", github_repo: repo)
-    product.revenue_days.create!(day: Date.new(2026, 10, 24), currency: "eur", mrr: 1000, subscriptions: 2)
+    revenue_day(product, day: Date.new(2026, 10, 24), currency: "eur", mrr: 1000, subscriptions: 2)
 
     service = described_class.new(user: user, from: Date.new(2026, 10, 1)).tap(&:call!)
 

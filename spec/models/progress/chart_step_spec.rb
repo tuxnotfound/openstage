@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe Progress::ChartStep do
-  let(:user) { create(:user) }
+  let(:user) { create(:user, pro: true) }
   let!(:repo) { create(:github_repo, user: user, full_name: "#{user.username}/app", name: "app") }
 
   def counted
@@ -43,5 +43,13 @@ RSpec.describe Progress::ChartStep do
 
     expect(described_class.new(user, repo: repo, nothing_shown: true).key).to eq(:hidden)
     expect(described_class.new(user, repo: repo, nothing_shown: false).key).to eq(:site)
+  end
+
+  it "asks Free for nothing where Pro would connect Stripe, since Free's MRR never draws on a chart" do
+    user.update!(pro: false)
+    counted
+    repo.update!(site_set_up_at: 1.day.ago)
+
+    expect(described_class.new(user).key).to be_nil
   end
 end
