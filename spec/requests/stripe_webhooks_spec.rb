@@ -45,4 +45,14 @@ RSpec.describe "Stripe's webhook", type: :request do
     expect(response).to have_http_status(:bad_request)
     expect(user.reload).not_to be_pro
   end
+
+  it "takes a finished checkout with no subscription, and leaves the builder as they were" do
+    payload = JSON.parse(completed)
+    payload["data"]["object"].merge!("mode" => "payment", "subscription" => nil)
+
+    deliver(payload.to_json)
+
+    expect(response).to have_http_status(:ok)
+    expect(user.reload).to have_attributes(pro: false, stripe_customer_id: nil, stripe_subscription_id: nil)
+  end
 end

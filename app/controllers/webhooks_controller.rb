@@ -30,7 +30,8 @@ class WebhooksController < ApplicationController
 
   def handle_checkout_completed(session)
     user = User.find_by(id: session.metadata["user_id"])
-    return unless user
+    # Pro is only ever a subscription; a checkout without one is not for Pro.
+    return unless user && session.subscription
 
     Billing::StartProService.new(user: user, customer_id: session.customer, subscription_id: session.subscription).call!
   end
