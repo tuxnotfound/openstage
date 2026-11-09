@@ -44,6 +44,26 @@ RSpec.describe "Signup attribution", type: :request do
       expect(session[:signup_ref]).to eq("bio")
     end
 
+    it "attributes links posted on X to their own tag" do
+      get "/", params: { ref: "x" }
+      expect(session[:signup_ref]).to eq("x")
+    end
+
+    it "reads via as ref, so buildinpublic.com's listing link counts as its own tag" do
+      get "/", params: { via: "buildinpublic" }
+      expect(session[:signup_ref]).to eq("buildinpublic")
+    end
+
+    it "takes ref over via when a link carries both" do
+      get "/", params: { ref: "reddit", via: "buildinpublic" }
+      expect(session[:signup_ref]).to eq("reddit")
+    end
+
+    it "records an unknown via as direct" do
+      get "/", params: { via: "someone-else" }
+      expect(session[:signup_ref]).to eq("direct")
+    end
+
     it "does not set a ref when none is given" do
       get "/"
       expect(session[:signup_ref]).to be_nil

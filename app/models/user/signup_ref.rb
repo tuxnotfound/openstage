@@ -8,12 +8,14 @@ class User
   # retry) and "producthunt" (the card). The free boards listed in the
   # Product Hunt week get one each, so a listing's signups never land as
   # "direct". "digest" is the subscriber digest. "reddit" is every link
-  # posted on Reddit.
+  # posted on Reddit. "x" is every link posted on X but the bio's.
+  # "buildinpublic" is the listing on buildinpublic.com, whose links carry it
+  # as ?via= rather than ?ref=.
   module SignupRef
     extend ActiveSupport::Concern
 
     REFS = %w[recap badge footer feed claim bio launch peerlist producthunt
-              devhunt saashub alternativeto digest reddit].freeze
+              devhunt saashub alternativeto digest reddit x buildinpublic].freeze
     DEFAULT_REF = "direct".freeze
 
     class_methods do

@@ -7,12 +7,15 @@ class ApplicationController < ActionController::Base
   private
 
   # First touch wins: a visitor who arrives from a recap link and signs up three
-  # pages later is still attributed to the recap.
+  # pages later is still attributed to the recap. A link from a site that tags
+  # with ?via= (buildinpublic.com) counts the same as ?ref=.
   def capture_first_touch_ref
     return if session[:signup_ref].present?
-    return if params[:ref].blank?
 
-    session[:signup_ref] = User.normalize_ref(params[:ref])
+    tag = params[:ref].presence || params[:via].presence
+    return if tag.blank?
+
+    session[:signup_ref] = User.normalize_ref(tag)
 
     # Once per session by construction, since the guard above returns after the
     # first touch. Signed-in clicks are the builder checking their own links.
