@@ -9,6 +9,12 @@ RSpec.describe Revenue::Money do
     expect(described_class.format(52_000, "kwd")).to eq("52 KWD")
   end
 
+  it "reads ISK and UGX as Stripe writes them, 5 as 500, though neither has a smaller unit" do
+    expect(described_class.units(500, "ugx")).to eq(5.0)
+    expect(described_class.units(500, "isk")).to eq(5.0)
+    expect(described_class.units(500, "krw")).to eq(500.0)
+  end
+
   it "says what an amount is in the currency's units, and writes units whole" do
     expect(described_class.units(1250, "usd")).to eq(12.5)
     expect(described_class.units(1250, "jpy")).to eq(1250.0)

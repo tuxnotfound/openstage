@@ -1,4 +1,5 @@
 require "rails_helper"
+require "support/revenue_data"
 
 RSpec.describe Analytics::FindStartService do
   let(:user) { create(:user, time_zone: "Europe/Lisbon") }
@@ -59,7 +60,7 @@ RSpec.describe Analytics::FindStartService do
     repo = create(:github_repo, user: user, full_name: "me/app")
     account = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok")
     product = account.revenue_products.create!(external_id: "prod_a", name: "A", github_repo: repo)
-    product.revenue_days.create!(day: Date.new(2026, 5, 1), currency: "usd", mrr: 100, subscriptions: 1)
+    revenue_day(product, day: Date.new(2026, 5, 1), currency: "usd", mrr: 100, subscriptions: 1)
 
     expect(firsts["mrr"]).to eq("me/app" => Date.new(2026, 5, 1))
     expect(firsts["customers"]).to eq("me/app" => Date.new(2026, 5, 1))

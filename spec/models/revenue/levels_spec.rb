@@ -3,8 +3,8 @@ require "rails_helper"
 RSpec.describe Revenue::Levels do
   let(:day) { Date.new(2026, 11, 6) }
 
-  def row(repo_id, on, currency, mrr, subscriptions = 1)
-    described_class::Row.new(repo_id: repo_id, day: on, currency: currency, mrr: mrr, subscriptions: subscriptions)
+  def row(repo_id, on, currency, mrr)
+    described_class::Row.new(repo_id: repo_id, day: on, currency: currency, mrr: mrr)
   end
 
   before do
@@ -15,7 +15,7 @@ RSpec.describe Revenue::Levels do
   it "keeps one currency as it is, in its units, and reads no rates" do
     allow(ExchangeRate).to receive(:where).and_call_original
 
-    levels = described_class.new([ row(1, day, "sek", 120_000, 3) ])
+    levels = described_class.new([ row(1, day, "sek", 120_000) ], customers: { 1 => { day => 3 } })
 
     expect(levels.currency).to eq("sek")
     expect(levels.mrr(1)).to eq(day => 1200.0)
@@ -24,10 +24,9 @@ RSpec.describe Revenue::Levels do
   end
 
   it "adds a project's products up on each day" do
-    levels = described_class.new([ row(1, day, "usd", 1000, 2), row(1, day, "usd", 500, 1) ])
+    levels = described_class.new([ row(1, day, "usd", 1000), row(1, day, "usd", 500) ])
 
     expect(levels.mrr(1)).to eq(day => 15.0)
-    expect(levels.customers(1)).to eq(day => 3)
   end
 
   it "takes the currency most of the revenue is in on the latest day, worth in euros, and converts the rest at each day's rate" do
@@ -46,7 +45,7 @@ RSpec.describe Revenue::Levels do
   end
 
   it "leaves out a currency the ECB has no rate for, names it, and still counts its customers" do
-    levels = described_class.new([ row(1, day, "usd", 10_000, 2), row(1, day, "ngn", 500_000_000, 5) ])
+    levels = described_class.new([ row(1, day, "usd", 10_000), row(1, day, "ngn", 500_000_000) ], customers: { 1 => { day => 7 } })
 
     expect(levels.currency).to eq("usd")
     expect(levels.mrr(1)).to eq(day => 100.0)

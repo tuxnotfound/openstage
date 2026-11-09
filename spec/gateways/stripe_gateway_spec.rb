@@ -100,4 +100,14 @@ RSpec.describe StripeGateway do
         .to eq("https://billing.stripe.com/p/session/bps_1")
     end
   end
+
+  describe ".invoices" do
+    it "asks for each discount's coupon" do
+      stub = stub_request(:get, "https://api.stripe.com/v1/invoices?expand%5B0%5D=data.discounts.source.coupon&limit=100")
+             .to_return(status: 200, headers: json, body: { object: "list", data: [], has_more: false }.to_json)
+
+      expect(described_class.invoices("rk_test_ok", limit: 100)).to eq(data: [], has_more: false)
+      expect(stub).to have_been_requested
+    end
+  end
 end

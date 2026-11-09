@@ -2,8 +2,9 @@ module Revenue
   # An amount as Stripe counts it, in the currency's smallest unit, written in
   # whole units for the pages: "$4,210", "€420", "¥52,000", "1,200 SEK".
   module Money
-    # The currencies Stripe counts without a smaller unit (Stripe's docs).
-    ZERO_DECIMAL = %w[bif clp djf gnf jpy kmf krw mga pyg rwf ugx vnd vuv xaf xof xpf].freeze
+    # The currencies Stripe counts without a smaller unit (Stripe's docs). Not
+    # ISK or UGX: Stripe writes 5 of either as 500, for backwards compatibility.
+    ZERO_DECIMAL = %w[bif clp djf gnf jpy kmf krw mga pyg rwf vnd vuv xaf xof xpf].freeze
     THREE_DECIMAL = %w[bhd jod kwd omr tnd].freeze
     SYMBOLS = { "usd" => "$", "eur" => "€", "gbp" => "£", "jpy" => "¥", "inr" => "₹", "cad" => "CA$", "aud" => "A$", "brl" => "R$" }.freeze
 

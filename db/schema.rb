@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_08_000002) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_09_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -230,7 +230,16 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_08_000002) do
     t.datetime "products_read_at"
     t.datetime "read_at"
     t.datetime "refused_at"
+    t.date "read_through"
     t.index ["user_id", "provider"], name: "index_revenue_accounts_on_user_id_and_provider", unique: true
+  end
+
+  create_table "revenue_customer_days", force: :cascade do |t|
+    t.bigint "revenue_account_id", null: false
+    t.date "day", null: false
+    t.bigint "product_ids", null: false, array: true
+    t.integer "customers", null: false
+    t.index ["revenue_account_id", "day", "product_ids"], name: "idx_on_revenue_account_id_day_product_ids_5d3d4834ac", unique: true
   end
 
   create_table "revenue_days", force: :cascade do |t|
@@ -506,6 +515,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_08_000002) do
   add_foreign_key "project_clicks", "users", on_delete: :cascade
   add_foreign_key "project_views", "users", on_delete: :cascade
   add_foreign_key "revenue_accounts", "users", on_delete: :cascade
+  add_foreign_key "revenue_customer_days", "revenue_accounts", on_delete: :cascade
   add_foreign_key "revenue_days", "revenue_products", on_delete: :cascade
   add_foreign_key "revenue_products", "github_repos", on_delete: :nullify
   add_foreign_key "revenue_products", "revenue_accounts", on_delete: :cascade

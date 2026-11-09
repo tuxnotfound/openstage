@@ -8,9 +8,10 @@ module Revenue
     COLLECTED = %w[active past_due canceled].freeze
     Item = Data.define(:id, :product, :price, :recurring, :currency, :unit_amount, :quantity, :created)
 
-    attr_reader :stopped_at, :discounts, :currency, :items
+    attr_reader :customer, :stopped_at, :discounts, :currency, :items
 
     def initialize(stripe)
+      @customer = stripe[:customer]
       @status = stripe[:status]
       @stopped_at = stripe[:canceled_at] || stripe[:ended_at]
       @collected = COLLECTED.include?(@status) && stripe[:pause_collection].nil?

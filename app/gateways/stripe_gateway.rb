@@ -59,8 +59,10 @@ class StripeGateway < ApplicationGateway
     page(api_key) { |client| client.v1.subscriptions.list(params) }
   end
 
+  # Each with its discounts' coupons, the only way a key that reads invoices
+  # can say how long a discount lasts: asking for a coupon itself is refused.
   def self.invoices(api_key, **params)
-    page(api_key) { |client| client.v1.invoices.list(params) }
+    page(api_key) { |client| client.v1.invoices.list({ expand: [ "data.discounts.source.coupon" ], **params }) }
   end
 
   # The lines of one invoice, past the first ones it carries.

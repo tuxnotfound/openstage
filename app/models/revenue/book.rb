@@ -2,7 +2,8 @@ module Revenue
   # What a builder's Stripe account holds for their projects, as the pages read
   # it: the last day read, the first day each project had revenue, and its days
   # in one currency (Levels). Only products counted for a project read here, and
-  # nothing while Stripe refuses the key, so no stale figure stands as verified.
+  # nothing while Stripe refuses the key or reads keep failing, so no stale
+  # figure stands as verified.
   class Book
     def initialize(user)
       @user = user
@@ -15,12 +16,12 @@ module Revenue
     end
 
     def live?
-      account.present? && account.refused_at.nil?
+      account.present? && account.refused_at.nil? && !account.stale?
     end
 
-    # The last day read, in the builder's zone; nil before the first read.
+    # The last day read; nil before the first read.
     def read_day
-      account&.read_at&.in_time_zone(@user.zone)&.to_date
+      account&.read_through
     end
 
     # { repo id => its first day with revenue }.
@@ -45,13 +46,26 @@ module Revenue
     # currency it last was in.
     def levels(repos, from: nil)
       days = counted_days.where(revenue_products: { github_repo_id: repos.map(&:id) })
-      rows = (from ? days.where(day: from..) : days).pluck("revenue_products.github_repo_id", :day, :currency, :mrr, :subscriptions).map do |repo_id, day, currency, mrr, subscriptions|
-        Levels::Row.new(repo_id: repo_id, day: day, currency: currency, mrr: mrr, subscriptions: subscriptions)
+      rows = (from ? days.where(day: from..) : days).pluck("revenue_products.github_repo_id", :day, :currency, :mrr).map do |repo_id, day, currency, mrr|
+        Levels::Row.new(repo_id: repo_id, day: day, currency: currency, mrr: mrr)
       end
-      Levels.new(rows, ended_in: (days.order(day: :desc).pick(:currency) if rows.empty?))
+      Levels.new(rows, customers: customers(repos, from), ended_in: (days.order(day: :desc).pick(:currency) if rows.empty?))
     end
 
     private
+
+    # { repo id => { date => its paying customers } }: a customer counts once
+    # for a project, however many of its products they pay for.
+    def customers(repos, from)
+      projects = account.revenue_products.where(github_repo_id: repos.map(&:id)).pluck(:id, :github_repo_id).to_h
+      days = account.revenue_customer_days.where("product_ids && ARRAY[?]::bigint[]", projects.keys)
+      (from ? days.where(day: from..) : days).pluck(:day, :product_ids, :customers).each_with_object({}) do |(day, product_ids, customers), counted|
+        projects.values_at(*product_ids).compact.uniq.each do |repo_id|
+          per_day = counted[repo_id] ||= Hash.new(0)
+          per_day[day] += customers
+        end
+      end
+    end
 
     def counted_days
       RevenueDay.joins(:revenue_product).where(revenue_products: { revenue_account_id: account.id }).where.not(revenue_products: { github_repo_id: nil })

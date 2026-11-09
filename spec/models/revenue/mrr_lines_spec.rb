@@ -34,8 +34,9 @@ RSpec.describe Revenue::MrrLines do
   end
 
   # The lines one read of these invoice lines gives, oldest first.
-  def counted(*lines, status: "paid", today: Date.new(2026, 12, 1))
+  def counted(*lines, status: "paid", today: Date.new(2026, 12, 1), named: [])
     reader = described_class.new(products: { "prod_1" => 7 }, recurring: recurring, subscriptions: subscriptions, zone: zone, today: today)
+    reader.read_discounts(named)
     lines.each { |line| reader.read(line, status) }
     [].tap { |given| reader.each_line { |tally_line| given << tally_line } }
   end
@@ -45,8 +46,14 @@ RSpec.describe Revenue::MrrLines do
   end
 
   it "counts a monthly subscription's period at its price, on the builder's days" do
-    expect(counted(stripe_line)).to eq([ Revenue::Tally::Line.new(product_id: 7, currency: "usd", subscription: "sub_1",
+    expect(counted(stripe_line)).to eq([ Revenue::Tally::Line.new(product_id: 7, currency: "usd", subscription: "sub_1", customer: "sub_1",
                                                                   from: Date.new(2026, 10, 11), to: Date.new(2026, 11, 10), monthly: 1900) ])
+  end
+
+  it "says whose subscription it is" do
+    subscriptions["sub_owned"] = stripe_subscription("active", customer: "cus_9")
+
+    expect(counted(stripe_line(subscription: "sub_owned")).sole.customer).to eq("cus_9")
   end
 
   it "counts a yearly plan as a twelfth, a two-weekly one as 26 twelfths" do
@@ -72,11 +79,16 @@ RSpec.describe Revenue::MrrLines do
   end
 
   describe "an invoice not yet paid" do
-    it "counts while Stripe collects it: a subscription active, past due, or cancelled, up to that moment" do
+    it "counts an open one while Stripe collects it: a subscription active, past due, or cancelled, up to that moment" do
       expect(counted(stripe_line, status: "open").sole.monthly).to eq(1900)
-      expect(counted(stripe_line, status: "draft").sole.monthly).to eq(1900)
       expect(counted(stripe_line(subscription: "sub_past_due"), status: "open").sole.monthly).to eq(1900)
-      expect(counted(stripe_line(subscription: "sub_gone"), status: "uncollectible").sole.to).to eq(Date.new(2026, 10, 20))
+      expect(counted(stripe_line(subscription: "sub_gone"), status: "open").sole.to).to eq(Date.new(2026, 10, 20))
+    end
+
+    it "does not count a draft or one given up on, even once its subscription is cancelled or resumed" do
+      %w[draft uncollectible].product(%w[sub_1 sub_gone]).each do |status, subscription|
+        expect(counted(stripe_line(subscription: subscription), status: status)).to be_empty
+      end
     end
 
     it "does not count once Stripe has stopped collecting, or never began" do
@@ -117,6 +129,29 @@ RSpec.describe Revenue::MrrLines do
 
     it "does not call one period's discount lasting for being on two of its lines" do
       expect(counted(discounted("di_once"), discounted("di_once")).map(&:monthly)).to eq([ 1900, 1900 ])
+    end
+
+    describe "whose coupon its invoice names" do
+      def named(id, duration, **fields)
+        { id: id, source: { coupon: { duration: duration } }, **fields }
+      end
+
+      it "takes a coupon's word from the first period: once is left out, the rest subtract" do
+        expect(counted(discounted("di_1"), named: [ named("di_1", "once") ]).sole.monthly).to eq(1900)
+        expect(counted(discounted("di_1"), named: [ named("di_1", "forever") ]).sole.monthly).to eq(1500)
+        expect(counted(discounted("di_1"), named: [ named("di_1", "repeating") ]).sole.monthly).to eq(1500)
+      end
+
+      it "takes a once coupon's word over a subscription that still carries it" do
+        expect(counted(discounted("di_lasting", subscription: "sub_discounted"), named: [ named("di_lasting", "once") ]).sole.monthly).to eq(1900)
+      end
+
+      it "goes by its periods when the coupon was deleted, and says nothing" do
+        gone = { id: "di_1", source: { coupon: { id: "x", deleted: true } } }
+
+        expect(counted(discounted("di_1"), named: [ gone ]).sole.monthly).to eq(1900)
+        expect(counted(discounted("di_1"), discounted("di_1", from: Time.utc(2026, 11, 10, 23, 30), to: Time.utc(2026, 12, 10, 23, 30)), named: [ gone ]).map(&:monthly)).to eq([ 1500, 1500 ])
+      end
     end
   end
 
@@ -220,6 +255,41 @@ RSpec.describe Revenue::MrrLines do
         line = paid([ 2026, 1, 1 ], [ 2026, 2, 1 ], amount: 2000, discounts: [ { amount: 1000, discount: "di_gone" } ])
 
         expect(spans(line, today: Date.new(2026, 1, 11)).last.last).to eq(2000)
+      end
+    end
+
+    context "with a discount on the customer, which no subscription carries" do
+      let(:charging) { on(current(unit_amount: 2000)) }
+      let(:line) { paid([ 2026, 1, 1 ], [ 2026, 2, 1 ], amount: 2000, discounts: [ { amount: 1000, discount: "di_c" } ]) }
+
+      def now_with(duration, **fields)
+        discount = { id: "di_c", subscription: nil, subscription_item: nil, source: { coupon: { duration: duration } }, **fields }
+        counted(line, today: Date.new(2026, 1, 11), named: [ discount ]).last.monthly
+      end
+
+      it "reads today less a forever one, from the first period" do
+        expect(now_with("forever")).to eq(1000)
+      end
+
+      it "reads today less a repeating one until it ends" do
+        expect(now_with("repeating", end: Time.utc(2026, 3, 1).to_i)).to eq(1000)
+        expect(now_with("repeating", end: Time.utc(2026, 1, 5).to_i)).to eq(2000)
+      end
+
+      it "reads today at the full price under a once one, or one taken off the customer" do
+        expect(now_with("once")).to eq(2000)
+        expect(now_with("forever", deleted: true)).to eq(2000)
+      end
+    end
+
+    context "with a discount on the subscription its coupon says lasts, since taken off" do
+      let(:charging) { on(current(unit_amount: 2000)) }
+
+      it "reads today at the full price" do
+        line = paid([ 2026, 1, 1 ], [ 2026, 2, 1 ], amount: 2000, discounts: [ { amount: 1000, discount: "di_s" } ])
+        discount = { id: "di_s", subscription: "sub_now", source: { coupon: { duration: "forever" } } }
+
+        expect(counted(line, today: Date.new(2026, 1, 11), named: [ discount ]).last.monthly).to eq(2000)
       end
     end
 

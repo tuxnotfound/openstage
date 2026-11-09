@@ -14,7 +14,8 @@ module Progress
       return :hidden if @nothing_shown && repos.any? { |repo| repo.hidden_numbers.any? }
       return :site unless repos.where.not(site_set_up_at: nil).exists?
 
-      :stripe unless @user.revenue_accounts.exists?
+      # Free's MRR never draws on a chart, so connecting would not fill this one.
+      :stripe if @user.pro? && @user.revenue_accounts.none?
     end
 
     private

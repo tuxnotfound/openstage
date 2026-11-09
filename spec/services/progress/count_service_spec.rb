@@ -1,4 +1,5 @@
 require "rails_helper"
+require "support/revenue_data"
 
 RSpec.describe Progress::CountService do
   let(:user) { create(:user, time_zone: "Europe/Paris") }
@@ -58,10 +59,10 @@ RSpec.describe Progress::CountService do
   end
 
   it "counts the MRR and paying customers of the projects whose revenue counts, as levels carried from the last read, and the first day of each" do
-    account = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok", read_at: Time.utc(2026, 10, 27, 12))
+    account = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok", read_at: Time.utc(2026, 10, 27, 12), read_through: Date.new(2026, 10, 27))
     product = account.revenue_products.create!(external_id: "prod_a", name: "A", github_repo: repo)
-    product.revenue_days.create!(day: Date.new(2026, 10, 1), currency: "usd", mrr: 1000, subscriptions: 2)
-    product.revenue_days.create!(day: Date.new(2026, 10, 27), currency: "usd", mrr: 3000, subscriptions: 4)
+    revenue_day(product, day: Date.new(2026, 10, 1), currency: "usd", mrr: 1000, subscriptions: 2)
+    revenue_day(product, day: Date.new(2026, 10, 27), currency: "usd", mrr: 3000, subscriptions: 4)
 
     counted = counts(revenue_repos: [ repo ], revenue: Revenue::Book.new(user))
 

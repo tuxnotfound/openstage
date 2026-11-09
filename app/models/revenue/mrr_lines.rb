@@ -32,6 +32,12 @@ module Revenue
       @today = today
       @periods = Hash.new { |periods, item| periods[item] = [] }
       @discount_periods = Hash.new { |periods, key| periods[key] = Set.new }
+      @discounts = {}
+    end
+
+    # Takes the discounts an invoice names, each with its coupon.
+    def read_discounts(discounts)
+      Array(discounts).each { |discount| @discounts[discount[:id]] = StripeDiscount.new(discount) }
     end
 
     # Takes one of Stripe's invoice lines, unless MRR leaves it out.
@@ -57,11 +63,15 @@ module Revenue
 
     private
 
+    # What was paid, and an open invoice while Stripe collects it. A draft asks
+    # nobody for anything yet, as those of an unpaid subscription, and an
+    # uncollectible one was given up on, as those of a pause: neither comes back
+    # when its subscription is later cancelled or resumed.
     def counted?(line, invoice_status)
       details = line.dig(:parent, :subscription_item_details)
-      return false if details.nil? || details[:proration] || invoice_status == "void"
+      return false if details.nil? || details[:proration]
 
-      invoice_status == "paid" || @subscriptions[details[:subscription]]&.collected?
+      invoice_status == "paid" || (invoice_status == "open" && @subscriptions[details[:subscription]]&.collected?)
     end
 
     # nil at a one-off price.
@@ -85,9 +95,14 @@ module Revenue
         next unless monthly && period.product_id
 
         following = periods.find { |each| each.from > period.from }
-        yield Tally::Line.new(product_id: period.product_id, currency: period.currency, subscription: period.subscription, from: period.from,
-                              to: [ period.to, following&.from, stop_of(period) ].compact.min, monthly: monthly)
+        yield Tally::Line.new(product_id: period.product_id, currency: period.currency, subscription: period.subscription, customer: customer_of(period.subscription),
+                              from: period.from, to: [ period.to, following&.from, stop_of(period) ].compact.min, monthly: monthly)
       end
+    end
+
+    # A subscription Stripe does not list stands for its own customer.
+    def customer_of(subscription_id)
+      @subscriptions[subscription_id]&.customer || subscription_id
     end
 
     # nil for a period that charges nothing.
@@ -99,11 +114,14 @@ module Revenue
       metered?(period.recurring) ? 0 : per_month(period.recurring, amount)
     end
 
-    # Stripe leaves a one-off discount out of MRR and subtracts one that lasts.
-    # A restricted key cannot read coupons, and asking it to would refuse every
-    # key already connected, so a discount lasts if its subscription still
-    # carries it, or if it covered more than one of an item's periods.
+    # Stripe leaves a one-off discount out of MRR and subtracts one that lasts,
+    # as its coupon says. With no coupon to read, on one item or deleted, a
+    # discount lasts if its subscription still carries it, or if it covered more
+    # than one of an item's periods.
     def lasting?(discount, period)
+      duration = @discounts[discount]&.duration
+      return duration != "once" if duration
+
       @discount_periods[[ discount, period.item ]].size > 1 || carried?(discount, @subscriptions[period.subscription])
     end
 
@@ -151,7 +169,7 @@ module Revenue
       monthly = monthly_now(subscription, item)
       return unless product_id && monthly
 
-      yield Tally::Line.new(product_id: product_id, currency: subscription.currency || item.currency, subscription: id,
+      yield Tally::Line.new(product_id: product_id, currency: subscription.currency || item.currency, subscription: id, customer: customer_of(id),
                             from: start_of(item), to: @today + 1, monthly: monthly)
     end
 
@@ -176,8 +194,17 @@ module Revenue
     def charged_now(full, subscription, last)
       return full unless last&.amount&.positive?
 
-      carried = last.discounts.sum { |discount, amount| carried?(discount, subscription) ? amount : 0 }
-      full * Rational(last.amount - carried, last.amount) * (1 - last.tax_share)
+      running = last.discounts.sum { |discount, amount| running?(discount, subscription) ? amount : 0 }
+      full * Rational(last.amount - running, last.amount) * (1 - last.tax_share)
+    end
+
+    # Whether a discount on its last invoice still comes off today. No
+    # subscription carries one on the customer, so its coupon has to say.
+    def running?(discount, subscription)
+      return true if carried?(discount, subscription)
+
+      found = @discounts[discount]
+      found&.on_customer? && (found.ends_at.nil? || day(found.ends_at) > @today)
     end
 
     def day(timestamp)

@@ -24,7 +24,7 @@ module Revenue
       tally = Tally.new(today: today)
       each_counted_line(today) { |line| tally.add(line) }
       rows = tally.rows
-      save(rows + unsold_rows(rows))
+      save(rows + unsold_rows(rows), tally.customer_rows, today)
     rescue ApplicationGateway::Unauthorized
       account.update!(refused_at: Time.current)
     end
@@ -34,6 +34,7 @@ module Revenue
       lines = MrrLines.new(products: account.revenue_products.pluck(:external_id, :id).to_h, recurring: recurring_prices(read),
                            subscriptions: read, zone: zone, today: today)
       each_item(->(params) { StripeGateway.invoices(key, **params) }) do |invoice|
+        lines.read_discounts(invoice[:discounts])
         lines_of(invoice).each { |line| lines.read(line, invoice[:status]) }
       end
       lines.each_line(&block)
@@ -84,11 +85,13 @@ module Revenue
       end
     end
 
-    def save(rows)
+    def save(rows, customer_rows, today)
       transaction do
         RevenueDay.where(revenue_product_id: account.revenue_products.select(:id)).delete_all
         rows.each_slice(1000) { |slice| RevenueDay.insert_all(slice) }
-        account.update!(read_at: Time.current, refused_at: nil)
+        account.revenue_customer_days.delete_all
+        customer_rows.each_slice(1000) { |slice| account.revenue_customer_days.insert_all(slice) }
+        account.update!(read_at: Time.current, read_through: today, refused_at: nil)
       end
     end
 

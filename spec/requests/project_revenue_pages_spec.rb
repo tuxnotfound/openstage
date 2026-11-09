@@ -1,4 +1,5 @@
 require "rails_helper"
+require "support/revenue_data"
 
 RSpec.describe "MRR on the chart pages", type: :request do
   let(:user) { create(:user, username: "builder", pro: true) }
@@ -7,10 +8,10 @@ RSpec.describe "MRR on the chart pages", type: :request do
 
   before do
     create(:entry, user: user, repo_name: repo.full_name, occurred_at: 2.days.ago)
-    account = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok", read_at: Time.current)
+    account = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok", read_at: Time.current, read_through: Time.current.in_time_zone(user.zone).to_date)
     product = account.revenue_products.create!(external_id: "prod_m", name: "Monthly", github_repo: repo)
-    product.revenue_days.create!(day: today - 10, currency: "usd", mrr: 210_000, subscriptions: 100)
-    product.revenue_days.create!(day: today, currency: "usd", mrr: 421_000, subscriptions: 230)
+    revenue_day(product, day: today - 10, currency: "usd", mrr: 210_000, subscriptions: 100)
+    revenue_day(product, day: today, currency: "usd", mrr: 421_000, subscriptions: 230)
   end
 
   def view
@@ -53,6 +54,7 @@ RSpec.describe "MRR on the chart pages", type: :request do
 
   it "counts nothing for a project with products before their first read" do
     RevenueDay.delete_all
+    RevenueCustomerDay.delete_all
 
     expect(number("mrr")).to be_nil
   end
@@ -85,7 +87,7 @@ RSpec.describe "MRR on the chart pages", type: :request do
     end
 
     it "says one paying customer, as one" do
-      RevenueDay.where(day: today).update_all(subscriptions: 1)
+      RevenueCustomerDay.where(day: today).update_all(customers: 1)
       repo.update!(hidden_numbers: %w[mrr])
 
       get "/builder/shipnote"
@@ -126,8 +128,9 @@ RSpec.describe "MRR on the chart pages", type: :request do
 
   it "writes a project whose revenue ended before the window at nothing, in its last currency" do
     RevenueDay.delete_all
+    RevenueCustomerDay.delete_all
     product = RevenueProduct.find_by!(external_id: "prod_m")
-    product.revenue_days.create!(day: today - 200, currency: "eur", mrr: 90_000, subscriptions: 9)
+    revenue_day(product, day: today - 200, currency: "eur", mrr: 90_000, subscriptions: 9)
 
     expect(response_status_of_view).to eq(200)
     expect(number("mrr")["value"]).to eq("€0")
@@ -140,7 +143,8 @@ RSpec.describe "MRR on the chart pages", type: :request do
   describe "a project that has never sold, as the read writes it" do
     before do
       RevenueDay.delete_all
-      RevenueProduct.find_by!(external_id: "prod_m").revenue_days.create!(day: today - 3, currency: "eur", mrr: 0, subscriptions: 0)
+      RevenueCustomerDay.delete_all
+      revenue_day(RevenueProduct.find_by!(external_id: "prod_m"), day: today - 3, currency: "eur", mrr: 0, subscriptions: 0)
     end
 
     it "says nothing earned, in its price's currency, on its chart's numbers and its page, and draws no line at nothing" do
@@ -180,6 +184,17 @@ RSpec.describe "MRR on the chart pages", type: :request do
       get "/analytics"
       expect(response).to have_http_status(:ok)
     end
+  end
+
+  it "takes them off the pages once reads have failed for days, past the page's cache" do
+    allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+    expect(number("mrr")["value"]).to eq("$4,210")
+
+    travel_to RevenueAccount::READ_LASTS.from_now + 1.minute
+
+    expect(number("mrr")).to be_nil
+    get "/builder/shipnote"
+    expect(figure).to be_nil
   end
 
   it "shows a new read at once, past the page's cache" do
