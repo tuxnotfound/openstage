@@ -22,7 +22,8 @@ module Revenue
 
       tally = Tally.new(today: Time.current.in_time_zone(zone).to_date)
       each_counted_line { |line| tally.add(line) }
-      save(tally.rows)
+      rows = tally.rows
+      save(rows + unsold_rows(rows))
     rescue ApplicationGateway::Unauthorized
       account.update!(refused_at: Time.current)
     end
@@ -36,11 +37,13 @@ module Revenue
       lines.read_held(&block)
     end
 
-    # Only what MRR needs of each price and subscription is kept while reading.
     def recurring_prices
-      recurring = {}
-      each_item(->(params) { StripeGateway.prices(key, **params) }) { |price| recurring[price[:id]] = price[:recurring] }
-      recurring
+      prices.to_h { |price| [ price[:id], price[:recurring] ] }
+    end
+
+    # Only what MRR needs of each price and subscription is kept while reading.
+    def prices
+      @prices ||= all_items(->(params) { StripeGateway.prices(key, **params) }).map { |price| price.slice(:id, :product, :currency, :recurring) }
     end
 
     def subscriptions
@@ -54,6 +57,17 @@ module Revenue
       return invoice.dig(:lines, :data) || [] unless invoice.dig(:lines, :has_more)
 
       all_items(->(params) { StripeGateway.invoice_lines(key, invoice[:id], **params) })
+    end
+
+    # MRR shows before any sale too: a product with no days stands at nothing
+    # from the day Stripe was connected, in its newest price's currency. With no
+    # price there is no currency to write it in.
+    def unsold_rows(rows)
+      connected = account.created_at.in_time_zone(zone).to_date
+      account.revenue_products.where.not(id: rows.map { |row| row[:revenue_product_id] }).filter_map do |product|
+        currency = prices.find { |price| price[:product] == product.external_id }&.dig(:currency)
+        { revenue_product_id: product.id, day: connected, currency: currency, mrr: 0, subscriptions: 0 } if currency
+      end
     end
 
     def save(rows)

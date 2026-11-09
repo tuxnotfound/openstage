@@ -51,7 +51,7 @@ RSpec.describe "MRR on the chart pages", type: :request do
     expect(number("customers")["value"]).to eq("230")
   end
 
-  it "knows a project with products but no sale counts nothing yet" do
+  it "counts nothing for a project with products before their first read" do
     RevenueDay.delete_all
 
     expect(number("mrr")).to be_nil
@@ -135,6 +135,49 @@ RSpec.describe "MRR on the chart pages", type: :request do
 
     get "/builder/shipnote"
     expect(figure.text.squish).to eq("€0 MRR · 0 paying customers · Verified with Stripe")
+  end
+
+  describe "a project that has never sold, as the read writes it" do
+    before do
+      RevenueDay.delete_all
+      RevenueProduct.find_by!(external_id: "prod_m").revenue_days.create!(day: today - 3, currency: "eur", mrr: 0, subscriptions: 0)
+    end
+
+    it "says nothing earned, in its price's currency, on its chart's numbers and its page, and draws no line at nothing" do
+      expect(number("mrr")["value"]).to eq("€0")
+      expect(number("customers")["value"]).to eq("0")
+      expect(view.dig("chart", "paths").map { |path| path["number"] }).not_to include("mrr")
+
+      get "/builder/shipnote"
+      expect(figure.text.squish).to eq("€0 MRR · 0 paying customers · Verified with Stripe")
+    end
+
+    it "still lets its builder hide it" do
+      repo.update!(hidden_numbers: %w[mrr customers])
+
+      get "/builder/shipnote"
+
+      expect(figure).to be_nil
+    end
+
+    it "keeps it off on Free" do
+      user.update!(pro: false)
+
+      get "/builder/shipnote"
+
+      expect(figure).to be_nil
+    end
+
+    it "lists it on the dashboard and on analytics" do
+      sign_in_as(user)
+
+      get "/api/progress/builder", params: { range: "30d", dashboard: 1 }
+      cells = JSON.parse(response.body).dig("table", "rows").first["cells"].to_h { |cell| [ cell["key"], cell ] }
+      expect(cells["mrr"]).to include("value" => "€0")
+
+      get "/analytics"
+      expect(response).to have_http_status(:ok)
+    end
   end
 
   it "shows a new read at once, past the page's cache" do

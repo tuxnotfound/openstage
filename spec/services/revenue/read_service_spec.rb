@@ -94,6 +94,40 @@ RSpec.describe Revenue::ReadService do
     expect(RevenueDay.count).to eq(0)
   end
 
+  describe "a product with no sale" do
+    before do
+      account.update!(created_at: Time.utc(2026, 11, 1, 12))
+      allow(StripeGateway).to receive(:prices)
+        .and_return(data: [ { id: "price_new", product: "prod_1", currency: "eur", recurring: { interval: "month", interval_count: 1 } },
+                            { id: "price_old", product: "prod_1", currency: "usd", recurring: { interval: "month", interval_count: 1 } } ], has_more: false)
+    end
+
+    it "stands at nothing from the day Stripe was connected, in its newest price's currency" do
+      allow(StripeGateway).to receive(:invoices).and_return(last_page)
+
+      described_class.new(account: account).call!
+
+      expect(RevenueDay.pluck(:day, :currency, :mrr, :subscriptions)).to eq([ [ Date.new(2026, 11, 1), "eur", 0, 0 ] ])
+    end
+
+    it "stands at nothing when a subscription was cancelled the day it began" do
+      allow(StripeGateway).to receive(:subscriptions).and_return(data: [ { id: "sub_1", status: "canceled", canceled_at: Time.utc(2026, 10, 1, 12).to_i } ], has_more: false)
+      allow(StripeGateway).to receive(:invoices).and_return(data: [ invoice("in_1", line("sub_1", [ 2026, 10, 1 ], [ 2026, 11, 1 ], price: "price_new")) ], has_more: false)
+
+      described_class.new(account: account).call!
+
+      expect(RevenueDay.pluck(:mrr, :subscriptions)).to eq([ [ 0, 0 ] ])
+    end
+
+    it "writes no such day once it has sold" do
+      allow(StripeGateway).to receive(:invoices).and_return(data: [ invoice("in_1", line("sub_1", [ 2026, 11, 5 ], [ 2026, 12, 5 ], price: "price_new")) ], has_more: false)
+
+      described_class.new(account: account).call!
+
+      expect(days.first).to eq([ Date.new(2026, 11, 5), 1900, 1 ])
+    end
+  end
+
   it "records a key Stripe refuses, keeps what it read, and fails nothing" do
     product = account.revenue_products.create!(external_id: "prod_1", name: "Shipnote Pro")
     product.revenue_days.create!(day: Date.new(2026, 11, 1), currency: "usd", mrr: 100, subscriptions: 1)
