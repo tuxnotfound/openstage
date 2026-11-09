@@ -16,7 +16,9 @@ RSpec.describe "Weekly email jobs", type: :job do
     expect { WeeklyEmailFanoutJob.perform_now }.to have_enqueued_job(WeeklyEmailJob).with(active.id).exactly(:once)
   end
 
+  # On a Friday, as it runs: on a Monday, 1.day.ago falls in the week before.
   it "sends one builder's emails" do
+    travel_to Time.utc(2026, 11, 13, 13)
     user = create(:user, email: "b@example.com")
     3.times { |i| create(:entry, user: user, title: "Commit #{i}", occurred_at: 1.day.ago) }
 
