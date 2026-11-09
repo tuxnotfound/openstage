@@ -147,6 +147,7 @@ RSpec.describe "MRR on the chart pages", type: :request do
       expect(number("mrr")["value"]).to eq("€0")
       expect(number("customers")["value"]).to eq("0")
       expect(view.dig("chart", "paths").map { |path| path["number"] }).not_to include("mrr")
+      expect(view.dig("chart", "note")).to be_nil
 
       get "/builder/shipnote"
       expect(figure.text.squish).to eq("€0 MRR · 0 paying customers · Verified with Stripe")
@@ -174,6 +175,7 @@ RSpec.describe "MRR on the chart pages", type: :request do
       get "/api/progress/builder", params: { range: "30d", dashboard: 1 }
       cells = JSON.parse(response.body).dig("table", "rows").first["cells"].to_h { |cell| [ cell["key"], cell ] }
       expect(cells["mrr"]).to include("value" => "€0")
+      expect(JSON.parse(response.body).dig("chart", "note")).to eq("No MRR in the last 30 days.")
 
       get "/analytics"
       expect(response).to have_http_status(:ok)

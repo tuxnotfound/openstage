@@ -160,7 +160,7 @@ RSpec.describe Progress::DrawService do
   it "starts the chart where rows with no colour start when no row with one counts the numbers drawn, so its note says why it has no line" do
     old = Progress::Row.new(key: "me/old", name: "old", rank: 10, color_class: nil, repo: nil, on: true, counted: %w[visits], shown: %w[visits])
     all_time = Progress::Window.new(range: "all", today: today, first_activity: Date.new(2026, 1, 5))
-    service = described_class.new(rows: [ row("me/app", %w[commits]), old ], counts: counts, totals_window: all_time, show: %w[visits]).tap(&:call!)
+    service = described_class.new(rows: [ row("me/app", %w[commits]), old ], counts: counts, totals_window: all_time, show: %w[visits], builder: true).tap(&:call!)
 
     expect(service.chart.lines).to be_empty
     expect(service.window.first).to eq(Date.new(2026, 1, 1))
@@ -241,7 +241,7 @@ RSpec.describe Progress::DrawService do
   it "shows no number for rows that show none" do
     service = draw([ row("me/app", []) ])
 
-    expect([ service.totals, service.drawn, service.chart.note ]).to eq([ [], [], "No project here shows a number yet." ])
+    expect([ service.totals, service.drawn, service.chart.note ]).to eq([ [], [], nil ])
   end
 
   it "needs the counts and the window" do

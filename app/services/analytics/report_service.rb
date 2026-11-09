@@ -109,7 +109,7 @@ module Analytics
     end
 
     def draw
-      service = Progress::DrawService.new(rows: rows, counts: counts, totals_window: totals_window, show: show, default_show: DEFAULT_SHOW, per: "page")
+      service = Progress::DrawService.new(rows: rows, counts: counts, totals_window: totals_window, show: show, default_show: DEFAULT_SHOW, per: "page", builder: true)
       @drawing = service if run(service)
     end
 

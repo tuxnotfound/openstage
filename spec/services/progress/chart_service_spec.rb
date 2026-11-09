@@ -85,7 +85,7 @@ RSpec.describe Progress::ChartService do
     service = chart(repos: [ "builder/app" ], lone: true, show: %w[site_visitors])
 
     expect([ service.rows.sole.shown, service.totals, service.drawn, service.chart.lines, service.columns ]).to eq([ [], [], [], [], [] ])
-    expect([ service.chart.note, service.earliest ]).to eq([ "This project shows no numbers yet.", nil ])
+    expect([ service.chart.note, service.earliest ]).to eq([ nil, nil ])
   end
 
   it "starts the chart where the numbers drawn start" do

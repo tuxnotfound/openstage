@@ -388,8 +388,7 @@ RSpec.describe "Project pages", type: :request do
       page = Nokogiri::HTML(response.body)
       expect(page.css("[data-chart-row]").to_h { |row| [ row["data-chart-row"], row.css("td").map { |cell| cell.text.squish } ] })
         .to eq("builder/side.app" => [], "builder/other" => [])
-      expect([ view["drawn"], view["chart"]["note"], page.at_css(".os-chart ~ .os-note").text ])
-        .to eq([ [], "No project here shows a number yet.", "No project here shows a number yet." ])
+      expect([ view["drawn"], view["chart"]["note"], page.at_css(".os-chart ~ .os-note") ]).to eq([ [], nil, nil ])
       expect(page.at_css("svg[role='img']")["aria-label"]).to start_with("Nothing to chart")
       expect(response.body).not_to include("Site visitors", "site_visitors")
 

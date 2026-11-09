@@ -147,7 +147,7 @@ module Progress
     # with what the page lists as shipped and published on it.
     def draw
       service = DrawService.new(rows: rows, counts: counts, totals_window: totals_window, show: show, default_show: DEFAULT_SHOW,
-                                items: section.tally.items, average: totals_window.average?, lone: lone, per: "project")
+                                items: section.tally.items, average: totals_window.average?, lone: lone, per: "project", builder: builder)
       @drawing = service if run(service)
     end
 

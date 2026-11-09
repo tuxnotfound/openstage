@@ -16,7 +16,7 @@ RSpec.describe ProgressChart::Compare do
   end
 
   def chart(lines, numbers: [ commits, visits ], range: "90d", **options)
-    described_class.new(window: window(range), lines: lines, numbers: numbers, **options)
+    described_class.new(window: window(range), lines: lines, numbers: numbers, builder: true, **options)
   end
 
   def tops(paths)
@@ -148,6 +148,12 @@ RSpec.describe ProgressChart::Compare do
     expect(compare.note).to eq("None of the pages in view counts site visits.")
     expect(compare.aria_label).to eq("Commits per week by page, last 90 days")
     expect(chart([], numbers: [], per: "page").note).to eq("No page here shows a number yet.")
+  end
+
+  it "says none of it to a visitor" do
+    expect(chart([ line("app", commits, [ 3, 1 ]), line("app", visits, [ 0, 0 ]) ], builder: false).note).to be_nil
+    expect(chart([ line("app", commits, [ 0, 0 ]) ], numbers: [ commits ], builder: false).note).to be_nil
+    expect(chart([], numbers: [], builder: false).note).to be_nil
   end
 
   it "says when nothing is drawn, or nothing is in the window" do

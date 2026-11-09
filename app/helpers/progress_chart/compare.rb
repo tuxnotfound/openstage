@@ -35,15 +35,16 @@ module ProgressChart
     # numbers: the numbers drawn, in line order. average: each point a 7-day
     # average. lone: one project's page. per: what a line's row is, "project"
     # or, on analytics, "page". currency: the one a money number is in.
-    attr_reader :window, :numbers, :every_line, :lone, :per, :currency
+    # builder: the builder's own view, the only one with a note.
+    attr_reader :window, :numbers, :every_line, :lone, :per, :currency, :builder
 
-    delegate :note, :aria_label, :none, to: :words
+    delegate :aria_label, :none, to: :words
 
     # beside: Lines of the numbers the tooltip shows beside those drawn, for
     # the projects that show them; they draw no path, set no peak or scale
     # and name nothing in the note. items: the TallyService::Items the page
     # lists, which the chart marks.
-    def initialize(window:, lines:, numbers:, beside: [], items: [], average: false, lone: false, per: "project", currency: nil)
+    def initialize(window:, lines:, numbers:, beside: [], items: [], average: false, lone: false, per: "project", currency: nil, builder: false)
       @window = window
       @every_line = lines
       @beside = beside
@@ -53,6 +54,13 @@ module ProgressChart
       @lone = lone
       @per = per
       @currency = currency
+      @builder = builder
+    end
+
+    # Why a number drawn has no line, for its builder. A visitor reads a
+    # number's value on its toggle.
+    def note
+      words.note if builder
     end
 
     # The lines with anything in the window and a colour: a project past the

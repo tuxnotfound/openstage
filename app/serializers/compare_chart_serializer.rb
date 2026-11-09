@@ -5,7 +5,7 @@
 # the axis; a tooltip per point, a row per project and a column per tip: each
 # number with lines, then any that sits beside it, which has none (line); the
 # marks of the entries shipped and published (ProgressChart::Marks); and the
-# note, nil unless a number drawn has no line.
+# note (CompareNote).
 class CompareChartSerializer < ApplicationSerializer
   def initialize(chart)
     @chart = chart

@@ -60,11 +60,12 @@ RSpec.describe "The public page's chart and what shipped" do
     end
   end
 
-  it "says so when the window holds nothing" do
+  it "draws nothing and adds no note when the window holds nothing, its toggle saying so" do
     travel_to ProgressData::TODAY + 60.days
     get "/tux", params: { range: "30d" }
 
-    expect(panel.text).to include("No commits in the last 30 days.")
+    expect(panel.text).not_to include("No commits in the last 30 days.")
+    expect(toggles).to eq([ "Commits 0" ])
     expect(shipped).to include("Nothing shipped or published in the last 30 days.")
     expect(panel.css("svg[role='img'] path")).to be_empty
   end
