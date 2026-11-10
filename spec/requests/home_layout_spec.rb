@@ -31,7 +31,8 @@ RSpec.describe "Home layout", type: :request do
 
     expect(response.body).to include("A real Openstage page")
     expect(response.body).to include("openstage.dev/tuxnotfound")
-    expect(response.body).to include("See a live page")
+    live = Nokogiri::HTML(response.body).css("a").find { |link| link.text.squish == "See a live stage" }
+    expect([ live["href"], live["class"] ]).to eq([ "/tuxnotfound", "os-btn2" ])
   end
 
   it "sells projects: a line each, and what each one is" do
