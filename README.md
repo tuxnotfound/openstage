@@ -5,7 +5,7 @@
 <a href="https://openstage.dev/tuxnotfound/openstage">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="doc/readme/project-page-dark.png">
-    <img src="doc/readme/project-page-light.png" alt="Openstage's own project page: its MRR, and one chart of its commits and site visits with what shipped marked on it">
+    <img src="doc/readme/project-page-light.png" alt="Openstage's own project page: one chart of its commits and site visits, with what shipped marked on it">
   </picture>
 </a>
 
