@@ -34,13 +34,6 @@ module Progress
       shown.include?(number)
     end
 
-    # Whether the table lists its value of a number: visitors see the ones
-    # it shows, and its builder, managing what they see, also the ones it
-    # counts and hides from them.
-    def lists?(number, manage)
-      shows?(number) || (manage && counts?(number))
-    end
-
     # Its builder's switch for a number it counts: on while they pick it for
     # visitors; nil without a synced repo or a count, for site visits and
     # site visitors that do not count now, and for a number beside one they

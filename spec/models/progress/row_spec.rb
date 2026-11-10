@@ -14,19 +14,13 @@ RSpec.describe Progress::Row do
       .to eq([ [ true, true ], [ true, false ], [ false, false ] ])
   end
 
-  it "lists for visitors what it shows, and for its builder what it counts too" do
-    row = described_class.new(key: "me/app", name: "app", rank: 0, color_class: "os-project-1", repo: nil, on: true, counted: %w[commits visits], shown: %w[commits])
-
-    expect([ row.lists?("visits", false), row.lists?("visits", true), row.lists?("views", true) ]).to eq([ false, true, false ])
-  end
-
   it "never shows a number that sits beside one it does not show, which its builder's table still lists" do
     row = ->(shown) { described_class.new(key: "me/app", name: "app", rank: 0, color_class: "os-project-1", repo: nil, on: true, counted: %w[commits visits site_visitors], shown: shown) }
     hiding = row.call(%w[commits site_visitors])
 
     expect([ hiding.shown, row.call(%w[site_visitors visits]).shown, row.call(%w[visits]).with(shown: %w[site_visitors]).shown ])
       .to eq([ %w[commits], %w[site_visitors visits], [] ])
-    expect([ hiding.shows?("site_visitors"), hiding.lists?("site_visitors", false), hiding.lists?("site_visitors", true) ]).to eq([ false, false, true ])
+    expect([ hiding.shows?("site_visitors"), hiding.counts?("site_visitors") ]).to eq([ false, true ])
   end
 
   it "has its builder's switch for a number it counts on a synced repo, and for site visits and site visitors only while they count" do

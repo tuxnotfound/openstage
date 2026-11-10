@@ -26,7 +26,7 @@ RSpec.describe "Api::Progress", type: :request do
     expect(totals).to eq("commits" => "3")
     expect(json["chart"]).to include("ariaLabel" => "7-day average of commits per day by project, last 30 days")
     expect(json["chart"]["paths"].map { |path| path.slice("number", "key") }).to eq([ { "number" => "commits", "key" => "builder/app" } ])
-    expect(json["table"]["rows"].map { |row| [ row["name"], row["cells"].first["value"] ] }).to eq([ [ "app", "3" ], [ "lib", "0" ] ])
+    expect(json["table"]["rows"].map { |row| [ row["name"], row["cells"].first["value"] ] }).to eq([ [ "app", "3" ], [ "lib", nil ] ])
     expect(json["shipped"]["items"].map { |item| item["title"] }).to eq([ "Launched" ])
 
     get "/builder", params: { range: "30d" }
@@ -106,7 +106,7 @@ RSpec.describe "Api::Progress", type: :request do
 
     get "/api/progress/builder", params: { range: "30d" }
 
-    expect(Rails.cache).to have_received(:fetch).with(array_including("progress-view/v10"), any_args)
+    expect(Rails.cache).to have_received(:fetch).with(array_including("progress-view/v11"), any_args)
   end
 
   it "answers 404 for a builder who does not exist" do
@@ -179,8 +179,8 @@ RSpec.describe "Api::Progress", type: :request do
       expect(json["table"]["rows"].to_h { |row| [ row["name"], site_visitors.call(row) ] }).to eq("app" => "20", "lib" => "7")
 
       get "/api/progress/builder", params: { range: "2026-10-01..2026-10-10", show: "site_visitors" }
-      expect(json).to include("range" => "2026-10-01..2026-10-10", "drawn" => %w[commits visits])
-      expect(totals).to eq("commits" => "0", "visits" => "29")
+      expect(json).to include("range" => "2026-10-01..2026-10-10", "drawn" => %w[visits])
+      expect(totals).to eq("visits" => "29")
       expect(json["table"]["rows"].to_h { |row| [ row["name"], site_visitors.call(row) ] }).to eq("app" => "8", "lib" => "7")
       expect(json["chart"]["paths"].map { |path| [ path["number"], path["key"] ] }).to contain_exactly([ "visits", "builder/app" ], [ "visits", "builder/lib" ])
       expect(json["chart"]["tips"].pluck("key")).to eq(%w[visits site_visitors])
@@ -218,11 +218,15 @@ RSpec.describe "Api::Progress", type: :request do
       expect(totals["visits"]).to eq("90")
     end
 
-    it "answers a project's page for its project alone, with no table" do
+    it "answers a project's page for its project alone, with no table, and no number it has none of in the window" do
       get "/api/progress/builder", params: { range: "30d", project: "builder/lib" }
 
-      expect(totals).to eq("commits" => "0")
+      expect(json["numbers"]).to eq([])
       expect(json["table"]).to be_nil
+      expect(json["chart"]["paths"]).to eq([])
+
+      get "/api/progress/builder", params: { range: "90d", project: "builder/lib" }
+      expect(totals).to eq("commits" => "1")
     end
   end
 end

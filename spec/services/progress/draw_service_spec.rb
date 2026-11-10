@@ -238,6 +238,36 @@ RSpec.describe Progress::DrawService do
     end
   end
 
+  describe "a number that reads zero over the window" do
+    let(:quiet) { row("me/lib", %w[commits visits], rank: 1) }
+
+    it "has no toggle, no line and no column for visitors, and a dash in the cell of a row with none" do
+      service = draw([ app, quiet ], show: %w[commits visits])
+      columns = Progress::Numbers.in_order(%w[commits visits])
+
+      expect(totals(service)).to eq("commits" => [ 4, 2, [ [ "app", 3 ], [ "lib", 1 ] ] ], "visits" => [ 40, nil, [ [ "app", 40 ] ] ])
+      expect(service.chart.lines.map { |line| [ line.number.key, line.repo ] }).to contain_exactly(%w[commits me/app], %w[commits me/lib], %w[visits me/app])
+      expect(service.cells(quiet, columns).map { |cell| [ cell.value, cell.shown ] }).to eq([ [ 1, true ], [ nil, false ] ])
+
+      lone = draw([ quiet ], show: %w[visits])
+      expect([ lone.shown.map(&:key), lone.drawn.map(&:key) ]).to eq([ %w[commits], %w[commits] ])
+    end
+
+    it "shows for none of a window that holds nothing, and the chart still draws its window" do
+      empty = draw([ app, lib ], totals_window: Progress::Window.new(range: "7d", today: today - 3, first_activity: nil))
+
+      expect([ empty.shown, empty.totals, empty.drawn, empty.chart.lines ]).to eq([ [], [], [], [] ])
+      expect(empty.window.buckets).not_to be_empty
+    end
+
+    it "stays on the builder's own view, at zero" do
+      service = draw([ app, quiet ], show: %w[commits visits], builder: true)
+
+      expect(totals(service)["visits"]).to eq([ 40, nil, [ [ "app", 40 ] ] ])
+      expect(service.cells(quiet, Progress::Numbers.in_order(%w[visits]), manage: true).sole.to_h.slice(:value, :shown)).to eq(value: 0, shown: true)
+    end
+  end
+
   it "shows no number for rows that show none" do
     service = draw([ row("me/app", []) ])
 

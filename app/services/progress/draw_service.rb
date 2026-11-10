@@ -8,6 +8,8 @@ module Progress
   # view with a colour, else for every row in view, with what its tooltip
   # shows beside them (Numbers.beside). A row past the palette has none: it
   # counts in the totals and draws no line (ProgressChart::Compare#lines).
+  # Visitors see a row's number only while it reads above zero over the
+  # window (seen?); the builder's own view lists it at zero too.
   class DrawService < ApplicationService
     # The numbers a chart draws at once, each in its own line.
     MAX_DRAWN = 3
@@ -50,16 +52,17 @@ module Progress
     def cells(row, columns, manage: false)
       columns.map do |number|
         key = number.key
+        shown = seen?(row, key)
         link = (row.link(key) if manage)
-        Cell.new(number: number, value: listed(number, row, manage, link), previous: (previous(number, [ row ]) if row.shows?(key)),
-                 shown: row.shows?(key), pick: (row.pick(key) if manage), link: link)
+        Cell.new(number: number, value: listed(number, row, shown || (manage && row.counts?(key)), link), previous: (previous(number, [ row ]) if shown),
+                 shown: shown, pick: (row.pick(key) if manage), link: link)
       end
     end
 
     private
 
     def execute
-      @shown = Numbers::ALL.select { |number| Array(rows).any? { |row| row.shows?(number.key) } }
+      @shown = Numbers::ALL.select { |number| Array(rows).any? { |row| seen?(row, number.key) } }
       @totals = shown.select(&:drawable?).map { |number| total(number) }
       @default_drawn = drawable(default_show)
       @drawn = drawable(show).presence || default_drawn.presence || totals.first(1).map(&:number)
@@ -93,7 +96,7 @@ module Progress
     # visitors beside its site visits, never a project's that hides them.
     def beside_lines
       drawn.flat_map do |number|
-        Numbers.beside(number).flat_map { |other| showing(number).select { |row| row.shows?(other.key) }.map { |row| line(other, row) } }
+        Numbers.beside(number).flat_map { |other| showing(number).select { |row| seen?(row, other.key) }.map { |row| line(other, row) } }
       end
     end
 
@@ -107,7 +110,17 @@ module Progress
     end
 
     def showing(number)
-      Array(rows).select { |row| row.on && row.shows?(number.key) }
+      Array(rows).select { |row| row.on && seen?(row, number.key) }
+    end
+
+    # Whether visitors see a row's number: one it shows, while it reads above
+    # zero over the window, a level at any point in it. Its builder sees it
+    # at zero too.
+    def seen?(row, key)
+      return row.shows?(key) if builder
+
+      @seen ||= {}
+      @seen.fetch([ row, key ]) { @seen[[ row, key ]] = row.shows?(key) && counts.above_zero?(key, row.key, totals_window.span) }
     end
 
     def average?
@@ -134,10 +147,10 @@ module Progress
       counts.sum(number.key, row.key, totals_window.span)
     end
 
-    # Its value where the table lists it; beside a link (Paused, Set up),
-    # only when the window has any.
-    def listed(number, row, manage, link)
-      return unless row.lists?(number.key, manage)
+    # Its value where the table lists it (listing); beside a link (Paused,
+    # Set up), only when the window has any.
+    def listed(number, row, listing, link)
+      return unless listing
 
       count = value(number, row)
       count if link.nil? || count.positive?
