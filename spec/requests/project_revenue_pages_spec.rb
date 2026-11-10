@@ -126,60 +126,88 @@ RSpec.describe "MRR on the chart pages", type: :request do
     expect(JSON.parse(response.body).dig("table", "columns").map { |column| column["key"] }).not_to include("mrr", "customers")
   end
 
-  it "writes a project whose revenue ended before the window at nothing, in its last currency" do
-    RevenueDay.delete_all
-    RevenueCustomerDay.delete_all
-    product = RevenueProduct.find_by!(external_id: "prod_m")
-    revenue_day(product, day: today - 200, currency: "eur", mrr: 90_000, subscriptions: 9)
-
-    expect(response_status_of_view).to eq(200)
-    expect(number("mrr")["value"]).to eq("€0")
-    expect(number("customers")["value"]).to eq("0")
-
-    get "/builder/shipnote"
-    expect(figure.text.squish).to eq("€0 MRR · 0 paying customers · Verified with Stripe")
-  end
-
-  describe "a project that has never sold, as the read writes it" do
+  describe "a project whose revenue ended" do
     before do
       RevenueDay.delete_all
       RevenueCustomerDay.delete_all
-      revenue_day(RevenueProduct.find_by!(external_id: "prod_m"), day: today - 3, currency: "eur", mrr: 0, subscriptions: 0)
+      revenue_day(RevenueProduct.find_by!(external_id: "prod_m"), day: today - 20, currency: "eur", mrr: 90_000, subscriptions: 9)
     end
 
-    it "says nothing earned, in its price's currency, on its chart's numbers and its page, and draws no line at nothing" do
-      expect(number("mrr")["value"]).to eq("€0")
-      expect(number("customers")["value"]).to eq("0")
-      expect(view.dig("chart", "paths").map { |path| path["number"] }).not_to include("mrr")
-      expect(view.dig("chart", "note")).to be_nil
+    it "shows visitors neither, even over a window where it stood above zero, nor its line under the description" do
+      expect(view["numbers"].pluck("key")).to eq([ "commits" ])
+      expect(response.body).not_to include('"mrr"', '"customers"')
 
       get "/builder/shipnote"
-      expect(figure.text.squish).to eq("€0 MRR · 0 paying customers · Verified with Stripe")
-    end
-
-    it "still lets its builder hide it" do
-      repo.update!(hidden_numbers: %w[mrr customers])
-
-      get "/builder/shipnote"
-
       expect(figure).to be_nil
+      expect(response.body).not_to include("Verified with Stripe")
     end
 
-    it "keeps it off on Free" do
-      user.update!(pro: false)
-
-      get "/builder/shipnote"
-
-      expect(figure).to be_nil
-    end
-
-    it "lists it on the dashboard and on analytics" do
+    it "lists both at nothing on the dashboard, in its last currency, each with its switch" do
       sign_in_as(user)
 
       get "/api/progress/builder", params: { range: "30d", dashboard: 1 }
+
       cells = JSON.parse(response.body).dig("table", "rows").first["cells"].to_h { |cell| [ cell["key"], cell ] }
-      expect(cells["mrr"]).to include("value" => "€0")
-      expect(JSON.parse(response.body).dig("chart", "note")).to eq("No MRR in the last 30 days.")
+      expect(cells["mrr"]).to include("value" => "€0", "pick" => true)
+      expect(cells["customers"]).to include("value" => "0", "pick" => true)
+    end
+  end
+
+  describe "a project that has never sold, as the read writes it" do
+    let(:product) { RevenueProduct.find_by!(external_id: "prod_m") }
+
+    before do
+      RevenueDay.delete_all
+      RevenueCustomerDay.delete_all
+      revenue_day(product, day: today - 3, currency: "eur", mrr: 0, subscriptions: 0)
+    end
+
+    it "shows visitors no MRR and no paying customers: no line under the description, no chip, nothing of them in the JSON" do
+      expect(view["numbers"].pluck("key")).to eq([ "commits" ])
+      expect(view["drawn"]).to eq([ "commits" ])
+      expect(response.body).not_to include('"mrr"', '"customers"')
+
+      get "/builder/shipnote"
+      expect(figure).to be_nil
+      expect(response.body).not_to include("Verified with Stripe")
+      expect(Nokogiri::HTML(response.body).at_css("[aria-label='Numbers on the chart']").text.squish).to eq("Commits 1")
+    end
+
+    it "shows them again after its first sale" do
+      revenue_day(product, day: today, currency: "eur", mrr: 1_900, subscriptions: 1)
+
+      expect(number("mrr")["value"]).to eq("€19")
+      expect(number("customers")["value"]).to eq("1")
+
+      get "/builder/shipnote"
+      expect(figure.text.squish).to eq("€19 MRR · 1 paying customer · Verified with Stripe")
+    end
+
+    it "shows paying customers alone while MRR rounds to nothing" do
+      revenue_day(product, day: today, currency: "eur", mrr: 40, subscriptions: 1)
+
+      expect(view["numbers"].pluck("key")).to eq(%w[commits customers])
+
+      get "/builder/shipnote"
+      expect(figure.text.squish).to eq("1 paying customer · Verified with Stripe")
+    end
+
+    it "keeps it off the builder's stage too" do
+      get "/api/progress/builder", params: { range: "30d" }
+
+      expect(JSON.parse(response.body)["numbers"].pluck("key")).to eq([ "commits" ])
+    end
+
+    it "lists both at nothing on the dashboard, each with its switch, and on analytics" do
+      sign_in_as(user)
+
+      get "/api/progress/builder", params: { range: "30d", dashboard: 1 }
+      body = JSON.parse(response.body)
+      cells = body.dig("table", "rows").first["cells"].to_h { |cell| [ cell["key"], cell ] }
+      expect(cells["mrr"]).to include("value" => "€0", "pick" => true)
+      expect(cells["customers"]).to include("value" => "0", "pick" => true)
+      expect(body["numbers"].pluck("key")).to include("mrr", "customers")
+      expect(body.dig("chart", "note")).to eq("No MRR in the last 30 days.")
 
       get "/analytics"
       expect(response).to have_http_status(:ok)

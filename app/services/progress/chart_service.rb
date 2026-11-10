@@ -7,7 +7,9 @@ module Progress
   # and the one chart of the numbers drawn. The builder's own view (the
   # dashboard) also lists in its rows the numbers their visitors do not see,
   # and the projects hidden from their page; its chart draws what visitors
-  # see.
+  # see, and the numbers at zero too. Visitors see MRR and paying customers
+  # only while today's reads above zero, and any number only while it reads
+  # above zero over the window (DrawService).
   class ChartService < ApplicationService
     # A builder's page, a project's page and the dashboard open on these, as
     # far as their projects show them; analytics opens on its own.
@@ -48,7 +50,10 @@ module Progress
       return unless compose
 
       list
-      return unless count && draw
+      return unless count
+
+      @rows = rows.map { |row| unsold(row) } unless builder
+      return unless draw
 
       @columns = builder ? builder_columns : drawing.shown
     end
@@ -141,6 +146,13 @@ module Progress
     # count them on the builder's own view, else the ones that show any.
     def repos_reading(keys)
       rows.select { |row| keys.any? { |key| builder ? row.counts?(key) : row.shows?(key) } }.map(&:repo)
+    end
+
+    # What visitors see of a row's MRR and paying customers: each only while
+    # today's reads above zero, whatever the window. The zero days stay
+    # counted, for its builder's own view.
+    def unsold(row)
+      row.with(shown: row.shown - Numbers::REVENUE.reject { |key| counts.above_zero?(key, row.key) })
     end
 
     # Each number its projects show visitors, the numbers drawn and the chart,

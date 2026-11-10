@@ -39,8 +39,9 @@ module RevenueHelper
   end
 
   # What a project's page says of its revenue, under its description, of what
-  # its builder shows: [the first figure, the words after it], nil with
-  # neither. chart: the page's Progress::ChartService, of its one project.
+  # its builder shows while today's reads above zero: [the first figure, the
+  # words after it], nil with neither. chart: the page's
+  # Progress::ChartService, of its one project.
   def revenue_on_page(chart)
     row = chart.rows.first
     parts = Progress::Numbers::REVENUE.select { |key| row&.shows?(key) }.map { |key| revenue_part(chart.counts, Progress::Numbers.find(key), row) }

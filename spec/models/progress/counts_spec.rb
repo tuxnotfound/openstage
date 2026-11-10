@@ -29,6 +29,12 @@ RSpec.describe Progress::Counts do
     expect(counts.per_point("commits", "me/app", [ week, day ])).to eq([ 7, 5 ])
     expect(counts.per_point("commits", "me/app", [ day ], average: true)).to eq([ 1.0 ])
   end
+  it "reads a flow above zero over days that hold any of it" do
+    expect(counts.above_zero?("commits", "me/app", Date.new(2026, 10, 2)..Date.new(2026, 10, 7))).to be(true)
+    expect(counts.above_zero?("commits", "me/app", Date.new(2026, 10, 2)..Date.new(2026, 10, 6))).to be(false)
+    expect([ counts.above_zero?("commits", "me/app"), counts.above_zero?("visits", "me/app") ]).to eq([ true, false ])
+  end
+
   describe "a level" do
     let(:may) { Date.new(2026, 5, 1) }
     let(:june) { Date.new(2026, 6, 1) }
@@ -54,6 +60,21 @@ RSpec.describe Progress::Counts do
 
       expect(counts.per_point("mrr", "me/app", points, average: true)).to eq([ 0, 0, 30.0 ])
       expect(counts.per_point("mrr", "me/app", [ bucket.new(may, may) ])).to eq([ 10.0 ])
+    end
+
+    it "reads above zero over days it stood above zero on any of, and with no days named while it stands there today" do
+      expect(counts.above_zero?("mrr", "me/app", (may - 9)..may)).to be(true)
+      expect(counts.above_zero?("mrr", "me/app", (may - 9)..(may - 1))).to be(false)
+      expect(counts.above_zero?("mrr", "me/app", (june + 5)..(june + 9))).to be(true)
+      expect(counts.above_zero?("mrr", "me/app")).to be(true)
+    end
+
+    it "reads at nothing today once it fell to nothing, and while it rounds to nothing as the pages write it" do
+      gone = described_class.new(days: { "mrr" => { "me/app" => { may => 10.0 } } }, through: june, currency: "usd")
+      cents = described_class.new(days: { "mrr" => { "me/app" => { june => 0.4 } } }, through: june, currency: "usd")
+
+      expect([ gone.above_zero?("mrr", "me/app"), gone.above_zero?("mrr", "me/app", may..june) ]).to eq([ false, true ])
+      expect([ cents.above_zero?("mrr", "me/app"), cents.above_zero?("mrr", "me/app", may..june) ]).to eq([ false, false ])
     end
 
     it "writes money in its currency, and any other number with its thousands" do

@@ -27,6 +27,14 @@ module Progress
       days ? daily.sum { |date, count| days.cover?(date) ? count : 0 } : daily.values.sum
     end
 
+    # Whether a project's count reads above zero over some days, as the pages
+    # write it: a flow's sum, a level on any of them; nil days for every day
+    # counted, where a level is where it stands today.
+    def above_zero?(key, repo, days = nil)
+      value = level?(key) && days ? peak(key, repo, days) : sum(key, repo, days)
+      value.round.positive?
+    end
+
     # The first day any of these projects counted the number; nil for none.
     def first_day(key, repos)
       repos.filter_map { |repo| @firsts.dig(key, repo) }.min
@@ -61,6 +69,14 @@ module Progress
 
     def at(key, repo, day)
       daily(key, repo).fetch([ day, @through ].compact.min, 0)
+    end
+
+    # A level's highest over some days; the days past the last read stand
+    # where it stood then.
+    def peak(key, repo, days)
+      last = [ days.last, @through ].compact.min
+      first = [ days.first, last ].min
+      daily(key, repo).filter_map { |date, count| count if date.between?(first, last) }.max || 0
     end
 
     def daily(key, repo)

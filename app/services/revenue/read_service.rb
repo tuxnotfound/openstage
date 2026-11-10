@@ -73,10 +73,10 @@ module Revenue
       all_items(->(params) { StripeGateway.invoice_lines(key, invoice[:id], **params) })
     end
 
-    # MRR shows before any sale too: a product with no days stands at nothing
-    # from the day Stripe was connected, in its newest price's currency, or the
-    # account's with only inline ones. With no price there is no currency to
-    # write it in.
+    # Its builder sees MRR before any sale too, and visitors once it is above
+    # zero: a product with no days stands at nothing from the day Stripe was
+    # connected, in its newest price's currency, or the account's with only
+    # inline ones. With no price there is no currency to write it in.
     def unsold_rows(rows)
       connected = account.created_at.in_time_zone(zone).to_date
       account.revenue_products.where.not(id: rows.map { |row| row[:revenue_product_id] }).filter_map do |product|
