@@ -6,8 +6,12 @@ RSpec.describe "Counting a visitor by their own address", type: :request do
   let!(:user) { create(:user, username: "builder") }
   let(:browser) { "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" }
 
+  # The page, then the view it sends back from the browser, where the address is read.
   def visit_from(forwarded_for)
-    get "/builder", headers: { "HTTP_USER_AGENT" => browser, "REMOTE_ADDR" => "10.0.0.5", "HTTP_X_FORWARDED_FOR" => forwarded_for }
+    headers = { "HTTP_USER_AGENT" => browser, "REMOTE_ADDR" => "10.0.0.5", "HTTP_X_FORWARDED_FOR" => forwarded_for }
+    get "/builder", headers: headers
+    ticket = Nokogiri::HTML(response.body).at_css("[data-controller='page-view']")["data-page-view-ticket-value"]
+    post "/pv", params: { t: ticket }, headers: headers
   end
 
   it "looks past a Cloudflare edge to the visitor" do

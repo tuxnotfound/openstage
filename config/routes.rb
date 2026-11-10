@@ -49,6 +49,9 @@ Rails.application.routes.draw do
 
   # A page view on a project's website, from Openstage's script (public/v.js).
   post "/v", to: "site_visits#create", as: :site_visits
+  # A view of a builder's stage or a project's page, sent by the page once it
+  # runs in a browser (page_view_controller.js).
+  post "/pv", to: "page_views#create", as: :page_views
 
   # A project as its builder sees it: its words, website and picture, and
   # what counts its site visits.

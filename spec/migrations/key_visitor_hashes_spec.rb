@@ -47,7 +47,9 @@ RSpec.describe KeyVisitorHashes, type: :request do
     migrate
     counts = counted
 
-    get "/builder", headers: { "HTTP_USER_AGENT" => "Mozilla/5.0 (Macintosh) Safari/605.1.15", "REMOTE_ADDR" => "203.0.113.7" }
+    browser = { "HTTP_USER_AGENT" => "Mozilla/5.0 (Macintosh) Safari/605.1.15", "REMOTE_ADDR" => "203.0.113.7" }
+    get "/builder", headers: browser
+    post "/pv", params: { t: Nokogiri::HTML(response.body).at_css("[data-controller='page-view']")["data-page-view-ticket-value"] }, headers: browser
 
     expect(counted["visitors"]).to eq(counts["visitors"])
     expect(counted["views"]["page"][today]).to eq(counts["views"]["page"][today] + 1)

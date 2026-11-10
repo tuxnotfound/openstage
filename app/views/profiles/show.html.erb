@@ -24,6 +24,8 @@
   </script>
 <% end %>
 
+<%= render "application/page_view", ticket: @view_ticket %>
+
 <% if @syncing %>
   <meta http-equiv="refresh" content="10">
   <div class="os-card mb-4 flex items-center gap-3" data-syncing>

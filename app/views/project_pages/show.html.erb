@@ -14,6 +14,8 @@
   <% content_for :head do %><meta name="robots" content="noindex"><% end %>
 <% end %>
 
+<%= render "application/page_view", ticket: @view_ticket %>
+
 <% if @revealed %>
   <p role="status" class="rounded-control bg-accent-soft px-4 py-3 os-sm">
     <b>Only you can see this page.</b> You hid <%= project.name %>, so visitors who open it land on your stage.

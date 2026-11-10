@@ -235,15 +235,21 @@ RSpec.describe "Project pages", type: :request do
   describe "visits" do
     let(:browser) { { "HTTP_USER_AGENT" => "Mozilla/5.0 (Macintosh) Safari/605.1.15", "HTTP_REFERER" => "https://news.ycombinator.com/item?id=1" } }
 
-    it "counts a visitor's, by the project's repo, with where they came from" do
-      expect { get "/builder/side.app", headers: browser }.to change(user.project_views, :count).by(1)
+    def view_ticket_in(body)
+      Nokogiri::HTML(body).at_css("[data-controller='page-view']")&.[]("data-page-view-ticket-value")
+    end
+
+    it "counts a visitor's once the page sends it back, by the project's repo, with where they came from" do
+      expect { get "/builder/side.app", headers: browser }.not_to change(user.project_views, :count)
+      expect { post "/pv", params: { t: view_ticket_in(response.body) }, headers: browser }.to change(user.project_views, :count).by(1)
 
       expect(user.project_views.last).to have_attributes(repo_name: "builder/side.app", referrer: "news.ycombinator.com")
       expect(user.profile_views.count).to eq(0)
     end
 
     it "keeps the visitor's address hashed with the day and a key, as the builder's page does" do
-      get "/builder/side.app", headers: browser.merge("REMOTE_ADDR" => "203.0.113.7")
+      get "/builder/side.app", headers: browser
+      post "/pv", params: { t: view_ticket_in(response.body) }, headers: browser.merge("REMOTE_ADDR" => "203.0.113.7")
 
       expect(user.project_views.last.ip_hash).to eq(VisitorHash.of("203.0.113.7"))
       expect(user.project_views.last.ip_hash).not_to eq(Digest::SHA256.hexdigest("203.0.113.7#{Date.current}"))
@@ -253,13 +259,13 @@ RSpec.describe "Project pages", type: :request do
       sign_in_as(user)
       get "/builder/side.app", headers: browser
 
-      expect(user.project_views.count).to eq(0)
+      expect(view_ticket_in(response.body)).to be_nil
     end
 
     it "never counts a bot's visit" do
       get "/builder/side.app", headers: { "HTTP_USER_AGENT" => "Googlebot/2.1 (+http://www.google.com/bot.html)" }
 
-      expect(user.project_views.count).to eq(0)
+      expect(view_ticket_in(response.body)).to be_nil
     end
   end
 

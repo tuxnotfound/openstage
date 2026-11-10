@@ -1,4 +1,6 @@
 class ProfilesController < ApplicationController
+  include CountsPageViews
+
   def show
     @user = User.active.find_by(username: params[:username])
     unless @user
@@ -10,7 +12,8 @@ class ProfilesController < ApplicationController
       return
     end
 
-    track_profile_view
+    # The feed never counts a view; the page does, once it runs in a browser.
+    @view_ticket = view_ticket(@user) if request.format.html?
 
     @syncing = syncing?
 
@@ -57,22 +60,5 @@ class ProfilesController < ApplicationController
     filter = Progress::Filter.from(params)
     service = Progress::GatherService.new(user: @user, range: filter.range, repos: filter.projects, show: filter.show)
     service if service.call
-  end
-
-  def track_profile_view
-    return if current_user == @user
-    return if BotDetector.bot?(request.user_agent)
-
-    referrer = request.referer.present? ? URI.parse(request.referer).host : nil rescue nil
-    ip_hash  = VisitorHash.of(request.remote_ip)
-    # CF-IPCountry is set by Cloudflare (e.g. "US", "GB"). nil on non-CF setups.
-    country  = request.headers["CF-IPCountry"].presence
-
-    @user.profile_views.create!(
-      viewed_at: Time.current,
-      referrer:  referrer,
-      ip_hash:   ip_hash,
-      country:   country
-    )
   end
 end

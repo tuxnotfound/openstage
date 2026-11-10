@@ -44,8 +44,10 @@ RSpec.describe "The request log", type: :request do
   it "counts a visit that also carries a Client-IP under the forwarded address, and logs neither" do
     create(:user, username: "builder")
     get "/builder", headers: visitor_with_client_ip
-
     expect(response).to have_http_status(:ok)
+    post "/pv", params: { t: Nokogiri::HTML(response.body).at_css("[data-controller='page-view']")["data-page-view-ticket-value"] },
+                headers: visitor_with_client_ip
+
     expect(io.string).not_to include("198.51.100.77", "192.0.2.99")
     expect(ProfileView.sole.ip_hash).to eq(VisitorHash.of("198.51.100.77"))
   end

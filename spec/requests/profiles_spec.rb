@@ -57,20 +57,38 @@ RSpec.describe "Profiles", type: :request do
         expect(response.body).not_to include("javascript:alert")
       end
 
-      it "records a profile view for a real browser" do
-        expect {
-          get "/testuser", headers: { "HTTP_USER_AGENT" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" }
-        }.to change { user.profile_views.count }.by(1)
+      def view_ticket_in(body)
+        Nokogiri::HTML(body).at_css("[data-controller='page-view']")&.[]("data-page-view-ticket-value")
       end
 
-      it "does not record a profile view for a crawler" do
-        expect {
-          get "/testuser", headers: { "HTTP_USER_AGENT" => "Mozilla/5.0 (compatible; ClaudeBot/1.0; +claudebot@anthropic.com)" }
-        }.not_to change { user.profile_views.count }
+      it "counts a real browser's view once the page sends it back, with where the visitor came from" do
+        browser = { "HTTP_USER_AGENT" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "HTTP_REFERER" => "https://news.ycombinator.com/item?id=1" }
+
+        expect { get "/testuser", headers: browser }.not_to change { user.profile_views.count }
+        expect { post "/pv", params: { t: view_ticket_in(response.body) }, headers: browser }.to change { user.profile_views.count }.by(1)
+        expect(user.profile_views.last.referrer).to eq("news.ycombinator.com")
       end
 
-      # A page Turbo loaded as the pointer rested on a link to it would count
-      # a view nobody opened.
+      it "hands a crawler no ticket, so its visit never counts" do
+        get "/testuser", headers: { "HTTP_USER_AGENT" => "Mozilla/5.0 (compatible; ClaudeBot/1.0; +claudebot@anthropic.com)" }
+
+        expect(view_ticket_in(response.body)).to be_nil
+      end
+
+      it "hands the builder no ticket on their own page" do
+        sign_in_as(user)
+        get "/testuser"
+
+        expect(view_ticket_in(response.body)).to be_nil
+      end
+
+      it "counts no view for a read of the feed" do
+        expect { get "/testuser.rss" }.not_to change { user.profile_views.count }
+      end
+
+      # A page Turbo loaded as the pointer rested on a link to it is a full
+      # render nobody may open.
       it "tells Turbo never to load a page ahead, so a view counts only when the page opens" do
         get "/testuser"
 
