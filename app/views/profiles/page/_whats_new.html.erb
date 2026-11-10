@@ -10,7 +10,7 @@
 <section id="whats-new-panel" class="os-panel" aria-labelledby="whats-new">
   <div class="os-between">
     <h2 id="whats-new" class="os-h2">What's new</h2>
-    <span class="os-xs os-muted"><%= items.size %> <%= section.labels.word %></span>
+    <% if items.any? %><span class="os-xs os-muted"><%= items.size %> <%= section.labels.word %></span><% end %>
   </div>
   <% if items.empty? %>
     <p class="os-note mt-3"><%= section.filtered? ? section.labels.empty_tagged(section.selection_name(alternatives: true)) : section.labels.empty %></p>

@@ -6,6 +6,12 @@ module ProgressHelper
   # the chart's marks write it.
   BADGE_WORDS = { milestone: "Milestone", shipped: "Shipped", published: "Published" }.freeze
 
+  # A builder's page's counts as visitors read them, each only while it has
+  # any: "3 entries", "1 repo".
+  def progress_counts(entries:, repos:, milestones:)
+    { "entry" => entries, "repo" => repos, "milestone" => milestones }.filter_map { |word, count| pluralize(count, word) if count.positive? }
+  end
+
   # This page with some of its params changed; nil drops one.
   def progress_view_path(user, **changes)
     kept = params.permit(*PROGRESS_PARAMS).to_h.symbolize_keys

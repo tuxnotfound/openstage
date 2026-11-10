@@ -30,6 +30,12 @@ module Progress
       def commits_shown?
         github_repo.nil? || github_repo.public_number?("commits")
       end
+
+      # Whether its card draws its commits for visitors: they see them, and
+      # it has any in the 52 weeks, so a card never reads 0 commits.
+      def commits_drawn?
+        commits_shown? && commits.positive?
+      end
     end
 
     # projects: Progress::Projects#all, in rank order. reveal: a repo the builder hid, shown anyway (Entry.counted_on_page).

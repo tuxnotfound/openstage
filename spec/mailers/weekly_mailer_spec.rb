@@ -146,6 +146,17 @@ RSpec.describe WeeklyMailer do
       expect(mail.text_part.body.to_s).to include("1 shipped · 1 published · 2 commits")
     end
 
+    it "leaves out the counters at zero, which the builder's own email keeps" do
+      Entry.where(entry_type: %w[milestone note]).destroy_all
+      create(:entry, user: builder, title: "Ship search", repo_name: "maker/app", occurred_at: 1.day.ago)
+      html = mail.html_part.body.to_s
+
+      expect(mail.text_part.body.to_s).to include("3 commits · 2 active days · 1 project")
+      expect(mail.text_part.body.to_s).not_to include("0 shipped", "0 published")
+      expect(html).not_to include(">● Shipped<", ">○ Published<")
+      expect(described_class.week_ready(builder).text_part.body.to_s).to include("0 shipped · 0 published · 3 commits")
+    end
+
     it "unsubscribes in one click" do
       expect(mail.header["List-Unsubscribe"].value).to include("/subscriptions/#{subscription.token}/unsubscribe")
       expect(mail.header["List-Unsubscribe-Post"].value).to eq("List-Unsubscribe=One-Click")

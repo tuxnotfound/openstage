@@ -220,7 +220,8 @@ RSpec.describe "Profiles", type: :request do
 
         get "/builder"
 
-        expect(facts).to include("0 entries")
+        expect(facts).not_to include("entries", "entry", "milestone")
+        expect(description).to eq("#{user.display_name} is building in public on Openstage — 1 repo.")
         expect(response.body).not_to include("Nothing here yet")
         expect(Nokogiri::HTML(response.body).at_css("[data-react='progress']")).to be_present
         expect(Nokogiri::HTML(response.body).css("section[aria-labelledby='projects'] .os-h3").map { |name| name.text.squish }).to eq([ "app" ])

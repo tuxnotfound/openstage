@@ -63,7 +63,7 @@ module Progress
     # where it has any.
     def details
       repo = card&.github_repo
-      [ *(commit_facts if commits_shown?),
+      [ *(commit_facts if commits_shown? && project.commits.positive?),
         (Fact.new(label: "Shipped and published", value: highlights) if highlights.positive?),
         (Fact.new(label: "Stars on GitHub", value: repo.stars_count) if repo&.stars_count.to_i.positive?),
         (Fact.new(label: "Website", value: repo.site_host) if repo&.site_host) ].compact

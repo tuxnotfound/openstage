@@ -159,7 +159,7 @@ function Shipped({ shipped }: { shipped: NonNullable<ProgressView["shipped"]> })
     <>
       <div className="os-between">
         <h2 id="whats-new" className="os-h2">What's new</h2>
-        <span className="os-xs os-muted">{shipped.heading}</span>
+        {shipped.heading && <span className="os-xs os-muted">{shipped.heading}</span>}
       </div>
       {items.length === 0 ? (
         <p className="os-note mt-3">{shipped.empty}</p>

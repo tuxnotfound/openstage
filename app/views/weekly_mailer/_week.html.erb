@@ -5,7 +5,8 @@
     With none of them on a project the chart draws (the ten busiest of all
     time, ProgressChart::Trend#lines), it says why it has no chart.
     log_url: the builder's own email offers to log an entry when the list is
-    empty. %>
+    empty. follower: a follower's email, whose counters leave out the ones at
+    zero, as the pages do for visitors. %>
 <% labels = section.labels %>
 <% now = section.tally.totals %>
 <% before = section.tally.previous_totals %>
@@ -17,6 +18,7 @@
      [ "Active days", now.active_days, before&.active_days ],
      [ "Projects", now.projects, nil ]
    ] %>
+<% tiles = tiles.reject { |_label, value, _previous| value.zero? } if local_assigns[:follower] %>
 <%= mail_panel do %>
 <p style="margin: 0 0 14px; font-family: <%= MailHelper::DISPLAY %>; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: #0E0F12;"><%= labels.nav %><span style="font-weight: 400; color: #666A73;"><%= " · so far" if labels.running? %></span></p>
 

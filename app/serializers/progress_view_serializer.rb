@@ -43,11 +43,11 @@ class ProgressViewSerializer < ApplicationSerializer
     ProjectsTableSerializer.new(@chart, manage: @chart.builder.present?, off_page: @chart.off_page)
   end
 
-  # Newest first, in the builder's words.
+  # Newest first, in the builder's words; its count only while it has any.
   def shipped
     items = tally.items.reverse
     empty = section.filtered? ? labels.empty_tagged(section.selection_name(alternatives: true)) : labels.empty
-    { heading: "#{items.size} #{labels.word}", empty: empty, items: items.map { |item| shipped_item(item) } }
+    { heading: ("#{items.size} #{labels.word}" if items.any?), empty: empty, items: items.map { |item| shipped_item(item) } }
   end
 
   # Its badge with its words and colour, its description, and its project,

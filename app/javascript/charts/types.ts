@@ -134,9 +134,10 @@ export type FilterView = {
   table: TableView | null
 }
 
-// A builder's page, a project's page or the dashboard (ProgressViewSerializer).
+// A builder's page, a project's page or the dashboard (ProgressViewSerializer);
+// shipped's heading is null while the window holds none.
 export type ProgressView = FilterView & {
-  shipped: { heading: string; empty: string; items: ShippedItem[] } | null
+  shipped: { heading: string | null; empty: string; items: ShippedItem[] } | null
 }
 
 // A row of What's new: its badge, in words (kind) and in its project's

@@ -27,9 +27,7 @@
           <% facts << link_to(website.gsub(%r{\Ahttps?://}, ""), website, target: "_blank", rel: "noopener", class: "underline hover:text-ink") %>
         <% end %>
         <% facts << "Building since #{user.building_since.strftime('%B %Y')}" if user.building_since.present? %>
-        <% facts << pluralize(@total_entries, "entry") %>
-        <% facts << pluralize(@repos_synced, "repo") %>
-        <% facts << pluralize(@milestones, "milestone") %>
+        <% facts.concat(progress_counts(entries: @total_entries, repos: @repos_synced, milestones: @milestones)) %>
         <% facts << "#{@streak}-day streak" if @streak.positive? %>
         <% facts.each do |fact| %><span><%= fact %></span><span aria-hidden="true">·</span><% end %>
         <span class="inline-flex gap-1.5" data-controller="share"

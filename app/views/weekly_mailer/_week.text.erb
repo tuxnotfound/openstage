@@ -3,7 +3,9 @@
 <% pick = section.pick %>
 <%= labels.nav %><%= " · so far" if labels.running? %>
 
-<%= now.shipped %> shipped · <%= now.published %> published · <%= pluralize(now.commits, "commit") %> · <%= pluralize(now.active_days, "active day") %> · <%= pluralize(now.projects, "project") %>
+<% counters = [ [ now.shipped, "#{now.shipped} shipped" ], [ now.published, "#{now.published} published" ], [ now.commits, pluralize(now.commits, "commit") ],
+                [ now.active_days, pluralize(now.active_days, "active day") ], [ now.projects, pluralize(now.projects, "project") ] ] %>
+<%= counters.reject { |count, _words| local_assigns[:follower] && count.zero? }.map(&:last).join(" · ") %>
 
 Shipped and published <%= labels.phrase %>:
 <% if pick.kept.any? %>
