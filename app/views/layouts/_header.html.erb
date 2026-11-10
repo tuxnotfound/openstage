@@ -35,17 +35,22 @@
       </details>
     </div>
   <% else %>
-    <div class="os-top max-sm:gap-3">
+    <%# A visitor's one action is their own stage, straight to GitHub's sign-in,
+        which a member uses too; "Sign in" names it for them beside the links.
+        On a phone only the logo and the button fit: Pricing and Blog stay in
+        the site's footer. %>
+    <div class="os-top">
       <%= link_to "openstage", root_path, class: "os-logo" %>
-      <nav class="os-nav ml-auto" aria-label="Main">
+      <nav class="os-nav ml-auto items-center max-sm:hidden" aria-label="Main">
         <%= link_to "Feed", feed_path, aria: { current: (controller_name == "feed" ? "page" : nil) } %>
         <%= link_to "Pricing", pricing_path %>
-        <%= link_to "Blog", blog_path, class: "max-sm:hidden" %>
+        <%= link_to "Blog", blog_path %>
+        <%= button_to "Sign in", "/auth/github", method: :post, data: { turbo: false, sign_in: true },
+                      class: "cursor-pointer whitespace-nowrap text-ink-2 hover:text-ink" %>
       </nav>
-      <%= render "layouts/theme_toggle" %>
-      <%= button_to "/auth/github", method: :post, data: { turbo: false }, class: "os-btn sm" do %>
-        <span>Sign in<span class="max-sm:hidden"> with GitHub</span></span>
-      <% end %>
+      <span class="max-sm:hidden"><%= render "layouts/theme_toggle" %></span>
+      <%= button_to "Make your own stage", "/auth/github", method: :post, data: { turbo: false, make_your_own: true },
+                    class: "os-btn sm", form_class: "max-sm:ml-auto" %>
     </div>
   <% end %>
 </header>

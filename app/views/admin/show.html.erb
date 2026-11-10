@@ -91,6 +91,24 @@
     <p class="os-xs os-muted mt-2">One per browser session, signed-out humans only. This is the top of the funnel that "signups by first touch" is the bottom of.</p>
   </section>
 
+  <!-- Sign-in starts -->
+  <section class="os-panel">
+    <h2 class="os-h3">Sign-ins started</h2>
+    <% if @sign_in_starts.any? %>
+      <div class="mt-2.5">
+        <% @sign_in_starts.each do |ref, count| %>
+          <div class="os-row os-between py-2" data-sign-in-start="<%= ref %>" data-count="<%= count %>">
+            <span class="os-sm"><%= ref %></span>
+            <span class="os-sm os-num font-bold"><%= count %></span>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="os-sm os-muted mt-2.5">No sign-in started in the window.</p>
+    <% end %>
+    <p class="os-xs os-muted mt-2">Every click on Make your own stage or Sign in, before GitHub's screen, by first touch. Signed-out humans only; a member signing back in counts too.</p>
+  </section>
+
   <!-- Weekly email (F2) -->
   <section class="os-panel">
     <h2 class="os-h3">Weekly email, builders other than you</h2>

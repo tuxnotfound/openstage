@@ -19,7 +19,8 @@ class AdminController < ApplicationController
     @total_entries  = Entry.publicly_counted.where(user_id: counted_ids).count
     @pro_users      = User.counted.where(pro: true).count
     @subscribes     = Subscription.confirmed.where(confirmed_at: @since.., user_id: counted_ids).count
-    @ref_visits     = Event.named("ref_visit").since(@since).group(:detail).count.sort_by { |_ref, count| -count }
+    @ref_visits     = by_ref("ref_visit")
+    @sign_in_starts = by_ref("sign_in_start")
     @shared_repos   = shared_repos
   end
 
@@ -98,6 +99,11 @@ class AdminController < ApplicationController
 
   def posted_recaps
     Entry.where(entry_type: :posted, occurred_at: @since.., user_id: counted_ids)
+  end
+
+  # An event's count in the window by the tag it carries, the most first.
+  def by_ref(name)
+    Event.named(name).since(@since).group(:detail).count.sort_by { |_ref, count| -count }
   end
 
   # The earliest honest audience signal: a repo with more than one builder on

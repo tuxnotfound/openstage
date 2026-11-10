@@ -24,6 +24,13 @@ Rails.application.config.middleware.use OmniAuth::Builder do
 end
 
 OmniAuth.config.allowed_request_methods = [ :post ]
+
+# Counts each sign-in's start once its request passed the CSRF check, which
+# runs first: nothing else sees it, since the sign-in answers before any
+# controller.
+OmniAuth.config.before_request_phase = lambda do |env|
+  SignIns::CountStartService.new(session: env["rack.session"], user_agent: env["HTTP_USER_AGENT"]).call
+end
 OmniAuth.config.silence_get_warning = true
 
 if Rails.env.development?

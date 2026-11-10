@@ -8,6 +8,7 @@ class Event < ApplicationRecord
   NAMES = %w[
     seen
     ref_visit
+    sign_in_start
     recap_opened recap_quiet recap_picked recap_copied recap_intent
     recap_from_email
     card_opened card_downloaded

@@ -78,6 +78,18 @@ RSpec.describe "Admin", type: :request do
         expect(response.body).to include('data-ref-visit="reddit" data-count="1"')
       end
 
+      it "counts the sign-ins started, by first touch" do
+        reset!
+        browser = { "HTTP_USER_AGENT" => "Mozilla/5.0 (Macintosh) Safari/605.1.15" }
+        get "/", params: { ref: "reddit" }, headers: browser
+        2.times { post "/auth/github", headers: browser }
+        reset!
+        sign_in_as(owner)
+
+        get "/admin"
+        expect(response.body).to include('data-sign-in-start="reddit" data-count="2"')
+      end
+
       it "labels rows that predate ref tagging rather than dropping them" do
         create(:user, username: "old_row", signup_ref: nil, created_at: 2.days.ago)
 

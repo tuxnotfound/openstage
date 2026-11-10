@@ -24,7 +24,6 @@ RSpec.describe "The button to make your own stage", type: :request do
       expect(URI(each["href"]).query).to eq("ref=footer")
       expect(each.parent.text).to include("Explore other builders")
     end
-    expect(response.body).to include("Sign in<span class=\"max-sm:hidden\"> with GitHub</span>")
   end
 
   it "is gone from a Pro builder's pages, but not from the owner's" do
