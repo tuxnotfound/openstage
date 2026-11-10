@@ -76,14 +76,7 @@
       </div>
     <% end %>
 
-    <footer class="flex flex-wrap justify-center gap-x-6 gap-y-2 pt-2 os-sm">
-      <%= link_to "Explore other builders", feed_path, class: "os-muted hover:text-ink", data: { turbo_frame: "_top" } %>
-      <% unless @user.pro? || current_user == @user %>
-        <%# Every circulating profile link is an ad. The visitor's next action is
-            their own page, not our homepage. Pro removes this; it never paywalls it. %>
-        <a href="<%= root_url %>?ref=footer" class="os-muted hover:text-ink" data-claim-cta data-turbo-frame="_top">Get your own proof-of-work stage &rarr;</a>
-      <% end %>
-    </footer>
+    <%= render "profiles/page/footer", user: @user %>
   </div>
 <% end %>
 </div>

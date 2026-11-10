@@ -1,0 +1,11 @@
+<%# The end of a builder's page and of each of their projects' pages:
+    other builders, and for a visitor the one thing on the page that speaks
+    to a stranger, a button to make their own stage (User#openstage_link?).
+    Its ref tags the signups it brings; first touch still wins. Its builder
+    never sees the button on their own pages. %>
+<footer class="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 pt-2 os-sm">
+  <%= link_to "Explore other builders", feed_path, class: "os-muted hover:text-ink", data: { turbo_frame: "_top" } %>
+  <% if user.openstage_link? && current_user != user %>
+    <%= link_to "Make your own stage", root_url(ref: "footer"), class: "os-btn2", data: { claim_cta: true, turbo_frame: "_top" } %>
+  <% end %>
+</footer>

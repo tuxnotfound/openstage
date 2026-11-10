@@ -113,6 +113,12 @@ class User < ApplicationRecord
       github_username.casecmp?(ENV.fetch("OWNER_GITHUB_USERNAME", "tuxnotfound"))
   end
 
+  # Whether its pages end on Openstage's own button, for a visitor to make a
+  # stage of their own: Pro removes it, except from the owner's.
+  def openstage_link?
+    !pro? || owner?
+  end
+
   def can_pin?
     pro? && entries.pinned_entries.count < 3
   end
