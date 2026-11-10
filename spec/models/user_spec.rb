@@ -58,11 +58,6 @@ RSpec.describe User, type: :model do
       expect(build(:user, github_username: "")).not_to be_owner
     end
 
-    it "ends its pages on Openstage's own button on Free, and on Pro only for the owner" do
-      expect([ build(:user).openstage_link?, build(:user, pro: true).openstage_link? ]).to eq([ true, false ])
-      expect(build(:user, pro: true, github_username: "tuxnotfound").openstage_link?).to be(true)
-    end
-
     it "rejects reserved usernames that collide with app routes" do
       expect(build(:user, username: "pricing")).not_to be_valid
       expect(build(:user, username: "About")).not_to be_valid

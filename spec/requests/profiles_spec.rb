@@ -27,7 +27,7 @@ RSpec.describe "Profiles", type: :request do
 
       it "shows the claim link in the footer of free profiles" do
         get "/testuser"
-        expect(response.body).to include("Make your own stage")
+        expect(response.body).to include("Make your own stage &rarr;")
       end
 
       it "marks the GitHub account with GitHub's icon and says so to screen readers" do

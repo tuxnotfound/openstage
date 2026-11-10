@@ -60,7 +60,7 @@ RSpec.describe "The builder's stage, by name", type: :request do
 
     user.update!(pro: false)
     get "/builder"
-    expect(response.body).to include("Make your own stage", "'s proof-of-work stage\"")
+    expect(response.body).to include("Make your own stage &rarr;", "'s proof-of-work stage\"")
   end
 
   it "names it when a builder claims a username or comes back" do
