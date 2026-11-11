@@ -241,8 +241,7 @@ function PinSwitch({ row, pin }: { row: TableRow; pin: NonNullable<TableRow["pin
       <input type="hidden" name="authenticity_token" value={csrfToken()} />
       <input type="hidden" name="pinned" value={String(!pin.on)} />
       {["range", "show", "projects"].map((key) => view.get(key) && <input key={key} type="hidden" name={key} value={view.get(key) ?? ""} />)}
-      <button type="submit" role="switch" aria-checked={pin.on} aria-label={`Pin ${row.name} to your stage`} title={pin.title} className="os-eye os-pin"
-              disabled={pin.full}>
+      <button type="submit" role="switch" aria-checked={pin.on} aria-label={`Pin ${row.name} to your stage`} title={pin.title} className="os-eye os-pin">
         <Pin />
       </button>
     </form>

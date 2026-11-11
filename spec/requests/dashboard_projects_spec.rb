@@ -270,34 +270,37 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       page.css("section[aria-labelledby='projects'] .os-card .os-h3").map { |name| name.text.squish }
     end
 
-    it "pins one from its row, beside its eye, and the stage then gives a card to the pinned ones alone" do
-      expect(stage_cards).to eq(%w[app bare])
+    it "shows the projects with a colour pinned, and unpinning one leaves the others pinned" do
       get "/dashboard"
-      expect(%w[aria-checked aria-label class].map { |name| pin_switch("builder/bare")[name] }).to eq([ "false", "Pin bare to your stage", "os-eye os-pin" ])
-      expect(pin_switch("builder/bare")["title"]).to eq("Pin it, and your stage gives a colour and a card to pinned projects alone.")
+      expect(%w[aria-checked aria-label class].map { |name| pin_switch("builder/app")[name] }).to eq([ "true", "Pin app to your stage", "os-eye os-pin" ])
+      expect(pin_switch("builder/bare")["title"]).to eq("Pinned: it has a colour and a card on your stage. Click to unpin it.")
 
-      patch "/projects/#{bare.id}/pin", params: { pinned: "true", range: "90d" }
+      patch "/projects/#{bare.id}/pin", params: { pinned: "false", range: "90d" }
 
       expect(response).to redirect_to("/dashboard?range=90d#your-activity")
-      expect(stage_cards).to eq(%w[bare])
+      expect(stage_cards).to eq(%w[app])
       get "/dashboard"
-      expect([ pin_switch("builder/bare")["aria-checked"], pin_switch("builder/app")["title"] ])
-        .to eq([ "true", "Pin it to give it a colour and a card on your stage." ])
+      expect([ pin_switch("builder/app")["aria-checked"], pin_switch("builder/bare")["aria-checked"], pin_switch("builder/bare")["title"] ])
+        .to eq([ "true", "false", "Pin it to give it a colour and a card on your stage." ])
+
+      patch "/projects/#{bare.id}/pin", params: { pinned: "true" }
+      expect(stage_cards).to eq(%w[app bare])
     end
 
-    it "offers no pin for a project hidden from the stage, nor an eleventh, and says why it refuses one" do
+    it "refuses an eleventh pin with a message at the top of the page, swapping none out, and offers no pin for a hidden project" do
       create(:entry, user: user, repo_name: "builder/idle", occurred_at: 1.day.ago)
       idle.update!(included: false)
-      create_list(:github_repo, 10, user: user, pinned: true).each { |pinned| create(:entry, user: user, repo_name: pinned.full_name) }
+      10.times { |i| 5.times { create(:entry, user: user, repo_name: "builder/top#{i}") } }
       get "/dashboard"
 
       expect(pin_switch("builder/idle")).to be_nil
-      expect(pin_switch("builder/app")["disabled"]).to eq("disabled")
-      expect(pin_switch("builder/app")["title"]).to eq("10 projects are pinned, one per colour. Unpin one to pin this one.")
+      expect(%w[aria-checked title].map { |name| pin_switch("builder/app")[name] }).to eq([ "false", "10 projects are pinned. Unpin one to pin this one." ])
 
       patch "/projects/#{tool.id}/pin", params: { pinned: "true" }
-      expect(flash[:alert]).to eq("10 projects are pinned, one per colour. Unpin one to pin app.")
-      expect(tool.reload.pinned).to be(false)
+
+      expect(response).to redirect_to("/dashboard")
+      expect(flash[:alert]).to eq("You can pin 10 projects at a time. Unpin one first.")
+      expect(stage_cards).to eq((0..9).map { |i| "top#{i}" })
     end
 
     it "pins no other builder's project" do

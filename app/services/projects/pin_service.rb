@@ -1,22 +1,38 @@
 module Projects
   # A project its builder pins to their stage, or unpins, from the
-  # dashboard's table. Once they pin any, the pinned ones alone wear a colour
-  # there, with a card and a line (Progress::Projects), so they pin as many
-  # as the palette has colours at most, and only a project their stage shows.
-  # A pin counts while its repo has work on Openstage (GithubRepo.with_entries),
-  # as the dashboard's table counts it: one with none is on neither page.
+  # dashboard's table. The projects with a colour are the pinned ones
+  # (Progress::Projects): until the builder pins or unpins one, the busiest,
+  # as many as the palette has colours. The first change pins those as they
+  # stand, so unpinning one leaves the others where they are. A project
+  # joins only while a colour is free: one more is refused, never swapped
+  # for another, and only a project the stage shows takes one. Unpinning
+  # the last pin goes back to the busiest.
   class PinService < ApplicationService
     attr_accessor :repo, :pinned
 
     validates :repo, presence: true
     validates :pinned, inclusion: { in: [ true, false ] }
-    validate :on_the_stage, :room_on_the_palette, if: -> { repo && pinned }
+    validate :on_the_stage, if: -> { repo && pinned }
+    validate :room_on_the_palette, if: -> { repo&.included? && pinned }
 
     private
 
     def execute
-      repo.update(pinned: pinned)
-      absorb_errors(repo)
+      keep = pinned ? colored | [ repo.full_name ] : colored - [ repo.full_name ]
+      transaction do
+        repos.where(pinned: true).where.not(full_name: keep).update_all(pinned: false, updated_at: Time.current)
+        repos.where(pinned: false, full_name: keep).update_all(pinned: true, updated_at: Time.current)
+      end
+    end
+
+    # The repos that wear a colour on the stage now, as visitors see it.
+    def colored
+      @colored ||= Progress::Projects.new(repo.user.entries.counted_on_page, pinned: repos.pinned_names).all
+                                     .select { |project| ProgressChart::Palette.colored?(project.rank) }.map(&:repo)
+    end
+
+    def repos
+      repo.user.github_repos
     end
 
     def on_the_stage
@@ -24,9 +40,9 @@ module Projects
     end
 
     def room_on_the_palette
-      return if repo.pinned? || repo.user.github_repos.where(pinned: true).with_entries.count < ProgressChart::Palette::SIZE
+      return if colored.include?(repo.full_name) || colored.size < ProgressChart::Palette::SIZE
 
-      errors.add(:base, "#{ProgressChart::Palette::SIZE} projects are pinned, one per colour. Unpin one to pin #{repo.name}.")
+      errors.add(:base, "You can pin #{ProgressChart::Palette::SIZE} projects at a time. Unpin one first.")
     end
   end
 end

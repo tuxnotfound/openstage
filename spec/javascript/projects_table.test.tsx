@@ -133,7 +133,7 @@ describe("the dashboard's stage switch", () => {
     expect(html).not.toContain("os-switch")
   })
 
-  test("pins a project to the stage beside its eye, the server's words its title, and offers no pin once every colour is taken", () => {
+  test("pins a project to the stage beside its eye, the server's words its title, and keeps the pin a click away once every colour is taken", () => {
     vi.stubGlobal("window", { location: { search: "?range=90d" } })
     vi.stubGlobal("document", { querySelector: () => null })
     const commits: TableCell = { key: "commits", value: "4", shown: true, pick: null, link: null, change: null }
@@ -141,15 +141,15 @@ describe("the dashboard's stage switch", () => {
                                                                      page: { on: true, path: "/github_repos/1" }, pin, switch: null })
     const html = renderToStaticMarkup(
       <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits", beside: null }], stack: "md", more: null,
-                              rows: [row("app", { on: true, path: "/projects/1/pin", full: false, title: "Pinned." }),
-                                     row("blog", { on: false, path: "/projects/2/pin", full: true, title: "Ten are pinned." })] }}
+                              rows: [row("app", { on: true, path: "/projects/1/pin", title: "Pinned." }),
+                                     row("blog", { on: false, path: "/projects/2/pin", title: "Ten are pinned." })] }}
                      drawn={["commits"]} lines={{ commits: 0 }} indexed={false} words="last 90 days" focused={null} rows={rows} switches={switches} />,
     )
 
     expect(html).toContain('action="/projects/1/pin" method="post"')
     expect(html).toContain('<input type="hidden" name="pinned" value="false"/><input type="hidden" name="range" value="90d"/>')
     expect(html).toContain('role="switch" aria-checked="true" aria-label="Pin app to your stage" title="Pinned." class="os-eye os-pin">')
-    expect(html).toContain('aria-checked="false" aria-label="Pin blog to your stage" title="Ten are pinned." class="os-eye os-pin" disabled="">')
+    expect(html).toContain('aria-checked="false" aria-label="Pin blog to your stage" title="Ten are pinned." class="os-eye os-pin">')
     expect(html.indexOf("Show app on your stage")).toBeLessThan(html.indexOf("Pin app to your stage"))
   })
 })

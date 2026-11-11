@@ -60,12 +60,13 @@ class ProjectsTableSerializer < ApplicationSerializer
   # whether the chart draws it.
   def row_of(row)
     { key: row.key, name: row.name, color_class: row.color_class, on: row.drawn?, drawable: row.boxed?,
-      cells: @chart.cells(row).map { |cell| cell_of(cell, row) } }.merge(manage_parts(row.repo))
+      cells: @chart.cells(row).map { |cell| cell_of(cell, row) } }.merge(manage_parts(row.repo, row.rank))
   end
 
+  # Its rank is none: a project hidden from the stage takes no pin.
   def off_page_row(repo)
     { key: repo.full_name, name: repo.name, color_class: nil, on: false, drawable: false,
-      cells: @chart.columns.map { |number| { key: number.key, value: nil, shown: false, pick: nil, link: nil, change: nil } } }.merge(manage_parts(repo))
+      cells: @chart.columns.map { |number| { key: number.key, value: nil, shown: false, pick: nil, link: nil, change: nil } } }.merge(manage_parts(repo, nil))
   end
 
   # pick: the cell's switch, on while visitors see the number; nil without
@@ -86,33 +87,33 @@ class ProjectsTableSerializer < ApplicationSerializer
   end
 
   # A project with no synced repo behind it has nothing to edit or save.
-  def manage_parts(repo)
+  def manage_parts(repo, rank)
     return { edit: nil, page: nil, pin: nil, switch: nil } unless @manage && repo
 
-    { edit: edit_project_path(repo), page: { on: repo.included?, path: github_repo_path(repo) }, pin: pin_of(repo),
+    { edit: edit_project_path(repo), page: { on: repo.included?, path: github_repo_path(repo) }, pin: pin_of(repo, rank),
       switch: project_numbers_path(repo) }
   end
 
-  # Whether it is pinned to the stage (Projects::PinService); full: no
-  # colour is left for it. None for a project the stage does not show.
-  # Its words are the server's, as for every switch the island draws.
-  def pin_of(repo)
-    return unless repo.included?
+  # Whether it is pinned to the stage: the projects with a colour are the
+  # pinned ones, the busiest until the builder picks (Projects::PinService).
+  # None for a project the stage does not show. Its words are the server's,
+  # as for every switch the island draws.
+  def pin_of(repo, rank)
+    return unless repo.included? && rank
 
-    full = !repo.pinned? && pinned_count >= ProgressChart::Palette::SIZE
-    { on: repo.pinned?, path: project_pin_path(repo), full: full, title: pin_title(repo.pinned?, full) }
+    on = ProgressChart::Palette.colored?(rank)
+    { on: on, path: project_pin_path(repo), title: pin_title(on) }
   end
 
-  def pinned_count
-    @pinned_count ||= (@chart.rows.filter_map(&:repo) + @off_page).uniq.count(&:pinned?)
-  end
-
-  def pin_title(on, full)
+  def pin_title(on)
     return "Pinned: it has a colour and a card on your stage. Click to unpin it." if on
-    return "#{ProgressChart::Palette::SIZE} projects are pinned, one per colour. Unpin one to pin this one." if full
-    return "Pin it to give it a colour and a card on your stage." if pinned_count.positive?
+    return "#{ProgressChart::Palette::SIZE} projects are pinned. Unpin one to pin this one." if colored_rows >= ProgressChart::Palette::SIZE
 
-    "Pin it, and your stage gives a colour and a card to pinned projects alone."
+    "Pin it to give it a colour and a card on your stage."
+  end
+
+  def colored_rows
+    @colored_rows ||= @chart.rows.count { |row| row.rank && ProgressChart::Palette.colored?(row.rank) }
   end
 
   def more
