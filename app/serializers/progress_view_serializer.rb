@@ -36,11 +36,13 @@ class ProgressViewSerializer < ApplicationSerializer
   end
 
   # The dashboard always has its table: it is where the builder picks what
-  # visitors see. A page has one with more than one project.
+  # visitors see, so it lists every project. A page has one with more than
+  # one project, listing the ones with a colour; the stage lists the rest
+  # under its cards.
   def table
     return unless @chart.builder.present? || (!@chart.lone && @chart.rows.size > 1)
 
-    ProjectsTableSerializer.new(@chart, manage: @chart.builder.present?, off_page: @chart.off_page)
+    ProjectsTableSerializer.new(@chart, manage: @chart.builder.present?, off_page: @chart.off_page, boxed_only: @chart.builder.blank?)
   end
 
   # Newest first, in the builder's words; its count only while it has any.

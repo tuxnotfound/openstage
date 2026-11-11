@@ -15,7 +15,8 @@
     a long name wraps rather than widening the table. Only shows on hover,
     and always on a touch screen, where there is no hover to find it by. A
     table that is wider still, as very large numbers can make one, scrolls
-    inside its panel, never the page.
+    inside its panel, never the page. A builder's stage lists the projects
+    with a colour and links to its list of the rest (more).
     view: a ChartFilterSerializer's attributes; path_for: the page's address
     for some params changed; back: the view's params, for the forms; label:
     what a row is, "Projects" unless told. %>
@@ -126,5 +127,8 @@
         <% end %>
       </tbody>
     </table>
+    <% if (more = table[:more]) %>
+      <p class="border-t border-line pt-3"><a href="#<%= more[:anchor] %>" class="os-link text-sm" data-turbo="false"><%= more[:text] %> <span aria-hidden="true">↓</span></a></p>
+    <% end %>
   <% end %>
 </div>

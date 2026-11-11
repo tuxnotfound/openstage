@@ -2,6 +2,7 @@ import { createRoot, type Root } from "react-dom/client"
 import { flushSync } from "react-dom"
 import ProgressIsland, { type ProgressProps } from "./progress/ProgressIsland"
 import AnalyticsIsland, { type AnalyticsProps } from "./analytics/AnalyticsIsland"
+import ProjectsIsland, { type ProjectsProps } from "./projects/ProjectsIsland"
 
 // Mounts each [data-react] island over the HTML the server rendered for it,
 // with the props in the <script type="application/json"> it names. The server
@@ -15,6 +16,7 @@ const mounted: Mounted[] = []
 function render(name: string, props: unknown) {
   if (name === "progress") return <ProgressIsland {...(props as ProgressProps)} />
   if (name === "analytics") return <AnalyticsIsland {...(props as AnalyticsProps)} />
+  if (name === "projects") return <ProjectsIsland {...(props as ProjectsProps)} />
   return null
 }
 

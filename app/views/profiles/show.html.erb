@@ -69,7 +69,7 @@
     </section>
 
     <% if @page %>
-      <%= render "profiles/page/projects", user: @user, cards: @page.cards if @page.cards.any? %>
+      <%= render "profiles/page/projects", user: @user, cards: @page.cards, list: @page.list if @page.cards.any? %>
       <div class="os-grid2 items-start">
         <%= render "profiles/page/recent", user: @user, groups: @page.recent, linked: @linked if @page.recent.any? %>
         <%= render "profiles/page/whats_new", section: @page.section, linked: @linked unless @empty %>

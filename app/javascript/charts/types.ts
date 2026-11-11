@@ -116,7 +116,48 @@ export type TableRow = {
 // not, and the number it sits beside (beside), null for one with lines of
 // its own. stack: the breakpoint below which the table stacks, as on a
 // phone, where its columns no longer fit (ProjectsTableSerializer#stack).
-export type TableView = { columns: { key: string; label: string; word: string; beside: string | null }[]; rows: TableRow[]; stack: "md" | "lg" }
+// more: on a builder's stage, the link to the projects it leaves to the
+// list under the cards, null with none.
+export type TableView = {
+  columns: { key: string; label: string; word: string; beside: string | null }[]
+  rows: TableRow[]
+  stack: "md" | "lg"
+  more: { text: string; anchor: string } | null
+}
+
+// The stage's list of the projects past the cards, a page of them
+// (ProjectListSerializer): commits, countWords (what a screen reader hears
+// after the count) and line (its weekly commits over 52 weeks, an SVG path
+// in a box 400 by 56) null while visitors do not see its commits or it has
+// none then; last null while they do not see them.
+export type ProjectListRow = {
+  key: string
+  name: string
+  path: string
+  description: string | null
+  live: boolean
+  archived: boolean
+  commits: number | null
+  countWords: string | null
+  line: string | null
+  last: string | null
+}
+
+// liveLabel: null while none is live, and the list offers no filter; range:
+// null with no project found, and empty says why.
+export type ProjectListView = {
+  title: string
+  sort: string
+  query: string
+  live: boolean
+  page: number
+  pages: number
+  sorts: { key: string; label: string }[]
+  liveLabel: string | null
+  range: string | null
+  empty: string | null
+  rows: ProjectListRow[]
+}
 
 // A chart filter's view, the same on every chart page (ChartFilterSerializer).
 export type FilterView = {

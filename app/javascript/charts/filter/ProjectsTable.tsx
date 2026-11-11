@@ -7,7 +7,8 @@ import { lineOf, type Lines } from "./lines"
 // The rows under the chart, its key, as charts/_table renders them: a row
 // per project (per page on analytics), a column per number, each cell the
 // row's value over the window (on analytics with its change under it),
-// drawn cells in ink. A row's box, in its colour, draws it or not, Only
+// drawn cells in ink. A builder's stage lists the projects with a colour
+// and links to its list of the rest (more). A row's box, in its colour, draws it or not, Only
 // shows it alone and Show all brings the rest back; the last row in view
 // keeps its box, and a click says so. A project past the palette has no
 // colour, so no box, and keeps its values in grey; a row with no box tells
@@ -89,6 +90,11 @@ export default function ProjectsTable({ table, drawn, lines, indexed, words, foc
             ))}
           </tbody>
         </table>
+        {table.more && (
+          <p className="border-t border-line pt-3">
+            <a href={`#${table.more.anchor}`} className="os-link text-sm" data-turbo="false">{table.more.text} <span aria-hidden="true">↓</span></a>
+          </p>
+        )}
       </div>
     </>
   )

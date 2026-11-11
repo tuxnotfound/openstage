@@ -55,10 +55,12 @@ class ProfilesController < ApplicationController
 
   # The page opens on the last 30 days, commits and site visits, every
   # project; ?range=, ?show= and ?projects= pick another view (Progress::Filter),
-  # and the projects scope the whole page.
+  # and the projects scope the whole page. ?sort=, ?q=, ?live= and ?page= pick
+  # the list of the projects past the cards, as its links do without the script.
   def gather
     filter = Progress::Filter.from(params)
-    service = Progress::GatherService.new(user: @user, range: filter.range, repos: filter.projects, show: filter.show)
+    service = Progress::GatherService.new(user: @user, range: filter.range, repos: filter.projects, show: filter.show,
+                                          listing: Progress::Listing.from(params))
     service if service.call
   end
 end

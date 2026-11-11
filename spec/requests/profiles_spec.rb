@@ -311,24 +311,6 @@ RSpec.describe "Profiles", type: :request do
         expect(response.body).to include("Commits per week over the last 12 months")
       end
 
-      it "gives the card of a project ranked eleventh no dot and its chart in ink, and the chart above no box or line for it" do
-        8.times { |i| create(:entry, user: user, repo_name: "builder/p#{i}", occurred_at: 2.days.ago) }
-        create(:entry, user: user, repo_name: "builder/zz", occurred_at: 2.days.ago)
-
-        get "/builder"
-
-        page = Nokogiri::HTML(response.body)
-        all = page.css("section[aria-labelledby='projects'] .os-card")
-        card = all.find { |each| each.at_css(".os-h3").text.squish == "zz" }
-        expect(card["class"].split).to include("os-project-none")
-        expect([ card.at_css(".os-dot"), card.css("svg path").size ]).to eq([ nil, 2 ])
-        expect(all.count { |each| each.at_css(".os-h3 .os-dot") }).to eq(10)
-        expect(page.at_css("[data-chart-row='builder/zz'] a")).to be_nil
-        expect(page.at_css("[data-chart-row='builder/zz']").text.squish).to eq("zz, draws no line Commits 1")
-        expect(page.at_css("[data-chart-row='builder/zz'] .sr-only").text).to eq(", draws no line")
-        expect(page.css("svg path[data-number='commits']").size).to eq(10)
-      end
-
       it "lists no commit of a project whose builder hides them under Recent commits, and keeps its milestones" do
         create(:entry, user: user, repo_name: "builder/app", title: "Fix the login", occurred_at: 1.hour.ago)
         create(:entry, user: user, repo_name: "builder/app", entry_type: "milestone", source: "manual", title: "Launched app", occurred_at: 2.hours.ago)
@@ -370,6 +352,70 @@ RSpec.describe "Profiles", type: :request do
         expect(card.text.squish).to include("app Live Archived", "My words.", "app.example")
         expect(card.at_css("img")).to be_nil
         expect(card.at_css("a[href='https://app.example']")["target"]).to eq("_blank")
+      end
+    end
+
+    context "a builder with more projects than colours" do
+      let!(:user) { create(:user, username: "builder") }
+
+      before do
+        10.times { |i| 3.times { create(:entry, user: user, repo_name: "builder/top#{i}", occurred_at: 1.day.ago) } }
+        create(:github_repo, user: user, full_name: "builder/sauna", homepage: "https://sauna.example")
+        create(:entry, user: user, repo_name: "builder/sauna", occurred_at: 2.days.ago)
+        create(:entry, user: user, repo_name: "builder/fire", occurred_at: 9.days.ago)
+      end
+
+      def page
+        Nokogiri::HTML(response.body)
+      end
+
+      def list
+        page.at_css("#more-projects")
+      end
+
+      def listed
+        list.css("a[data-turbo-frame='_top']").map(&:text)
+      end
+
+      it "gives the ten with a colour a card and a row in the chart's table, and lists the rest under the cards" do
+        get "/builder"
+
+        expect(page.css("section[aria-labelledby='projects'] .os-card").size).to eq(10)
+        expect(page.css("section[aria-labelledby='projects'] .os-card .os-h3 .os-dot").size).to eq(10)
+        expect(page.css("[data-chart-row]").size).to eq(10)
+        expect(page.css("svg path[data-number='commits']").size).to eq(10)
+        expect(page.at_css("[data-chart-table] a[href='#more-projects']").text.squish).to eq("2 more projects ↓")
+        expect(list.at_css("h3").text).to eq("2 more projects")
+        expect(listed).to eq(%w[sauna fire])
+        expect(list.text.squish).to include("sauna Live", "1 commit in 12 months", "Last commit 2 days ago", "1–2 of 2")
+        expect(list.at_css("a[href='/builder/sauna']")["data-turbo-frame"]).to eq("_top")
+        expect(list.at_css("[data-react='projects']")).to be_present
+      end
+
+      it "opens the list on another view without its script, keeping the chart's window" do
+        get "/builder", params: { range: "90d" }
+
+        by_name = list.css(".os-pills a").find { |link| link.text == "A–Z" }
+        expect(by_name["href"]).to eq("/builder?range=90d&sort=name#more-projects")
+        expect([ list.at_css("a.os-chip").text, list.at_css("a.os-chip")["href"] ]).to eq([ "Live · 1", "/builder?live=1&range=90d#more-projects" ])
+        expect(list.css("form[role='search'] input[type='hidden']").to_h { |input| [ input["name"], input["value"] ] }).to eq("range" => "90d")
+
+        get "/builder", params: { range: "90d", sort: "name" }
+        expect(listed).to eq(%w[fire sauna])
+        expect(list.at_css(".os-pills a[aria-current='true']").text).to eq("A–Z")
+
+        get "/builder", params: { q: "kale" }
+        expect(listed).to eq([])
+        expect(list.text).to include(%(No project named "kale".))
+      end
+
+      it "keeps the list off the page of a builder with ten projects or fewer" do
+        user.entries.where(repo_name: %w[builder/sauna builder/fire]).delete_all
+
+        get "/builder"
+
+        expect(list).to be_nil
+        expect(page.at_css("[data-chart-table] a[href='#more-projects']")).to be_nil
       end
     end
 

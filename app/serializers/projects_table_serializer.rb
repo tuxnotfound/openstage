@@ -11,31 +11,41 @@
 # colour, so no box: it keeps its values, in grey, as it draws no line.
 # Which rows the chart draws (Row#drawn?) and which cells list a value, a
 # switch or a link (DrawService#cells) is the chart's to say; this only
-# writes it.
+# writes it. A builder's stage (boxed_only) lists the rows with a box alone,
+# and names how many it leaves to its list of projects (more).
 class ProjectsTableSerializer < ApplicationSerializer
   include Rails.application.routes.url_helpers
 
   WIDE = 5
+  # Where the stage's list of projects starts, which more leads to.
+  MORE_ANCHOR = "more-projects".freeze
 
   # chart: a Progress::ChartService or an Analytics::ReportService; changes:
   # whether each cell carries its change; manage: the builder's own table;
-  # off_page: the GithubRepos hidden from their page.
-  def initialize(chart, changes: false, manage: false, off_page: [])
+  # off_page: the GithubRepos hidden from their page; boxed_only: the
+  # stage's table, of the rows with a box.
+  def initialize(chart, changes: false, manage: false, off_page: [], boxed_only: false)
     @chart = chart
     @changes = changes
     @manage = manage
     @off_page = off_page
+    @boxed_only = boxed_only
   end
 
   # columns: each number with its names, and the number it sits beside
   # (Progress::Numbers::Number#beside), nil for one with lines of its own:
   # the dashboard hides a cell at once while that number switches off.
+  # more: the link to the rows left out, nil with none.
   def attributes
     { columns: @chart.columns.map { |number| { key: number.key, label: number.label, word: number.word, beside: number.beside } },
-      rows: @chart.rows.map { |row| row_of(row) } + @off_page.map { |repo| off_page_row(repo) }, stack: stack }
+      rows: listed.map { |row| row_of(row) } + @off_page.map { |repo| off_page_row(repo) }, stack: stack, more: more }
   end
 
   private
+
+  def listed
+    @boxed_only ? @chart.rows.select(&:boxed?) : @chart.rows
+  end
 
   # The breakpoint below which the table stacks, as on a phone (the stacked
   # variant): "md", or "lg" from WIDE columns on. Its name column takes 180
@@ -80,5 +90,10 @@ class ProjectsTableSerializer < ApplicationSerializer
     return { edit: nil, page: nil, switch: nil } unless @manage && repo
 
     { edit: edit_project_path(repo), page: { on: repo.included?, path: github_repo_path(repo) }, switch: project_numbers_path(repo) }
+  end
+
+  def more
+    left = @chart.rows.size - listed.size
+    { text: "#{left} more #{'project'.pluralize(left)}", anchor: MORE_ANCHOR } if left.positive?
   end
 end

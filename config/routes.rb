@@ -41,6 +41,7 @@ Rails.application.routes.draw do
   # is a reserved username, so no builder or project collides with these.
   namespace :api, defaults: { format: :json } do
     get "progress/:username", to: "progress#show", as: :progress, constraints: { username: /[a-zA-Z0-9_-]+/ }
+    get "projects/:username", to: "projects#show", as: :projects, constraints: { username: /[a-zA-Z0-9_-]+/ }
     get "analytics", to: "analytics#show", as: :analytics
   end
 

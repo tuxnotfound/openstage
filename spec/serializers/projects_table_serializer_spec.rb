@@ -68,6 +68,19 @@ RSpec.describe ProjectsTableSerializer do
     expect(json["rows"].map { |row| row["colorClass"] }.compact).to eq((1..10).map { |n| "os-project-#{n}" })
   end
 
+  it "lists on a builder's stage the rows with a box alone, and names how many it leaves to the list under its cards" do
+    8.times { |i| create(:entry, user: user, repo_name: "me/p#{i}", occurred_at: 2.days.ago) }
+    %w[me/yy me/zz].each { |repo| create(:entry, user: user, repo_name: repo, occurred_at: 2.days.ago) }
+    chart = Progress::ChartService.new(user: user, range: "30d").tap(&:call!)
+
+    stage = described_class.new(chart, boxed_only: true).as_json
+    every = described_class.new(chart).as_json
+
+    expect(stage["rows"].map { |row| row["drawable"] }).to eq([ true ] * 10)
+    expect(stage["more"]).to eq("text" => "2 more projects", "anchor" => "more-projects")
+    expect([ every["rows"].size, every["more"] ]).to eq([ 12, nil ])
+  end
+
   it "gives each cell visitors see its change against the window before, when asked, and only while it counted before" do
     create(:entry, user: user, repo_name: "me/app", occurred_at: 40.days.ago)
     json = table(changes: true)

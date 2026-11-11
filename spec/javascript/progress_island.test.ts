@@ -6,7 +6,7 @@ import type { TableCell, TableRow, TableView } from "../../app/javascript/charts
 // switched off: its site visitors, which sit beside them, have no switch.
 const cell = (key: string, pick: boolean | null): TableCell => ({ key, value: "1", shown: pick === true, pick, link: null, change: null })
 const table: TableView = {
-  columns: [], stack: "md",
+  columns: [], stack: "md", more: null,
   rows: [{ key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true, edit: null, page: null, switch: "/projects/1/numbers",
            cells: [cell("commits", true), cell("visits", false), cell("site_visitors", null)] }],
 }
@@ -27,7 +27,7 @@ const app: TableRow = { key: "me/app", name: "app", colorClass: "os-project-1", 
 const before: TableView = {
   columns: [{ key: "commits", label: "Commits", word: "commits", beside: null }, { key: "visits", label: "Site visits", word: "site visits", beside: null },
             { key: "site_visitors", label: "Site visitors", word: "site visitors", beside: "visits" }],
-  rows: [app], stack: "md",
+  rows: [app], stack: "md", more: null,
 }
 
 // Each of app's cells as [its switch, whether it reads shown] while some

@@ -4,6 +4,9 @@ module Progress
   # (SummarizeService) and the latest commits, grouped by project and day:
   # none the builder hid from the lists (Entry.listed_on_page), and none of a
   # project whose builder hides its commits (Entry.without_hidden_commits).
+  # The stage itself (listing) gives a card to the projects with a colour
+  # alone and lists the rest (ListService); its share card and a project's
+  # page read every card.
   class GatherService < ApplicationService
     # Groups in Recent commits, and the commits read to fill them.
     RECENT_GROUPS = 8
@@ -15,10 +18,11 @@ module Progress
     # range: a Window range; repos: the projects in view, none for all;
     # show: the numbers drawn, by key in line order, none for the default.
     # reveal: a repo the builder hid, shown anyway (Entry.counted_on_page). lone: a
-    # project's page, which shows that project alone.
-    attr_accessor :user, :range, :repos, :show, :reveal, :lone
-    # chart: the page's ChartService.
-    attr_reader :section, :chart, :cards, :recent
+    # project's page, which shows that project alone. listing: the stage's
+    # Listing of the projects past the cards; none for a card per project.
+    attr_accessor :user, :range, :repos, :show, :reveal, :lone, :listing
+    # chart: the page's ChartService. list: the ListService, with a listing.
+    attr_reader :section, :chart, :cards, :recent, :list
 
     validates :user, presence: true
 
@@ -30,16 +34,22 @@ module Progress
 
       @chart = chart
       @section = chart.section
-      summarize = SummarizeService.new(user: user, projects: section.tally.projects.all, zone: section.tally.zone, reveal: reveal)
+      summarize = SummarizeService.new(user: user, projects: carded, zone: section.tally.zone, reveal: reveal)
       return unless run(summarize)
 
       @cards = summarize.cards
       @recent = recent_groups
+      list_rest if listing
     end
 
     def run(service)
       service.call
       absorb_errors(service)
+    end
+
+    def carded
+      projects = section.tally.projects.all
+      listing ? projects.select { |project| ProgressChart::Palette.colored?(project.rank) } : projects
     end
 
     def recent_groups
@@ -60,6 +70,11 @@ module Progress
       scope = user.entries.listed_on_page(reveal: reveal).commits.without_hidden_commits.chronological
       scope = scope.where(repo_name: section.selected.map(&:repo)) if section.filtered?
       scope.limit(RECENT_LIMIT)
+    end
+
+    def list_rest
+      list = ListService.new(user: user, listing: listing, projects: section.tally.projects.all)
+      @list = list if run(list)
     end
   end
 end

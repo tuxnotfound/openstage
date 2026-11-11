@@ -106,7 +106,7 @@ RSpec.describe "Api::Progress", type: :request do
 
     get "/api/progress/builder", params: { range: "30d" }
 
-    expect(Rails.cache).to have_received(:fetch).with(array_including("progress-view/v11"), any_args)
+    expect(Rails.cache).to have_received(:fetch).with(array_including("progress-view/v12"), any_args)
   end
 
   it "answers 404 for a builder who does not exist" do

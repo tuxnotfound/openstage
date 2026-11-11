@@ -1,8 +1,10 @@
-<%# One card per project: what it is, its status as GitHub says it (Live
-    with a website there, Archived), and how it moved over the last 52 weeks,
-    each on its own scale, unless its builder hides its commits or it has none
-    in the 52 weeks. Its picture shows on its own page, never here. A project
-    past the palette has no colour: no dot, and its chart in ink. %>
+<%# One card per project with a colour: what it is, its status as GitHub
+    says it (Live with a website there, Archived), and how it moved over the
+    last 52 weeks, each on its own scale, unless its builder hides its
+    commits or it has none in the 52 weeks. Its picture shows on its own
+    page, never here. The projects past the palette follow in a list
+    (profiles/page/_more_projects); list: a Progress::ListService, nil
+    without one. %>
 <section class="os-panel" aria-labelledby="projects">
   <h2 id="projects" class="os-h2">Projects</h2>
   <% if cards.any?(&:commits_drawn?) %>
@@ -49,4 +51,7 @@
       </div>
     <% end %>
   </div>
+  <% if local_assigns[:list]&.count&.positive? %>
+    <%= render "profiles/page/more_projects", user: user, list: list %>
+  <% end %>
 </section>

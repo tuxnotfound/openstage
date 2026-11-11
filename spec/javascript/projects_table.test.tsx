@@ -17,7 +17,7 @@ const switches: CellSwitches = { pick: (_, cell) => cell.pick, shown: (_, cell) 
 // Each row's site visits cell, as markup with its quotes back.
 function cells(...tableRows: TableRow[]): Record<string, string> {
   const html = renderToStaticMarkup(
-    <ProjectsTable table={{ columns: [{ key: "visits", label: "Site visits", word: "site visits", beside: null }], rows: tableRows, stack: "md" }} drawn={["visits"]}
+    <ProjectsTable table={{ columns: [{ key: "visits", label: "Site visits", word: "site visits", beside: null }], rows: tableRows, stack: "md", more: null }} drawn={["visits"]}
                    lines={{ visits: 0 }} indexed={false} words="last 90 days" focused={null} rows={rows} switches={switches} />,
   ).replaceAll("&#x27;", "'")
   return Object.fromEntries(tableRows.map((each) => {
@@ -63,7 +63,7 @@ describe("a project past the tenth", () => {
     const commits: TableCell = { key: "commits", value: "4", shown: true, pick: null, link: null, change: null }
     const quiet: TableRow = { key: "me/quiet", name: "quiet", colorClass: null, on: false, drawable: false, cells: [commits], edit: null, page: null, switch: null }
     const html = renderToStaticMarkup(
-      <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits", beside: null }], rows: [{ ...quiet, key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true }, quiet], stack: "md" }}
+      <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits", beside: null }], rows: [{ ...quiet, key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true }, quiet], stack: "md", more: null }}
                      drawn={["commits"]} lines={{ commits: 0 }} indexed={false} words="last 90 days" focused={null} rows={rows} />,
     )
     const row = html.slice(html.indexOf('data-chart-row="me/quiet"'))
@@ -82,7 +82,7 @@ describe("the table's width", () => {
     const commits: TableCell = { key: "commits", value: "4", shown: true, pick: null, link: null, change: null }
     const app: TableRow = { key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true, cells: [commits], edit: null, page: null, switch: null }
     const html = renderToStaticMarkup(
-      <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits", beside: null }], rows: [app], stack: "lg" }} drawn={["commits"]}
+      <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits", beside: null }], rows: [app], stack: "lg", more: null }} drawn={["commits"]}
                      lines={{ commits: 0 }} indexed={false} words="last 90 days" focused={null} rows={rows} />,
     )
 
@@ -106,7 +106,7 @@ describe("the dashboard's stage switch", () => {
     const app: TableRow = { key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true, cells: [commits], edit: null,
                             page: { on: true, path: "/github_repos/1" }, switch: "/projects/1/numbers" }
     const html = renderToStaticMarkup(
-      <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits", beside: null }], rows: [app], stack: "md" }} drawn={["commits"]}
+      <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits", beside: null }], rows: [app], stack: "md", more: null }} drawn={["commits"]}
                      lines={{ commits: 0 }} indexed={false} words="last 90 days" focused={null} rows={rows} switches={switches} />,
     )
 
@@ -122,7 +122,7 @@ describe("the dashboard's stage switch", () => {
     const app: TableRow = { key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true, cells: [commits], edit: null,
                             page: { on: true, path: "/github_repos/1" }, switch: "/projects/1/numbers" }
     const html = renderToStaticMarkup(
-      <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits", beside: null }], rows: [app], stack: "md" }} drawn={["commits"]}
+      <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits", beside: null }], rows: [app], stack: "md", more: null }} drawn={["commits"]}
                      lines={{ commits: 0 }} indexed={false} words="last 90 days" focused={null} rows={rows}
                      switches={{ pick: (_row, cell) => cell.pick, shown: (_row, cell) => cell.shown, flip: () => undefined }} />,
     )
