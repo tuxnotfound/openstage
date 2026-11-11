@@ -19,6 +19,13 @@ RSpec.describe "Project pages", type: :request do
     expect(response.body).not_to include("Other work")
   end
 
+  it "asks search engines not to count its Visit button as a vote for the website the builder typed" do
+    get "/builder/side.app"
+
+    visit = Nokogiri::HTML(response.body).at_xpath("//a[starts-with(normalize-space(.), 'Visit side.example')]")
+    expect(visit["rel"]).to eq("ugc nofollow noopener")
+  end
+
   it "leaves out of More from the project in view, and a repo of its name under another owner, whose address opens this page too" do
     create(:entry, user: user, repo_name: "acme/side.app")
 

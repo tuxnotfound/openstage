@@ -50,6 +50,17 @@ RSpec.describe "Profiles", type: :request do
         expect(page.at_css("a[href='mailto:me@example.com']").text.squish).to eq("Email me@example.com")
       end
 
+      it "asks search engines not to count the links the builder types as votes: their website and each project's" do
+        user.update!(website_url: "https://me.example")
+        create(:github_repo, user: user, full_name: "testuser/sauna", homepage: "https://sauna.example")
+        create(:entry, user: user, repo_name: "testuser/sauna")
+
+        get "/testuser"
+
+        page = Nokogiri::HTML(response.body)
+        expect(%w[https://me.example https://sauna.example].map { |site| page.at_css("a[href='#{site}']")["rel"] }).to eq([ "ugc nofollow noopener" ] * 2)
+      end
+
       it "never renders a javascript: website URL into the page" do
         user.update_column(:website_url, "javascript:alert(document.cookie)")
 

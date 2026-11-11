@@ -24,7 +24,7 @@
           <% facts << mail_to(email, safe_join([ email_icon, tag.span("Email ", class: "sr-only"), email ]), class: "inline-flex items-center gap-1 underline hover:text-ink") %>
         <% end %>
         <% if (website = safe_external_url(user.website_url)) %>
-          <% facts << link_to(website.gsub(%r{\Ahttps?://}, ""), website, target: "_blank", rel: "noopener", class: "underline hover:text-ink") %>
+          <% facts << link_to(website.gsub(%r{\Ahttps?://}, ""), website, target: "_blank", rel: "ugc nofollow noopener", class: "underline hover:text-ink") %>
         <% end %>
         <% facts << "Building since #{user.building_since.strftime('%B %Y')}" if user.building_since.present? %>
         <% facts.concat(progress_counts(entries: @total_entries, repos: @repos_synced, milestones: @milestones)) %>
