@@ -38,11 +38,20 @@ module Progress
       end
     end
 
-    # projects: Progress::Projects#all, in rank order. reveal: a repo the builder hid, shown anyway (Entry.counted_on_page).
+    # projects: Progress::Projects#all, in rank order, or the ones to draw a
+    # card for. reveal: a repo the builder hid, shown anyway (Entry.counted_on_page).
     attr_accessor :user, :projects, :zone, :reveal
     attr_reader :cards
 
     validates :user, :zone, presence: true
+
+    # The Monday that starts the 52 weeks, in the builder's zone. The stage's
+    # list counts its projects' commits from it too, so its order agrees with
+    # the counts its rows show.
+    def self.first_week(zone)
+      today = Time.current.in_time_zone(zone).to_date
+      today - (today.cwday - 1) - ((WEEKS - 1) * 7)
+    end
 
     private
 
@@ -62,8 +71,9 @@ module Progress
       user.github_repos.by_full_name(Array(projects).map(&:repo))
     end
 
+    # The projects' alone, so a page that draws a few cards reads no more.
     def commits
-      user.entries.counted_on_page(reveal: reveal).commits
+      user.entries.counted_on_page(reveal: reveal).commits.where(repo_name: Array(projects).map(&:repo))
     end
 
     # Commits per week, counted by day in SQL: a row per day and project.
@@ -89,10 +99,7 @@ module Progress
     end
 
     def first_monday
-      @first_monday ||= begin
-        today = Time.current.in_time_zone(zone).to_date
-        today - (today.cwday - 1) - ((WEEKS - 1) * 7)
-      end
+      @first_monday ||= self.class.first_week(zone)
     end
   end
 end
