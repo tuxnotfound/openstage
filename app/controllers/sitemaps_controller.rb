@@ -1,6 +1,8 @@
 class SitemapsController < ApplicationController
   def show
-    @users = User.active.order(created_at: :asc)
+    # A builder with no public entry has a page that says "Nothing here yet"
+    # and carries noindex, so it stays out until it fills.
+    @users = User.active.where(id: Entry.publicly_counted.select(:user_id)).order(created_at: :asc)
     # publicly_counted: a lastmod derived from private entries would publish a
     # dated signal of private activity that appears nowhere on the profile;
     # so would one from the commits a builder hides from visitors. An entry

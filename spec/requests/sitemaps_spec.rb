@@ -51,6 +51,15 @@ RSpec.describe "Sitemaps", type: :request do
       expect(response.body).not_to include(project_page_url("builder", "thin"))
     end
 
+    it "leaves out a builder with nothing public to show" do
+      user = create(:user, username: "quiet")
+      create(:entry, user: user, source: "manual", entry_type: "note", visibility: :private_entry)
+
+      get "/sitemap.xml"
+
+      expect(response.body).not_to include(profile_url("quiet"))
+    end
+
     it "does not include deleted users" do
       create(:user, username: "deleted_builder", deleted_at: Time.current)
 

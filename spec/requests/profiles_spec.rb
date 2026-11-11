@@ -10,6 +10,16 @@ RSpec.describe "Profiles", type: :request do
         expect(response).to have_http_status(:success)
       end
 
+      it "stays out of search until the builder has a public entry" do
+        create(:entry, user: user, source: "manual", entry_type: "note", visibility: :private_entry)
+        get "/testuser"
+        expect(response.body).to include(%(<meta name="robots" content="noindex">))
+
+        create(:entry, user: user, source: "manual", entry_type: "note")
+        get "/testuser"
+        expect(response.body).not_to include(%(name="robots"))
+      end
+
       it "counts one of each in the singular in the description of a builder with no bio" do
         create(:entry, user: user, entry_type: "milestone", source: "manual")
         create(:github_repo, user: user)
