@@ -161,8 +161,8 @@ function Row({ row, table, drawn, alone, hot, rows, switches }: {
       {switches && (
         <td className="whitespace-nowrap py-2.5 pl-[18px] text-right stacked:p-0 stacked:text-left">
           <span className="os-xs os-muted mb-1 hidden stacked:block">Your stage</span>
-          {row.page && <PageSwitch row={row} page={row.page} />}
-          {row.pin && <PinSwitch row={row} pin={row.pin} />}
+          {row.page && <PageSwitch name={row.name} page={row.page} />}
+          {row.pin && <PinSwitch name={row.name} pin={row.pin} />}
         </td>
       )}
       {row.cells.map((cell) => {
@@ -214,17 +214,27 @@ function ChangeLine({ change }: { change: Change }) {
   return <span className="mt-px block text-[11px] font-bold text-ink-2"><ChangeWords change={change} /></span>
 }
 
+// The fields a stage switch sends beside its own: the chart's view, as the
+// page's address holds it, then the caller's (the list's view), as
+// charts/_stage_switches writes them.
+type Fields = [string, string][]
+
+function Kept({ fields = [] }: { fields?: Fields }) {
+  const view = new URLSearchParams(window.location.search)
+  const chart: Fields = ["range", "show", "projects"].flatMap((key) => { const value = view.get(key); return value ? [[key, value] as [string, string]] : [] })
+  return <>{[...chart, ...fields].map(([key, value]) => <input key={key} type="hidden" name={key} value={value} />)}</>
+}
+
 // GithubReposController switches it and sends the dashboard back, as the
 // page reloads without its line.
-function PageSwitch({ row, page }: { row: TableRow; page: { on: boolean; path: string } }) {
-  const view = new URLSearchParams(window.location.search)
+export function PageSwitch({ name, page, fields }: { name: string; page: { on: boolean; path: string }; fields?: Fields }) {
   return (
     <form method="post" action={page.path} className="inline-flex align-middle" data-turbo="false">
       <input type="hidden" name="_method" value="patch" />
       <input type="hidden" name="authenticity_token" value={csrfToken()} />
       <input type="hidden" name="included" value={String(!page.on)} />
-      {["range", "show", "projects"].map((key) => view.get(key) && <input key={key} type="hidden" name={key} value={view.get(key) ?? ""} />)}
-      <button type="submit" role="switch" aria-checked={page.on} aria-label={`Show ${row.name} on your stage`} title={eyeTitle(page.on)} className="os-eye">
+      <Kept fields={fields} />
+      <button type="submit" role="switch" aria-checked={page.on} aria-label={`Show ${name} on your stage`} title={eyeTitle(page.on)} className="os-eye">
         <Eye />
       </button>
     </form>
@@ -232,16 +242,15 @@ function PageSwitch({ row, page }: { row: TableRow; page: { on: boolean; path: s
 }
 
 // Projects::PinsController pins it or not and sends the dashboard back, as
-// every colour on it moves. Its title is the server's (pin_of).
-function PinSwitch({ row, pin }: { row: TableRow; pin: NonNullable<TableRow["pin"]> }) {
-  const view = new URLSearchParams(window.location.search)
+// every colour on it moves. Its title is the server's (pin_title).
+export function PinSwitch({ name, pin, fields }: { name: string; pin: NonNullable<TableRow["pin"]>; fields?: Fields }) {
   return (
     <form method="post" action={pin.path} className="ml-1 inline-flex align-middle" data-turbo="false">
       <input type="hidden" name="_method" value="patch" />
       <input type="hidden" name="authenticity_token" value={csrfToken()} />
       <input type="hidden" name="pinned" value={String(!pin.on)} />
-      {["range", "show", "projects"].map((key) => view.get(key) && <input key={key} type="hidden" name={key} value={view.get(key) ?? ""} />)}
-      <button type="submit" role="switch" aria-checked={pin.on} aria-label={`Pin ${row.name} to your stage`} title={pin.title} className="os-eye os-pin">
+      <Kept fields={fields} />
+      <button type="submit" role="switch" aria-checked={pin.on} aria-label={`Pin ${name} to your stage`} title={pin.title} className="os-eye os-pin">
         <Pin />
       </button>
     </form>
