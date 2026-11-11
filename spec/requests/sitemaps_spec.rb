@@ -22,6 +22,7 @@ RSpec.describe "Sitemaps", type: :request do
       expect(response.body).to include(about_url)
       expect(response.body).to include(blog_url)
       expect(response.body).to include(blog_post_url(BlogPost.all.first))
+      expect(response.body).to include("<loc>#{feed_url}</loc>")
     end
 
     it "dates no page from the commits a builder hides, and still lists the project's page" do
