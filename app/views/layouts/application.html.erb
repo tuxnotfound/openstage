@@ -49,11 +49,15 @@
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
+    <%# Turbo runs every script again when it draws an error page, such as a
+        claim page's 404, and a counter loaded twice counts every view after
+        it twice. data-turbo-eval="false" keeps the first one; a page load
+        ignores it. %>
     <% if ENV["UMAMI_WEBSITE_ID"].present? %>
-      <script defer src="https://cloud.umami.is/script.js" data-website-id="<%= ENV["UMAMI_WEBSITE_ID"] %>"></script>
+      <script defer src="https://cloud.umami.is/script.js" data-website-id="<%= ENV["UMAMI_WEBSITE_ID"] %>" data-turbo-eval="false"></script>
     <% end %>
     <% if (token = own_visits_token) %>
-      <script defer src="/v.js" data-project="<%= token %>"></script>
+      <script defer src="/v.js" data-project="<%= token %>" data-turbo-eval="false"></script>
     <% end %>
   </head>
 

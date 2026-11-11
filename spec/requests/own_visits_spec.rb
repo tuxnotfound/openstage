@@ -31,6 +31,12 @@ RSpec.describe "Openstage's own visits", type: :request do
       expect(counter["data-project"]).to eq("os_own")
     end
 
+    it "keeps its counter to one run when Turbo draws a claim page's 404" do
+      get "/nobody_here_xyz"
+      expect(response).to have_http_status(:not_found)
+      expect(counter["data-turbo-eval"]).to eq("false")
+    end
+
     it "leaves out the visits of its project's own builder" do
       sign_in_as(builder)
       get "/dashboard"

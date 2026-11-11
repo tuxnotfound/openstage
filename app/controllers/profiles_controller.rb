@@ -8,7 +8,9 @@ class ProfilesController < ApplicationController
 
       @claimed_username = params[:username]
       session[:claimed_username] = @claimed_username
-      render :claim
+      # A visitor still sees the claim page; search sees no page, so a
+      # mistyped or made-up link never becomes one in its index.
+      render :claim, status: :not_found
       return
     end
 
