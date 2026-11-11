@@ -23,6 +23,8 @@ RSpec.describe "Feed", type: :request do
       expect(cards.size).to eq(2)
       expect(cards.first).to include("@builder", "5 commits · yesterday", "Step 4", "Step 2", "and 2 more that day")
       expect(cards.first).not_to include("Step 1")
+      button = Nokogiri::HTML(response.body).at_css("#feed-groups article a.os-btn2")
+      expect([ button.text, button["href"] ]).to eq([ "Open stage", "/builder" ])
     end
 
     it "leaves out merges, dependency bumps and the owner's own work, so it shows the others" do
