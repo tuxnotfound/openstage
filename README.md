@@ -1,8 +1,8 @@
-[![openstage](https://openstage.dev/badge/tuxnotfound)](https://openstage.dev/tuxnotfound)
+[![openstage](https://openstage.dev/badge/tuxnotfound)](https://openstage.dev/tuxnotfound?ref=github)
 
 # Openstage
 
-<a href="https://openstage.dev/tuxnotfound/openstage">
+<a href="https://openstage.dev/tuxnotfound/openstage?ref=github">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="doc/readme/project-page-dark.png">
     <img src="doc/readme/project-page-light.png" alt="Openstage's own project page: one chart of its commits and site visits, with what shipped marked on it">
@@ -17,7 +17,7 @@ Each project gets a page. It shows:
 - Site visits, from one script tag on your site, with no cookies.
 - MRR, read from Stripe with a read-only key.
 
-A live page: [openstage.dev/tuxnotfound/openstage](https://openstage.dev/tuxnotfound/openstage). Make your own at [openstage.dev](https://openstage.dev).
+A live page: [openstage.dev/tuxnotfound/openstage](https://openstage.dev/tuxnotfound/openstage?ref=github). Make your own at [openstage.dev](https://openstage.dev/?ref=github).
 
 ## README badge
 
@@ -52,7 +52,7 @@ Environment variables go in `.env`:
 
 Tests run with `bundle exec rspec` and `npm test`.
 
-Running it in production is not documented yet. The hosted version is at [openstage.dev](https://openstage.dev).
+Running it in production is not documented yet. The hosted version is at [openstage.dev](https://openstage.dev/?ref=github).
 
 ## Licence and stack
 
