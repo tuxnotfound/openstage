@@ -53,7 +53,7 @@ module Progress
 
     # Two repos may share a name under different owners; the busier one wins.
     def find_project
-      Projects.new(counted).all.find { |project| project.repo.split("/").last.casecmp?(slug) }
+      Projects.new(counted, pinned: user.github_repos.pinned_names).all.find { |project| project.repo.split("/").last.casecmp?(slug) }
     end
 
     # What its numbers count.

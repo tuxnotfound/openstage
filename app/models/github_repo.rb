@@ -43,6 +43,11 @@ class GithubRepo < ApplicationRecord
     where(full_name: full_names).index_by(&:full_name)
   end
 
+  # The full names of the repos pinned to the stage (Progress::Projects).
+  def self.pinned_names
+    where(pinned: true).pluck(:full_name)
+  end
+
   # Repos under different owners can share a name, so Settings names the owner
   # of every repo that is not the builder's own.
   def owner_login

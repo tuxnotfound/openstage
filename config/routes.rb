@@ -63,6 +63,9 @@ Rails.application.routes.draw do
     # The numbers its visitors see, switched in the dashboard's table and on
     # its own view.
     resource :numbers, only: :update, module: :projects
+    # Whether it is pinned to the stage, with a colour, switched in the
+    # dashboard's table.
+    resource :pin, only: :update, module: :projects
   end
 
   # A payment provider connected for projects' MRR, on Settings' Integrations tab.

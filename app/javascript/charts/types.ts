@@ -106,10 +106,13 @@ export type TableRow = {
   drawable: boolean
   cells: TableCell[]
   // The dashboard's: the project's own view, whether the builder's page
-  // lists it (GithubReposController's path to switch it), and
+  // lists it (GithubReposController's path to switch it), whether it is
+  // pinned there with a colour (Projects::PinsController's path; full while
+  // no colour is left for it; null while the page does not list it), and
   // Projects::NumbersController's path for its switches.
   edit: string | null
   page: { on: boolean; path: string } | null
+  pin: { on: boolean; path: string; full: boolean; title: string } | null
   switch: string | null
 }
 

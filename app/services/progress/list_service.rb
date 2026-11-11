@@ -34,7 +34,7 @@ module Progress
     end
 
     def rest
-      @rest ||= (projects || Projects.new(user.entries.counted_on_page).all).reject { |project| ProgressChart::Palette.colored?(project.rank) }
+      @rest ||= (projects || Projects.new(user.entries.counted_on_page, pinned: user.github_repos.pinned_names).all).reject { |project| ProgressChart::Palette.colored?(project.rank) }
     end
 
     def live?(project)

@@ -3,8 +3,8 @@ require "rails_helper"
 RSpec.describe Progress::Projects do
   let(:user) { create(:user) }
 
-  def projects
-    described_class.new(user.entries.publicly_counted.without_tooling_noise)
+  def projects(pinned: [])
+    described_class.new(user.entries.publicly_counted.without_tooling_noise, pinned: pinned)
   end
 
   it "ranks repos by all-time commits, then tagged-only repos by name" do
@@ -13,6 +13,17 @@ RSpec.describe Progress::Projects do
     create(:entry, user: user, source: "manual", entry_type: "milestone", repo_name: "me/z")
 
     expect(projects.all.map { |project| [ project.name, project.commits, project.rank ] }).to eq([ [ "b", 2, 0 ], [ "a", 1, 1 ], [ "z", 0, 2 ] ])
+  end
+
+  it "ranks the projects a builder pinned first, and the rest past the palette, so only pinned ones wear a colour" do
+    3.times { create(:entry, user: user, repo_name: "me/busy") }
+    2.times { create(:entry, user: user, repo_name: "me/site") }
+    create(:entry, user: user, repo_name: "me/calc")
+
+    pinned = projects(pinned: %w[me/calc me/site me/gone]).all
+    expect(pinned.map { |project| [ project.name, project.rank ] }).to eq([ [ "site", 0 ], [ "calc", 1 ], [ "busy", 10 ] ])
+    expect(pinned.map { |project| ProgressChart::Palette.colored?(project.rank) }).to eq([ true, true, false ])
+    expect(projects(pinned: %w[me/gone]).all.map(&:rank)).to eq([ 0, 1, 2 ])
   end
 
   it "keeps the owner in the name when two repos share one" do

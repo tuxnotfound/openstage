@@ -43,7 +43,7 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     idle.update!(included: false)
     get "/dashboard"
 
-    eyes = page.css("[data-chart-table] button[role='switch']")
+    eyes = page.css("[data-chart-table] button[role='switch']:not(.os-pin)")
     expect(eyes.map { |eye| eye["class"] }.uniq).to eq([ "os-eye" ])
     expect(eyes.map { |eye| eye.css("svg").map { |svg| svg["class"].split.first } }.uniq).to eq([ %w[os-eye-open os-eye-shut] ])
     expect(page_switch("builder/app")["title"]).to eq("Visitors see it on your stage. Click to hide it.")
@@ -257,6 +257,56 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       theirs = create(:github_repo, user: create(:user))
       patch "/projects/#{theirs.id}/numbers", params: { number: "visits", shown: "false" }
       expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  describe "pinning a project to the stage" do
+    def pin_switch(repo)
+      page.at_css("[data-chart-row='#{repo}'] form[action$='/pin'] button[role='switch']")
+    end
+
+    def stage_cards
+      get "/builder"
+      page.css("section[aria-labelledby='projects'] .os-card .os-h3").map { |name| name.text.squish }
+    end
+
+    it "pins one from its row, beside its eye, and the stage then gives a card to the pinned ones alone" do
+      expect(stage_cards).to eq(%w[app bare])
+      get "/dashboard"
+      expect(%w[aria-checked aria-label class].map { |name| pin_switch("builder/bare")[name] }).to eq([ "false", "Pin bare to your stage", "os-eye os-pin" ])
+      expect(pin_switch("builder/bare")["title"]).to eq("Pin it, and your stage gives a colour and a card to pinned projects alone.")
+
+      patch "/projects/#{bare.id}/pin", params: { pinned: "true", range: "90d" }
+
+      expect(response).to redirect_to("/dashboard?range=90d#your-activity")
+      expect(stage_cards).to eq(%w[bare])
+      get "/dashboard"
+      expect([ pin_switch("builder/bare")["aria-checked"], pin_switch("builder/app")["title"] ])
+        .to eq([ "true", "Pin it to give it a colour and a card on your stage." ])
+    end
+
+    it "offers no pin for a project hidden from the stage, nor an eleventh, and says why it refuses one" do
+      create(:entry, user: user, repo_name: "builder/idle", occurred_at: 1.day.ago)
+      idle.update!(included: false)
+      create_list(:github_repo, 10, user: user, pinned: true).each { |pinned| create(:entry, user: user, repo_name: pinned.full_name) }
+      get "/dashboard"
+
+      expect(pin_switch("builder/idle")).to be_nil
+      expect(pin_switch("builder/app")["disabled"]).to eq("disabled")
+      expect(pin_switch("builder/app")["title"]).to eq("10 projects are pinned, one per colour. Unpin one to pin this one.")
+
+      patch "/projects/#{tool.id}/pin", params: { pinned: "true" }
+      expect(flash[:alert]).to eq("10 projects are pinned, one per colour. Unpin one to pin app.")
+      expect(tool.reload.pinned).to be(false)
+    end
+
+    it "pins no other builder's project" do
+      theirs = create(:github_repo, user: create(:user), full_name: "someone/tool")
+
+      patch "/projects/#{theirs.id}/pin", params: { pinned: "true" }
+
+      expect(response).to have_http_status(:not_found)
+      expect(theirs.reload.pinned).to be(false)
     end
   end
 end

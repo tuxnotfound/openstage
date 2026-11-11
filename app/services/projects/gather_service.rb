@@ -26,7 +26,7 @@ module Projects
 
     def execute
       entries = user.entries.publicly_counted.without_tooling_noise
-      @project = Progress::Projects.new(entries).find(repo.full_name)
+      @project = Progress::Projects.new(entries, pinned: user.github_repos.pinned_names).find(repo.full_name)
       commits = entries.commits.where(repo_name: repo.full_name)
       @commits = commits.where(occurred_at: (today - (DAYS - 1)).in_time_zone(user.zone)..).count
       @last_commit = commits.maximum(:occurred_at)&.in_time_zone(user.zone)&.to_date

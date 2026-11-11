@@ -251,6 +251,9 @@
   .os-eye[aria-checked="true"] { color: var(--color-accent-ink); }
   .os-eye .os-eye-open, .os-eye[aria-checked="true"] .os-eye-shut { display: none; }
   .os-eye[aria-checked="true"] .os-eye-open { display: block; }
+  .os-eye:disabled { opacity: .4; cursor: not-allowed; }
+  .os-eye:disabled:hover { background: transparent; color: var(--color-ink-3); }
+  .os-pin[aria-checked="true"] .os-pin-head { fill: currentColor; }
 
   /* Fields */
   .os-fieldset { display: flex; flex-direction: column; gap: 6px; }

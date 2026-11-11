@@ -96,7 +96,7 @@ module Analytics
     end
 
     def projects
-      @projects ||= Progress::Projects.new(user.entries.publicly_counted.without_tooling_noise).all
+      @projects ||= Progress::Projects.new(user.entries.publicly_counted.without_tooling_noise, pinned: user.github_repos.pinned_names).all
     end
 
     # A page counts a number once it has counted it on any day, and shows every

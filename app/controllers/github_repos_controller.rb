@@ -19,7 +19,9 @@ class GithubReposController < ApplicationController
 
   def update
     @repo = current_user.github_repos.find(params[:id])
-    @repo.update!(included: params[:included] == "true", included_chosen: true)
+    included = params[:included] == "true"
+    # A hidden project drops its pin, as only the stage's projects take one.
+    @repo.update!(included: included, included_chosen: true, pinned: @repo.pinned? && included)
 
     scope = current_user.entries.where(source: :github, repo_name: @repo.full_name)
 

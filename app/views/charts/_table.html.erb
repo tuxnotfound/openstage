@@ -5,8 +5,8 @@
     view, a box in view current, and the last row in view keeps its box. A
     project past the palette has no colour, so no box, and keeps its values
     in grey; a row with no box tells a screen reader it draws no line. On
-    the dashboard (manage) a row also has Edit and whether the builder's page
-    lists it, and each cell the switch for what visitors see, each an eye
+    the dashboard (manage) a row also has Edit, whether the builder's page
+    lists it and whether it is pinned there with a colour (charts/_pin), and each cell the switch for what visitors see, each an eye
     (charts/_eye); a project hidden from the page comes last, with no box. Where site visits do not
     count, Set up or Paused stands in place of the switch, after the value
     when the window has any. On a phone each row stacks, with only the
@@ -85,7 +85,7 @@
               </span>
             </th>
             <% if local_assigns[:manage] %>
-              <td class="py-2.5 pl-[18px] text-right stacked:p-0 stacked:text-left">
+              <td class="whitespace-nowrap py-2.5 pl-[18px] text-right stacked:p-0 stacked:text-left">
                 <span class="os-xs os-muted mb-1 hidden stacked:block">Your stage</span>
                 <% if row[:page] %>
                   <%= form_with url: row[:page][:path], method: :patch, class: "inline-flex align-middle", data: { turbo: false } do %>
@@ -93,6 +93,14 @@
                     <% back.each do |key, value| %><%= hidden_field_tag key, value, id: nil %><% end %>
                     <button type="submit" role="switch" aria-checked="<%= row[:page][:on] %>" aria-label="Show <%= row[:name] %> on your stage"
                             title="<%= eye_title(row[:page][:on]) %>" class="os-eye"><%= render "charts/eye" %></button>
+                  <% end %>
+                <% end %>
+                <% if row[:pin] %>
+                  <%= form_with url: row[:pin][:path], method: :patch, class: "ml-1 inline-flex align-middle", data: { turbo: false } do %>
+                    <%= hidden_field_tag :pinned, (!row[:pin][:on]).to_s, id: nil %>
+                    <% back.each do |key, value| %><%= hidden_field_tag key, value, id: nil %><% end %>
+                    <%= tag.button render("charts/pin"), type: "submit", role: "switch", aria: { checked: row[:pin][:on], label: "Pin #{row[:name]} to your stage" },
+                                                         title: row[:pin][:title], class: "os-eye os-pin", disabled: row[:pin][:full] %>
                   <% end %>
                 <% end %>
               </td>

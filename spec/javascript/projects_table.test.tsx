@@ -8,7 +8,7 @@ import type { TableCell, TableRow } from "../../app/javascript/charts/types"
 const siteRow = (id: number) => `/projects/${id}/edit?site=open#site-visits`
 const visits = (cell: Partial<TableCell>): TableCell => ({ key: "visits", value: null, shown: false, pick: null, link: null, change: null, ...cell })
 const row = (name: string, cell: TableCell): TableRow =>
-  ({ key: `me/${name}`, name, colorClass: "os-project-1", on: true, drawable: true, cells: [cell], edit: null, page: null, switch: "/projects/1/numbers" })
+  ({ key: `me/${name}`, name, colorClass: "os-project-1", on: true, drawable: true, cells: [cell], edit: null, page: null, pin: null, switch: "/projects/1/numbers" })
 
 const target = { go: () => {}, warm: () => {} }
 const rows: RowTargets = { box: () => target, only: () => target, all: null, refuse: () => {}, focus: () => {} }
@@ -61,7 +61,7 @@ describe("the dashboard's site visits cell", () => {
 describe("a project past the tenth", () => {
   test("has no box and no colour, keeps its value in grey, and tells a screen reader it draws no line", () => {
     const commits: TableCell = { key: "commits", value: "4", shown: true, pick: null, link: null, change: null }
-    const quiet: TableRow = { key: "me/quiet", name: "quiet", colorClass: null, on: false, drawable: false, cells: [commits], edit: null, page: null, switch: null }
+    const quiet: TableRow = { key: "me/quiet", name: "quiet", colorClass: null, on: false, drawable: false, cells: [commits], edit: null, page: null, pin: null, switch: null }
     const html = renderToStaticMarkup(
       <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits", beside: null }], rows: [{ ...quiet, key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true }, quiet], stack: "md", more: null }}
                      drawn={["commits"]} lines={{ commits: 0 }} indexed={false} words="last 90 days" focused={null} rows={rows} />,
@@ -80,7 +80,7 @@ describe("a project past the tenth", () => {
 describe("the table's width", () => {
   test("names the breakpoint it stacks below, and lets a long name wrap rather than widen the table", () => {
     const commits: TableCell = { key: "commits", value: "4", shown: true, pick: null, link: null, change: null }
-    const app: TableRow = { key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true, cells: [commits], edit: null, page: null, switch: null }
+    const app: TableRow = { key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true, cells: [commits], edit: null, page: null, pin: null, switch: null }
     const html = renderToStaticMarkup(
       <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits", beside: null }], rows: [app], stack: "lg", more: null }} drawn={["commits"]}
                      lines={{ commits: 0 }} indexed={false} words="last 90 days" focused={null} rows={rows} />,
@@ -104,7 +104,7 @@ describe("the dashboard's stage switch", () => {
     vi.stubGlobal("document", { querySelector: () => null })
     const commits: TableCell = { key: "commits", value: "4", shown: true, pick: null, link: null, change: null }
     const app: TableRow = { key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true, cells: [commits], edit: null,
-                            page: { on: true, path: "/github_repos/1" }, switch: "/projects/1/numbers" }
+                            page: { on: true, path: "/github_repos/1" }, pin: null, switch: "/projects/1/numbers" }
     const html = renderToStaticMarkup(
       <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits", beside: null }], rows: [app], stack: "md", more: null }} drawn={["commits"]}
                      lines={{ commits: 0 }} indexed={false} words="last 90 days" focused={null} rows={rows} switches={switches} />,
@@ -120,7 +120,7 @@ describe("the dashboard's stage switch", () => {
     vi.stubGlobal("document", { querySelector: () => null })
     const commits: TableCell = { key: "commits", value: "4", shown: false, pick: false, link: null, change: null }
     const app: TableRow = { key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true, cells: [commits], edit: null,
-                            page: { on: true, path: "/github_repos/1" }, switch: "/projects/1/numbers" }
+                            page: { on: true, path: "/github_repos/1" }, pin: null, switch: "/projects/1/numbers" }
     const html = renderToStaticMarkup(
       <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits", beside: null }], rows: [app], stack: "md", more: null }} drawn={["commits"]}
                      lines={{ commits: 0 }} indexed={false} words="last 90 days" focused={null} rows={rows}
@@ -131,5 +131,25 @@ describe("the dashboard's stage switch", () => {
     expect(html).toContain('aria-checked="false" aria-label="Show commits for app" title="Only you see it. Click to show it on your stage." class="os-eye"')
     expect(html.match(/class="os-eye-open/g)).toHaveLength(2)
     expect(html).not.toContain("os-switch")
+  })
+
+  test("pins a project to the stage beside its eye, the server's words its title, and offers no pin once every colour is taken", () => {
+    vi.stubGlobal("window", { location: { search: "?range=90d" } })
+    vi.stubGlobal("document", { querySelector: () => null })
+    const commits: TableCell = { key: "commits", value: "4", shown: true, pick: null, link: null, change: null }
+    const row = (name: string, pin: TableRow["pin"]): TableRow => ({ key: `me/${name}`, name, colorClass: null, on: false, drawable: false, cells: [commits], edit: null,
+                                                                     page: { on: true, path: "/github_repos/1" }, pin, switch: null })
+    const html = renderToStaticMarkup(
+      <ProjectsTable table={{ columns: [{ key: "commits", label: "Commits", word: "commits", beside: null }], stack: "md", more: null,
+                              rows: [row("app", { on: true, path: "/projects/1/pin", full: false, title: "Pinned." }),
+                                     row("blog", { on: false, path: "/projects/2/pin", full: true, title: "Ten are pinned." })] }}
+                     drawn={["commits"]} lines={{ commits: 0 }} indexed={false} words="last 90 days" focused={null} rows={rows} switches={switches} />,
+    )
+
+    expect(html).toContain('action="/projects/1/pin" method="post"')
+    expect(html).toContain('<input type="hidden" name="pinned" value="false"/><input type="hidden" name="range" value="90d"/>')
+    expect(html).toContain('role="switch" aria-checked="true" aria-label="Pin app to your stage" title="Pinned." class="os-eye os-pin">')
+    expect(html).toContain('aria-checked="false" aria-label="Pin blog to your stage" title="Ten are pinned." class="os-eye os-pin" disabled="">')
+    expect(html.indexOf("Show app on your stage")).toBeLessThan(html.indexOf("Pin app to your stage"))
   })
 })

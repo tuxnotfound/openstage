@@ -68,7 +68,7 @@ module Progress
 
     def execute
       @zone = user.zone
-      @projects = Projects.new(counted_entries)
+      @projects = Projects.new(counted_entries, pinned: user.github_repos.pinned_names)
       @period = period_for(Time.current.in_time_zone(zone).to_date, first_day_of(projects))
       @commit_days = commits_by_day
       @items = items_on(period.first..period.last_day).select(&:listed)

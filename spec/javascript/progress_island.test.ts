@@ -7,7 +7,7 @@ import type { TableCell, TableRow, TableView } from "../../app/javascript/charts
 const cell = (key: string, pick: boolean | null): TableCell => ({ key, value: "1", shown: pick === true, pick, link: null, change: null })
 const table: TableView = {
   columns: [], stack: "md", more: null,
-  rows: [{ key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true, edit: null, page: null, switch: "/projects/1/numbers",
+  rows: [{ key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true, edit: null, page: null, pin: null, switch: "/projects/1/numbers",
            cells: [cell("commits", true), cell("visits", false), cell("site_visitors", null)] }],
 }
 
@@ -22,7 +22,7 @@ describe("the dashboard's pending switches", () => {
 
 // The same table before the switch: app shows its commits, its site visits
 // and the site visitors beside them, each switch on.
-const app: TableRow = { key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true, edit: null, page: null, switch: "/projects/1/numbers",
+const app: TableRow = { key: "me/app", name: "app", colorClass: "os-project-1", on: true, drawable: true, edit: null, page: null, pin: null, switch: "/projects/1/numbers",
                         cells: [cell("commits", true), cell("visits", true), cell("site_visitors", true)] }
 const before: TableView = {
   columns: [{ key: "commits", label: "Commits", word: "commits", beside: null }, { key: "visits", label: "Site visits", word: "site visits", beside: null },

@@ -13,8 +13,9 @@ import { lineOf, type Lines } from "./lines"
 // keeps its box, and a click says so. A project past the palette has no
 // colour, so no box, and keeps its values in grey; a row with no box tells
 // a screen reader it draws no line. Hovering or focusing a row brings its
-// lines forward. On the dashboard (manage) a row also has Edit and whether
-// the builder's page lists it, and each cell the switch for what visitors
+// lines forward. On the dashboard (manage) a row also has Edit, whether
+// the builder's page lists it and whether it is pinned there with a colour
+// (Pin), and each cell the switch for what visitors
 // see (its value grey while they do not), or Set up or Paused where site
 // visits do not count; a project hidden from the page comes last, with no
 // box. Each of the builder's switches is an eye (Eye), open while visitors
@@ -158,9 +159,10 @@ function Row({ row, table, drawn, alone, hot, rows, switches }: {
         </span>
       </th>
       {switches && (
-        <td className="py-2.5 pl-[18px] text-right stacked:p-0 stacked:text-left">
+        <td className="whitespace-nowrap py-2.5 pl-[18px] text-right stacked:p-0 stacked:text-left">
           <span className="os-xs os-muted mb-1 hidden stacked:block">Your stage</span>
           {row.page && <PageSwitch row={row} page={row.page} />}
+          {row.pin && <PinSwitch row={row} pin={row.pin} />}
         </td>
       )}
       {row.cells.map((cell) => {
@@ -226,6 +228,34 @@ function PageSwitch({ row, page }: { row: TableRow; page: { on: boolean; path: s
         <Eye />
       </button>
     </form>
+  )
+}
+
+// Projects::PinsController pins it or not and sends the dashboard back, as
+// every colour on it moves. Its title is the server's (pin_of).
+function PinSwitch({ row, pin }: { row: TableRow; pin: NonNullable<TableRow["pin"]> }) {
+  const view = new URLSearchParams(window.location.search)
+  return (
+    <form method="post" action={pin.path} className="ml-1 inline-flex align-middle" data-turbo="false">
+      <input type="hidden" name="_method" value="patch" />
+      <input type="hidden" name="authenticity_token" value={csrfToken()} />
+      <input type="hidden" name="pinned" value={String(!pin.on)} />
+      {["range", "show", "projects"].map((key) => view.get(key) && <input key={key} type="hidden" name={key} value={view.get(key) ?? ""} />)}
+      <button type="submit" role="switch" aria-checked={pin.on} aria-label={`Pin ${row.name} to your stage`} title={pin.title} className="os-eye os-pin"
+              disabled={pin.full}>
+        <Pin />
+      </button>
+    </form>
+  )
+}
+
+// A project's pin, as charts/_pin draws it: its head filled while it is
+// pinned (.os-pin, by the switch's aria-checked).
+export function Pin() {
+  return (
+    <svg className="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path className="os-pin-head" d="M10 3h4v6l3 4H7l3-4Z" /><path d="M8.5 3h7M12 13v8" />
+    </svg>
   )
 }
 

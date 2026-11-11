@@ -104,6 +104,16 @@ RSpec.describe "GithubRepos", type: :request do
           expect(entry.reload.hidden).to be true
         end
 
+        it "drops its pin, and showing it again does not bring the pin back" do
+          repo.update!(pinned: true)
+
+          patch github_repo_path(repo), params: { included: "false" }
+          expect(repo.reload.pinned).to be(false)
+
+          patch github_repo_path(repo), params: { included: "true" }
+          expect(repo.reload.pinned).to be(false)
+        end
+
         it "does not affect entries from other repos" do
           other = create(:entry, user: user, source: "github", repo_name: "user/otherapp", hidden: false)
           patch github_repo_path(repo), params: { included: "false" }

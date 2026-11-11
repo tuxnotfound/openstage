@@ -77,7 +77,7 @@ RSpec.describe Progress::ListService do
 
   it "reads the ranked projects itself, or takes the ones its caller ranked" do
     commits("me/fresh", 1, 2.days.ago)
-    ranked = Progress::Projects.new(user.entries.counted_on_page).all
+    ranked = Progress::Projects.new(user.entries.counted_on_page, pinned: []).all
 
     given = described_class.new(user: user, listing: Progress::Listing.new, projects: ranked).tap(&:call!)
 

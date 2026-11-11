@@ -2,8 +2,8 @@
 # analytics), a column per number, each cell the row's value over the window
 # (and on analytics its change against the window before), and a row's box
 # drawing it on the chart or not. On the builder's dashboard (manage) a row
-# also has Edit, whether their page lists it, and the path that saves its
-# switches: each cell's switch sets what visitors see (a value they do not
+# also has Edit, whether their page lists it, whether it is pinned there
+# with a colour (pin_of), and the path that saves its switches: each cell's switch sets what visitors see (a value they do not
 # see stays for the builder, in grey), or in its place Set up, where a
 # project counts no site visits, or Paused, where Free counts another
 # project's, each to the project's Site visits row; a project hidden from
@@ -87,9 +87,32 @@ class ProjectsTableSerializer < ApplicationSerializer
 
   # A project with no synced repo behind it has nothing to edit or save.
   def manage_parts(repo)
-    return { edit: nil, page: nil, switch: nil } unless @manage && repo
+    return { edit: nil, page: nil, pin: nil, switch: nil } unless @manage && repo
 
-    { edit: edit_project_path(repo), page: { on: repo.included?, path: github_repo_path(repo) }, switch: project_numbers_path(repo) }
+    { edit: edit_project_path(repo), page: { on: repo.included?, path: github_repo_path(repo) }, pin: pin_of(repo),
+      switch: project_numbers_path(repo) }
+  end
+
+  # Whether it is pinned to the stage (Projects::PinService); full: no
+  # colour is left for it. None for a project the stage does not show.
+  # Its words are the server's, as for every switch the island draws.
+  def pin_of(repo)
+    return unless repo.included?
+
+    full = !repo.pinned? && pinned_count >= ProgressChart::Palette::SIZE
+    { on: repo.pinned?, path: project_pin_path(repo), full: full, title: pin_title(repo.pinned?, full) }
+  end
+
+  def pinned_count
+    @pinned_count ||= (@chart.rows.filter_map(&:repo) + @off_page).uniq.count(&:pinned?)
+  end
+
+  def pin_title(on, full)
+    return "Pinned: it has a colour and a card on your stage. Click to unpin it." if on
+    return "#{ProgressChart::Palette::SIZE} projects are pinned, one per colour. Unpin one to pin this one." if full
+    return "Pin it to give it a colour and a card on your stage." if pinned_count.positive?
+
+    "Pin it, and your stage gives a colour and a card to pinned projects alone."
   end
 
   def more

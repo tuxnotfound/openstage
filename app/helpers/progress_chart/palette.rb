@@ -14,6 +14,8 @@ module ProgressChart
       light: %w[#2f6ee0 #eb6834 #1baf7a #eda100 #e87ba4 #008300 #6250d6 #e34948 #9e8eff #7c3856],
       dark: %w[#3987e5 #d95926 #199e70 #c98500 #d55181 #008300 #9085e9 #e66767 #5f4bb4 #8b4664]
     }.freeze
+    # How many projects wear a colour at once, and so how many a builder pins.
+    SIZE = PROJECT_COLORS[:light].size
     # The class of marks that wear ink: the builder's own page on analytics,
     # which is no project, and a project past the palette where it stands
     # alone.
@@ -25,7 +27,7 @@ module ProgressChart
     # size, and no project (nil), which wears ink. A project past the palette
     # has none, so no box and no line.
     def colored?(rank)
-      rank.nil? || rank < PROJECT_COLORS[:light].size
+      rank.nil? || rank < SIZE
     end
 
     # The class that gives a project's marks its colour on the pages
