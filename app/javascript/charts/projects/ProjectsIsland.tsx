@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react"
+import { PageSwitch, PinSwitch } from "../filter/ProjectsTable"
 import type { ProjectListRow, ProjectListView } from "../types"
 import { useView } from "../useView"
 
@@ -7,11 +8,13 @@ import { useView } from "../useView"
 // visitor types, sorted, filtered to the live ones and paged, each view asked
 // of Api::ProjectsController and shown in place. The page's address stays as
 // it is: the chart's island writes it, and Back stays the chart's. Its words
-// are the server's (ProjectListSerializer).
+// are the server's (ProjectListSerializer). On the dashboard each row also
+// has Edit and its stage switches, which send the view along (back).
 
 export type ProjectsProps = {
   initial: ProjectListView
-  // Api::ProjectsController's path for this builder.
+  // Api::ProjectsController's path for this builder, with dashboard=1 on
+  // the dashboard.
   endpoint: string
 }
 
@@ -73,10 +76,10 @@ export default function ProjectsIsland({ initial, endpoint }: ProjectsProps) {
         </p>
       )}
       <div className="mt-3.5">
-        <div className="hidden grid-cols-[minmax(0,1fr)_220px_120px] gap-x-6 pb-2 text-xs font-bold text-ink-3 md:grid" aria-hidden="true">
-          <span>Project</span><span>Last 12 months</span><span className="text-right">Last commit</span>
+        <div className={`hidden gap-x-6 pb-2 text-xs font-bold text-ink-3 md:grid ${view.back ? GRID_MANAGE : GRID}`} aria-hidden="true">
+          <span>Project</span><span>Last 12 months</span><span className="text-right">Last commit</span>{view.back && <span className="text-right">Your stage</span>}
         </div>
-        {view.rows.map((row) => <ListRow key={row.key} row={row} />)}
+        {view.rows.map((row) => <ListRow key={row.key} row={row} fields={view.back} />)}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3.5">
           <span className="os-sm os-muted" aria-live="polite">{view.range ?? view.empty}</span>
           {view.pages > 1 && (
@@ -93,18 +96,25 @@ export default function ProjectsIsland({ initial, endpoint }: ProjectsProps) {
   )
 }
 
+// The list's columns, as profiles/page/_more_projects writes them: on the
+// dashboard, a fourth for the stage switches.
+const GRID = "md:grid-cols-[minmax(0,1fr)_220px_120px]"
+const GRID_MANAGE = "md:grid-cols-[minmax(0,1fr)_220px_120px_88px]"
+
 // One project, as profiles/page/_more_projects draws it: its name, a link to
 // its page, with Live or Archived, its description on one line, its weekly
-// line over 52 weeks in ink with their count, and its last commit. On a
+// line over 52 weeks in ink with their count, and its last commit; on the
+// dashboard (fields), Edit beside its name and its stage switches last. On a
 // phone the name and description take the row, the rest goes under it.
-export function ListRow({ row }: { row: ProjectListRow }) {
+export function ListRow({ row, fields = null }: { row: ProjectListRow; fields?: [string, string][] | null }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-1.5 border-t border-line py-2.5 md:grid-cols-[minmax(0,1fr)_220px_120px]">
+    <div className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-1.5 border-t border-line py-2.5 ${fields ? GRID_MANAGE : GRID}`}>
       <div className="min-w-0 max-md:col-span-2">
         <div className="flex min-w-0 items-center gap-2">
           <a href={row.path} className="truncate text-[15px] font-bold hover:underline" data-turbo-frame="_top">{row.name}</a>
           {row.live && <span className="os-tag soft shrink-0">Live</span>}
           {row.archived && <span className="os-tag shrink-0">Archived</span>}
+          {row.edit && <a href={row.edit} className="os-btn2 ml-auto h-[30px] shrink-0 rounded-[9px] px-3 text-[13px]" aria-label={`Edit ${row.name}`}>Edit</a>}
         </div>
         {row.description && <p className="os-xs os-muted mt-0.5 truncate">{row.description}</p>}
       </div>
@@ -119,6 +129,13 @@ export function ListRow({ row }: { row: ProjectListRow }) {
         )}
       </div>
       <div className="os-sm os-ink2 text-right">{row.last && <><span className="sr-only">Last commit </span>{row.last}</>}</div>
+      {fields && (
+        <div className="whitespace-nowrap text-right max-md:col-span-2 max-md:text-left">
+          <span className="os-xs os-muted mb-1 block md:hidden">Your stage</span>
+          {row.page && <PageSwitch name={row.name} page={row.page} fields={fields} />}
+          {row.pin && <PinSwitch name={row.name} pin={row.pin} fields={fields} />}
+        </div>
+      )}
     </div>
   )
 }
@@ -128,13 +145,15 @@ function askOf(view: ProjectListView): Ask {
 }
 
 // The API's address for a view of the list, its defaults left out as
-// Progress::Listing#to_params leaves them, so one view has one address.
+// Progress::Listing#to_params leaves them, so one view has one address, after
+// the endpoint's own params (dashboard=1).
 export function listUrl(endpoint: string, ask: Ask, fallback: string): string {
-  const params = new URLSearchParams()
+  const [path = endpoint, own = ""] = endpoint.split("?")
+  const params = new URLSearchParams(own)
   if (ask.sort !== fallback) params.set("sort", ask.sort)
   if (ask.query.trim()) params.set("q", ask.query.trim())
   if (ask.live) params.set("live", "1")
   if (ask.page > 1) params.set("page", String(ask.page))
   const search = params.toString()
-  return search ? `${endpoint}?${search}` : endpoint
+  return search ? `${path}?${search}` : path
 }

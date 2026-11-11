@@ -261,8 +261,9 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
   end
 
   describe "pinning a project to the stage" do
-    def pin_switch(repo)
-      page.at_css("[data-chart-row='#{repo}'] form[action$='/pin'] button[role='switch']")
+    # In the chart's table or the list under it.
+    def pin_switch(name)
+      page.at_css("form[action$='/pin'] button[role='switch'][aria-label='Pin #{name} to your stage']")
     end
 
     def stage_cards
@@ -272,15 +273,15 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
 
     it "shows the projects with a colour pinned, and unpinning one leaves the others pinned" do
       get "/dashboard"
-      expect(%w[aria-checked aria-label class].map { |name| pin_switch("builder/app")[name] }).to eq([ "true", "Pin app to your stage", "os-eye os-pin" ])
-      expect(pin_switch("builder/bare")["title"]).to eq("Pinned: it has a colour and a card on your stage. Click to unpin it.")
+      expect(%w[aria-checked aria-label class].map { |name| pin_switch("app")[name] }).to eq([ "true", "Pin app to your stage", "os-eye os-pin" ])
+      expect(pin_switch("bare")["title"]).to eq("Pinned: it has a colour and a card on your stage. Click to unpin it.")
 
       patch "/projects/#{bare.id}/pin", params: { pinned: "false", range: "90d" }
 
       expect(response).to redirect_to("/dashboard?range=90d#your-activity")
       expect(stage_cards).to eq(%w[app])
       get "/dashboard"
-      expect([ pin_switch("builder/app")["aria-checked"], pin_switch("builder/bare")["aria-checked"], pin_switch("builder/bare")["title"] ])
+      expect([ pin_switch("app")["aria-checked"], pin_switch("bare")["aria-checked"], pin_switch("bare")["title"] ])
         .to eq([ "true", "false", "Pin it to give it a colour and a card on your stage." ])
 
       patch "/projects/#{bare.id}/pin", params: { pinned: "true" }
@@ -293,14 +294,25 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       10.times { |i| 5.times { create(:entry, user: user, repo_name: "builder/top#{i}") } }
       get "/dashboard"
 
-      expect(pin_switch("builder/idle")).to be_nil
-      expect(%w[aria-checked title].map { |name| pin_switch("builder/app")[name] }).to eq([ "false", "10 projects are pinned. Unpin one to pin this one." ])
+      expect(pin_switch("idle")).to be_nil
+      expect(%w[aria-checked title].map { |name| pin_switch("app")[name] }).to eq([ "false", "10 projects are pinned. Unpin one to pin this one." ])
 
       patch "/projects/#{tool.id}/pin", params: { pinned: "true" }
 
       expect(response).to redirect_to("/dashboard")
       expect(flash[:alert]).to eq("You can pin 10 projects at a time. Unpin one first.")
       expect(stage_cards).to eq((0..9).map { |i| "top#{i}" })
+    end
+
+    it "pins one from the list under the table, and comes back to the list on its view" do
+      tops = Array.new(10) { |i| create(:github_repo, user: user, name: "top#{i}", full_name: "builder/top#{i}") }
+      tops.each { |top| 5.times { create(:entry, user: user, repo_name: top.full_name) } }
+
+      patch "/projects/#{tops.last.id}/pin", params: { pinned: "false" }
+      patch "/projects/#{bare.id}/pin", params: { pinned: "true", back: "list", list_sort: "name", range: "90d" }
+
+      expect(response).to redirect_to("/dashboard?list_sort=name&range=90d#more-projects")
+      expect(stage_cards).to eq([ *(0..8).map { |i| "top#{i}" }, "bare" ])
     end
 
     it "pins no other builder's project" do
@@ -310,6 +322,50 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
 
       expect(response).to have_http_status(:not_found)
       expect(theirs.reload.pinned).to be(false)
+    end
+  end
+
+  describe "a builder with more projects than colours" do
+    before { 10.times { |i| 5.times { create(:entry, user: user, repo_name: "builder/top#{i}", occurred_at: 1.day.ago) } } }
+
+    def list
+      page.at_css("#more-projects")
+    end
+
+    def listed
+      list.css("a[data-turbo-frame='_top']").map(&:text)
+    end
+
+    it "gives the table the ten with a colour, and lists the rest under it with Edit and their stage switches" do
+      get "/dashboard", params: { range: "90d" }
+
+      expect(project_rows.keys).to eq((0..9).map { |i| "builder/top#{i}" })
+      expect(page.at_css("[data-chart-table] a[href='#more-projects']").text.squish).to eq("2 more projects ↓")
+      expect(list.at_css("h3").text).to eq("2 more projects")
+      expect(listed).to eq(%w[app bare])
+      expect(list.at_css("a[aria-label='Edit app']")["href"]).to eq("/projects/#{tool.id}/edit")
+      expect(page.at_css("script#project-list-props").text).to include("/api/projects/builder?dashboard=1")
+      eye = list.at_css("form[action='/github_repos/#{tool.id}']")
+      expect(eye.css("input[type='hidden']").to_h { |field| [ field["name"], field["value"] ] }).to include("included" => "false", "back" => "list", "range" => "90d")
+      expect(list.at_css("button[aria-label='Pin app to your stage']")["title"]).to eq("10 projects are pinned. Unpin one to pin this one.")
+    end
+
+    it "finds, sorts and pages the list on its own params, as the entries read q" do
+      get "/dashboard", params: { list_q: "bar", q: "work" }
+      expect(listed).to eq(%w[bare])
+      expect(list.at_css("input[name='list_q']")["value"]).to eq("bar")
+
+      get "/dashboard", params: { list_sort: "name" }
+      by_commits = list.css(".os-pills a").find { |link| link.text == "Most commits" }
+      expect(by_commits["href"]).to eq("/dashboard?list_sort=commits#more-projects")
+    end
+
+    it "comes back to the list on its view once a project is hidden from it" do
+      patch "/github_repos/#{bare.id}", params: { included: "false", back: "list", list_q: "ba" }
+
+      expect(response).to redirect_to("/dashboard?list_q=ba#more-projects")
+      get "/dashboard"
+      expect(listed).to eq(%w[app])
     end
   end
 end

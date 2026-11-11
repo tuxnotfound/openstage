@@ -133,7 +133,8 @@ export type TableView = {
 // (ProjectListSerializer): commits, countWords (what a screen reader hears
 // after the count) and line (its weekly commits over 52 weeks, an SVG path
 // in a box 400 by 56) null while visitors do not see its commits or it has
-// none then; last null while they do not see them.
+// none then; last null while they do not see them. On the dashboard, edit,
+// page and pin as a TableRow has them; null on the stage.
 export type ProjectListRow = {
   key: string
   name: string
@@ -145,10 +146,15 @@ export type ProjectListRow = {
   countWords: string | null
   line: string | null
   last: string | null
+  edit: string | null
+  page: { on: boolean; path: string } | null
+  pin: { on: boolean; path: string; title: string } | null
 }
 
 // liveLabel: null while none is live, and the list offers no filter; range:
-// null with no project found, and empty says why.
+// null with no project found, and empty says why. back: on the dashboard,
+// what each row's switch sends beside its own, [name, value] pairs, so the
+// dashboard comes back on this view; null on the stage.
 export type ProjectListView = {
   title: string
   sort: string
@@ -161,6 +167,7 @@ export type ProjectListView = {
   range: string | null
   empty: string | null
   rows: ProjectListRow[]
+  back: [string, string][] | null
 }
 
 // A chart filter's view, the same on every chart page (ChartFilterSerializer).

@@ -14,6 +14,13 @@ RSpec.describe Progress::Listing do
     expect(described_class.from(sort: "name", q: "a", live: "true", page: "2").to_params).to eq(sort: "name", q: "a", live: "1", page: 2)
   end
 
+  it "reads and writes its params with the dashboard's prefix there, as the dashboard's entries read q" do
+    listing = described_class.from({ list_sort: "name", list_q: "sauna", q: "an entry", page: "5" }, described_class::DASHBOARD)
+
+    expect([ listing.sort, listing.query, listing.page ]).to eq([ "name", "sauna", 1 ])
+    expect(listing.to_params(prefix: described_class::DASHBOARD)).to eq(list_sort: "name", list_q: "sauna")
+  end
+
   it "makes the same listing with one thing changed, and equals another that names the same view" do
     listing = described_class.from(sort: "name", page: "4")
 

@@ -48,6 +48,26 @@ RSpec.describe "Api::Projects", type: :request do
     expect(response).to have_http_status(:not_modified)
   end
 
+  it "adds each project's switches on the builder's own dashboard, kept out of shared caches, and the list's view for them to send" do
+    sign_in_as(user)
+    sauna = user.github_repos.find_by!(full_name: "builder/sauna")
+
+    get "/api/projects/builder", params: { dashboard: 1, sort: "name" }
+
+    expect(response.headers["Cache-Control"]).not_to include("public")
+    expect(json["back"]).to eq([ %w[back list], %w[list_sort name] ])
+    expect(json["rows"].last).to include("edit" => "/projects/#{sauna.id}/edit", "page" => { "on" => true, "path" => "/github_repos/#{sauna.id}" },
+                                         "pin" => { "on" => false, "path" => "/projects/#{sauna.id}/pin", "title" => "10 projects are pinned. Unpin one to pin this one." })
+  end
+
+  it "answers anyone else who asks for the dashboard with the stage's list, kept out of shared caches too" do
+    get "/api/projects/builder", params: { dashboard: 1 }
+
+    expect(response.headers["Cache-Control"]).not_to include("public")
+    expect(json["back"]).to be_nil
+    expect(json["rows"].first).to include("edit" => nil, "page" => nil, "pin" => nil)
+  end
+
   it "answers Not Found for a builder who is not there" do
     get "/api/projects/nobody"
 

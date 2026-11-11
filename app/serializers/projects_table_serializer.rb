@@ -11,8 +11,8 @@
 # colour, so no box: it keeps its values, in grey, as it draws no line.
 # Which rows the chart draws (Row#drawn?) and which cells list a value, a
 # switch or a link (DrawService#cells) is the chart's to say; this only
-# writes it. A builder's stage (boxed_only) lists the rows with a box alone,
-# and names how many it leaves to its list of projects (more).
+# writes it. A builder's stage and dashboard (boxed_only) list the rows with
+# a box alone, and name how many they leave to their list of projects (more).
 class ProjectsTableSerializer < ApplicationSerializer
   include Rails.application.routes.url_helpers
 
@@ -23,7 +23,16 @@ class ProjectsTableSerializer < ApplicationSerializer
   # chart: a Progress::ChartService or an Analytics::ReportService; changes:
   # whether each cell carries its change; manage: the builder's own table;
   # off_page: the GithubRepos hidden from their page; boxed_only: the
-  # stage's table, of the rows with a box.
+  # stage's or the dashboard's table, of the rows with a box.
+  # A pin's title: pinned, or not while every colour is taken (full), or not.
+  # The dashboard's list of projects writes the same words.
+  def self.pin_title(on:, full:)
+    return "Pinned: it has a colour and a card on your stage. Click to unpin it." if on
+    return "#{ProgressChart::Palette::SIZE} projects are pinned. Unpin one to pin this one." if full
+
+    "Pin it to give it a colour and a card on your stage."
+  end
+
   def initialize(chart, changes: false, manage: false, off_page: [], boxed_only: false)
     @chart = chart
     @changes = changes
@@ -102,14 +111,7 @@ class ProjectsTableSerializer < ApplicationSerializer
     return unless repo.included? && rank
 
     on = ProgressChart::Palette.colored?(rank)
-    { on: on, path: project_pin_path(repo), title: pin_title(on) }
-  end
-
-  def pin_title(on)
-    return "Pinned: it has a colour and a card on your stage. Click to unpin it." if on
-    return "#{ProgressChart::Palette::SIZE} projects are pinned. Unpin one to pin this one." if colored_rows >= ProgressChart::Palette::SIZE
-
-    "Pin it to give it a colour and a card on your stage."
+    { on: on, path: project_pin_path(repo), title: self.class.pin_title(on: on, full: colored_rows >= ProgressChart::Palette::SIZE) }
   end
 
   def colored_rows

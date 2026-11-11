@@ -3,7 +3,8 @@ module Progress
   # name searched for, whether only live projects show, and which page of
   # them. Read from a page's or the API's params, so an address no one could
   # have meant (an unknown order, page 0) still opens a list. A link leaves
-  # the defaults out of its address.
+  # the defaults out of its address. On the dashboard, whose entries read q
+  # already, its params carry a prefix (DASHBOARD).
   class Listing
     # Latest commit first, the most commits over the cards' 52 weeks first,
     # or by name. The first is the default.
@@ -12,11 +13,18 @@ module Progress
     QUERY_LENGTH = 100
     # What a link or a form sends for the live projects alone.
     LIVE_VALUES = %w[1 true].freeze
+    # Its params, and their prefix on the dashboard.
+    PARAMS = %w[sort q live page].freeze
+    DASHBOARD = "list_".freeze
 
     attr_reader :sort, :query, :live, :page
 
-    def self.from(params)
-      new(sort: params[:sort], query: params[:q], live: params[:live], page: params[:page])
+    def self.names(prefix = "")
+      PARAMS.map { |name| "#{prefix}#{name}" }
+    end
+
+    def self.from(params, prefix = "")
+      new(sort: params[:"#{prefix}sort"], query: params[:"#{prefix}q"], live: params[:"#{prefix}live"], page: params[:"#{prefix}page"])
     end
 
     def initialize(sort: nil, query: nil, live: nil, page: nil)
@@ -26,8 +34,9 @@ module Progress
       @page = [ page.to_i, 1 ].max
     end
 
-    def to_params
+    def to_params(prefix: "")
       { sort: (sort unless sort == SORTS.first), q: query.presence, live: ("1" if live), page: (page if page > 1) }.compact
+        .transform_keys { |key| :"#{prefix}#{key}" }
     end
 
     def with(sort: @sort, query: @query, live: @live, page: @page)

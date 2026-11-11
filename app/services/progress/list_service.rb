@@ -16,14 +16,16 @@ module Progress
     # cards: the page's SummarizeService::Cards, in the list's order; count:
     # the projects past the cards; live_count: how many of those are live;
     # found: how many the search and the filter keep; page: the page shown,
-    # never past the last; pages: at least one.
-    attr_reader :cards, :count, :live_count, :found, :page, :pages
+    # never past the last; pages: at least one; colored: how many projects
+    # have a colour, the pinned ones (Projects::PinService).
+    attr_reader :cards, :count, :live_count, :found, :page, :pages, :colored
 
     validates :user, :listing, presence: true
 
     private
 
     def execute
+      @colored = ranked.size - rest.size
       @count = rest.size
       @live_count = rest.count { |project| live?(project) }
       matches = sorted(rest.select { |project| match?(project) })
@@ -33,8 +35,12 @@ module Progress
       summarize(matches.slice((page - 1) * PER_PAGE, PER_PAGE))
     end
 
+    def ranked
+      @ranked ||= projects || Projects.new(user.entries.counted_on_page, pinned: user.github_repos.pinned_names).all
+    end
+
     def rest
-      @rest ||= (projects || Projects.new(user.entries.counted_on_page, pinned: user.github_repos.pinned_names).all).reject { |project| ProgressChart::Palette.colored?(project.rank) }
+      @rest ||= ranked.reject { |project| ProgressChart::Palette.colored?(project.rank) }
     end
 
     def live?(project)

@@ -44,12 +44,13 @@ class GithubReposController < ApplicationController
       format.turbo_stream
       # Back to the project's own view when switched there; else to the
       # dashboard's chart, in the view it showed, so the line that went or
-      # came back is in view.
+      # came back is in view, or to its list of projects, on the list's view.
       format.html do
         next redirect_to(edit_project_path(@repo)) if params[:back] == "project"
 
-        redirect_to dashboard_path(**params.permit(:show, :projects).to_h.symbolize_keys.compact_blank,
-                                   range: Progress::Filter.new(range: params[:range]).range, anchor: "activity")
+        kept = params.permit(:show, :projects, *Progress::Listing.names(Progress::Listing::DASHBOARD))
+        redirect_to dashboard_path(**kept.to_h.symbolize_keys.compact_blank, range: Progress::Filter.new(range: params[:range]).range,
+                                   anchor: params[:back] == "list" ? ProjectsTableSerializer::MORE_ANCHOR : "activity")
       end
     end
   end

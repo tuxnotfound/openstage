@@ -1,11 +1,14 @@
 module Api
   # A page of a builder's projects past the ones their stage gives a card,
   # found by name, sorted and filtered (Progress::Listing), as the stage's
-  # list asks for it once a visitor changes it: what the stage would render
+  # list asks for it once a visitor changes it, or the dashboard's
+  # (dashboard), with each project's switches: what the page would render
   # there, as JSON (ProjectListSerializer). Public, like the stage. Cached
   # until the builder's public work or their projects change, or the day
   # does, which moves every "last commit" and the 52 weeks; browsers
-  # revalidate with an ETag.
+  # revalidate with an ETag. The dashboard's answers for the builder alone,
+  # and an address that asks for it never goes into a shared cache, whoever
+  # asks: the cache would hand a visitor's answer to the builder.
   class ProjectsController < ApplicationController
     # A ceiling, for a change the cache key cannot see.
     EXPIRES = 10.minutes
@@ -16,7 +19,7 @@ module Api
 
       listing = Progress::Listing.from(params)
       key = cache_key(user, listing)
-      return unless stale?(etag: key, public: true)
+      return unless stale?(etag: key, public: params[:dashboard].blank?)
 
       json = Rails.cache.fetch(key, expires_in: EXPIRES, skip_nil: true) { view(user, listing) }
       json ? render(json: json) : head(:unprocessable_entity)
@@ -27,13 +30,17 @@ module Api
     def cache_key(user, listing)
       entries = user.entries.publicly_counted.pick(Arel.sql("COUNT(*)"), Arel.sql("MAX(entries.updated_at)"))
       repos = user.github_repos.pick(Arel.sql("COUNT(*)"), Arel.sql("MAX(github_repos.updated_at)"))
-      [ "project-list/v1", user.id, *entries, *repos, user.zone.tzinfo.identifier, Time.current.in_time_zone(user.zone).to_date, Date.current,
-        *listing.to_params.sort.flatten ]
+      [ "project-list/v2", user.id, *entries, *repos, user.zone.tzinfo.identifier, Time.current.in_time_zone(user.zone).to_date, Date.current,
+        dashboard?(user), *listing.to_params.sort.flatten ]
     end
 
     def view(user, listing)
       list = Progress::ListService.new(user: user, listing: listing)
-      ProjectListSerializer.new(list, user: user).to_json if list.call
+      ProjectListSerializer.new(list, user: user, manage: dashboard?(user)).to_json if list.call
+    end
+
+    def dashboard?(user)
+      params[:dashboard].present? && current_user == user
     end
   end
 end

@@ -60,6 +60,7 @@ class DashboardController < ApplicationController
     load_week
     @chart = activity_chart
     @activity = @chart&.section
+    @list = project_list if @chart
     @untagged = untagged
     @show_pro_activated = params[:pro] == "activated" && current_user.pro?
   end
@@ -99,5 +100,14 @@ class DashboardController < ApplicationController
     service = Progress::ChartService.new(user: current_user, range: filter.range, repos: filter.projects,
                                          show: filter.show, builder: true)
     service if service.call
+  end
+
+  # The projects past the ones with a colour, a page at a time, under the
+  # chart's table, which lists those alone, as the stage does. Its params
+  # carry a prefix, as the entries read q (Progress::Listing::DASHBOARD).
+  def project_list
+    listing = Progress::Listing.from(params, Progress::Listing::DASHBOARD)
+    list = Progress::ListService.new(user: current_user, listing: listing, projects: @chart.section.tally.projects.all)
+    list if list.call
   end
 end

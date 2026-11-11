@@ -1,18 +1,18 @@
 import { renderToStaticMarkup } from "react-dom/server"
-import { describe, expect, test } from "vitest"
+import { afterEach, describe, expect, test, vi } from "vitest"
 import ProjectsIsland, { ListRow, listUrl } from "../../app/javascript/charts/projects/ProjectsIsland"
 import type { ProjectListRow, ProjectListView } from "../../app/javascript/charts/types"
 
 // A row of the stage's list as the server sends it (ProjectListSerializer).
 const row: ProjectListRow = {
   key: "me/sauna", name: "sauna", path: "/me/sauna", description: "Sauna math.", live: true, archived: false,
-  commits: 1, countWords: "commit in 12 months", line: "M0.0 5.1 L400.0 56.0", last: "2 days ago",
+  commits: 1, countWords: "commit in 12 months", line: "M0.0 5.1 L400.0 56.0", last: "2 days ago", edit: null, page: null, pin: null,
 }
 
 const view: ProjectListView = {
   title: "2 more projects", sort: "latest", query: "", live: false, page: 1, pages: 2,
   sorts: [{ key: "latest", label: "Latest" }, { key: "commits", label: "Most commits" }, { key: "name", label: "A–Z" }],
-  liveLabel: "Live · 1", range: "1–25 of 30", empty: null, rows: [row],
+  liveLabel: "Live · 1", range: "1–25 of 30", empty: null, rows: [row], back: null,
 }
 
 describe("the address of a view of the list", () => {
@@ -21,6 +21,8 @@ describe("the address of a view of the list", () => {
 
     expect(listUrl("/api/projects/me", ask, "latest")).toBe("/api/projects/me")
     expect(listUrl("/api/projects/me", { sort: "name", query: " sauna ", live: true, page: 2 }, "latest")).toBe("/api/projects/me?sort=name&q=sauna&live=1&page=2")
+    expect(listUrl("/api/projects/me?dashboard=1", { ...ask, page: 3 }, "latest")).toBe("/api/projects/me?dashboard=1&page=3")
+    expect(listUrl("/api/projects/me?dashboard=1", ask, "latest")).toBe("/api/projects/me?dashboard=1")
   })
 })
 
@@ -40,6 +42,23 @@ describe("a row of the list", () => {
 
     expect(html).not.toContain("<svg")
     expect(html).not.toContain("commit")
+  })
+})
+
+describe("a row of the dashboard's list", () => {
+  afterEach(() => { vi.unstubAllGlobals() })
+
+  test("adds Edit beside its name and its stage switches last, each sending the list's view along", () => {
+    vi.stubGlobal("window", { location: { search: "?range=90d" } })
+    vi.stubGlobal("document", { querySelector: () => null })
+    const managed = { ...row, edit: "/projects/7/edit", page: { on: true, path: "/github_repos/7" }, pin: { on: false, path: "/projects/7/pin", title: "Pin it." } }
+    const html = renderToStaticMarkup(<ListRow row={managed} fields={[[ "back", "list" ], [ "list_sort", "name" ]]} />)
+
+    expect(html).toContain('<a href="/projects/7/edit" class="os-btn2 ml-auto h-[30px] shrink-0 rounded-[9px] px-3 text-[13px]" aria-label="Edit sauna">Edit</a>')
+    expect(html).toContain('aria-label="Show sauna on your stage"')
+    expect(html).toContain('aria-checked="false" aria-label="Pin sauna to your stage" title="Pin it." class="os-eye os-pin"')
+    expect(html).toContain('<input type="hidden" name="pinned" value="true"/><input type="hidden" name="range" value="90d"/><input type="hidden" name="back" value="list"/><input type="hidden" name="list_sort" value="name"/>')
+    expect(html).toContain("md:grid-cols-[minmax(0,1fr)_220px_120px_88px]")
   })
 })
 
