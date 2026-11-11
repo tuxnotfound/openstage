@@ -40,14 +40,23 @@ class ChartFilterSerializer < ApplicationSerializer
       picked: (picked && { from: picked.from.iso8601, to: picked.to.iso8601, name: labels.name }) }
   end
 
+  # The one part of a toggle's bar that the rows past the palette share.
+  OTHERS = "others".freeze
+
   # group: where it happens, for the toggles grouped under it; value: "–"
   # when no row in view shows it; split: the part of each row in view with
-  # any, in the class of its colour, for the toggle's bar, where a row past
-  # the palette (nil) leaves its share empty.
+  # any, in the class of its colour, for the toggle's bar, and one empty
+  # share for the rows past the palette together (OTHERS), so a builder with
+  # hundreds of projects keeps a bar that fits its toggle.
   def number_of(total)
     number = total.number
     { key: number.key, label: number.label, word: number.word, group: number.group, value: total.value ? @filter.counts.written(number, total.value) : "–",
-      split: total.split.map { |row, count| { key: row.key, color_class: row.color_class, value: count } },
-      change: (Progress::Change.of(total.value, total.previous)&.to_h if @changes) }
+      split: split_of(total), change: (Progress::Change.of(total.value, total.previous)&.to_h if @changes) }
+  end
+
+  def split_of(total)
+    colored, others = total.split.partition { |row, _| row.color_class }
+    parts = colored.map { |row, count| { key: row.key, color_class: row.color_class, value: count } }
+    others.any? ? parts << { key: OTHERS, color_class: nil, value: others.sum(&:last) } : parts
   end
 end

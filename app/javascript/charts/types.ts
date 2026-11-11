@@ -76,6 +76,7 @@ export type NumberView = {
   group: string
   value: string
   // colorClass: null for a row with no colour, whose share stays empty.
+  // The rows past the palette share one part, keyed "others", with no colour.
   split: { key: string; colorClass: string | null; value: number }[]
   change: Change | null
 }
