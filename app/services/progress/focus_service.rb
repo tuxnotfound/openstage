@@ -16,13 +16,14 @@ module Progress
     # the numbers its chart draws, by key in line order, none for the
     # default. reveal: a repo the builder hid, shown anyway (Entry.counted_on_page).
     attr_accessor :user, :slug, :range, :show, :reveal
-    # page: the GatherService run for this project; others: the rest of the
-    # builder's cards; highlights: how many it shipped and published, ever,
+    # page: the GatherService run for this project; others: the cards of the
+    # builder's other projects with a colour; more: how many other projects
+    # are past the palette, which the builder's stage lists; highlights: how many it shipped and published, ever,
     # the hidden ones too; first_commit: a time, which its share card reads; facts: its
     # Details as visitors see them, Facts; last_commit: the day of its latest
     # commit, nil while its builder hides its commits; co_builders:
     # CoBuilders, busiest first, the ones with no count shown last.
-    attr_reader :project, :page, :card, :others, :highlights, :first_commit, :facts, :last_commit, :co_builders
+    attr_reader :project, :page, :card, :others, :more, :highlights, :first_commit, :facts, :last_commit, :co_builders
 
     validates :user, :slug, presence: true
 
@@ -41,6 +42,7 @@ module Progress
 
       @page = gather
       @card, @others = split_cards(gather.cards)
+      @more = past_palette(gather.section.tally.projects.all)
       @highlights = counted.highlights.where(repo_name: project.repo).count
       @first_commit = counted.commits.where(repo_name: project.repo).minimum(:occurred_at)
       @facts = details
@@ -95,6 +97,10 @@ module Progress
     def split_cards(cards)
       mine, rest = cards.partition { |card| card.repo == project.repo }
       [ mine.first, rest ]
+    end
+
+    def past_palette(projects)
+      projects.count { |other| other.repo != project.repo && !ProgressChart::Palette.colored?(other.rank) }
     end
   end
 end

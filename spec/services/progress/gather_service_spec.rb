@@ -35,15 +35,18 @@ RSpec.describe Progress::GatherService do
     expect(hiding.cards.map(&:repo)).to include(progress_repo(0))
   end
 
-  it "gives the stage's cards to the projects with a colour and lists the rest, and a card per project otherwise" do
+  it "gives the stage's cards to the projects with a colour and lists the rest, a project's page those and its own, and a card per project otherwise" do
     5.times { |i| create(:entry, user: user, repo_name: "me/extra#{i}", occurred_at: 2.days.ago) }
     ranked = described_class.new(user: user).tap(&:call!).section.tally.projects.all
     stage = described_class.new(user: user, listing: Progress::Listing.new).tap(&:call!)
     every = described_class.new(user: user).tap(&:call!)
+    past = ranked.last.repo
+    project = described_class.new(user: user, repos: [ past ], lone: true).tap(&:call!)
 
     expect(stage.cards.map(&:repo)).to eq(ranked.first(10).map(&:repo))
     expect([ ranked.size, stage.list.count ]).to eq([ 12, 2 ])
     expect([ every.cards.size, every.list ]).to eq([ ranked.size, nil ])
+    expect(project.cards.map(&:repo)).to eq([ *ranked.first(10).map(&:repo), past ])
   end
 
   it "opens on the last 30 days" do

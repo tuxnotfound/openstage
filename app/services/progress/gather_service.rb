@@ -4,9 +4,10 @@ module Progress
   # (SummarizeService) and the latest commits, grouped by project and day:
   # none the builder hid from the lists (Entry.listed_on_page), and none of a
   # project whose builder hides its commits (Entry.without_hidden_commits).
-  # The stage itself (listing) gives a card to the projects with a colour
-  # alone and lists the rest (ListService); its share card and a project's
-  # page read every card.
+  # The stage (listing) and a project's page (lone) give a card to the
+  # projects with a colour alone, and a project's page to its own project
+  # too; the stage lists the rest (ListService), and its share card reads
+  # every card.
   class GatherService < ApplicationService
     # Groups in Recent commits, and the commits read to fill them.
     RECENT_GROUPS = 8
@@ -49,7 +50,9 @@ module Progress
 
     def carded
       projects = section.tally.projects.all
-      listing ? projects.select { |project| ProgressChart::Palette.colored?(project.rank) } : projects
+      return projects unless listing || lone
+
+      projects.select { |project| ProgressChart::Palette.colored?(project.rank) || (lone && Array(repos).include?(project.repo)) }
     end
 
     def recent_groups

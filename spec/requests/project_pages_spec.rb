@@ -182,6 +182,35 @@ RSpec.describe "Project pages", type: :request do
     expect(page.css("[data-react='progress'] .os-big, [data-chart-table]")).to be_empty
   end
 
+  describe "a builder with more projects than colours" do
+    before do
+      10.times { |i| 3.times { create(:entry, user: user, repo_name: "builder/top#{i}", occurred_at: 1.day.ago) } }
+      create(:entry, user: user, repo_name: "builder/fire", occurred_at: 9.days.ago)
+    end
+
+    def more_from
+      Nokogiri::HTML(response.body).at_xpath("//h2[starts-with(text(), 'More from')]/following-sibling::ul[1]").css("a").map { |row| row.text.squish.split.first }
+    end
+
+    def more_link
+      Nokogiri::HTML(response.body).at_xpath("//h2[starts-with(text(), 'More from')]/following-sibling::p[1]/a")
+    end
+
+    it "lists under More from the projects with a colour, and links the rest to the list on the builder's stage" do
+      get "/builder/fire"
+
+      expect(more_from).to eq((0..9).map { |i| "top#{i}" })
+      expect([ more_link.text, more_link["href"] ]).to eq([ "and 2 more projects", "/builder#more-projects" ])
+    end
+
+    it "lists the other nine on a project with a colour's own page" do
+      get "/builder/top0"
+
+      expect(more_from).to eq((1..9).map { |i| "top#{i}" })
+      expect(more_link.text).to eq("and 3 more projects")
+    end
+  end
+
   describe "a project the builder hid" do
     # As the dashboard's switch hides it: the repo, and its synced entries.
     before do

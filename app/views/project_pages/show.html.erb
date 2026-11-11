@@ -149,6 +149,9 @@
             </li>
           <% end %>
         </ul>
+        <% if @focus.more.positive? %>
+          <p class="os-note mt-1"><%= link_to "and #{pluralize(@focus.more, 'more project')}", profile_path(@user.username, anchor: ProjectsTableSerializer::MORE_ANCHOR), class: "os-link" %></p>
+        <% end %>
       <% end %>
     </aside>
   <% end %>
