@@ -8,7 +8,8 @@
 # first paint both write. On the builder's dashboard (manage) each row also
 # has Edit, whether the stage shows it and its pin, as the chart's table
 # has, and each switch sends the list's view (back), so the dashboard comes
-# back on it.
+# back on it; and it lists the projects hidden from the stage instead
+# (hidden), behind a chip of their own while others are listed.
 class ProjectListSerializer < ApplicationSerializer
   include Rails.application.routes.url_helpers
   include ProgressHelper
@@ -23,17 +24,28 @@ class ProjectListSerializer < ApplicationSerializer
     @manage = manage
   end
 
-  # live_label: nil while none is live, and the list offers no filter.
+  # live_label: nil while none is live, and the list offers no filter;
+  # hidden_label: nil unless the dashboard lists others beside the hidden.
   # range: nil with no project found; empty: why, then.
   def attributes
     listing = @list.listing
-    { title: "#{@list.count} more #{'project'.pluralize(@list.count)}", sort: listing.sort, query: listing.query, live: listing.live,
+    { title: title, sort: listing.sort, query: listing.query, live: listing.live, hidden: @list.hidden,
       page: @list.page, pages: @list.pages, sorts: Progress::Listing::SORTS.map { |key| { key: key, label: SORT_LABELS.fetch(key) } },
-      live_label: ("Live · #{@list.live_count}" if @list.live_count.positive?), range: range, empty: (empty if @list.found.zero?),
-      rows: @list.cards.map { |card| row_of(card) }, back: (back if @manage) }
+      live_label: ("Live · #{@list.live_count}" if @list.live_count.positive?), hidden_label: hidden_label, range: range,
+      empty: (empty if @list.found.zero?), rows: @list.cards.map { |card| row_of(card) }, back: (back if @manage) }
   end
 
   private
+
+  def title
+    return "#{@list.hidden_count} hidden #{'project'.pluralize(@list.hidden_count)}" if @list.hidden
+
+    "#{@list.count} more #{'project'.pluralize(@list.count)}"
+  end
+
+  def hidden_label
+    "Hidden · #{@list.hidden_count}" if @manage && @list.count.positive? && @list.hidden_count.positive?
+  end
 
   def range
     return if @list.found.zero?
@@ -44,7 +56,7 @@ class ProjectListSerializer < ApplicationSerializer
 
   def empty
     listing = @list.listing
-    kind = listing.live ? "live project" : "project"
+    kind = [ ("hidden" if @list.hidden), ("live" if listing.live), "project" ].compact.join(" ")
     listing.query.present? ? %(No #{kind} named "#{listing.query}".) : "No #{kind}."
   end
 
@@ -60,19 +72,23 @@ class ProjectListSerializer < ApplicationSerializer
   end
 
   # A project with no synced repo behind it has nothing to edit or switch.
-  # Past the colours, none is pinned.
+  # Past the colours, none is pinned; a hidden one takes no pin.
   def manage_parts(repo)
     return { edit: nil, page: nil, pin: nil } unless @manage && repo
 
+    { edit: edit_project_path(repo), page: { on: repo.included?, path: github_repo_path(repo) }, pin: (pin_of(repo) if repo.included?) }
+  end
+
+  def pin_of(repo)
     full = @list.colored >= ProgressChart::Palette::SIZE
-    { edit: edit_project_path(repo), page: { on: repo.included?, path: github_repo_path(repo) },
-      pin: { on: false, path: project_pin_path(repo), title: ProjectsTableSerializer.pin_title(on: false, full: full) } }
+    { on: false, path: project_pin_path(repo), title: ProjectsTableSerializer.pin_title(on: false, full: full) }
   end
 
   # What a row's switch sends beside its own: that it came from the list,
   # and the list's view, with the dashboard's prefix. As [name, value] pairs,
   # which keep their names as they leave (ApplicationSerializer).
   def back
-    [ [ "back", "list" ], *@list.listing.with(page: @list.page).to_params(prefix: Progress::Listing::DASHBOARD).map { |key, value| [ key.to_s, value.to_s ] } ]
+    view = @list.listing.with(hidden: @list.hidden, page: @list.page)
+    [ [ "back", "list" ], *view.to_params(prefix: Progress::Listing::DASHBOARD).map { |key, value| [ key.to_s, value.to_s ] } ]
   end
 end

@@ -152,7 +152,9 @@ export type ProjectListRow = {
 }
 
 // liveLabel: null while none is live, and the list offers no filter; range:
-// null with no project found, and empty says why. back: on the dashboard,
+// null with no project found, and empty says why. hidden: whether it lists
+// the projects hidden from the stage instead; hiddenLabel: null unless the
+// dashboard lists others beside them. back: on the dashboard,
 // what each row's switch sends beside its own, [name, value] pairs, so the
 // dashboard comes back on this view; null on the stage.
 export type ProjectListView = {
@@ -160,10 +162,12 @@ export type ProjectListView = {
   sort: string
   query: string
   live: boolean
+  hidden: boolean
   page: number
   pages: number
   sorts: { key: string; label: string }[]
   liveLabel: string | null
+  hiddenLabel: string | null
   range: string | null
   empty: string | null
   rows: ProjectListRow[]

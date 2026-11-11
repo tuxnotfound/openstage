@@ -3,11 +3,12 @@
 # (and on analytics its change against the window before), and a row's box
 # drawing it on the chart or not. On the builder's dashboard (manage) a row
 # also has Edit, whether their page lists it, whether it is pinned there
-# with a colour (pin_of), and the path that saves its switches: each cell's switch sets what visitors see (a value they do not
-# see stays for the builder, in grey), or in its place Set up, where a
-# project counts no site visits, or Paused, where Free counts another
-# project's, each to the project's Site visits row; a project hidden from
-# the page comes last, with no box. A project past the palette has no
+# with a colour (pin_of), and the path that saves its switches: each cell's
+# switch sets what visitors see (a value they do not see stays for the
+# builder, in grey), or in its place Set up, where a project counts no site
+# visits, or Paused, where Free counts another project's, each to the
+# project's Site visits row. A project hidden from the page is in the
+# dashboard's list of projects, not here. A project past the palette has no
 # colour, so no box: it keeps its values, in grey, as it draws no line.
 # Which rows the chart draws (Row#drawn?) and which cells list a value, a
 # switch or a link (DrawService#cells) is the chart's to say; this only
@@ -21,10 +22,6 @@ class ProjectsTableSerializer < ApplicationSerializer
   # Where the stage's list of projects starts, which more leads to.
   MORE_ANCHOR = "more-projects".freeze
 
-  # chart: a Progress::ChartService or an Analytics::ReportService; changes:
-  # whether each cell carries its change; manage: the builder's own table;
-  # off_page: the GithubRepos hidden from their page; boxed_only: the
-  # stage's or the dashboard's table, of the rows with a box.
   # A pin's title: pinned, or not while every colour is taken (full), or not.
   # The dashboard's list of projects writes the same words.
   def self.pin_title(on:, full:)
@@ -34,11 +31,13 @@ class ProjectsTableSerializer < ApplicationSerializer
     "Pin it to give it a colour and a card on your stage."
   end
 
-  def initialize(chart, changes: false, manage: false, off_page: [], boxed_only: false)
+  # chart: a Progress::ChartService or an Analytics::ReportService; changes:
+  # whether each cell carries its change; manage: the builder's own table;
+  # boxed_only: the stage's or the dashboard's table, of the rows with a box.
+  def initialize(chart, changes: false, manage: false, boxed_only: false)
     @chart = chart
     @changes = changes
     @manage = manage
-    @off_page = off_page
     @boxed_only = boxed_only
   end
 
@@ -48,7 +47,7 @@ class ProjectsTableSerializer < ApplicationSerializer
   # more: the link to the rows left out, nil with none.
   def attributes
     { columns: @chart.columns.map { |number| { key: number.key, label: number.label, word: number.word, beside: number.beside } },
-      rows: listed.map { |row| row_of(row) } + @off_page.map { |repo| off_page_row(repo) }, stack: stack, more: more }
+      rows: listed.map { |row| row_of(row) }, stack: stack, more: more }
   end
 
   private
@@ -71,12 +70,6 @@ class ProjectsTableSerializer < ApplicationSerializer
   def row_of(row)
     { key: row.key, name: row.name, color_class: row.color_class, on: row.drawn?, drawable: row.boxed?,
       cells: @chart.cells(row).map { |cell| cell_of(cell, row) } }.merge(manage_parts(row.repo, row.rank))
-  end
-
-  # Its rank is none: a project hidden from the stage takes no pin.
-  def off_page_row(repo)
-    { key: repo.full_name, name: repo.name, color_class: nil, on: false, drawable: false,
-      cells: @chart.columns.map { |number| { key: number.key, value: nil, shown: false, pick: nil, link: nil, change: nil } } }.merge(manage_parts(repo, nil))
   end
 
   # pick: the cell's switch, on while visitors see the number; nil without

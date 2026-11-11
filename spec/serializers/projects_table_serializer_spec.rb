@@ -14,7 +14,7 @@ RSpec.describe ProjectsTableSerializer do
 
   def table(changes: false, **options)
     chart = Progress::ChartService.new(user: user, range: "30d", **options).tap(&:call!)
-    described_class.new(chart, changes: changes, manage: chart.builder.present?, off_page: chart.off_page).as_json
+    described_class.new(chart, changes: changes, manage: chart.builder.present?).as_json
   end
 
   def cells(json, name)
@@ -92,7 +92,7 @@ RSpec.describe ProjectsTableSerializer do
     expect(table["rows"].flat_map { |row| row["cells"].pluck("change") }.uniq).to eq([ nil ])
   end
 
-  it "gives the builder every value with its switch, none for site visitors hidden with site visits, Set up where a project counts no site visits, and the projects off their page last" do
+  it "gives the builder every value with its switch, none for site visitors hidden with site visits, Set up where a project counts no site visits, and no row for a project off their page" do
     app.update!(hidden_numbers: [ "visits" ])
     create(:github_repo, user: user, full_name: "me/old", name: "old", included: false)
     create(:entry, user: user, repo_name: "me/old", occurred_at: 2.days.ago)
@@ -103,10 +103,7 @@ RSpec.describe ProjectsTableSerializer do
     expect(cells(json, "lib")["visits"]).to eq("value" => nil, "shown" => false, "pick" => nil, "link" => set_up("lib", lib))
     expect(cells(json, "lib")["site_visitors"]).to eq("value" => nil, "shown" => false, "pick" => nil, "link" => nil)
     expect(json["columns"].map { |column| [ column["label"], column["word"] ] }).to eq([ %w[Commits commits], [ "Site visits", "site visits" ], [ "Site visitors", "site visitors" ] ])
-    expect(json["rows"].map { |row| [ row["name"], row["colorClass"] ] }).to eq([ [ "app", "os-project-1" ], [ "lib", "os-project-2" ], [ "old", nil ] ])
-    expect(json["rows"].last).to include("name" => "old", "drawable" => false, "on" => false)
-    expect(json["rows"].last["cells"].pluck("link")).to eq([ nil, nil, nil ])
-    expect(json["rows"].last["page"]).to eq("on" => false, "path" => "/github_repos/#{user.github_repos.find_by(name: 'old').id}")
+    expect(json["rows"].map { |row| [ row["name"], row["colorClass"] ] }).to eq([ [ "app", "os-project-1" ], [ "lib", "os-project-2" ] ])
   end
 
   it "puts Paused where Free counts another project, and Set up where the script is off, each beside the value in grey and no switch" do

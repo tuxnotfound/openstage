@@ -35,7 +35,7 @@ module Api
     end
 
     def view(user, listing)
-      list = Progress::ListService.new(user: user, listing: listing)
+      list = Progress::ListService.new(user: user, listing: listing, builder: dashboard?(user))
       ProjectListSerializer.new(list, user: user, manage: dashboard?(user)).to_json if list.call
     end
 

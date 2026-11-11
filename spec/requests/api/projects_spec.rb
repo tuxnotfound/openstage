@@ -60,11 +60,15 @@ RSpec.describe "Api::Projects", type: :request do
                                          "pin" => { "on" => false, "path" => "/projects/#{sauna.id}/pin", "title" => "10 projects are pinned. Unpin one to pin this one." })
   end
 
-  it "answers anyone else who asks for the dashboard with the stage's list, kept out of shared caches too" do
-    get "/api/projects/builder", params: { dashboard: 1 }
+  it "answers anyone else who asks for the dashboard with the stage's list, kept out of shared caches too, never the hidden projects" do
+    create(:github_repo, user: user, full_name: "builder/secret", name: "secret", included: false)
+    create(:entry, user: user, repo_name: "builder/secret", hidden: true)
+
+    get "/api/projects/builder", params: { dashboard: 1, hidden: 1 }
 
     expect(response.headers["Cache-Control"]).not_to include("public")
-    expect(json["back"]).to be_nil
+    expect(json).to include("back" => nil, "hidden" => false, "hiddenLabel" => nil)
+    expect(json["rows"].map { |row| row["name"] }).to eq(%w[sauna fire])
     expect(json["rows"].first).to include("edit" => nil, "page" => nil, "pin" => nil)
   end
 

@@ -21,6 +21,14 @@ RSpec.describe Progress::Listing do
     expect(listing.to_params(prefix: described_class::DASHBOARD)).to eq(list_sort: "name", list_q: "sauna")
   end
 
+  it "asks for the hidden projects instead, as a link or a form sends it" do
+    listing = described_class.from({ list_hidden: "1" }, described_class::DASHBOARD)
+
+    expect(listing.hidden).to be(true)
+    expect(listing.with(page: 2).to_params(prefix: described_class::DASHBOARD)).to eq(list_hidden: "1", list_page: 2)
+    expect(described_class.from(hidden: "maybe").hidden).to be(false)
+  end
+
   it "makes the same listing with one thing changed, and equals another that names the same view" do
     listing = described_class.from(sort: "name", page: "4")
 

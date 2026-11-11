@@ -20,9 +20,9 @@ module Progress
     # the builder hid, shown anyway (Entry.counted_on_page). lone: a project's page,
     # whose one project in view is all it shows. builder: the builder's own view.
     attr_accessor :user, :range, :repos, :show, :reveal, :lone, :builder
-    # rows (Progress::Rows) and off_page (GithubRepos) are the table's;
-    # columns, its numbers; drawing: the DrawService of the totals and the chart.
-    attr_reader :section, :rows, :off_page, :columns, :counts, :drawing
+    # rows (Progress::Rows) are the table's; columns, its numbers; drawing:
+    # the DrawService of the totals and the chart.
+    attr_reader :section, :rows, :columns, :counts, :drawing
 
     delegate :totals, :drawn, :default_drawn, :window, :chart, :earliest, to: :drawing
 
@@ -98,14 +98,14 @@ module Progress
       Filter.in_view(section.selected.map(&:repo), colored.map(&:repo))
     end
 
-    # The page's projects, and on the builder's own view the ones hidden from
-    # their page. Which project Free counts site visits for is read once.
+    # The page's projects; the ones hidden from it are in the dashboard's
+    # list of projects (ListService). Which project Free counts site visits
+    # for is read once.
     def list
       projects = lone ? section.selected : section.tally.projects.all
       synced = user.github_repos.by_full_name(projects.map(&:repo))
       slot = SiteVisits::Slot.new(user)
       @rows = projects.map { |project| row(project, synced[project.repo], slot) }
-      @off_page = builder ? user.github_repos.with_entries.where(included: false).order(:name).to_a : []
     end
 
     def row(project, repo, slot)

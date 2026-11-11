@@ -17,8 +17,8 @@ import { lineOf, type Lines } from "./lines"
 // the builder's page lists it and whether it is pinned there with a colour
 // (Pin), and each cell the switch for what visitors
 // see (its value grey while they do not), or Set up or Paused where site
-// visits do not count; a project hidden from the page comes last, with no
-// box. Each of the builder's switches is an eye (Eye), open while visitors
+// visits do not count; a project hidden from the page is in the dashboard's
+// list of projects, not here. Each of the builder's switches is an eye (Eye), open while visitors
 // see it on the stage. On a phone each row stacks, with only the numbers it counts, and
 // below the width its columns need too (stack, the stacked variant). The
 // name column takes what the numbers leave, and a long name wraps rather

@@ -13,8 +13,15 @@ RSpec.describe Progress::ListService do
     count.times { |i| create(:entry, user: user, repo_name: repo, occurred_at: at - i.minutes) }
   end
 
-  def list(**listing)
-    described_class.new(user: user, listing: Progress::Listing.new(**listing)).tap(&:call!)
+  def list(builder: nil, **listing)
+    described_class.new(user: user, listing: Progress::Listing.new(**listing), builder: builder).tap(&:call!)
+  end
+
+  # A repo its builder hid from the stage, its commits hidden with it, as
+  # GithubReposController hides them.
+  def hidden(name, count, at)
+    create(:github_repo, user: user, full_name: "me/#{name}", name: name, included: false)
+    count.times { |i| create(:entry, user: user, repo_name: "me/#{name}", occurred_at: at - i.minutes, hidden: true) }
   end
 
   def names(service)
@@ -82,6 +89,29 @@ RSpec.describe Progress::ListService do
     given = described_class.new(user: user, listing: Progress::Listing.new, projects: ranked).tap(&:call!)
 
     expect(names(given)).to eq(names(list))
+  end
+
+  it "lists the projects hidden from the stage on the builder's dashboard when asked, with their commits as the builder sees them" do
+    commits("me/shown", 1, 2.days.ago)
+    hidden("quiet", 3, 5.days.ago)
+    hidden("older", 1, 40.days.ago)
+
+    stage = list(hidden: true)
+    expect([ names(stage), stage.hidden, stage.hidden_count ]).to eq([ %w[shown], false, 0 ])
+
+    dashboard = list(builder: true)
+    expect([ names(dashboard), dashboard.hidden, dashboard.hidden_count, dashboard.count ]).to eq([ %w[shown], false, 2, 1 ])
+
+    asked = list(builder: true, hidden: true, sort: "commits")
+    expect([ names(asked), asked.cards.map(&:commits), asked.found ]).to eq([ %w[quiet older], [ 3, 1 ], 2 ])
+  end
+
+  it "lists the hidden ones on the dashboard while every other project has a colour" do
+    hidden("quiet", 1, 5.days.ago)
+
+    service = list(builder: true)
+
+    expect([ service.count, service.hidden, names(service) ]).to eq([ 0, true, %w[quiet] ])
   end
 
   it "refuses without a builder or a listing" do

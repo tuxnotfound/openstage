@@ -1,7 +1,7 @@
 module Progress
   # What the stage's list of projects shows (ListService): its order, the
-  # name searched for, whether only live projects show, and which page of
-  # them. Read from a page's or the API's params, so an address no one could
+  # name searched for, whether only live projects show, whether the hidden
+  # ones show instead (on the dashboard alone), and which page of them. Read from a page's or the API's params, so an address no one could
   # have meant (an unknown order, page 0) still opens a list. A link leaves
   # the defaults out of its address. On the dashboard, whose entries read q
   # already, its params carry a prefix (DASHBOARD).
@@ -11,36 +11,38 @@ module Progress
     SORTS = %w[latest commits name].freeze
     # Longer than any repo's name, which GitHub caps at 100.
     QUERY_LENGTH = 100
-    # What a link or a form sends for the live projects alone.
+    # What a link or a form sends for the live projects alone, or the hidden.
     LIVE_VALUES = %w[1 true].freeze
     # Its params, and their prefix on the dashboard.
-    PARAMS = %w[sort q live page].freeze
+    PARAMS = %w[sort q live hidden page].freeze
     DASHBOARD = "list_".freeze
 
-    attr_reader :sort, :query, :live, :page
+    attr_reader :sort, :query, :live, :hidden, :page
 
     def self.names(prefix = "")
       PARAMS.map { |name| "#{prefix}#{name}" }
     end
 
     def self.from(params, prefix = "")
-      new(sort: params[:"#{prefix}sort"], query: params[:"#{prefix}q"], live: params[:"#{prefix}live"], page: params[:"#{prefix}page"])
+      new(sort: params[:"#{prefix}sort"], query: params[:"#{prefix}q"], live: params[:"#{prefix}live"], hidden: params[:"#{prefix}hidden"],
+          page: params[:"#{prefix}page"])
     end
 
-    def initialize(sort: nil, query: nil, live: nil, page: nil)
+    def initialize(sort: nil, query: nil, live: nil, hidden: nil, page: nil)
       @sort = sort.to_s.presence_in(SORTS) || SORTS.first
       @query = query.to_s.strip.first(QUERY_LENGTH)
       @live = LIVE_VALUES.include?(live.to_s)
+      @hidden = LIVE_VALUES.include?(hidden.to_s)
       @page = [ page.to_i, 1 ].max
     end
 
     def to_params(prefix: "")
-      { sort: (sort unless sort == SORTS.first), q: query.presence, live: ("1" if live), page: (page if page > 1) }.compact
+      { sort: (sort unless sort == SORTS.first), q: query.presence, live: ("1" if live), hidden: ("1" if hidden), page: (page if page > 1) }.compact
         .transform_keys { |key| :"#{prefix}#{key}" }
     end
 
-    def with(sort: @sort, query: @query, live: @live, page: @page)
-      self.class.new(sort: sort, query: query, live: live, page: page)
+    def with(sort: @sort, query: @query, live: @live, hidden: @hidden, page: @page)
+      self.class.new(sort: sort, query: query, live: live, hidden: hidden, page: page)
     end
 
     def ==(other)

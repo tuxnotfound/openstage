@@ -113,7 +113,6 @@ RSpec.describe Progress::ChartService do
     expect(builder.cells(row).to_h { |cell| [ cell.number.key, [ cell.value, cell.pick ] ] })
       .to eq("commits" => [ 3, true ], "visits" => [ 40, false ], "site_visitors" => [ 12, nil ])
     expect(builder.columns.map(&:key)).to eq(%w[commits visits site_visitors])
-    expect(builder.off_page.map(&:name)).to eq([ "old" ])
     expect(builder.chart.lines.map { |line| line.number.key }.uniq).to eq(%w[commits])
   end
 

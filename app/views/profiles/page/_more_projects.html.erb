@@ -7,13 +7,14 @@
     links and the search form open the stage again on that view. On a phone
     the name and description take the row, the rest goes under it. On the
     builder's dashboard (manage) each row also has Edit beside its name and
-    its stage switches last (charts/_stage_switches), and the links and the
-    form open the dashboard, with the list's params prefixed.
+    its stage switches last (charts/_stage_switches), the links and the form
+    open the dashboard, with the list's params prefixed, and Hidden lists the
+    projects hidden from the stage instead.
     list: a called Progress::ListService. %>
 <% manage = local_assigns.fetch(:manage, false) %>
 <% serializer = ProjectListSerializer.new(list, user: user, manage: manage) %>
 <% view = serializer.attributes %>
-<% listing = list.listing %>
+<% listing = list.listing.with(hidden: list.hidden) %>
 <% grid = manage ? "md:grid-cols-[minmax(0,1fr)_220px_120px_88px]" : "md:grid-cols-[minmax(0,1fr)_220px_120px]" %>
 <% fields = (request.query_parameters.slice("range", "show", "projects").to_a + view[:back] if manage) %>
 <div id="<%= ProjectsTableSerializer::MORE_ANCHOR %>" class="mt-7 scroll-mt-6">
@@ -37,6 +38,10 @@
         <% if view[:live_label] %>
           <%= link_to view[:live_label], project_list_path(user, listing.with(live: !listing.live, page: 1), manage: manage), class: "os-chip",
                 aria: { current: ("true" if view[:live]) } %>
+        <% end %>
+        <% if view[:hidden_label] %>
+          <%= link_to view[:hidden_label], project_list_path(user, listing.with(hidden: !listing.hidden, page: 1), manage: manage), class: "os-chip",
+                aria: { current: ("true" if view[:hidden]) } %>
         <% end %>
       </div>
     </div>

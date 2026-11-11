@@ -42,7 +42,7 @@ class ProgressViewSerializer < ApplicationSerializer
   def table
     return unless @chart.builder.present? || (!@chart.lone && @chart.rows.size > 1)
 
-    ProjectsTableSerializer.new(@chart, manage: @chart.builder.present?, off_page: @chart.off_page, boxed_only: true)
+    ProjectsTableSerializer.new(@chart, manage: @chart.builder.present?, boxed_only: true)
   end
 
   # Newest first, in the builder's words; its count only while it has any.

@@ -14,7 +14,7 @@
     <%= render "charts/filter", view: view, mode: "dashboard", path_for: path_for, step: step,
                back: chart_params(view, default_range: Progress::Window::DEFAULT).compact %>
   <% end %>
-  <%= render "profiles/page/more_projects", list: @list, user: current_user, manage: true if @list&.count&.positive? %>
+  <%= render "profiles/page/more_projects", list: @list, user: current_user, manage: true if @list && (@list.count + @list.hidden_count).positive? %>
   <%= render "dashboard/untagged", **@untagged, back: chart_params(view, default_range: Progress::Window::DEFAULT).compact %>
   <div class="mt-4 border-t border-line pt-3"><%= render "dashboard/sync" %></div>
 </section>

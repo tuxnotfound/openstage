@@ -18,7 +18,7 @@ export type ProjectsProps = {
   endpoint: string
 }
 
-type Ask = { sort: string; query: string; live: boolean; page: number }
+type Ask = { sort: string; query: string; live: boolean; hidden: boolean; page: number }
 
 // How long typing pauses before the list asks for what was typed.
 const TYPING_MS = 250
@@ -67,6 +67,9 @@ export default function ProjectsIsland({ initial, endpoint }: ProjectsProps) {
           </div>
           {view.liveLabel && (
             <button type="button" className="os-chip" aria-pressed={view.live} onClick={() => go({ live: !view.live, page: 1 })}>{view.liveLabel}</button>
+          )}
+          {view.hiddenLabel && (
+            <button type="button" className="os-chip" aria-pressed={view.hidden} onClick={() => go({ hidden: !view.hidden, page: 1 })}>{view.hiddenLabel}</button>
           )}
         </div>
       </div>
@@ -141,7 +144,7 @@ export function ListRow({ row, fields = null }: { row: ProjectListRow; fields?: 
 }
 
 function askOf(view: ProjectListView): Ask {
-  return { sort: view.sort, query: view.query, live: view.live, page: view.page }
+  return { sort: view.sort, query: view.query, live: view.live, hidden: view.hidden, page: view.page }
 }
 
 // The API's address for a view of the list, its defaults left out as
@@ -153,6 +156,7 @@ export function listUrl(endpoint: string, ask: Ask, fallback: string): string {
   if (ask.sort !== fallback) params.set("sort", ask.sort)
   if (ask.query.trim()) params.set("q", ask.query.trim())
   if (ask.live) params.set("live", "1")
+  if (ask.hidden) params.set("hidden", "1")
   if (ask.page > 1) params.set("page", String(ask.page))
   const search = params.toString()
   return search ? `${path}?${search}` : path

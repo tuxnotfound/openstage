@@ -103,11 +103,12 @@ class DashboardController < ApplicationController
   end
 
   # The projects past the ones with a colour, a page at a time, under the
-  # chart's table, which lists those alone, as the stage does. Its params
-  # carry a prefix, as the entries read q (Progress::Listing::DASHBOARD).
+  # chart's table, which lists those alone, as the stage does, and the ones
+  # hidden from the stage. Its params carry a prefix, as the entries read q
+  # (Progress::Listing::DASHBOARD).
   def project_list
     listing = Progress::Listing.from(params, Progress::Listing::DASHBOARD)
-    list = Progress::ListService.new(user: current_user, listing: listing, projects: @chart.section.tally.projects.all)
+    list = Progress::ListService.new(user: current_user, listing: listing, projects: @chart.section.tally.projects.all, builder: true)
     list if list.call
   end
 end

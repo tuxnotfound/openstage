@@ -20,8 +20,9 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     page.css("[data-chart-table] [data-chart-row]").to_h { |row| [ row["data-chart-row"], row.text.squish ] }
   end
 
-  def page_switch(repo)
-    page.at_css("[data-chart-row='#{repo}'] form[action^='/github_repos/'] button[role='switch']")
+  # In the chart's table or the list under it.
+  def page_switch(name)
+    page.at_css("form[action^='/github_repos/'] button[role='switch'][aria-label='Show #{name} on your stage']")
   end
 
   it "charts the last 30 days of the builder's work with no figure over it, and keeps the entry filters on its links" do
@@ -46,8 +47,8 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     eyes = page.css("[data-chart-table] button[role='switch']:not(.os-pin)")
     expect(eyes.map { |eye| eye["class"] }.uniq).to eq([ "os-eye" ])
     expect(eyes.map { |eye| eye.css("svg").map { |svg| svg["class"].split.first } }.uniq).to eq([ %w[os-eye-open os-eye-shut] ])
-    expect(page_switch("builder/app")["title"]).to eq("Visitors see it on your stage. Click to hide it.")
-    expect([ page_switch("builder/idle")["aria-checked"], page_switch("builder/idle")["title"] ]).to eq([ "false", "Only you see it. Click to show it on your stage." ])
+    expect(page_switch("app")["title"]).to eq("Visitors see it on your stage. Click to hide it.")
+    expect([ page_switch("idle")["aria-checked"], page_switch("idle")["title"] ]).to eq([ "false", "Only you see it. Click to show it on your stage." ])
     expect(page.at_css("section[aria-labelledby='your-activity']").text.squish).not_to include("Visitors see it on your stage")
   end
 
@@ -98,18 +99,21 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
     expect(page.css("[data-chart-row] th span.font-bold").map { |name| name["class"].split.first }).to eq(%w[wrap-anywhere wrap-anywhere])
   end
 
-  it "hides a project from the page with its switch, and keeps it listed to switch back" do
+  it "hides a project from the page with its switch, and lists it under the table to switch back, with its commits as the builder sees them" do
     get "/dashboard"
-    expect(page_switch("builder/app")["aria-checked"]).to eq("true")
+    expect(page_switch("app")["aria-checked"]).to eq("true")
 
     patch "/github_repos/#{tool.id}", params: { included: "false" }
     expect(response).to redirect_to("/dashboard#activity")
 
     get "/dashboard"
-    expect(project_rows.keys.last).to eq("builder/app")
-    expect(page_switch("builder/app")["aria-checked"]).to eq("false")
-    expect(page.css("[data-chart-row='builder/app'] td").map { |cell| cell.text.squish }.last(2)).to eq([ "Commits –", "Site visits –" ])
-    expect(page.at_css("[data-chart-row='builder/app'] th a[href*='projects=']")).to be_nil
+    expect(project_rows.keys).to eq([ "builder/bare" ])
+    list = page.at_css("#more-projects")
+    expect(list.at_css("h3").text).to eq("1 hidden project")
+    expect(list.text.squish).to include("app", "3 commits in 12 months")
+    expect(list.at_css(".os-chip")).to be_nil
+    expect(page_switch("app")["aria-checked"]).to eq("false")
+    expect(page.at_css("button[aria-label='Pin app to your stage']")).to be_nil
     expect(user.entries.where(repo_name: "builder/app").pluck(:hidden).uniq).to eq([ true ])
   end
 
@@ -358,6 +362,25 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       get "/dashboard", params: { list_sort: "name" }
       by_commits = list.css(".os-pills a").find { |link| link.text == "Most commits" }
       expect(by_commits["href"]).to eq("/dashboard?list_sort=commits#more-projects")
+    end
+
+    it "keeps the hidden projects behind a chip, and shows one again from there, coming back to the hidden ones" do
+      patch "/github_repos/#{bare.id}", params: { included: "false" }
+      get "/dashboard"
+
+      chip = list.at_css("a.os-chip[href*='list_hidden']")
+      expect([ chip.text, chip["href"] ]).to eq([ "Hidden · 1", "/dashboard?list_hidden=1#more-projects" ])
+      expect(listed).to eq(%w[app])
+
+      get "/dashboard", params: { list_hidden: "1" }
+      expect([ list.at_css("h3").text, listed ]).to eq([ "1 hidden project", %w[bare] ])
+      eye = list.at_css("form[action='/github_repos/#{bare.id}']")
+      expect(eye.css("input[type='hidden']").to_h { |field| [ field["name"], field["value"] ] }).to include("included" => "true", "back" => "list", "list_hidden" => "1")
+
+      patch "/github_repos/#{bare.id}", params: { included: "true", back: "list", list_hidden: "1" }
+      expect(response).to redirect_to("/dashboard?list_hidden=1#more-projects")
+      get "/dashboard"
+      expect([ listed, list.at_css("a.os-chip[href*='list_hidden']") ]).to eq([ %w[app bare], nil ])
     end
 
     it "comes back to the list on its view once a project is hidden from it" do

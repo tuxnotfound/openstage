@@ -39,7 +39,8 @@ module Progress
     end
 
     # projects: Progress::Projects#all, in rank order, or the ones to draw a
-    # card for. reveal: a repo the builder hid, shown anyway (Entry.counted_on_page).
+    # card for. reveal: a repo the builder hid, or several, shown anyway
+    # (Entry.counted_on_page).
     attr_accessor :user, :projects, :zone, :reveal
     attr_reader :cards
 

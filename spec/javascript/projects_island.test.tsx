@@ -10,17 +10,18 @@ const row: ProjectListRow = {
 }
 
 const view: ProjectListView = {
-  title: "2 more projects", sort: "latest", query: "", live: false, page: 1, pages: 2,
+  title: "2 more projects", sort: "latest", query: "", live: false, hidden: false, page: 1, pages: 2,
   sorts: [{ key: "latest", label: "Latest" }, { key: "commits", label: "Most commits" }, { key: "name", label: "A–Z" }],
-  liveLabel: "Live · 1", range: "1–25 of 30", empty: null, rows: [row], back: null,
+  liveLabel: "Live · 1", hiddenLabel: null, range: "1–25 of 30", empty: null, rows: [row], back: null,
 }
 
 describe("the address of a view of the list", () => {
   test("leaves its defaults out, as Progress::Listing does, so one view has one address", () => {
-    const ask = { sort: "latest", query: "", live: false, page: 1 }
+    const ask = { sort: "latest", query: "", live: false, hidden: false, page: 1 }
 
     expect(listUrl("/api/projects/me", ask, "latest")).toBe("/api/projects/me")
-    expect(listUrl("/api/projects/me", { sort: "name", query: " sauna ", live: true, page: 2 }, "latest")).toBe("/api/projects/me?sort=name&q=sauna&live=1&page=2")
+    expect(listUrl("/api/projects/me", { sort: "name", query: " sauna ", live: true, hidden: false, page: 2 }, "latest")).toBe("/api/projects/me?sort=name&q=sauna&live=1&page=2")
+    expect(listUrl("/api/projects/me?dashboard=1", { ...ask, hidden: true }, "latest")).toBe("/api/projects/me?dashboard=1&hidden=1")
     expect(listUrl("/api/projects/me?dashboard=1", { ...ask, page: 3 }, "latest")).toBe("/api/projects/me?dashboard=1&page=3")
     expect(listUrl("/api/projects/me?dashboard=1", ask, "latest")).toBe("/api/projects/me?dashboard=1")
   })
@@ -63,6 +64,12 @@ describe("a row of the dashboard's list", () => {
 })
 
 describe("the list", () => {
+  test("offers the hidden projects behind a chip of their own on the dashboard, pressed while it lists them", () => {
+    const html = renderToStaticMarkup(<ProjectsIsland initial={{ ...view, hidden: true, hiddenLabel: "Hidden · 3", back: [] }} endpoint="/api/projects/me?dashboard=1" />)
+
+    expect(html).toContain('aria-pressed="true">Hidden · 3</button>')
+  })
+
   test("marks the order and filter in view, and offers the next page alone on the first", () => {
     const html = renderToStaticMarkup(<ProjectsIsland initial={view} endpoint="/api/projects/me" />)
 
