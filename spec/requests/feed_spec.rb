@@ -93,21 +93,21 @@ RSpec.describe "Feed", type: :request do
       create(:user, username: "freebie")
 
       get "/freebie"
-      expect(response.body.index("data-claim-cta")).to be > response.body.index('aria-label="Profile"')
+      expect(response.body.index('name="ref" value="footer"')).to be > response.body.index('aria-label="Profile"')
     end
 
     it "carries a ref tag so footer-driven signups are attributable" do
       create(:user, username: "freebie2")
 
       get "/freebie2"
-      expect(response.body).to include("?ref=footer")
+      expect(response.body).to include('name="ref" value="footer"')
     end
 
     it "stays hidden for Pro profiles" do
       create(:user, username: "paid", pro: true)
 
       get "/paid"
-      expect(response.body).not_to include("data-claim-cta")
+      expect(response.body).not_to include('name="ref" value="footer"')
       expect(response.body).to include("Explore other builders")
     end
   end

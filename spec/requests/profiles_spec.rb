@@ -25,9 +25,9 @@ RSpec.describe "Profiles", type: :request do
         expect(response.body).not_to include("/badge/testuser.svg")
       end
 
-      it "shows the claim link in the footer of free profiles" do
+      it "ends a free profile on the header's button, tagged footer" do
         get "/testuser"
-        expect(response.body).to include("Make your own stage &rarr;")
+        expect(Nokogiri::HTML(response.body).at_css("footer #{"input[name='ref'][value='footer']"}")).to be_present
       end
 
       it "marks the GitHub account with GitHub's icon and says so to screen readers" do
@@ -110,9 +110,9 @@ RSpec.describe "Profiles", type: :request do
     context "when user is pro" do
       let!(:user) { create(:user, username: "paidbuilder", pro: true) }
 
-      it "does not show Powered by Openstage footer" do
+      it "does not end on the button to make your own stage" do
         get "/paidbuilder"
-        expect(response.body).not_to include("data-claim-cta")
+        expect(Nokogiri::HTML(response.body).at_css("footer input[name='ref'][value='footer']")).to be_nil
       end
     end
 

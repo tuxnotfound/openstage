@@ -60,7 +60,8 @@ RSpec.describe "The builder's stage, by name", type: :request do
 
     user.update!(pro: false)
     get "/builder"
-    expect(response.body).to include("Make your own stage &rarr;", "'s proof-of-work stage\"")
+    expect(response.body).to include("'s proof-of-work stage\"")
+    expect(Nokogiri::HTML(response.body).at_css("footer input[name='ref'][value='footer']")).to be_present
   end
 
   it "names it when a builder claims a username or comes back" do

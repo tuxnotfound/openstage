@@ -116,21 +116,31 @@ end
 RSpec.describe "Distribution surfaces", type: :request do
   let!(:user) { create(:user, username: "builder") }
 
-  it "gives a visitor to a free profile their next action, tagged" do
-    get "/builder"
-    expect(response.body).to include("data-claim-cta")
-    expect(response.body).to include("?ref=footer")
+  def footer_button
+    Nokogiri::HTML(response.body).at_css("footer form:has(input[name='ref'][value='footer'])")
   end
 
-  it "does not show the claim link to the owner or on Pro pages" do
+  it "ends a free profile on the header's button for a visitor, straight to GitHub's sign-in, tagged footer" do
+    get "/builder"
+
+    expect([ footer_button["action"], footer_button.at_css("button").text, footer_button.at_css("button")["class"] ])
+      .to eq([ "/auth/github", "Make your own stage", "os-btn sm" ])
+  end
+
+  it "shows it to no member, whoever's stage it is, nor on Pro pages" do
+    sign_in_as(create(:user, username: "someone"))
+    get "/builder"
+    expect(footer_button).to be_nil
+
+    reset!
     sign_in_as(user)
     get "/builder"
-    expect(response.body).not_to include("data-claim-cta")
+    expect(footer_button).to be_nil
 
     reset!
     user.update!(pro: true)
     get "/builder"
-    expect(response.body).not_to include("data-claim-cta")
+    expect(footer_button).to be_nil
   end
 
   it "nudges the badge on the dashboard until one has rendered somewhere" do

@@ -49,8 +49,7 @@
                       class: "cursor-pointer whitespace-nowrap text-ink-2 hover:text-ink" %>
       </nav>
       <span class="max-sm:hidden"><%= render "layouts/theme_toggle" %></span>
-      <%= button_to "Make your own stage", "/auth/github", method: :post, data: { turbo: false, make_your_own: true },
-                    class: "os-btn sm", form_class: "max-sm:ml-auto" %>
+      <%= render "layouts/make_your_own", form_class: "max-sm:ml-auto" %>
     </div>
   <% end %>
 </header>

@@ -27,9 +27,10 @@ OmniAuth.config.allowed_request_methods = [ :post ]
 
 # Counts each sign-in's start once its request passed the CSRF check, which
 # runs first: nothing else sees it, since the sign-in answers before any
-# controller.
+# controller. The button's own tag (ref) rides in the form.
 OmniAuth.config.before_request_phase = lambda do |env|
-  SignIns::CountStartService.new(session: env["rack.session"], user_agent: env["HTTP_USER_AGENT"]).call
+  SignIns::CountStartService.new(session: env["rack.session"], user_agent: env["HTTP_USER_AGENT"],
+                                 ref: Rack::Request.new(env).params["ref"]).call
 end
 OmniAuth.config.silence_get_warning = true
 

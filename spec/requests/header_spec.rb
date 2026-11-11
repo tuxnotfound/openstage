@@ -46,4 +46,14 @@ RSpec.describe "The header", type: :request do
     expect(Event.named("sign_in_start").pluck(:detail)).to eq([ "reddit" ])
     expect(response).to redirect_to("/auth/github/callback")
   end
+
+  it "counts a start from the stage's footer under footer, unless the visitor came with a tag" do
+    post "/auth/github", params: { ref: "footer" }, headers: browser
+    expect(Event.named("sign_in_start").pluck(:detail)).to eq([ "footer" ])
+
+    reset!
+    get "/", params: { ref: "x" }, headers: browser
+    post "/auth/github", params: { ref: "footer" }, headers: browser
+    expect(Event.named("sign_in_start").pluck(:detail)).to eq(%w[footer x])
+  end
 end

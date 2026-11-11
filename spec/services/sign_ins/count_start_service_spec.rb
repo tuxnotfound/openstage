@@ -3,8 +3,8 @@ require "rails_helper"
 RSpec.describe SignIns::CountStartService do
   let(:browser) { "Mozilla/5.0 (Macintosh) Safari/605.1.15" }
 
-  def count(session, user_agent: browser)
-    described_class.new(session: session, user_agent: user_agent).call
+  def count(session, user_agent: browser, ref: nil)
+    described_class.new(session: session, user_agent: user_agent, ref: ref).call
     Event.named("sign_in_start").pluck(:detail)
   end
 
@@ -15,6 +15,13 @@ RSpec.describe SignIns::CountStartService do
 
   it "counts a visitor who came with no tag as unattributed" do
     expect(count({})).to eq([ "unattributed" ])
+  end
+
+  it "takes a button's own tag as the first touch of a visitor who came with none, and keeps an earlier one" do
+    session = {}
+    expect(count(session, ref: "footer")).to eq([ "footer" ])
+    expect(session[:signup_ref]).to eq("footer")
+    expect(count({ signup_ref: "x" }, ref: "footer")).to eq(%w[footer x])
   end
 
   it "never counts a signed-in click, nor a bot's" do
