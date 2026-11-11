@@ -24,5 +24,13 @@ Disallow: /checkout
 Disallow: /sync/
 Disallow: /auth/
 Disallow: /e/
+# The chart's filters re-slice a page whose canonical drops them, and their
+# links multiply into a thousand URLs worth no crawl.
+Disallow: /*?range=
+Disallow: /*&range=
+Disallow: /*?projects=
+Disallow: /*&projects=
+Disallow: /*?show=
+Disallow: /*&show=
 
 Sitemap: https://openstage.dev/sitemap.xml
