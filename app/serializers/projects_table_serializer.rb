@@ -12,7 +12,8 @@
 # Which rows the chart draws (Row#drawn?) and which cells list a value, a
 # switch or a link (DrawService#cells) is the chart's to say; this only
 # writes it. A builder's stage and dashboard (boxed_only) list the rows with
-# a box alone, and name how many they leave to their list of projects (more).
+# a box alone; the stage names how many it leaves to its list of projects,
+# under the cards (more), while the dashboard's list starts under the table.
 class ProjectsTableSerializer < ApplicationSerializer
   include Rails.application.routes.url_helpers
 
@@ -119,6 +120,8 @@ class ProjectsTableSerializer < ApplicationSerializer
   end
 
   def more
+    return if @manage
+
     left = @chart.rows.size - listed.size
     { text: "#{left} more #{'project'.pluralize(left)}", anchor: MORE_ANCHOR } if left.positive?
   end

@@ -336,11 +336,11 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       list.css("a[data-turbo-frame='_top']").map(&:text)
     end
 
-    it "gives the table the ten with a colour, and lists the rest under it with Edit and their stage switches" do
+    it "gives the table the ten with a colour, and lists the rest right under it, with no link to it, with Edit and their stage switches" do
       get "/dashboard", params: { range: "90d" }
 
       expect(project_rows.keys).to eq((0..9).map { |i| "builder/top#{i}" })
-      expect(page.at_css("[data-chart-table] a[href='#more-projects']").text.squish).to eq("2 more projects ↓")
+      expect(page.at_css("[data-chart-table] a[href='#more-projects']")).to be_nil
       expect(list.at_css("h3").text).to eq("2 more projects")
       expect(listed).to eq(%w[app bare])
       expect(list.at_css("a[aria-label='Edit app']")["href"]).to eq("/projects/#{tool.id}/edit")
