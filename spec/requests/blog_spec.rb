@@ -33,10 +33,11 @@ RSpec.describe "Blog", type: :request do
       end
     end
 
-    it "returns 404 for an unknown slug" do
+    it "returns 404 for an unknown slug, on the site's 404 page" do
       get "/blog/does-not-exist"
 
       expect(response).to have_http_status(:not_found)
+      expect(Nokogiri::HTML(response.body).at_css("h1").text).to eq("This page doesn't exist")
     end
   end
 end

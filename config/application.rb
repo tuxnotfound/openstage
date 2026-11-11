@@ -46,5 +46,16 @@ module Openstage
     # past the request log (config/initializers/request_log.rb), so /cable
     # stays unmounted until a feature needs it and those lines leave it out.
     config.action_cable.mount_path = nil
+
+    # A missing page renders in the site's own look (ErrorsController). Every
+    # other error keeps its static page in public/, which needs nothing from
+    # the app, so it still shows when the database is down.
+    config.exceptions_app = lambda do |env|
+      if env["PATH_INFO"] == "/404"
+        ErrorsController.action(:not_found).call(env)
+      else
+        ActionDispatch::PublicExceptions.new(Rails.public_path).call(env)
+      end
+    end
   end
 end

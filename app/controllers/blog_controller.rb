@@ -5,6 +5,6 @@ class BlogController < ApplicationController
 
   def show
     @post = BlogPost.find(params[:slug])
-    head :not_found unless @post
+    render_not_found unless @post
   end
 end

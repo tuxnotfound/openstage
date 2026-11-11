@@ -51,6 +51,14 @@ class ApplicationController < ActionController::Base
     current_user.present?
   end
 
+  # A missing page in the site's own look, as a 404 so search keeps nothing
+  # of it. Anything but a page gets the bare status.
+  def render_not_found
+    return head(:not_found) unless request.format.html?
+
+    render "errors/not_found", status: :not_found
+  end
+
   # A link from an email (the weekly one opens the dashboard) must land
   # where it pointed once the builder has signed in, not on the dashboard.
   def require_authentication

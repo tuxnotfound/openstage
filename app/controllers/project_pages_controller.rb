@@ -6,7 +6,7 @@ class ProjectPagesController < ApplicationController
 
   def show
     @user = User.active.find_by(username: params[:username])
-    return head(:not_found) unless @user
+    return render_not_found unless @user
 
     @revealed = hidden_repo&.full_name
     filter = Progress::Filter.from(params, repo: false)

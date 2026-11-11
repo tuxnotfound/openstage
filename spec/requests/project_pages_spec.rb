@@ -271,10 +271,11 @@ RSpec.describe "Project pages", type: :request do
     expect(response).to redirect_to("/builder")
   end
 
-  it "answers 404 for a builder who does not exist" do
+  it "answers 404 for a builder who does not exist, on the site's 404 page" do
     get "/nobody/side.app"
 
     expect(response).to have_http_status(:not_found)
+    expect(Nokogiri::HTML(response.body).at_css("h1").text).to eq("This page doesn't exist")
   end
 
   describe "visits" do
