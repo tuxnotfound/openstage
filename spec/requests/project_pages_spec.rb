@@ -19,6 +19,15 @@ RSpec.describe "Project pages", type: :request do
     expect(response.body).not_to include("Other work")
   end
 
+  it "leaves out of More from the project in view, and a repo of its name under another owner, whose address opens this page too" do
+    create(:entry, user: user, repo_name: "acme/side.app")
+
+    get "/builder/side.app"
+
+    links = Nokogiri::HTML(response.body).xpath("//h2[starts-with(text(), 'More from')]/following-sibling::ul[1]//a")
+    expect(links.map { |link| link["href"] }).to eq([ "/builder/other" ])
+  end
+
   it "lists what it shipped and published in the window in What's new, as the builder's page does, each where its mark leads" do
     create(:entry, user: user, repo_name: "builder/side.app", title: "An older commit", occurred_at: 4.days.ago)
     older = create(:entry, user: user, repo_name: "builder/side.app", entry_type: "note", source: "manual", title: "An older note", occurred_at: 3.days.ago)

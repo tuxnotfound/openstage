@@ -18,11 +18,12 @@ module Progress
     attr_accessor :user, :slug, :range, :show, :reveal
     # page: the GatherService run for this project; others: the cards of the
     # builder's other projects with a colour; more: how many other projects
-    # are past the palette, which the builder's stage lists; highlights: how many it shipped and published, ever,
-    # the hidden ones too; first_commit: a time, which its share card reads; facts: its
-    # Details as visitors see them, Facts; last_commit: the day of its latest
-    # commit, nil while its builder hides its commits; co_builders:
-    # CoBuilders, busiest first, the ones with no count shown last.
+    # are past the palette, which the builder's stage lists; highlights: how
+    # many it shipped and published, ever, the hidden ones too; first_commit:
+    # a time, which its share card reads; facts: its Details as visitors see
+    # them, Facts; last_commit: the day of its latest commit, nil while its
+    # builder hides its commits; co_builders: CoBuilders, busiest first, the
+    # ones with no count shown last.
     attr_reader :project, :page, :card, :others, :more, :highlights, :first_commit, :facts, :last_commit, :co_builders
 
     validates :user, :slug, presence: true
@@ -94,13 +95,18 @@ module Progress
           .sort_by { |co| [ co.commits ? 0 : 1, -co.commits.to_i, co.user.username ] }
     end
 
+    # Its card, and the others but any whose address opens this page: a repo
+    # of the same name under another owner (find_project).
     def split_cards(cards)
-      mine, rest = cards.partition { |card| card.repo == project.repo }
-      [ mine.first, rest ]
+      [ cards.find { |card| card.repo == project.repo }, cards.reject { |card| this_page?(card) } ]
     end
 
     def past_palette(projects)
-      projects.count { |other| other.repo != project.repo && !ProgressChart::Palette.colored?(other.rank) }
+      projects.count { |other| !this_page?(other) && !ProgressChart::Palette.colored?(other.rank) }
+    end
+
+    def this_page?(other)
+      other.repo.split("/").last.casecmp?(slug)
     end
   end
 end
