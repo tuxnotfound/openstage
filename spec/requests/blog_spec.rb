@@ -23,6 +23,16 @@ RSpec.describe "Blog", type: :request do
       expect(response.body).to include('"@type":"BlogPosting"')
     end
 
+    it "keeps every post's title within the 60 characters search shows, its headline whole" do
+      BlogPost.all.each do |post|
+        get "/blog/#{post.slug}"
+
+        page = Nokogiri::HTML(response.body)
+        expect(page.at_css("title").text.length).to be <= 60, post.slug
+        expect(page.at_css("h1").text.squish).to eq(post.title)
+      end
+    end
+
     it "returns 404 for an unknown slug" do
       get "/blog/does-not-exist"
 

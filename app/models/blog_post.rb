@@ -3,11 +3,14 @@
 # No database, no extra gems — version-controlled, fast, and fully indexable.
 # chart: "username/project", a project page whose commits the post's share
 # card draws under its title; leave it out for a post about no one project.
+# short_title: the tab's and search results' title for a headline too long
+# for them, as search cuts a title past 60 characters, " — Openstage" included.
 class BlogPost
   POSTS = [
     {
       slug: "rebuilt-around-projects",
       title: "Product Hunt sent about 150 visits and no signups. So I rebuilt Openstage around projects.",
+      short_title: "Product Hunt sent about 150 visits, no signups",
       description: "The launch page showed a commit log. Now each project has a page of its own, with visits to its website beside its commits, and Openstage has numbers to reach by November 30.",
       published_on: Date.new(2026, 11, 4),
       reading_minutes: 3,
@@ -16,6 +19,7 @@ class BlogPost
     {
       slug: "rebuilt-on-itself",
       title: "My build-in-public tool showed I had quit. So I rebuilt it on itself.",
+      short_title: "My build-in-public tool showed I had quit",
       description: "Openstage's own timeline showed 82 days of nothing from its founder. What the page exposed, what was broken underneath, and what the relaunch changed, with the honest numbers.",
       published_on: Date.new(2026, 10, 6),
       reading_minutes: 4,
@@ -31,6 +35,7 @@ class BlogPost
     {
       slug: "turn-github-commits-into-a-story",
       title: "How Openstage turns your GitHub commits into a story",
+      short_title: "Turn your GitHub commits into a story",
       description: "Commits show what changed, not why it mattered. Here's how Openstage layers milestones and notes on top of your GitHub activity.",
       published_on: Date.new(2026, 6, 11),
       reading_minutes: 5
@@ -55,6 +60,11 @@ class BlogPost
     @published_on     = attrs[:published_on]
     @reading_minutes  = attrs[:reading_minutes]
     @chart            = attrs[:chart]
+    @short_title      = attrs[:short_title]
+  end
+
+  def short_title
+    @short_title || title
   end
 
   def to_param

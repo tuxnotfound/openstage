@@ -1,4 +1,4 @@
-<% content_for :title, "#{@post.title} — Openstage" %>
+<% content_for :title, "#{@post.short_title} — Openstage" %>
 <% content_for :meta_description, @post.description %>
 <% content_for :og_type, "article" %>
 <% content_for :og_image, share_card(og_post_url(@post.slug)) %>
