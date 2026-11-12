@@ -21,12 +21,12 @@ RSpec.describe "Profiles", type: :request do
       end
 
       it "counts one of each in the singular in the description of a builder with no bio" do
-        create(:entry, user: user, entry_type: "milestone", source: "manual")
-        create(:github_repo, user: user)
+        create(:github_repo, user: user, full_name: "testuser/app")
+        create(:entry, user: user, entry_type: "milestone", source: "manual", repo_name: "testuser/app")
         get "/testuser"
 
         description = Nokogiri::HTML(response.body).at_css("meta[name='description']")["content"]
-        expect(description).to end_with("1 entry, 1 repo, 1 milestone.")
+        expect(description).to end_with("1 entry, 1 project, 1 milestone.")
       end
 
       it "does not show README badge snippet" do
@@ -242,7 +242,7 @@ RSpec.describe "Profiles", type: :request do
         get "/builder"
 
         expect(facts).not_to include("entries", "entry", "milestone")
-        expect(description).to eq("#{user.display_name} is building in public on Openstage — 1 repo.")
+        expect(description).to eq("#{user.display_name} is building in public on Openstage — 1 project.")
         expect(response.body).not_to include("Nothing here yet")
         expect(Nokogiri::HTML(response.body).at_css("[data-react='progress']")).to be_present
         expect(Nokogiri::HTML(response.body).css("section[aria-labelledby='projects'] .os-h3").map { |name| name.text.squish }).to eq([ "app" ])
@@ -310,6 +310,15 @@ RSpec.describe "Profiles", type: :request do
 
       def cards
         Nokogiri::HTML(response.body).css("section[aria-labelledby='projects'] .os-card").map { |card| card.text.squish }
+      end
+
+      it "counts the projects the stage shows in its header, a private repo's among them, and no repo without work" do
+        create(:github_repo, user: user, full_name: "builder/idle")
+        get "/builder"
+
+        header = Nokogiri::HTML(response.body).at_css("section[aria-label='Profile']").text.squish
+        expect(header).to include("2 projects")
+        expect(header).not_to include("repo")
       end
 
       it "puts What's new above Recent commits" do

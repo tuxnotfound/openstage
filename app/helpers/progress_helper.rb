@@ -7,9 +7,9 @@ module ProgressHelper
   BADGE_WORDS = { milestone: "Milestone", shipped: "Shipped", published: "Published" }.freeze
 
   # A builder's page's counts as visitors read them, each only while it has
-  # any: "3 entries", "1 repo".
-  def progress_counts(entries:, repos:, milestones:)
-    { "entry" => entries, "repo" => repos, "milestone" => milestones }.filter_map { |word, count| pluralize(count, word) if count.positive? }
+  # any: "3 entries", "1 project".
+  def progress_counts(entries:, projects:, milestones:)
+    { "entry" => entries, "project" => projects, "milestone" => milestones }.filter_map { |word, count| pluralize(count, word) if count.positive? }
   end
 
   # This page with some of its params changed; nil drops one.

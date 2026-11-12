@@ -1,5 +1,5 @@
 <% content_for :title do %><%= @user.display_name %> (@<%= @user.username %>) — Openstage<% end %>
-<% counts = progress_counts(entries: @total_entries, repos: @repos_synced, milestones: @milestones) %>
+<% counts = progress_counts(entries: @total_entries, projects: @projects, milestones: @milestones) %>
 <% content_for :meta_description do %><%= @user.bio.presence || "#{@user.display_name} is building in public on Openstage#{" — #{counts.join(', ')}" if counts.any?}." %><% end %>
 <% content_for :canonical, profile_url(@user.username) %>
 <% content_for :og_type, "profile" %>

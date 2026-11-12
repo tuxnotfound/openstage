@@ -28,8 +28,6 @@ class ProfilesController < ApplicationController
     # other numbers.
     @total_entries = @user.entries.publicly_counted.without_hidden_commits.count
     @empty = @total_entries.zero? && @user.entries.publicly_counted.none?
-    # Public repos only: counting private ones would disclose that they exist.
-    @repos_synced  = @user.github_repos.included_repos.public_repos.count
     @milestones    = @user.entries.publicly_counted.where(entry_type: :milestone).count
     # public_activity_streak, not current_streak: the latter counts private
     # entries, so the headline number would disclose private working days.
@@ -59,10 +57,17 @@ class ProfilesController < ApplicationController
   # project; ?range=, ?show= and ?projects= pick another view (Progress::Filter),
   # and the projects scope the whole page. ?sort=, ?q=, ?live= and ?page= pick
   # the list of the projects past the cards, as its links do without the script.
+  # It counts the projects the stage shows too, a card or a row of its list
+  # each, so the header's count matches what a visitor sees: a private
+  # repo's project counts, as its card names it; a repo with no work does not.
   def gather
+    @projects = 0
     filter = Progress::Filter.from(params)
     service = Progress::GatherService.new(user: @user, range: filter.range, repos: filter.projects, show: filter.show,
                                           listing: Progress::Listing.from(params))
-    service if service.call
+    return unless service.call
+
+    @projects = service.section.tally.projects.all.size
+    service
   end
 end
