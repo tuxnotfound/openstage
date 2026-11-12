@@ -12,7 +12,26 @@ RSpec.describe "Home", type: :request do
 
       expect(response.body).to include("Keep shipping.")
       expect(response.body).to include("Openstage does the showing.")
-      expect(response.body).to include("Start free with GitHub")
+    end
+
+    # Signing in claims a stage the visitor has already seen, so the landing
+    # asks for a GitHub username first, at its top and its end.
+    it "asks a signed-out visitor for their GitHub username, not a sign-in" do
+      Rails.configuration.x.github_profile_token = "preview-token"
+      get "/"
+      Rails.configuration.x.github_profile_token = nil
+
+      forms = Nokogiri::HTML(response.body).css("form[data-preview-form]")
+      expect(forms.map { |form| form["action"] }).to eq(%w[/preview /preview])
+      expect(forms.map { |form| form.at_css("input[name=login]")["id"] }).to eq(%w[preview-login preview-login-end])
+      expect(response.body).not_to include("Start free with GitHub")
+    end
+
+    it "keeps the sign-in while previews are off, as before the token is set" do
+      get "/"
+
+      expect(response.body).not_to include("data-preview-form")
+      expect(Nokogiri::HTML(response.body).css("form[action='/auth/github']").size).to be >= 2
     end
 
     # The whole feed left the landing on 2026-09-29, when it sold a network of

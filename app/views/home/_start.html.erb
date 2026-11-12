@@ -1,0 +1,11 @@
+<%# A signed-out visitor's first step: their GitHub username, to see their
+    stage before signing in; the sign-in itself while previews are off, so
+    a deploy before the token never leaves the landing without a way in.
+    id and form_class: the form's (previews/_form). %>
+<% if previews_on? %>
+  <%= render "previews/form", id: id, form_class: local_assigns[:form_class] %>
+<% else %>
+  <%= button_to "/auth/github", method: :post, data: { turbo: false }, class: "os-btn" do %>
+    <%= brand_icon(:github) %><span>Start free with GitHub</span>
+  <% end %>
+<% end %>

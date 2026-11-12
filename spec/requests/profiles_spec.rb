@@ -152,6 +152,18 @@ RSpec.describe "Profiles", type: :request do
         expect(response).to have_http_status(:not_found)
         expect(response.body).to include("@nobody_here_xyz isn't on Openstage yet")
         expect(response.body).to include("@nobody_here_xyz is available")
+        # No GitHub login holds an underscore, so no preview is offered.
+        expect(response.body).not_to include("data-preview-form")
+      end
+
+      it "offers the stage that name's GitHub account would make" do
+        Rails.configuration.x.github_profile_token = "preview-token"
+        get "/ada-builds"
+        Rails.configuration.x.github_profile_token = nil
+
+        form = Nokogiri::HTML(response.body).at_css("form[data-preview-form]")
+        expect(form["action"]).to eq("/preview")
+        expect(form.at_css("input[name=login]")["value"]).to eq("ada-builds")
       end
     end
 
