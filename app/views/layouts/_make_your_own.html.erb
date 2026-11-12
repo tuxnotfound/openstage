@@ -1,7 +1,15 @@
-<%# The button that starts a signed-out visitor's own stage, straight to
-    GitHub's sign-in: the header's, and the one ending a stage or a project's
-    page (layouts/_invite). ref: a tag for
+<%# The button that starts a signed-out visitor's own stage: the header's,
+    and the one ending a stage or a project's page (layouts/_invite). It
+    leads to the landing, whose box shows their stage before any sign-in;
+    while previews are off, straight to GitHub's sign-in. ref: a tag for
     /admin, the visitor's first touch when they came with none
-    (SignIns::CountStartService); form_class: its form's. %>
-<%= button_to "Make your own stage", "/auth/github", method: :post, params: (local_assigns[:ref] ? { ref: ref } : {}),
-              data: { turbo: false, make_your_own: true }, class: "os-btn sm", form_class: local_assigns[:form_class] %>
+    (ApplicationController#capture_first_touch_ref, or
+    SignIns::CountStartService on the sign-in); form_class: its outer
+    element's. %>
+<% if previews_on? %>
+  <%= link_to "Make your own stage", root_path(ref: local_assigns[:ref]), data: { make_your_own: true },
+              class: "os-btn sm #{local_assigns[:form_class]}" %>
+<% else %>
+  <%= button_to "Make your own stage", "/auth/github", method: :post, params: (local_assigns[:ref] ? { ref: ref } : {}),
+                data: { turbo: false, make_your_own: true }, class: "os-btn sm", form_class: local_assigns[:form_class] %>
+<% end %>

@@ -17,7 +17,7 @@ class PreviewsController < ApplicationController
   # The landing's form: the username typed, or a GitHub profile's address
   # pasted, as the preview's own address.
   def new
-    @login = params[:login].to_s.strip.sub(%r{\A(?:https?://)?(?:www\.)?github\.com/}i, "").delete_prefix("@").delete_suffix("/")
+    @login = params[:github].to_s.strip.sub(%r{\A(?:https?://)?(?:www\.)?github\.com/}i, "").delete_prefix("@").delete_suffix("/")
     return redirect_to(root_path) if @login.blank?
     return render(:missing, status: :unprocessable_content) unless @login.match?(Previews::BuildService::LOGIN)
 

@@ -20,24 +20,24 @@ RSpec.describe "Previews", type: :request do
 
   describe "GET /preview" do
     it "sends the username typed to its preview" do
-      get "/preview", params: { login: " @Ada " }
+      get "/preview", params: { github: " @Ada " }
       expect(response).to redirect_to("/preview/Ada")
     end
 
     it "takes a GitHub profile's address pasted" do
-      get "/preview", params: { login: "https://github.com/ada/" }
+      get "/preview", params: { github: "https://github.com/ada/" }
       expect(response).to redirect_to("/preview/ada")
     end
 
     it "says so for a name GitHub could never have" do
-      get "/preview", params: { login: "your_username" }
+      get "/preview", params: { github: "your_username" }
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("No GitHub user named @your_username")
     end
 
     it "goes home with nothing typed" do
-      get "/preview", params: { login: "" }
+      get "/preview", params: { github: "" }
       expect(response).to redirect_to(root_path)
     end
   end

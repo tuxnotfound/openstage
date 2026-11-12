@@ -23,7 +23,7 @@ RSpec.describe "Home", type: :request do
 
       forms = Nokogiri::HTML(response.body).css("form[data-preview-form]")
       expect(forms.map { |form| form["action"] }).to eq(%w[/preview /preview])
-      expect(forms.map { |form| form.at_css("input[name=login]")["id"] }).to eq(%w[preview-login preview-login-end])
+      expect(forms.map { |form| form.at_css("input[name=github]")["id"] }).to eq(%w[preview-login preview-login-end])
       expect(response.body).not_to include("Start free with GitHub")
     end
 

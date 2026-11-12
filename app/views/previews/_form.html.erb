@@ -5,7 +5,10 @@
 <%= form_with url: new_preview_path, method: :get, data: { preview_form: true },
               class: "flex w-full max-w-[480px] flex-wrap gap-2 #{local_assigns[:form_class]}" do %>
   <label for="<%= id %>" class="sr-only">Your GitHub username</label>
-  <input type="text" id="<%= id %>" name="login" value="<%= local_assigns[:value] %>" placeholder="Enter your GitHub username" required
-         autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="100" class="os-field min-w-0 flex-[1_1_220px]">
+  <%# Named github, not login or username, and marked for the password
+      managers, which otherwise take it for a sign-in and offer to fill it. %>
+  <input type="text" id="<%= id %>" name="github" value="<%= local_assigns[:value] %>" placeholder="Enter your GitHub username" required
+         autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="100" class="os-field min-w-0 flex-[1_1_220px]"
+         data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
   <button type="submit" class="<%= local_assigns.fetch(:button_class, "os-btn") %> flex-[0_0_auto]" data-turbo-submits-with="Building your stage…">See your stage</button>
 <% end %>

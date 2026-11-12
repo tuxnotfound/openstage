@@ -60,9 +60,6 @@
         <% else %>
           <%= render "home/start", id: "preview-login" %>
         <% end %>
-        <% if @demo_user %>
-          <%= link_to "See a live stage", profile_path(@demo_user.username), class: "os-btn2" %>
-        <% end %>
       </div>
       <p class="os-note mt-3.5">Asks only for your email. Your public repos show up on your stage, and you can hide any of them. Private ones only if you add them. Never posts to your X or other accounts.</p>
     </div>

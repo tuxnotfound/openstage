@@ -163,7 +163,7 @@ RSpec.describe "Profiles", type: :request do
 
         form = Nokogiri::HTML(response.body).at_css("form[data-preview-form]")
         expect(form["action"]).to eq("/preview")
-        expect(form.at_css("input[name=login]")["value"]).to eq("ada-builds")
+        expect(form.at_css("input[name=github]")["value"]).to eq("ada-builds")
       end
     end
 
