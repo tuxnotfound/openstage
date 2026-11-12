@@ -144,6 +144,9 @@ RSpec.describe "Previews", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("No public commits in the last 12 months")
+      # The top's sign-in stays; the end's, with nothing to keep current, goes.
+      expect(Nokogiri::HTML(response.body).css("main form[action='/auth/github'] button").map { |b| b.text.squish }).to eq([ "Make your own stage" ])
+      expect(response.body).not_to include("Keep it current")
     end
   end
 

@@ -67,11 +67,16 @@
     <%= render "previews/recent", preview: @preview, groups: groups %>
   <% end %>
 
-  <section class="os-panel flex flex-wrap items-center justify-between gap-x-6 gap-y-3.5" aria-labelledby="claim-end">
-    <div class="min-w-0">
-      <h2 id="claim-end" class="os-h3">Keep it current</h2>
-      <p class="os-sm os-muted mt-0.5">A page per project, private repos if you add them, and the sync every 2 hours.</p>
-    </div>
-    <%= render "previews/claim" %>
-  </section>
+  <%# Its end repeats the sign-in for whoever read this far; with no public
+      commits there is nothing to keep current, and the top's button is
+      a glance away. %>
+  <% unless @preview.empty? %>
+    <section class="os-panel flex flex-wrap items-center justify-between gap-x-6 gap-y-3.5" aria-labelledby="claim-end">
+      <div class="min-w-0">
+        <h2 id="claim-end" class="os-h3">Keep it current</h2>
+        <p class="os-sm os-muted mt-0.5">A page per project, private repos if you add them, and the sync every 2 hours.</p>
+      </div>
+      <%= render "previews/claim" %>
+    </section>
+  <% end %>
 </div>
