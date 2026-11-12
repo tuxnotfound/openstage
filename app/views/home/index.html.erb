@@ -54,11 +54,14 @@
       <span class="os-tag">For indie and side-project builders</span>
       <h1 class="os-h1 mt-4.5"><%= safe_join(HomeHelper::TAGLINE, tag.br) %></h1>
       <p class="os-p mt-4 text-lg">Openstage keeps a public page of everything you're building, project by project. It stays current from your GitHub commits while you work.</p>
-      <div class="mt-6 flex flex-wrap items-center gap-x-4.5 gap-y-3">
+      <div class="mt-6">
         <% if user_signed_in? %>
-          <%= link_to "Go to your dashboard", dashboard_path, class: "os-btn" %>
+          <div class="flex flex-wrap items-center gap-x-4.5 gap-y-3">
+            <%= link_to "Go to your dashboard", dashboard_path, class: "os-btn" %>
+            <% if @demo_user %><%= link_to "See a live stage", profile_path(@demo_user.username), class: "os-btn2" %><% end %>
+          </div>
         <% else %>
-          <%= render "home/start", id: "preview-login" %>
+          <%= render "home/start", id: "preview-login", live: @demo_user %>
         <% end %>
       </div>
       <p class="os-note mt-3.5">Asks only for your email. Your public repos show up on your stage, and you can hide any of them. Private ones only if you add them. Never posts to your X or other accounts.</p>
@@ -112,12 +115,12 @@
 <section class="os-panel p-7 text-center sm:p-14">
   <h2 class="os-h1 text-[clamp(30px,4vw,46px)]">Your commits already tell the story.</h2>
   <p class="os-p mt-2.5 text-lg">Give them a page. Free, and it fills itself.</p>
-  <div class="mt-5.5 flex flex-wrap items-center justify-center gap-x-4.5 gap-y-3">
+  <div class="mt-5.5">
     <% if user_signed_in? %>
       <%= link_to "Go to your dashboard", dashboard_path, class: "os-btn" %>
     <% else %>
-      <%= render "home/start", id: "preview-login-end", form_class: "justify-center" %>
+      <%= render "home/start", id: "preview-login-end", center: true %>
     <% end %>
-    <%= link_to "Pro is $7 a month. See pricing", pricing_path, class: "os-link" %>
   </div>
+  <%= link_to "Pro is $7 a month. See pricing", pricing_path, class: "os-link mt-4 inline-block" %>
 </section>

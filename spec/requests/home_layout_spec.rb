@@ -26,16 +26,13 @@ RSpec.describe "Home layout", type: :request do
     expect(response.body).not_to include("Everything on one page")
   end
 
-  # Its name opens the whole stage. A "See a live stage" button beside the
-  # username box made a second action for a newcomer, so it left.
   it "shows a real page above the fold, with a way to see all of it" do
     get "/"
 
     expect(response.body).to include("A real Openstage page")
     expect(response.body).to include("openstage.dev/tuxnotfound")
-    page = Nokogiri::HTML(response.body)
-    expect(page.css("a").select { |link| link["href"] == "/tuxnotfound" }.map { |link| link.text.squish }).to include("Tux")
-    expect(page.css("a").map { |link| link.text.squish }).not_to include("See a live stage")
+    live = Nokogiri::HTML(response.body).css("a").find { |link| link.text.squish == "See a live stage" }
+    expect([ live["href"], live["class"] ]).to eq([ "/tuxnotfound", "os-btn2" ])
   end
 
   it "sells projects: a line each, and what each one is" do

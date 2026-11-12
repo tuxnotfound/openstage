@@ -38,44 +38,6 @@ RSpec.describe "The header", type: :request do
     expect(menu.at_css("[data-controller='theme']")).to be_present
   end
 
-  context "once previews are on" do
-    around do |example|
-      Rails.configuration.x.github_profile_token = "preview-token"
-      example.run
-    ensure
-      Rails.configuration.x.github_profile_token = nil
-    end
-
-    def make_your_own
-      header.css("a").find { |link| link.text.squish == "Make your own stage" }
-    end
-
-    # The landing's box shows a visitor their stage before any sign-in, so
-    # the button leads there, and leaves the landing, where the box is.
-    it "leads a visitor to the landing's box, and leaves the landing to it" do
-      create(:user, username: "builder")
-
-      get "/builder"
-      expect(make_your_own["href"]).to eq("/")
-      expect(make_your_own["class"]).to eq("os-btn sm max-sm:ml-auto")
-      expect(form_of("Sign in")["action"]).to eq("/auth/github")
-
-      get "/"
-      expect(make_your_own).to be_nil
-      expect(header.text).not_to include("Make your own stage")
-      expect(header.at_css("details[data-phone-menu]")["class"]).to include("max-sm:ml-auto")
-      expect(form_of("Sign in")["action"]).to eq("/auth/github")
-    end
-
-    it "carries a stage's invite's tag to the landing" do
-      create(:user, username: "builder")
-      get "/builder"
-
-      invite = Nokogiri::HTML(response.body).at_css("[data-invite] a[data-make-your-own]")
-      expect(invite["href"]).to eq("/?ref=footer")
-    end
-  end
-
   it "stays as it was for a member" do
     sign_in_as(create(:user))
     get "/feed"

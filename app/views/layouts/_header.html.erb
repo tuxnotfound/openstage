@@ -49,10 +49,8 @@
                       class: "cursor-pointer whitespace-nowrap text-ink-2 hover:text-ink" %>
       </nav>
       <span class="max-sm:hidden"><%= render "layouts/theme_toggle" %></span>
-      <%# On the landing its box is the one action, so the button leaves. %>
-      <% landing = previews_on? && controller_name == "home" %>
-      <%= render "layouts/make_your_own", form_class: "max-sm:ml-auto" unless landing %>
-      <details class="relative sm:hidden <%= "max-sm:ml-auto" if landing %>" data-controller="dropdown" data-phone-menu>
+      <%= render "layouts/make_your_own", form_class: "max-sm:ml-auto" %>
+      <details class="relative sm:hidden" data-controller="dropdown" data-phone-menu>
         <summary class="os-chip size-8.5 cursor-pointer justify-center p-0 text-ink-2 list-none [&::-webkit-details-marker]:hidden" aria-label="Menu">
           <svg class="size-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
         </summary>

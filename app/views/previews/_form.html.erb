@@ -10,5 +10,5 @@
   <input type="text" id="<%= id %>" name="github" value="<%= local_assigns[:value] %>" placeholder="Enter your GitHub username" required
          autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="100" class="os-field min-w-0 flex-[1_1_220px]"
          data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
-  <button type="submit" class="<%= local_assigns.fetch(:button_class, "os-btn") %> flex-[0_0_auto]" data-turbo-submits-with="Building your stage…">See your stage</button>
+  <button type="submit" class="<%= local_assigns.fetch(:button_class, "os-btn") %> flex-[0_0_auto]" data-turbo-submits-with="Building your preview…">Preview your stage</button>
 <% end %>

@@ -27,6 +27,23 @@ RSpec.describe "Home", type: :request do
       expect(response.body).not_to include("Start free with GitHub")
     end
 
+    # Three ways in, each with its own verb and weight: the box first, the
+    # sign-up named as the header's button, and a live stage as a link.
+    it "offers a preview first, then the sign-up and a live stage" do
+      create(:user, username: "tuxnotfound", github_username: "tuxnotfound")
+      Rails.configuration.x.github_profile_token = "preview-token"
+      get "/"
+      Rails.configuration.x.github_profile_token = nil
+
+      hero = Nokogiri::HTML(response.body).at_css("main section")
+      expect(hero.at_css("form[data-preview-form] button").text).to eq("Preview your stage")
+      expect(hero.at_css("form[data-preview-form] button")["class"]).to start_with("os-btn ")
+      sign_up = hero.at_css("form[action='/auth/github']")
+      expect([ sign_up.text.squish, sign_up.at_css("button")["class"] ]).to eq([ "Make your own stage", "os-btn2" ])
+      live = hero.at_css("a[data-live-stage]")
+      expect([ live.text.squish, live["href"], live["class"] ]).to eq([ "See a live stage →", "/tuxnotfound", "os-link text-[15px]" ])
+    end
+
     it "keeps the sign-in while previews are off, as before the token is set" do
       get "/"
 
