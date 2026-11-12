@@ -19,8 +19,9 @@ export type CompareChartView = {
   // key: the row's (TableRow); number: the number's; start: the point its
   // first vertex stands on.
   paths: { d: string; colorClass: string; number: string; key: string; start: number }[]
-  // value: null on a chart that compares numbers, each on its own peak.
-  ticks: { value: string | null; top: number }[]
+  // value: the gridline's on a chart of one number, else null; values:
+  // each number's on a chart that compares them, each on its own axis.
+  ticks: { value: string | null; top: number; values: { key: string; label: string }[] }[]
   // values: one per tip, "–" where the project shows none of it.
   columns: { left: number; width: number; mark: number; title: string; rows: { key: string; name: string; colorClass: string; values: string[] }[] }[]
   // The tooltip's columns: each number with lines, then any the server

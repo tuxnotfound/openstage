@@ -19,6 +19,20 @@ module ProgressChart
       (0..count).map { |k| whole(k * step) }
     end
 
+    # The two gridlines of an axis over max, its middle and its top: a step
+    # of one significant figure, rounded up from half of max, and twice it,
+    # so both read as round numbers (20 and 40 over 37). whole: a count
+    # never splits, so the step is at least 1.
+    def self.two_steps(max, whole: true)
+      raw = [ max.to_f, whole ? 2 : 0 ].max / 2
+      return [ 1, 2 ] unless raw.positive?
+
+      power = 10.0**Math.log10(raw).floor
+      step = (((raw / power) - 1e-9).ceil * power).round(6)
+      step = step.round if step == step.round
+      [ step, step * 2 ]
+    end
+
     def self.step_for(mantissa, power)
       if mantissa <= 1 then 1
       elsif mantissa <= 2 then 2

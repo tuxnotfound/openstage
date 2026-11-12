@@ -19,6 +19,8 @@ RSpec.describe CompareChartSerializer do
     expect(json["tips"]).to eq([ { "key" => "commits", "label" => "Commits", "line" => true }, { "key" => "visits", "label" => "Site visits", "line" => true } ])
     expect(json["columns"].last["rows"]).to eq([ { "key" => "me/app", "name" => "app", "colorClass" => "os-project-1", "values" => %w[1 400] } ])
     expect(json["ticks"].pluck("value")).to eq([ nil, nil ])
+    expect(json["ticks"].pluck("values")).to eq([ [ { "key" => "commits", "label" => "2" }, { "key" => "visits", "label" => "200" } ],
+                                                  [ { "key" => "commits", "label" => "4" }, { "key" => "visits", "label" => "400" } ] ])
     expect(json).to include("indexed" => true, "note" => nil, "none" => "Nothing this week", "axis" => [ "Oct 19", "Today" ])
   end
 
@@ -52,7 +54,7 @@ RSpec.describe CompareChartSerializer do
     chart = ProgressChart::Compare.new(window: window, lines: [ line(commits, [ 3, 1 ]) ], numbers: [ commits ])
 
     json = described_class.new(chart).as_json
-    expect(json["ticks"].pluck("value")).to eq(%w[2 4])
+    expect(json["ticks"].pluck("value", "values")).to eq([ [ "2", [] ], [ "4", [] ] ])
     expect(json).to include("indexed" => false, "note" => nil)
   end
 end

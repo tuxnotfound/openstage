@@ -106,3 +106,25 @@ describe("a chart with nothing to draw", () => {
     expect(html).toContain("No commits in the last 30 days.")
   })
 })
+
+describe("the gridlines' values", () => {
+  const path = (number: string) => ({ d: "M0 100 L1000 0", colorClass: "os-project-1", number, key: "me/app", start: 0 })
+  const labels = (html: string) => [...html.matchAll(/class="os-ylab[^"]*"[^>]*>(.*?)<\/div>/g)].map(([, inner = ""]) => inner)
+
+  test("name one number's value on a chart of it alone", () => {
+    const html = renderToStaticMarkup(<CompareChart chart={chart({ paths: [path("commits")], ticks: [{ value: "2", top: 50, values: [] }] })} lines={{ commits: 0 }} focus={null} />)
+
+    expect(labels(html)).toEqual(["2"])
+  })
+
+  test("name each number's value beside its line's sample on a chart that compares them, in its line style", () => {
+    const ticks = [{ value: null, top: 50, values: [{ key: "commits", label: "20" }, { key: "visits", label: "200" }] }]
+    const html = renderToStaticMarkup(<CompareChart chart={chart({ paths: [path("commits"), path("visits")], ticks, indexed: true })}
+                                                    lines={{ commits: 0, visits: 1 }} focus={null} />)
+
+    const [label = ""] = labels(html)
+    expect([...label.matchAll(/<\/svg>([^<]*)<\/span>/g)].map(([, value]) => value)).toEqual(["20", "200"])
+    const dashes = [...label.matchAll(/<line [^>]*>/g)].map(([line]) => line.match(/stroke-dasharray="([^"]*)"/)?.[1] ?? null)
+    expect(dashes).toEqual([null, "0.1 5.5"])
+  })
+})

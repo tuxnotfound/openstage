@@ -19,7 +19,7 @@ module ProgressChart
     def aria_label
       return "Nothing to chart, #{labels.words}" if chart.numbers.empty?
 
-      "#{what.upcase_first} by #{chart.per}, #{'each against its own peak, ' if chart.indexed?}#{labels.words}"
+      "#{what.upcase_first} by #{chart.per}, #{'each on its own scale, ' if chart.indexed?}#{labels.words}"
     end
 
     # What a point's title adds on an averaged chart. A level is never

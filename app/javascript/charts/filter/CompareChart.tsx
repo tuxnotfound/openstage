@@ -7,7 +7,8 @@ import Mark, { MarkIcon, type Lead } from "./Marks"
 // Draws a chart filter's chart as the server worked it out
 // (CompareChartSerializer), as charts/_chart renders the same view: a line
 // per project and number, in the project's colour and its number's line
-// style by this page's line order. Hovering a point, dragging across it on
+// style by this page's line order, and the gridlines' values, each
+// number's beside its line's sample when the chart compares numbers. Hovering a point, dragging across it on
 // a touch screen or moving with the arrow keys once the chart has focus
 // shows a mark on each line there and one tooltip, a row per project with
 // anything at that point and a column per number drawn, each followed by
@@ -96,7 +97,15 @@ export default function CompareChart({ chart, lines, focus, height = "", hidden,
                   strokeDasharray={LINE_DASHES[line(path)] || undefined} style={{ opacity: hot(path) ? 1 : FADED }} />
           ))}
         </svg>
-        {chart.ticks.map((tick) => tick.value && <div key={`label-${tick.top}`} className="os-ylab -translate-y-1/2" style={{ top: `${tick.top}%` }}>{tick.value}</div>)}
+        {chart.ticks.map((tick) => (tick.value || tick.values.length > 0) && (
+          <div key={`label-${tick.top}`} className="os-ylab flex -translate-y-1/2 items-center gap-2.5" style={{ top: `${tick.top}%` }}>
+            {tick.value ?? tick.values.map((each) => (
+              <span key={each.key} className="inline-flex items-center gap-1">
+                <LineKey line={lineOf(lines, each.key, chart.indexed)} className="static h-1.5 w-4" />{each.label}
+              </span>
+            ))}
+          </div>
+        ))}
         <div className="absolute inset-y-0 right-0 w-0.5 bg-strong" aria-hidden="true" />
         {column && <div className="pointer-events-none absolute inset-y-0 z-[1] w-px bg-ink-3" style={{ left: `${x}%` }} aria-hidden="true" />}
         {marks.map(({ path, top }) => (

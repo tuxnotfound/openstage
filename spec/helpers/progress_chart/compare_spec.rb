@@ -23,12 +23,16 @@ RSpec.describe ProgressChart::Compare do
     paths.map { |d, *| d.scan(/[ML][\d.]+ ([\d.]+)/).flatten.map(&:to_f).min }
   end
 
-  it "draws a line per project and number, each carrying its colour and its number, every number against its own peak" do
+  it "draws a line per project and number, each carrying its colour and its number, every number on its own round axis, named on each gridline" do
     compare = chart([ line("app", commits, [ 3, 1 ]), line("app", visits, [ 0, 400 ]) ])
 
     expect(compare.paths.map { |path| path[1..3] }).to eq([ [ "os-project-1", "visits", "builder/app" ], [ "os-project-1", "commits", "builder/app" ] ])
     expect(compare.ticks.map(&:value)).to eq([ nil, nil ])
-    expect(tops(compare.paths).uniq.size).to eq(1)
+    expect(compare.ticks.map(&:values)).to eq([ [ %w[commits 2], %w[visits 200] ], [ %w[commits 4], %w[visits 400] ] ])
+    # Visits reach their top gridline, 400; commits stand at 3 of their 4.
+    visits_top, commits_top = tops(compare.paths)
+    expect(visits_top).to be < commits_top
+    expect(compare.ticks.last.top).to eq((100.0 * visits_top / described_class::HEIGHT).round(2))
   end
 
   it "keeps a number's projects on one scale, so they still compare" do
@@ -85,11 +89,11 @@ RSpec.describe ProgressChart::Compare do
     end
   end
 
-  it "has no note while every number drawn has a line, and tells a screen reader each is against its own peak" do
+  it "has no note while every number drawn has a line, and tells a screen reader each is on its own scale" do
     compare = chart([ line("app", commits, [ 3, 1 ]), line("app", visits, [ 0, 400 ]) ], numbers: [ visits, commits ])
 
     expect(compare.note).to be_nil
-    expect(compare.aria_label).to eq("Commits and site visits per week by project, each against its own peak, last 90 days")
+    expect(compare.aria_label).to eq("Commits and site visits per week by project, each on its own scale, last 90 days")
     expect(chart([ line("app", commits, [ 3, 1 ]) ], numbers: [ commits ]).note).to be_nil
   end
 

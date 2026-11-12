@@ -4,8 +4,10 @@ module ProgressChart
   # gives a number its style by its place in its own line order (the first
   # solid, the second dotted, the third dashed); the server's first paint, by
   # its place among the numbers drawn. With two or three numbers that have
-  # lines, each is drawn against its own peak in the window, its projects on
-  # one scale so they still compare; with one, the axis is that number's own.
+  # lines, each is drawn on its own axis, rounded up from its peak in the
+  # window, its projects on one scale so they still compare, and every
+  # gridline names each number's value beside its line's sample; with one,
+  # the axis is that number's own.
   # The tooltip keeps the real numbers: a row per project with anything at
   # the point, a column per number with lines, each followed by the numbers
   # that sit beside it (Progress::Numbers.beside), which draw nothing. The
@@ -31,6 +33,14 @@ module ProgressChart
     # shows none of it.
     Row = Data.define(:repo, :name, :color_class, :values)
     Column = Data.define(:left, :width, :mark, :title, :rows)
+    # A gridline, top percent from the chart's top: value, its number's on a
+    # chart of one number; values, each number's on a chart that compares
+    # them, as [key, words] in the pages' order.
+    Tick = Data.define(:value, :top, :values) do
+      def initialize(values: [], **fields)
+        super
+      end
+    end
 
     # numbers: the numbers drawn, in line order. average: each point a 7-day
     # average. lone: one project's page. per: what a line's row is, "project"
@@ -98,13 +108,16 @@ module ProgressChart
     end
 
     # None without a line, so an empty chart suggests no scale. Comparing
-    # numbers, each on its own peak, the gridlines carry no value (nil): the
-    # tooltip gives the real ones.
+    # numbers, each on its own axis, a gridline carries each one's value.
     def ticks
       return [] if lines.empty?
-      return [ PEAK / 2, PEAK ].map { |value| Trend::Tick.new(value: nil, top: top(value)) } if indexed?
+      if indexed?
+        return [ PEAK / 2, PEAK ].each_with_index.map do |share, i|
+          Tick.new(value: nil, top: top(share), values: lined.map { |number| [ number.key, words.tick(number, axes.fetch(number)[i]) ] })
+        end
+      end
 
-      scale.drop(1).map { |value| Trend::Tick.new(value: words.tick(lined.first, value), top: top(value)) }
+      scale.drop(1).map { |value| Tick.new(value: words.tick(lined.first, value), top: top(value)) }
     end
 
     def columns
@@ -122,7 +135,7 @@ module ProgressChart
       [ window.labels.axis(buckets.first), window.labels.axis(buckets[buckets.size / 2]), last ]
     end
 
-    # A number's highest value in the window, over every project: its 100%.
+    # A number's highest value in the window, over every project.
     def peak(number)
       lines.select { |line| line.number == number }.flat_map(&:values).max.to_f
     end
@@ -186,16 +199,18 @@ module ProgressChart
       count == 1 ? WIDTH / 2.0 : index * WIDTH.to_f / (count - 1)
     end
 
-    # A value's height: against its number's peak when the chart compares numbers.
+    # A value's height: against its number's own axis when the chart compares numbers.
     def y(number, value)
       return HEIGHT * (1 - (value / ceiling)) unless indexed?
 
-      peak = peaks.fetch(number)
-      HEIGHT * (1 - ((peak.positive? ? PEAK * value / peak : 0) / ceiling))
+      HEIGHT * (1 - ((PEAK * value / axes.fetch(number).last) / ceiling))
     end
 
-    def peaks
-      @peaks ||= lined.to_h { |number| [ number, peak(number) ] }
+    # Each number's gridlines when the chart compares numbers, its middle
+    # and its top: two round steps over its peak (Scale.two_steps), whole
+    # counts unless averaged.
+    def axes
+      @axes ||= lined.to_h { |number| [ number, Scale.two_steps(peak(number), whole: !average?) ] }
     end
 
     # Nice steps over the busiest point; whole counts unless averaged.

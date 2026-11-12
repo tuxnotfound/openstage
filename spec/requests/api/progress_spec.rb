@@ -126,7 +126,7 @@ RSpec.describe "Api::Progress", type: :request do
       user.update!(pro: true)
     end
 
-    it "draws them beside the commits where the builder shows them, each number against its own peak, the tooltip showing site visitors beside them" do
+    it "draws them beside the commits where the builder shows them, each number on its own scale, the tooltip showing site visitors beside them" do
       get "/api/progress/builder", params: { range: "30d" }
 
       expect(totals).to eq("commits" => "3", "visits" => "40")
