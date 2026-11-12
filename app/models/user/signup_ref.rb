@@ -12,13 +12,14 @@ class User
   # "buildinpublic" is the listing on buildinpublic.com, whose links carry it
   # as ?via= rather than ?ref=. "github" is every link in Openstage's own
   # repository on GitHub (its README). "project" is the button at the foot
-  # of a builder's project page.
+  # of a builder's project page. "preview" is the claim on a stage previewed
+  # before sign-in (PreviewsController).
   module SignupRef
     extend ActiveSupport::Concern
 
     REFS = %w[recap badge footer feed claim bio launch peerlist producthunt
               devhunt saashub alternativeto digest reddit x buildinpublic github
-              project].freeze
+              project preview].freeze
     DEFAULT_REF = "direct".freeze
 
     class_methods do

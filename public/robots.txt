@@ -24,6 +24,8 @@ Disallow: /checkout
 Disallow: /sync/
 Disallow: /auth/
 Disallow: /e/
+# A stage previewed from GitHub before sign-in is about someone who never asked for a page.
+Disallow: /preview
 # The chart's filters re-slice a page whose canonical drops them, and their
 # links multiply into a thousand URLs worth no crawl.
 Disallow: /*?range=

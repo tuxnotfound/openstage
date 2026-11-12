@@ -107,6 +107,11 @@ Rails.application.routes.draw do
   # Global feed
   get "/feed", to: "feed#index", as: :feed
 
+  # The stage a GitHub user would get, before any sign-in: the landing's form
+  # asks /preview?login=. "preview" is a reserved username.
+  get "/preview", to: "previews#new", as: :new_preview
+  get "/preview/:login", to: "previews#show", as: :preview, constraints: { login: /[a-zA-Z0-9-]+/ }
+
   # Settings
   get "/settings", to: "settings#show",            as: :settings
   patch "/settings", to: "settings#update"

@@ -13,6 +13,7 @@ class User < ApplicationRecord
     webhooks sign_out signin signup login logout register admin api app www
     help support docs terms privacy contact status new edit me root public
     assets up entries github_repos e recap _deploy_check subscriptions subscribe weekly_email week
+    preview
   ].freeze
 
   has_many :entries, dependent: :destroy
@@ -44,6 +45,8 @@ class User < ApplicationRecord
   # Everyone the numbers count: test accounts (internal) stay out of /admin,
   # the owner digest and the gates.
   scope :counted, -> { active.where(internal: false) }
+  # The member a GitHub login belongs to; GitHub ignores a login's case.
+  scope :with_github_login, ->(login) { where("LOWER(users.github_username) = ?", login.to_s.downcase) }
 
   normalizes :time_zone, with: ->(zone) { ActiveSupport::TimeZone[zone.to_s] ? zone.to_s : nil }
 

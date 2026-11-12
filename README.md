@@ -49,6 +49,7 @@ Environment variables go in `.env`:
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | Sign-in, from the OAuth App. Required. |
 | `GITHUB_APP_SLUG`, `GITHUB_APP_CLIENT_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_WEBHOOK_SECRET` | Private repos, through a GitHub App with read access to Contents, Metadata, Pull requests and Deployments. |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_MONTHLY_PRICE_ID` | The Pro checkout. |
+| `GITHUB_PREVIEW_TOKEN` | A GitHub token with no scope, for the stage a visitor previews from a username before signing in. Without it the landing asks for the sign-in instead. |
 
 Tests run with `bundle exec rspec` and `npm test`.
 

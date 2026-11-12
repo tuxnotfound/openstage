@@ -21,6 +21,7 @@ class AdminController < ApplicationController
     @subscribes     = Subscription.confirmed.where(confirmed_at: @since.., user_id: counted_ids).count
     @ref_visits     = by_ref("ref_visit")
     @sign_in_starts = by_ref("sign_in_start")
+    @previews       = by_ref("preview")
     @shared_repos   = shared_repos
   end
 
