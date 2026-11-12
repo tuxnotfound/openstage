@@ -12,6 +12,13 @@ module ProgressHelper
     { "entry" => entries, "project" => projects, "milestone" => milestones }.filter_map { |word, count| pluralize(count, word) if count.positive? }
   end
 
+  # Whether a builder's pages end on the button that makes a visitor's own
+  # stage: never for a member, who has one; never on Pro, which removes it,
+  # but on the landing's demo stage, Openstage's own.
+  def invites_to_make_own?(user)
+    !user_signed_in? && (!user.pro? || user.username == DemoPage.username)
+  end
+
   # This page with some of its params changed; nil drops one.
   def progress_view_path(user, **changes)
     kept = params.permit(*PROGRESS_PARAMS).to_h.symbolize_keys

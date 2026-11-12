@@ -4,10 +4,15 @@
 module DemoPage
   extend ActiveSupport::Concern
 
+  # The username of the builder whose stage is the demo.
+  def self.username
+    ENV.fetch("DEMO_USERNAME", "tuxnotfound")
+  end
+
   private
 
   def demo_user
-    User.active.find_by(username: ENV.fetch("DEMO_USERNAME", "tuxnotfound"))
+    User.active.find_by(username: DemoPage.username)
   end
 
   # Nothing to show without a commit in the window. The demo draws its

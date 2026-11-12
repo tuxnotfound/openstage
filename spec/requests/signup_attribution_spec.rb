@@ -11,6 +11,10 @@ RSpec.describe "Signup attribution", type: :request do
       expect(session[:signup_ref]).to eq("recap")
     end
 
+    it "knows the project page's button as project" do
+      expect(User.normalize_ref("project")).to eq("project")
+    end
+
     it "records an unknown or missing ref as direct rather than dropping it" do
       expect(User.normalize_ref("not-a-real-source")).to eq("direct")
       expect(User.normalize_ref(nil)).to eq("direct")

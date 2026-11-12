@@ -11,12 +11,14 @@ class User
   # posted on Reddit. "x" is every link posted on X but the bio's.
   # "buildinpublic" is the listing on buildinpublic.com, whose links carry it
   # as ?via= rather than ?ref=. "github" is every link in Openstage's own
-  # repository on GitHub (its README).
+  # repository on GitHub (its README). "project" is the button at the foot
+  # of a builder's project page.
   module SignupRef
     extend ActiveSupport::Concern
 
     REFS = %w[recap badge footer feed claim bio launch peerlist producthunt
-              devhunt saashub alternativeto digest reddit x buildinpublic github].freeze
+              devhunt saashub alternativeto digest reddit x buildinpublic github
+              project].freeze
     DEFAULT_REF = "direct".freeze
 
     class_methods do

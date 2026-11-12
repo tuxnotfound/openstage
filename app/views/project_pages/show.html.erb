@@ -156,3 +156,7 @@
     </aside>
   <% end %>
 </div>
+
+<% if invites_to_make_own?(@user) %>
+  <%= render "layouts/invite", title: "Give your projects a page like this one.", about: "It fills itself from GitHub.", ref: "project" %>
+<% end %>

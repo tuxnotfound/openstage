@@ -78,15 +78,16 @@
       <%= render "profiles/page/recent", user: @user, groups: @page.recent, linked: @linked if @page.recent.any? %>
     <% end %>
 
-    <footer class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-2 os-sm">
-      <%= link_to "Explore other builders", feed_path, class: "os-muted hover:text-ink", data: { turbo_frame: "_top" } %>
-      <% unless user_signed_in? || @user.pro? %>
+    <footer class="os-stack">
+      <% if invites_to_make_own?(@user) %>
         <%# Every circulating profile link is an ad. The visitor's next action is
             their own stage: the header's button, straight to GitHub's sign-in,
-            tagged footer for /admin. A member has a stage already. Pro removes
-            this; it never paywalls it. %>
-        <%= render "layouts/make_your_own", ref: "footer" %>
+            tagged footer for /admin. Pro removes this; it never paywalls it. %>
+        <%= render "layouts/invite", title: "Want a stage like this?", about: "It fills itself from GitHub.", ref: "footer" %>
       <% end %>
+      <p class="os-sm text-center">
+        <%= link_to "Explore other builders", feed_path, class: "os-muted hover:text-ink", data: { turbo_frame: "_top" } %>
+      </p>
     </footer>
   </div>
 <% end %>

@@ -19,6 +19,22 @@ RSpec.describe "Project pages", type: :request do
     expect(response.body).not_to include("Other work")
   end
 
+  it "ends on the button that makes a visitor's own stage, tagged project, unless its builder is on Pro or the visitor a member" do
+    get "/builder/side.app"
+    invite = Nokogiri::HTML(response.body).at_css("[data-invite]")
+    expect(invite.text.squish).to eq("Give your projects a page like this one. It fills itself from GitHub. Make your own stage")
+    expect(invite.at_css("form[action='/auth/github'] input[name='ref'][value='project']")).to be_present
+
+    user.update!(pro: true)
+    get "/builder/side.app"
+    expect(response.body).not_to include("data-invite")
+
+    user.update!(pro: false)
+    sign_in_as(create(:user))
+    get "/builder/side.app"
+    expect(response.body).not_to include("data-invite")
+  end
+
   it "links All commits on GitHub to the repo's commits, and to nothing for a private repo" do
     get "/builder/side.app"
 

@@ -35,9 +35,29 @@ RSpec.describe "Profiles", type: :request do
         expect(response.body).not_to include("/badge/testuser.svg")
       end
 
-      it "ends a free profile on the header's button, tagged footer" do
+      it "ends a free profile on the header's button, tagged footer, saying what the visitor gets" do
         get "/testuser"
-        expect(Nokogiri::HTML(response.body).at_css("footer #{"input[name='ref'][value='footer']"}")).to be_present
+        invite = Nokogiri::HTML(response.body).at_css("footer [data-invite]")
+        expect(invite.text.squish).to eq("Want a stage like this? It fills itself from GitHub. Make your own stage")
+        expect(invite.at_css("input[name='ref'][value='footer']")).to be_present
+      end
+
+      it "ends the landing's demo stage on the button too, though it is Pro" do
+        user.update!(pro: true)
+        get "/testuser"
+        expect(response.body).not_to include("data-invite")
+
+        allow(ENV).to receive(:fetch).and_call_original
+        allow(ENV).to receive(:fetch).with("DEMO_USERNAME", "tuxnotfound").and_return("testuser")
+        get "/testuser"
+        expect(Nokogiri::HTML(response.body).at_css("footer [data-invite]")).to be_present
+      end
+
+      it "ends on no button for a member, who has a stage" do
+        sign_in_as(create(:user))
+        get "/testuser"
+        expect(response.body).not_to include("data-invite")
+        expect(response.body).to include("Explore other builders")
       end
 
       it "marks the GitHub account with GitHub's icon and says so to screen readers" do
