@@ -172,7 +172,11 @@ RSpec.describe "Project pages", type: :request do
     get "/builder/side.app"
 
     header = Nokogiri::HTML(response.body).at_css("section[aria-label='side.app']")
-    expect(header.at_css("img[src='https://side.example/cover.png']")).to be_present
+    picture = header.at_css("img[src='https://side.example/cover.png']")
+    expect(picture).to be_present
+    expect(picture["data-controller"]).to eq("picture")
+    expect(picture.key?("data-loading")).to be(true)
+    expect(picture["class"]).to include("data-loading:animate-pulse")
   end
 
   it "shares the project's picture as the link's preview, its card without one" do
