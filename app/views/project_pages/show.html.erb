@@ -92,7 +92,7 @@
 <div class="flex flex-wrap items-start gap-4.5">
   <div class="os-stack min-w-0 flex-[999_1_560px]">
     <%= render "profiles/page/whats_new", section: section, lone: true %>
-    <%= render "profiles/page/recent", user: @user, groups: @focus.page.recent, by_project: false if @focus.page.recent.any? %>
+    <%= render "profiles/page/recent", user: @user, groups: @focus.page.recent, by_project: false, repo: card&.github_repo if @focus.page.recent.any? %>
   </div>
 
   <%# Its facts as visitors see them (FocusService#facts); then its other

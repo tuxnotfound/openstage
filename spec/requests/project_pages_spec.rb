@@ -19,6 +19,21 @@ RSpec.describe "Project pages", type: :request do
     expect(response.body).not_to include("Other work")
   end
 
+  it "links All commits on GitHub to the repo's commits, and to nothing for a private repo" do
+    get "/builder/side.app"
+
+    expect(all_commits_link["href"]).to eq("https://github.com/builder/side.app/commits")
+
+    user.github_repos.find_by(full_name: "builder/side.app").update!(private_repo: true, included: true)
+    get "/builder/side.app"
+
+    expect(all_commits_link).to be_nil
+  end
+
+  def all_commits_link
+    Nokogiri::HTML(response.body).at_xpath("//section[@aria-labelledby='recent-commits']//a[text()='All commits on GitHub']")
+  end
+
   it "asks search engines not to count its Visit button as a vote for the website the builder typed" do
     get "/builder/side.app"
 

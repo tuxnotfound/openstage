@@ -1,6 +1,15 @@
 <%# The latest commits as the GitHub sync wrote them, one row per project and
     day. Never ranked, never rewritten. by_project: false on a project's own
-    page, where every row is the same project. %>
+    page, where every row is the same project. repo: that project's
+    GithubRepo there, whose commits on GitHub the last link opens; a private
+    repo, or none, has none to open, so the link goes. On the stage it opens
+    the builder's GitHub profile. %>
+<% github = if local_assigns.key?(:repo)
+              url = local_assigns[:repo]&.outbound_url("github")
+              "#{url}/commits" if url
+            else
+              "https://github.com/#{user.github_username}"
+            end %>
 <section class="os-panel" aria-labelledby="recent-commits">
   <div class="os-between">
     <h2 id="recent-commits" class="os-h2">Recent commits</h2>
@@ -37,6 +46,6 @@
   </div>
   <p class="os-note border-t border-line pt-3">
     Merges and dependency updates stay hidden.
-    <a href="https://github.com/<%= user.github_username %>" target="_blank" rel="noopener" class="underline hover:text-ink">All commits on GitHub</a>
+    <% if github %><a href="<%= github %>" target="_blank" rel="noopener" class="underline hover:text-ink">All commits on GitHub</a><% end %>
   </p>
 </section>
