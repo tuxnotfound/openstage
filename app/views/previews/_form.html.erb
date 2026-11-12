@@ -1,9 +1,10 @@
 <%# A GitHub username, to see the stage it makes before any sign-in
     (PreviewsController). id: the field's, unique on its page; value: a
     username to start from; form_class: the form's own classes; button_class:
-    its button's, os-btn2 where a sign-in leads. %>
+    its button's, os-btn2 where a sign-in leads; note: words under the
+    button, as the landing says no sign-in is needed. %>
 <%= form_with url: new_preview_path, method: :get, data: { preview_form: true },
-              class: "flex w-full max-w-[480px] flex-wrap gap-2 #{local_assigns[:form_class]}" do %>
+              class: "flex w-full max-w-[480px] flex-wrap items-start gap-2 #{local_assigns[:form_class]}" do %>
   <%# The address's own start before the field, and an example after it, so
       the box reads github.com/tuxnotfound: what to type, and where it comes
       from. A click on the start lands in the field, and the box, not the
@@ -18,5 +19,8 @@
            class="h-full min-w-0 flex-1 bg-transparent pr-3.5 outline-none placeholder:text-ink-3"
            data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
   </label>
-  <button type="submit" class="<%= local_assigns.fetch(:button_class, "os-btn") %> flex-[0_0_auto]" data-turbo-submits-with="Building your preview…">Preview your stage</button>
+  <div class="flex flex-[0_0_auto] flex-col items-center">
+    <button type="submit" class="<%= local_assigns.fetch(:button_class, "os-btn") %>" data-turbo-submits-with="Building your preview…">Preview your stage</button>
+    <% if local_assigns[:note] %><p class="os-note mt-1.5"><%= note %></p><% end %>
+  </div>
 <% end %>

@@ -38,7 +38,12 @@ RSpec.describe "Home", type: :request do
       page = Nokogiri::HTML(response.body)
       hero = page.at_css("main section")
       expect(hero.css("form").map { |form| form["action"] }).to eq(%w[/preview /auth/github])
-      expect([ hero.at_css("form button").text, hero.at_css("form button")["class"] ]).to eq([ "Preview your stage", "os-btn flex-[0_0_auto]" ])
+      expect([ hero.at_css("form button").text, hero.at_css("form button")["class"] ]).to eq([ "Preview your stage", "os-btn" ])
+      # "No sign-in" sits under the button, inside the form.
+      expect(hero.at_css("form[data-preview-form] button + p.os-note").text).to eq("No sign-in needed to preview.")
+      # On a wide screen the sign-in link shares the second row with the demo
+      # card's "View this stage" (home_layout_spec).
+      expect(hero.at_css("form[action='/auth/github']")["class"]).to include("lg:row-start-2")
       expect(hero.at_css("input[name=github]")["placeholder"]).to eq("tuxnotfound")
       expect(hero.at_css("form[data-preview-form] label").text.squish).to eq("Your GitHub username github.com/")
       sign_in = hero.at_css("form[action='/auth/github'] button")

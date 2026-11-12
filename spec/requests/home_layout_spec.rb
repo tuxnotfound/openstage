@@ -37,7 +37,12 @@ RSpec.describe "Home layout", type: :request do
     expect([ card["data-card-link-url-value"], card["data-action"] ]).to eq([ "/tuxnotfound", "click->card-link#open" ])
     expect(page.css("a").select { |link| link.text.include?("View this stage") }.size).to eq(1)
     live = card.at_css("> a[data-live-stage]")
-    expect([ live.text.squish, live["href"], live["class"] ]).to eq([ "View this stage →", "/tuxnotfound", "os-link mt-3 inline-block text-sm" ])
+    expect([ live.text.squish, live["href"], live["class"] ]).to eq([ "View this stage →", "/tuxnotfound", "os-link mt-3 inline-block justify-self-start text-sm" ])
+    # On a wide screen the card spans the hero's first two rows as a subgrid,
+    # its top in the first and "View this stage" in the second, the row of
+    # the sign-in link beside it.
+    expect(card["class"]).to include("lg:row-span-2", "lg:grid-rows-subgrid")
+    expect(card.element_children.map(&:name)).to eq(%w[div a])
     expect(response.body).not_to include("A real Openstage page", "See a live stage")
   end
 
