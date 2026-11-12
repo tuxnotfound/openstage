@@ -312,6 +312,12 @@ RSpec.describe "Profiles", type: :request do
         Nokogiri::HTML(response.body).css("section[aria-labelledby='projects'] .os-card").map { |card| card.text.squish }
       end
 
+      it "puts What's new above Recent commits" do
+        get "/builder"
+
+        expect(response.body.index("id=\"whats-new\"")).to be < response.body.index("id=\"recent-commits\"")
+      end
+
       it "gives each project a card with GitHub's description and its last 12 months" do
         get "/builder"
 

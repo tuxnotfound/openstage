@@ -73,10 +73,9 @@
 
     <% if @page %>
       <%= render "profiles/page/projects", user: @user, cards: @page.cards, list: @page.list if @page.cards.any? %>
-      <div class="os-grid2 items-start">
-        <%= render "profiles/page/recent", user: @user, groups: @page.recent, linked: @linked if @page.recent.any? %>
-        <%= render "profiles/page/whats_new", section: @page.section, linked: @linked unless @empty %>
-      </div>
+      <%# What shipped leads; the commits behind it follow, as on a project's page. %>
+      <%= render "profiles/page/whats_new", section: @page.section, linked: @linked unless @empty %>
+      <%= render "profiles/page/recent", user: @user, groups: @page.recent, linked: @linked if @page.recent.any? %>
     <% end %>
 
     <footer class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-2 os-sm">
