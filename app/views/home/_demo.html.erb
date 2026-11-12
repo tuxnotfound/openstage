@@ -1,9 +1,11 @@
 <%# A real page above the fold, drawn by the page's own code: the headline
-    number, the share bar and the chart, nothing more. It ends on the
-    landing's one link to a live stage, this one. %>
+    number, the share bar and the chart, nothing more. The whole card opens
+    the stage it shows (card-link), and its foot names it: the landing's one
+    link to a live stage. %>
 <% totals = section.tally.totals %>
 <% shares = section.tally.projects.all.filter_map { |project| [ project, totals.counts[project.repo] ] if totals.counts[project.repo].to_i.positive? } %>
-<div class="os-card min-w-0 p-5">
+<div class="os-card min-w-0 cursor-pointer p-5 transition-colors hover:border-ink-3" data-controller="card-link"
+     data-card-link-url-value="<%= profile_path(user.username) %>" data-action="click->card-link#open">
   <div class="flex items-center gap-3">
     <img src="<%= user.avatar_url %>" alt="" class="os-avatar size-10">
     <div class="min-w-0">
@@ -29,5 +31,5 @@
     <%= render "profiles/page/chart", section: section, chart: chart, height: "h-[200px]" %>
   </div>
 
-  <%= link_to profile_path(user.username), class: "os-link mt-3 inline-block", data: { live_stage: true } do %>See a live stage <span aria-hidden="true">→</span><% end %>
+  <%= link_to profile_path(user.username), class: "os-link mt-3 inline-block text-sm", data: { live_stage: true } do %>View this stage <span aria-hidden="true">→</span><% end %>
 </div>

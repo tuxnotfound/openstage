@@ -54,6 +54,7 @@ RSpec.describe "Previews", type: :request do
       expect(body).to include("commits, last 12 months")
       claim = Nokogiri::HTML(body).css("[data-preview-claim] form").first
       expect(claim["action"]).to eq("/auth/github")
+      expect([ claim.at_css("button").text.squish, claim.at_css("button")["class"] ]).to eq([ "Make your own stage", "os-btn h-[52px] px-6 text-[17px]" ])
       expect(claim.css("input[name=ref]").first["value"]).to eq("preview")
     end
 
@@ -93,7 +94,8 @@ RSpec.describe "Previews", type: :request do
       get "/preview/nobody", headers: browser
 
       expect(response).to have_http_status(:not_found)
-      expect(response.body).to include("No GitHub user named @nobody", "Enter your GitHub username")
+      expect(response.body).to include("No GitHub user named @nobody", "github.com/")
+      expect(Nokogiri::HTML(response.body).at_css("input[name=github]")["placeholder"]).to eq("tuxnotfound")
     end
 
     it "offers the sign-in when GitHub fails, and reports it" do

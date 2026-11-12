@@ -4,11 +4,19 @@
     its button's, os-btn2 where a sign-in leads. %>
 <%= form_with url: new_preview_path, method: :get, data: { preview_form: true },
               class: "flex w-full max-w-[480px] flex-wrap gap-2 #{local_assigns[:form_class]}" do %>
-  <label for="<%= id %>" class="sr-only">Your GitHub username</label>
-  <%# Named github, not login or username, and marked for the password
-      managers, which otherwise take it for a sign-in and offer to fill it. %>
-  <input type="text" id="<%= id %>" name="github" value="<%= local_assigns[:value] %>" placeholder="Enter your GitHub username" required
-         autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="100" class="os-field min-w-0 flex-[1_1_220px]"
-         data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
+  <%# The address's own start before the field, and an example after it, so
+      the box reads github.com/tuxnotfound: what to type, and where it comes
+      from. A click on the start lands in the field, and the box, not the
+      field, wears the focus ring. The field is named github, not login or
+      username, and marked for the password managers, which otherwise take
+      it for a sign-in and offer to fill it. %>
+  <label class="os-field flex min-w-0 flex-[1_1_220px] cursor-text items-center px-0 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent">
+    <span class="sr-only">Your GitHub username</span>
+    <span class="select-none pl-3.5 text-ink-2" aria-hidden="true">github.com/</span>
+    <input type="text" id="<%= id %>" name="github" value="<%= local_assigns[:value] %>" placeholder="tuxnotfound" required
+           autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="100"
+           class="h-full min-w-0 flex-1 bg-transparent pr-3.5 outline-none placeholder:text-ink-3"
+           data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
+  </label>
   <button type="submit" class="<%= local_assigns.fetch(:button_class, "os-btn") %> flex-[0_0_auto]" data-turbo-submits-with="Building your preview…">Preview your stage</button>
 <% end %>

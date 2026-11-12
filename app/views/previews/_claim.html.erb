@@ -1,5 +1,7 @@
-<%# The sign-in that claims a previewed stage, tagged preview for /admin
-    (SignIns::CountStartService). Whoever signs in gets their own stage. %>
-<%= button_to "/auth/github", method: :post, params: { ref: "preview" }, data: { turbo: false, claim_preview: true }, class: "os-btn" do %>
-  <%= brand_icon(:github) %><span>Claim this stage</span>
+<%# The page's one big button: the sign-in, named as the header's, when a
+    visitor has just seen their own projects. Tagged preview for /admin
+    (SignIns::CountStartService); whoever signs in gets their own stage. %>
+<%= button_to "/auth/github", method: :post, params: { ref: "preview" }, data: { turbo: false, claim_preview: true },
+              class: "os-btn h-[52px] px-6 text-[17px]" do %>
+  <%= brand_icon(:github) %><span>Make your own stage</span>
 <% end %>

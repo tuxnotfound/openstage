@@ -26,17 +26,19 @@ RSpec.describe "Home layout", type: :request do
     expect(response.body).not_to include("Everything on one page")
   end
 
-  # The card is the live stage, so the landing's one link to it is the card's
-  # own, at its foot, and not a button beside the sign-up.
-  it "shows a real page above the fold, ending on the one link to all of it" do
+  # The card is the live stage, so the whole card opens it, and its foot
+  # names it: the landing's one link to a live stage.
+  it "shows a real page above the fold, the whole card opening all of it" do
     get "/"
 
     page = Nokogiri::HTML(response.body)
     expect(response.body).to include("openstage.dev/tuxnotfound")
-    expect(page.css("a").select { |link| link.text.include?("See a live stage") }.size).to eq(1)
-    live = page.at_css("main section .os-card > a[data-live-stage]")
-    expect([ live.text.squish, live["href"], live["class"] ]).to eq([ "See a live stage →", "/tuxnotfound", "os-link mt-3 inline-block" ])
-    expect(response.body).not_to include("A real Openstage page")
+    card = page.at_css("main section .os-card[data-controller='card-link']")
+    expect([ card["data-card-link-url-value"], card["data-action"] ]).to eq([ "/tuxnotfound", "click->card-link#open" ])
+    expect(page.css("a").select { |link| link.text.include?("View this stage") }.size).to eq(1)
+    live = card.at_css("> a[data-live-stage]")
+    expect([ live.text.squish, live["href"], live["class"] ]).to eq([ "View this stage →", "/tuxnotfound", "os-link mt-3 inline-block text-sm" ])
+    expect(response.body).not_to include("A real Openstage page", "See a live stage")
   end
 
   it "sells projects: a line each, and what each one is" do
@@ -60,7 +62,7 @@ RSpec.describe "Home layout", type: :request do
 
       get "/"
 
-      card = response.body[/<div class="os-card min-w-0 p-5">.*See a live stage/m]
+      card = response.body[/<div class="os-card min-w-0 cursor-pointer.*View this stage/m]
       expect(card).to include("commits, last 30 days", "os-sharebar", "os-chart")
       expect(card).not_to include("Rebirth begins", "os-disc")
     end
@@ -95,6 +97,6 @@ RSpec.describe "Home layout", type: :request do
 
     get "/"
     expect(response).to have_http_status(:success)
-    expect(response.body).not_to include("See a live stage")
+    expect(response.body).not_to include("View this stage")
   end
 end

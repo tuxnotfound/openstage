@@ -27,34 +27,38 @@ RSpec.describe "Home", type: :request do
       expect(response.body).not_to include("Start free with GitHub")
     end
 
-    # Three things to do, each in one place: the box in the hero, the sign-up
-    # in the header on the same screen, a live stage on the card that shows it.
-    it "leaves the hero's words with the box alone, and says it asks no sign-in" do
+    # The preview is the one main action; whoever is ready signs in from a
+    # link under it, the header's button too, and reads what that asks. A
+    # live stage is the demo card's own link.
+    it "puts the box first, then the sign-in as a link, then what the sign-in asks" do
       Rails.configuration.x.github_profile_token = "preview-token"
       get "/"
       Rails.configuration.x.github_profile_token = nil
 
       page = Nokogiri::HTML(response.body)
       hero = page.at_css("main section")
-      expect(hero.css("form").map { |form| form["action"] }).to eq(%w[/preview])
+      expect(hero.css("form").map { |form| form["action"] }).to eq(%w[/preview /auth/github])
       expect([ hero.at_css("form button").text, hero.at_css("form button")["class"] ]).to eq([ "Preview your stage", "os-btn flex-[0_0_auto]" ])
-      expect(hero.at_css("p.os-note").text).to eq("No sign-in. Built from your public repos.")
-      expect(hero.text).not_to include("Asks only for your email")
+      expect(hero.at_css("input[name=github]")["placeholder"]).to eq("tuxnotfound")
+      expect(hero.at_css("form[data-preview-form] label").text.squish).to eq("Your GitHub username github.com/")
+      sign_in = hero.at_css("form[action='/auth/github'] button")
+      expect([ sign_in.text.squish, sign_in["class"] ]).to eq([ "Or sign in with GitHub and skip the preview.", "os-link cursor-pointer text-[15px]" ])
+      expect(hero.css("p.os-note").map(&:text)).to match([ "No sign-in needed to preview.", a_string_starting_with("Asks only for your email.") ])
+      expect(hero.css("a").map { |link| link.text.squish }).not_to include("See a live stage", "See a live stage →")
       expect(page.at_css("header form[action='/auth/github'] button.os-btn").text).to eq("Make your own stage")
     end
 
-    # The header has scrolled away by the landing's end, so the sign-up is
-    # there again, under the box.
-    it "ends on the box and the sign-up" do
+    # The header has scrolled away by the landing's end, so the sign-in link
+    # is there again, under the box.
+    it "ends on the box and the sign-in link" do
       Rails.configuration.x.github_profile_token = "preview-token"
       get "/"
       Rails.configuration.x.github_profile_token = nil
 
       last = Nokogiri::HTML(response.body).css("main section").last
       expect(last.css("form").map { |form| form["action"] }).to eq(%w[/preview /auth/github])
-      sign_up = last.at_css("form[action='/auth/github'] button")
-      expect([ sign_up.text.squish, sign_up["class"] ]).to eq([ "Make your own stage", "os-btn2" ])
-      expect(last.css("p.os-note")).to be_empty
+      expect(last.at_css("form[action='/auth/github'] button").text.squish).to eq("Or sign in with GitHub and skip the preview.")
+      expect(last.css("p.os-note").map(&:text)).to eq([ "No sign-in needed to preview." ])
     end
 
     it "keeps the sign-in while previews are off, as before the token is set" do

@@ -115,7 +115,7 @@
     <% if user_signed_in? %>
       <%= link_to "Go to your dashboard", dashboard_path, class: "os-btn" %>
     <% else %>
-      <%= render "home/start", id: "preview-login-end", center: true, sign_up: true %>
+      <%= render "home/start", id: "preview-login-end", center: true %>
     <% end %>
   </div>
   <%= link_to "Pro is $7 a month. See pricing", pricing_path, class: "os-link mt-4 inline-block" %>

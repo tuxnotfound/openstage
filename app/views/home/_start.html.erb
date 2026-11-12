@@ -1,30 +1,26 @@
-<%# A signed-out visitor's way in: the box, for the stage their GitHub
-    username makes before any sign-in. The sign-up is the header's button, so
-    the hero does not repeat it; the landing's end does (sign_up: true), where
-    the header has scrolled away. A live stage is the demo card's own link
-    (home/_demo). While previews are off, the sign-in leads, so a deploy
-    before the token never loses the way in. note: says what this way in
-    asks, as in the hero; id: the box's field, unique on the page; center:
+<%# A signed-out visitor's way in: the box first, for the stage their GitHub
+    username makes before any sign-in, then GitHub's sign-in as a link for
+    whoever is ready, and what that sign-in asks (note: true, as in the
+    hero). A live stage is the demo card's own link (home/_demo). While
+    previews are off, the sign-in leads, so a deploy before the token never
+    loses the way in. id: the box's field, unique on the page; center:
     centred, as at the landing's end. %>
-<% align = "justify-center" if local_assigns[:center] %>
-<% make = capture do %>
-  <%= brand_icon(:github) %><span>Make your own stage</span>
-<% end %>
+<% email = "Asks only for your email. Your public repos show up on your stage, and you can hide any of them. Private ones only if you add them. Never posts to your X or other accounts." %>
 <% if previews_on? %>
   <%= render "previews/form", id: id, form_class: ("mx-auto justify-center" if local_assigns[:center]) %>
-  <% if local_assigns[:sign_up] %>
-    <div class="mt-3 flex <%= align %>">
-      <%= button_to "/auth/github", method: :post, data: { turbo: false, sign_up: true }, class: "os-btn2" do %><%= make %><% end %>
-    </div>
-  <% end %>
+  <p class="os-note mt-2.5">No sign-in needed to preview.</p>
+  <%= button_to "/auth/github", method: :post, data: { turbo: false, sign_up: true }, form: { class: "mt-3" },
+                class: "os-link cursor-pointer text-[15px]" do %>Or sign in with GitHub and skip the preview.<% end %>
   <% if local_assigns[:note] %>
-    <p class="os-note mt-3.5">No sign-in. Built from your public repos.</p>
+    <p class="os-note mt-2"><%= email %></p>
   <% end %>
 <% else %>
-  <div class="flex <%= align %>">
-    <%= button_to "/auth/github", method: :post, data: { turbo: false, sign_up: true }, class: "os-btn" do %><%= make %><% end %>
+  <div class="flex <%= "justify-center" if local_assigns[:center] %>">
+    <%= button_to "/auth/github", method: :post, data: { turbo: false, sign_up: true }, class: "os-btn" do %>
+      <%= brand_icon(:github) %><span>Make your own stage</span>
+    <% end %>
   </div>
   <% if local_assigns[:note] %>
-    <p class="os-note mt-3.5">Asks only for your email. Your public repos show up on your stage, and you can hide any of them. Private ones only if you add them. Never posts to your X or other accounts.</p>
+    <p class="os-note mt-3.5"><%= email %></p>
   <% end %>
 <% end %>
