@@ -11,7 +11,7 @@
     { q: "What does it read from GitHub?",
       a: "Sign-in asks only for your email address. Public repos you push to sync every 2 hours, with the description, website and preview image you set on each. Private repos stay out unless you connect them in Settings and include each one, and even then only commit messages and release names appear, never links to the code." },
     { q: "Does it post for me?",
-      a: "No. Openstage never posts, ranks or rewrites anything for you. Share your stage wherever you like; it keeps itself current." },
+      a: "No. Openstage never posts to your X or other accounts, and never ranks or rewrites what you wrote. Share your stage wherever you like; it keeps itself current." },
     { q: "What does it cost?",
       a: "Your stage, a page for each project, the sync and a subscribe box are free for good. Pro is $7 a month and adds your subscriber list, MRR on your projects' pages, profile analytics, private entries and pins." }
   ]
@@ -67,7 +67,7 @@
           <%= link_to "See a live stage", profile_path(@demo_user.username), class: "os-btn2" %>
         <% end %>
       </div>
-      <p class="os-note mt-3.5">Public repos sync on their own. Private ones only if you add them. Nothing is ever posted for you.</p>
+      <p class="os-note mt-3.5">Asks only for your email. Your public repos show up on your stage, and you can hide any of them. Private ones only if you add them. Never posts to your X or other accounts.</p>
     </div>
 
     <% if @demo %>
