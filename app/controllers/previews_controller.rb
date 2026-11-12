@@ -14,10 +14,11 @@ class PreviewsController < ApplicationController
 
   rescue_from ApplicationGateway::Error, with: :github_unavailable
 
-  # The landing's form: the username typed, or a GitHub profile's address
-  # pasted, as the preview's own address.
+  # The landing's form: the username typed, with or without its @, or any
+  # GitHub address pasted, as the preview's own address. A repo's address,
+  # or a profile's tab, gives its owner.
   def new
-    @login = params[:github].to_s.strip.sub(%r{\A(?:https?://)?(?:www\.)?github\.com/}i, "").delete_prefix("@").delete_suffix("/")
+    @login = params[:github].to_s.strip.sub(%r{\A(?:https?://)?(?:www\.)?github\.com/}i, "").delete_prefix("@").split(%r{[/?#]}).first.to_s
     return redirect_to(root_path) if @login.blank?
     return render(:missing, status: :unprocessable_content) unless @login.match?(Previews::BuildService::LOGIN)
 

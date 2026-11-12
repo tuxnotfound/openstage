@@ -29,6 +29,14 @@ RSpec.describe "Previews", type: :request do
       expect(response).to redirect_to("/preview/ada")
     end
 
+    # The box shows github.com/ before the field, so some will type it too.
+    it "takes any GitHub address, a repo's or a tab's giving its owner" do
+      [ "github.com/ada", "www.github.com/ada", "https://github.com/ada/engine", "https://github.com/ada?tab=repositories", "@ada" ].each do |typed|
+        get "/preview", params: { github: typed }
+        expect(response).to redirect_to("/preview/ada"), typed
+      end
+    end
+
     it "says so for a name GitHub could never have" do
       get "/preview", params: { github: "your_username" }
 

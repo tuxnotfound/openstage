@@ -8,11 +8,13 @@
 <% email = "Asks only for your email. Your public repos show up on your stage, and you can hide any of them. Private ones only if you add them. Never posts to your X or other accounts." %>
 <% if previews_on? %>
   <%= render "previews/form", id: id, form_class: ("mx-auto justify-center" if local_assigns[:center]) %>
-  <p class="os-note mt-2.5">No sign-in needed to preview.</p>
-  <%= button_to "/auth/github", method: :post, data: { turbo: false, sign_up: true }, form: { class: "mt-3" },
+  <%# The sign-in sits right under the line it answers, as the preview's
+      fallback, not a section of its own. %>
+  <p class="os-note mt-2">No sign-in needed to preview.</p>
+  <%= button_to "/auth/github", method: :post, data: { turbo: false, sign_up: true }, form: { class: "mt-1" },
                 class: "os-link cursor-pointer text-[15px]" do %>Or sign in with GitHub and skip the preview.<% end %>
   <% if local_assigns[:note] %>
-    <p class="os-note mt-2"><%= email %></p>
+    <p class="os-note mt-1.5"><%= email %></p>
   <% end %>
 <% else %>
   <div class="flex <%= "justify-center" if local_assigns[:center] %>">
