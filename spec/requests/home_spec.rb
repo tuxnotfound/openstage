@@ -43,7 +43,8 @@ RSpec.describe "Home", type: :request do
       expect(hero.at_css("form[data-preview-form] button + p.os-note").text).to eq("No sign-in needed to preview.")
       # On a wide screen the sign-in link shares the second row with the demo
       # card's "View this stage" (home_layout_spec).
-      expect(hero.at_css("form[action='/auth/github']")["class"]).to include("lg:row-start-2")
+      expect(hero.at_css("[data-sign-in-block]")["class"]).to include("lg:row-start-2", "lg:row-span-2")
+      expect(hero.at_css("[data-sign-in-block] form[action='/auth/github'] + p.os-note").text).to start_with("Asks only for your email.")
       expect(hero.at_css("input[name=github]")["placeholder"]).to eq("tuxnotfound")
       expect(hero.at_css("form[data-preview-form] label").text.squish).to eq("Your GitHub username github.com/")
       sign_in = hero.at_css("form[action='/auth/github'] button")

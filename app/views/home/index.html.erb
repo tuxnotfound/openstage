@@ -51,13 +51,14 @@
 <%# The box first, with "no sign-in" under its button. On a wide screen the
     hero is a grid whose second row the demo card shares (subgrid), so the
     sign-in link, the box's fallback, sits on the line of the card's "View
-    this stage"; what the sign-in asks follows in a third row, past the
-    card's foot. On a phone it all stacks. While previews are off, the
-    sign-in leads, as before the token. %>
+    this stage", with what the sign-in asks right under it. That block spans
+    the second row and a flexible third one, so its height goes to the
+    third alone and the card gains no empty space. On a phone it all
+    stacks. While previews are off, the sign-in leads, as before the token. %>
 <% sign_in_asks = "Asks only for your email. Your public repos show up on your stage, and you can hide any of them. Private ones only if you add them. Never posts to your X or other accounts." %>
 <% previewing = !user_signed_in? && previews_on? %>
 <section class="os-panel p-6 sm:p-[52px]">
-  <div class="grid lg:grid-cols-2 lg:gap-x-9">
+  <div class="grid lg:grid-cols-2 lg:grid-rows-[auto_auto_1fr] lg:gap-x-9">
     <div class="lg:col-start-1 lg:row-start-1 lg:self-end">
       <span class="os-tag">For indie and side-project builders</span>
       <h1 class="os-h1 mt-4.5"><%= safe_join(HomeHelper::TAGLINE, tag.br) %></h1>
@@ -74,8 +75,10 @@
       </div>
     </div>
     <% if previewing %>
-      <%= render "home/sign_in", form_class: "mt-2 lg:col-start-1 lg:row-start-2 lg:mt-3" %>
-      <p class="os-note mt-1.5 lg:col-start-1 lg:row-start-3"><%= sign_in_asks %></p>
+      <div class="mt-2 lg:col-start-1 lg:row-span-2 lg:row-start-2 lg:mt-3" data-sign-in-block>
+        <%= render "home/sign_in" %>
+        <p class="os-note mt-1.5"><%= sign_in_asks %></p>
+      </div>
     <% end %>
 
     <% if @demo %>
