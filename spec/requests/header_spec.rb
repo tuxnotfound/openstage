@@ -22,13 +22,20 @@ RSpec.describe "The header", type: :request do
     expect(header.text).not_to include("with GitHub")
   end
 
-  it "keeps only the logo and the button on a phone" do
+  it "keeps the logo and the button on a phone, and folds the links and the theme into a menu beside them" do
     get "/"
 
     expect(header.at_css("nav")["class"]).to include("max-sm:hidden")
     expect(header.at_css("[data-controller='theme']").parent["class"]).to eq("max-sm:hidden")
     expect(form_of("Make your own stage")["class"]).to eq("max-sm:ml-auto")
     expect(header.at_css("nav").text.squish).to eq("Feed Pricing Blog Sign in")
+
+    menu = header.at_css("details[data-phone-menu]")
+    expect(menu["class"]).to include("sm:hidden")
+    expect(menu.at_css("summary")["aria-label"]).to eq("Menu")
+    expect(menu.css("nav a").map { |link| [ link.text, link["href"] ] }).to eq([ %w[Feed /feed], %w[Pricing /pricing], %w[Blog /blog] ])
+    expect(menu.at_css("form[action='/auth/github']").text.squish).to eq("Sign in")
+    expect(menu.at_css("[data-controller='theme']")).to be_present
   end
 
   it "stays as it was for a member" do

@@ -37,9 +37,9 @@
   <% else %>
     <%# A visitor's one action is their own stage, straight to GitHub's sign-in,
         which a member uses too; "Sign in" names it for them beside the links.
-        On a phone only the logo and the button fit: Pricing and Blog stay in
-        the site's footer. %>
-    <div class="os-top">
+        On a phone only the logo and the button fit, so the links and the
+        theme fold into a menu beside the button. %>
+    <div class="os-top max-sm:gap-3">
       <%= link_to "openstage", root_path, class: "os-logo" %>
       <nav class="os-nav ml-auto items-center max-sm:hidden" aria-label="Main">
         <%= link_to "Feed", feed_path, aria: { current: (controller_name == "feed" ? "page" : nil) } %>
@@ -50,6 +50,23 @@
       </nav>
       <span class="max-sm:hidden"><%= render "layouts/theme_toggle" %></span>
       <%= render "layouts/make_your_own", form_class: "max-sm:ml-auto" %>
+      <details class="relative sm:hidden" data-controller="dropdown" data-phone-menu>
+        <summary class="os-chip size-8.5 cursor-pointer justify-center p-0 text-ink-2 list-none [&::-webkit-details-marker]:hidden" aria-label="Menu">
+          <svg class="size-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </summary>
+        <nav class="os-card absolute right-0 top-full z-20 mt-2 w-52 p-1.5 text-[15px] font-semibold shadow-lg" aria-label="Menu">
+          <% item = "block w-full cursor-pointer rounded-[10px] px-3 py-2.5 text-left text-ink-2 hover:bg-fill hover:text-ink" %>
+          <%= link_to "Feed", feed_path, class: item, aria: { current: (controller_name == "feed" ? "page" : nil) } %>
+          <%= link_to "Pricing", pricing_path, class: item %>
+          <%= link_to "Blog", blog_path, class: item %>
+          <%= button_to "Sign in", "/auth/github", method: :post, data: { turbo: false, sign_in: true }, class: item %>
+          <div class="mt-1 border-t border-line pt-1">
+            <button type="button" class="<%= item %>" data-controller="theme" data-action="theme#toggle">
+              <span class="dark:hidden">Dark theme</span><span class="hidden dark:inline">Light theme</span>
+            </button>
+          </div>
+        </nav>
+      </details>
     </div>
   <% end %>
 </header>
