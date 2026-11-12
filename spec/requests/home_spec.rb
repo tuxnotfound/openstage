@@ -27,28 +27,53 @@ RSpec.describe "Home", type: :request do
       expect(response.body).not_to include("Start free with GitHub")
     end
 
-    # Three ways in, each with its own verb and weight: the box first, the
-    # sign-up named as the header's button, and a live stage as a link.
-    it "offers a preview first, then the sign-up and a live stage" do
-      create(:user, username: "tuxnotfound", github_username: "tuxnotfound")
+    # Three things to do, each in one place: the box in the hero, the sign-up
+    # in the header on the same screen, a live stage on the card that shows it.
+    it "leaves the hero's words with the box alone, and says it asks no sign-in" do
       Rails.configuration.x.github_profile_token = "preview-token"
       get "/"
       Rails.configuration.x.github_profile_token = nil
 
-      hero = Nokogiri::HTML(response.body).at_css("main section")
-      expect(hero.at_css("form[data-preview-form] button").text).to eq("Preview your stage")
-      expect(hero.at_css("form[data-preview-form] button")["class"]).to start_with("os-btn ")
-      sign_up = hero.at_css("form[action='/auth/github']")
-      expect([ sign_up.text.squish, sign_up.at_css("button")["class"] ]).to eq([ "Make your own stage", "os-btn2" ])
-      live = hero.at_css("a[data-live-stage]")
-      expect([ live.text.squish, live["href"], live["class"] ]).to eq([ "See a live stage →", "/tuxnotfound", "os-link text-[15px]" ])
+      page = Nokogiri::HTML(response.body)
+      hero = page.at_css("main section")
+      expect(hero.css("form").map { |form| form["action"] }).to eq(%w[/preview])
+      expect([ hero.at_css("form button").text, hero.at_css("form button")["class"] ]).to eq([ "Preview your stage", "os-btn flex-[0_0_auto]" ])
+      expect(hero.at_css("p.os-note").text).to eq("No sign-in. Built from your public repos.")
+      expect(hero.text).not_to include("Asks only for your email")
+      expect(page.at_css("header form[action='/auth/github'] button.os-btn").text).to eq("Make your own stage")
+    end
+
+    # The header has scrolled away by the landing's end, so the sign-up is
+    # there again, under the box.
+    it "ends on the box and the sign-up" do
+      Rails.configuration.x.github_profile_token = "preview-token"
+      get "/"
+      Rails.configuration.x.github_profile_token = nil
+
+      last = Nokogiri::HTML(response.body).css("main section").last
+      expect(last.css("form").map { |form| form["action"] }).to eq(%w[/preview /auth/github])
+      sign_up = last.at_css("form[action='/auth/github'] button")
+      expect([ sign_up.text.squish, sign_up["class"] ]).to eq([ "Make your own stage", "os-btn2" ])
+      expect(last.css("p.os-note")).to be_empty
     end
 
     it "keeps the sign-in while previews are off, as before the token is set" do
       get "/"
 
+      page = Nokogiri::HTML(response.body)
       expect(response.body).not_to include("data-preview-form")
-      expect(Nokogiri::HTML(response.body).css("form[action='/auth/github']").size).to be >= 2
+      sections = [ page.at_css("main section"), page.css("main section").last ]
+      expect(sections.map { |section| section.at_css("form[action='/auth/github'] button")&.[]("class") }).to eq(%w[os-btn os-btn])
+      expect(sections.first.at_css("p.os-note").text).to start_with("Asks only for your email.")
+    end
+
+    it "shows a member their dashboard, with nothing about signing in" do
+      sign_in_as(create(:user))
+      get "/"
+
+      hero = Nokogiri::HTML(response.body).at_css("main section")
+      expect(hero.css("a.os-btn").map { |link| [ link.text, link["href"] ] }).to eq([ [ "Go to your dashboard", "/dashboard" ] ])
+      expect(hero.css("form, p.os-note")).to be_empty
     end
 
     # The whole feed left the landing on 2026-09-29, when it sold a network of

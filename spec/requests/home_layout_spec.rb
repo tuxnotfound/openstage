@@ -26,13 +26,17 @@ RSpec.describe "Home layout", type: :request do
     expect(response.body).not_to include("Everything on one page")
   end
 
-  it "shows a real page above the fold, with a way to see all of it" do
+  # The card is the live stage, so the landing's one link to it is the card's
+  # own, at its foot, and not a button beside the sign-up.
+  it "shows a real page above the fold, ending on the one link to all of it" do
     get "/"
 
-    expect(response.body).to include("A real Openstage page")
+    page = Nokogiri::HTML(response.body)
     expect(response.body).to include("openstage.dev/tuxnotfound")
-    live = Nokogiri::HTML(response.body).css("a").find { |link| link.text.squish == "See a live stage" }
-    expect([ live["href"], live["class"] ]).to eq([ "/tuxnotfound", "os-btn2" ])
+    expect(page.css("a").select { |link| link.text.include?("See a live stage") }.size).to eq(1)
+    live = page.at_css("main section .os-card > a[data-live-stage]")
+    expect([ live.text.squish, live["href"], live["class"] ]).to eq([ "See a live stage →", "/tuxnotfound", "os-link mt-3 inline-block" ])
+    expect(response.body).not_to include("A real Openstage page")
   end
 
   it "sells projects: a line each, and what each one is" do
@@ -56,7 +60,7 @@ RSpec.describe "Home layout", type: :request do
 
       get "/"
 
-      card = response.body[/<div class="os-card min-w-0 p-5">.*A real Openstage page/m]
+      card = response.body[/<div class="os-card min-w-0 p-5">.*See a live stage/m]
       expect(card).to include("commits, last 30 days", "os-sharebar", "os-chart")
       expect(card).not_to include("Rebirth begins", "os-disc")
     end
@@ -91,6 +95,6 @@ RSpec.describe "Home layout", type: :request do
 
     get "/"
     expect(response).to have_http_status(:success)
-    expect(response.body).not_to include("A real Openstage page")
+    expect(response.body).not_to include("See a live stage")
   end
 end

@@ -1,5 +1,6 @@
 <%# A real page above the fold, drawn by the page's own code: the headline
-    number, the share bar and the chart, nothing more. %>
+    number, the share bar and the chart, nothing more. It ends on the
+    landing's one link to a live stage, this one. %>
 <% totals = section.tally.totals %>
 <% shares = section.tally.projects.all.filter_map { |project| [ project, totals.counts[project.repo] ] if totals.counts[project.repo].to_i.positive? } %>
 <div class="os-card min-w-0 p-5">
@@ -28,5 +29,5 @@
     <%= render "profiles/page/chart", section: section, chart: chart, height: "h-[200px]" %>
   </div>
 
-  <p class="os-note mt-2">A real Openstage page, as it stands today.</p>
+  <%= link_to profile_path(user.username), class: "os-link mt-3 inline-block", data: { live_stage: true } do %>See a live stage <span aria-hidden="true">→</span><% end %>
 </div>

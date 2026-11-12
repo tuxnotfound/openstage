@@ -56,15 +56,11 @@
       <p class="os-p mt-4 text-lg">Openstage keeps a public page of everything you're building, project by project. It stays current from your GitHub commits while you work.</p>
       <div class="mt-6">
         <% if user_signed_in? %>
-          <div class="flex flex-wrap items-center gap-x-4.5 gap-y-3">
-            <%= link_to "Go to your dashboard", dashboard_path, class: "os-btn" %>
-            <% if @demo_user %><%= link_to "See a live stage", profile_path(@demo_user.username), class: "os-btn2" %><% end %>
-          </div>
+          <%= link_to "Go to your dashboard", dashboard_path, class: "os-btn" %>
         <% else %>
-          <%= render "home/start", id: "preview-login", live: @demo_user %>
+          <%= render "home/start", id: "preview-login", note: true %>
         <% end %>
       </div>
-      <p class="os-note mt-3.5">Asks only for your email. Your public repos show up on your stage, and you can hide any of them. Private ones only if you add them. Never posts to your X or other accounts.</p>
     </div>
 
     <% if @demo %>
@@ -119,7 +115,7 @@
     <% if user_signed_in? %>
       <%= link_to "Go to your dashboard", dashboard_path, class: "os-btn" %>
     <% else %>
-      <%= render "home/start", id: "preview-login-end", center: true %>
+      <%= render "home/start", id: "preview-login-end", center: true, sign_up: true %>
     <% end %>
   </div>
   <%= link_to "Pro is $7 a month. See pricing", pricing_path, class: "os-link mt-4 inline-block" %>
