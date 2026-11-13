@@ -1,5 +1,4 @@
-<% content_for :title, "#{@preview.display_name}'s stage, from GitHub — Openstage" %>
-<% content_for :head do %><meta name="robots" content="noindex, nofollow"><% end %>
+<%= render "previews/meta", login: @preview.login %>
 <% content_for :main_class, "os-wrap pt-1.5" %>
 
 <div class="os-stack">

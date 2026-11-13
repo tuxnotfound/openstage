@@ -23,12 +23,21 @@ module Previews
     validates :login, format: { with: LOGIN, message: "is not a GitHub username" }
     validates :today, presence: true
 
+    # Whether a preview read in the last hour answers, so GitHub is not asked.
+    def cached?
+      valid? && Rails.cache.exist?(cache_key)
+    end
+
     private
 
     def execute
-      @preview = Rails.cache.fetch([ "preview", CACHE_VERSION, login.downcase, today.iso8601 ], expires_in: KEPT_FOR) { build }
+      @preview = Rails.cache.fetch(cache_key, expires_in: KEPT_FOR) { build }
     rescue GithubProfileGateway::NotFound
       errors.add(:login, :not_found, message: "is not on GitHub")
+    end
+
+    def cache_key
+      [ "preview", CACHE_VERSION, login.downcase, today.iso8601 ]
     end
 
     def build

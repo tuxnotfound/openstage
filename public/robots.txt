@@ -35,4 +35,31 @@ Disallow: /*&projects=
 Disallow: /*?show=
 Disallow: /*&show=
 
+# The link previews of posts and messages, which read a shared page's card
+# and nothing else, may read a stage preview's too, so a preview sent in a
+# message shows its card. Search stays out of /preview (the group above).
+User-agent: Twitterbot
+User-agent: facebookexternalhit
+User-agent: LinkedInBot
+User-agent: Slackbot
+User-agent: Discordbot
+User-agent: TelegramBot
+User-agent: WhatsApp
+Allow: /
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /claim-username
+Disallow: /analytics
+Disallow: /billing
+Disallow: /checkout
+Disallow: /sync/
+Disallow: /auth/
+Disallow: /e/
+Disallow: /*?range=
+Disallow: /*&range=
+Disallow: /*?projects=
+Disallow: /*&projects=
+Disallow: /*?show=
+Disallow: /*&show=
+
 Sitemap: https://openstage.dev/sitemap.xml

@@ -92,11 +92,35 @@ RSpec.describe "Previews", type: :request do
       expect(GithubProfileGateway).not_to have_received(:profile)
     end
 
-    it "builds nothing for a bot" do
-      get "/preview/ada", headers: { "User-Agent" => "Googlebot/2.1" }
+    # X's link preview reads the card when a preview is sent in a message.
+    it "gives a bot the card alone, with no read from GitHub" do
+      get "/preview/ada", headers: { "User-Agent" => "Twitterbot/1.0" }
 
-      expect(response).to have_http_status(:not_found)
+      expect(response).to have_http_status(:ok)
+      expect(response.headers["X-Robots-Tag"]).to eq("noindex, nofollow")
+      page = Nokogiri::HTML(response.body)
+      meta = ->(name) { page.at_css("meta[property='#{name}'], meta[name='#{name}']")&.[]("content") }
+      expect(meta.call("og:title")).to eq("@ada's stage, built from public GitHub — Openstage")
+      expect(meta.call("og:description")).to eq("Projects and a year of commits from @ada's public GitHub, on Openstage. No sign-in needed to preview.")
+      expect(meta.call("og:image")).to eq("https://avatars.githubusercontent.com/ada?size=400")
+      expect([ meta.call("twitter:card"), meta.call("twitter:image") ]).to eq([ "summary", "https://avatars.githubusercontent.com/ada?size=400" ])
       expect(GithubProfileGateway).not_to have_received(:profile)
+    end
+
+    it "sends a bot to a member's stage, whose own card it reads" do
+      create(:user, username: "lovelace", github_username: "ada")
+
+      get "/preview/ada", headers: { "User-Agent" => "Twitterbot/1.0" }
+
+      expect(response).to redirect_to("/lovelace")
+    end
+
+    it "gives a visitor's page the same card" do
+      get "/preview/ada", headers: browser
+
+      page = Nokogiri::HTML(response.body)
+      expect(page.at_css("meta[property='og:title']")["content"]).to eq("@ada's stage, built from public GitHub — Openstage")
+      expect(page.at_css("meta[name='twitter:card']")["content"]).to eq("summary")
     end
 
     it "answers 404 with the landing for a login GitHub does not know, the login kept in the box" do
@@ -133,15 +157,25 @@ RSpec.describe "Previews", type: :request do
       expect(GithubProfileGateway).not_to have_received(:profile)
     end
 
-    it "stops a visitor past their previews for the hour" do
+    it "stops a visitor past their reads from GitHub for the hour" do
       allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
 
-      PreviewsController::PER_VISITOR.times { get "/preview/ada", headers: browser }
+      PreviewsController::PER_VISITOR.times { |i| get "/preview/ada-#{i}", headers: browser }
       expect(response).to have_http_status(:ok)
 
-      get "/preview/ada", headers: browser
+      get "/preview/one-more", headers: browser
       expect(response).to have_http_status(:too_many_requests)
       expect(response.body).to include("Too many previews this hour")
+    end
+
+    # A reload, or a crowd opening one shared preview, costs GitHub nothing.
+    it "counts no preview the hour's cache answers" do
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+
+      (PreviewsController::PER_VISITOR + 5).times { get "/preview/ada", headers: browser }
+
+      expect(response).to have_http_status(:ok)
+      expect(GithubProfileGateway).to have_received(:profile).once
     end
 
     it "shows the public repos the stage would show, for someone with no commits in the 12 months" do
@@ -179,6 +213,18 @@ RSpec.describe "Previews", type: :request do
       expect(Nokogiri::HTML(response.body).css("main form[action='/auth/github'] button").map { |b| b.text.squish }).to eq([ "Make your own stage" ])
       expect(response.body).not_to include("Keep it current")
     end
+  end
+
+  # Search stays out of previews; the link previews of posts and messages
+  # may read one, or a preview sent in a message shows no card.
+  it "keeps search out of previews and lets link previews in" do
+    rules = Rails.root.join("public/robots.txt").read.split(/\n\s*\n/).select { |block| block.include?("User-agent:") }
+    everyone = rules.find { |block| block.include?("User-agent: *") }
+    previews = rules.find { |block| block.include?("User-agent: Twitterbot") }
+
+    expect(everyone).to include("Disallow: /preview")
+    expect(previews).to include("User-agent: facebookexternalhit", "User-agent: Slackbot", "Allow: /")
+    expect(previews).not_to include("Disallow: /preview")
   end
 
   it "keeps the username preview from ever being claimed" do

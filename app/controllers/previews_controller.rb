@@ -1,18 +1,20 @@
 # The stage a GitHub user would get, built from their public work for a
 # visitor who has not signed in (Previews::BuildService), with the sign-in
 # that claims it, tagged preview. Each preview reads GitHub on Openstage's
-# own token, so bots get none, a visitor gets a few an hour, and search
-# keeps none: a preview is a page about someone who never asked for one.
+# own token, so a bot gets the preview's card alone, a visitor a few reads
+# an hour, and search keeps none: a preview is a page about someone who
+# never asked for one.
 class PreviewsController < ApplicationController
   include LandingPage
 
-  # Previews one visitor may open in an hour, and all visitors together, so a
-  # flood cannot spend the token's hourly allowance.
-  PER_VISITOR = 20
+  # Previews read from GitHub in an hour for one address, and for all of them
+  # together, so a flood cannot spend the token's hourly allowance. One
+  # address can be an office or a phone carrier's whole network, so its
+  # share is wide; the cap on all of them is the guard.
+  PER_VISITOR = 60
   PER_HOUR = 400
 
   before_action :keep_out_of_search
-  before_action :refuse_bots, only: :show
 
   rescue_from ApplicationGateway::Error, with: :github_unavailable
 
@@ -27,15 +29,19 @@ class PreviewsController < ApplicationController
     redirect_to preview_path(@login)
   end
 
-  # A member's GitHub account opens their stage, not a preview of it.
+  # A member's GitHub account opens their stage, not a preview of it. A bot
+  # gets the card alone, as X and the other link previews read it in a post
+  # or a message, at no cost to GitHub. A preview read in the last hour costs
+  # GitHub nothing either, so only a new read counts against the limits.
   def show
     @login = params[:login]
     member = User.active.with_github_login(@login).first
     return redirect_to(profile_path(member.username)) if member
-    return render(:unavailable, status: :too_many_requests) if (@busy = throttled?)
+    return render(:card) if BotDetector.bot?(request.user_agent)
     return render(:unavailable, status: :service_unavailable) unless GithubProfileGateway.configured?
 
     service = Previews::BuildService.new(login: @login, today: Date.current)
+    return render(:unavailable, status: :too_many_requests) if (@busy = !service.cached? && throttled?)
     return render_missing(:not_found) unless service.call
 
     @preview = service.preview
@@ -48,12 +54,6 @@ class PreviewsController < ApplicationController
     response.headers["X-Robots-Tag"] = "noindex, nofollow"
   end
 
-  def refuse_bots
-    head :not_found if BotDetector.bot?(request.user_agent)
-  end
-
-  # Counted before the cache answers: a reload costs GitHub nothing, but
-  # counting it keeps the rule one line.
   def throttled?
     hour = Time.current.strftime("%Y%m%d%H")
     visitor = Digest::SHA256.hexdigest(request.remote_ip.to_s)

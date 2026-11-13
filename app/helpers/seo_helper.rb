@@ -34,6 +34,12 @@ module SeoHelper
     content_for?(:og_image) ? content_for(:og_image) : share_card(og_site_url)
   end
 
+  # X's card: the share card's wide picture, unless a page sets "summary",
+  # whose small square suits a GitHub avatar (previews/_meta).
+  def twitter_card
+    content_for?(:twitter_card) ? content_for(:twitter_card) : "summary_large_image"
+  end
+
   # A share card's address (OgImagesController). X and others keep the image
   # they fetched for an address; a new version makes them fetch the new look.
   SHARE_CARD_VERSION = 4
