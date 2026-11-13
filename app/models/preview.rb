@@ -27,9 +27,11 @@ class Preview
   # A row of Recent commits: one project's commits on one day, newest first.
   Group = Data.define(:project, :date, :commits)
 
-  attr_reader :profile, :latest, :today
+  # quiet_repos: with no commits in the 12 months, public repos the stage
+  # would show once they get one (GithubProfileGateway::RecentRepo).
+  attr_reader :profile, :latest, :today, :quiet_repos
 
-  delegate :login, :avatar_url, :bio, :website, to: :profile
+  delegate :login, :avatar_url, :bio, :website, :private_contributions, to: :profile
 
   # The first day a preview reads: the 12-month chart's first or the cards'
   # first week, whichever is earlier.
@@ -43,10 +45,11 @@ class Preview
   end
 
   # latest: GithubProfileGateway::Commit, newest first.
-  def initialize(profile:, latest:, today:)
+  def initialize(profile:, latest:, today:, quiet_repos: [])
     @profile = profile
     @latest = latest
     @today = today
+    @quiet_repos = quiet_repos
   end
 
   def display_name

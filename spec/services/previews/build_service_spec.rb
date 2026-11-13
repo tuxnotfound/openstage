@@ -20,15 +20,26 @@ RSpec.describe Previews::BuildService do
     expect(GithubProfileGateway).to have_received(:commits).with("U_ada", [ "ada/engine", "ada/old" ], per_repo: described_class::RECENT_PER_REPO)
   end
 
-  it "asks for no commits when no repo has any" do
+  it "reads the public repos instead of commits when the 12 months have none" do
     allow(GithubProfileGateway).to receive(:profile).and_return(github_profile(repos: []))
     allow(GithubProfileGateway).to receive(:commits)
+    allow(GithubProfileGateway).to receive(:recent_repos).with("ada", count: described_class::QUIET_REPOS).and_return([ github_recent_repo ])
 
     service = described_class.new(login: "ada", today: today)
 
     expect(service.call).to be(true)
     expect(service.preview).to be_empty
+    expect(service.preview.quiet_repos.map(&:name)).to eq(%w[notes])
     expect(GithubProfileGateway).not_to have_received(:commits)
+  end
+
+  it "reads no public repos for a preview with commits" do
+    allow(GithubProfileGateway).to receive(:profile).and_return(github_profile(repos: [ github_profile_repo(days: { today - 2 => 4 }) ]))
+    allow(GithubProfileGateway).to receive(:commits).and_return([])
+    allow(GithubProfileGateway).to receive(:recent_repos)
+
+    expect(described_class.new(login: "ada", today: today).tap(&:call).preview.quiet_repos).to eq([])
+    expect(GithubProfileGateway).not_to have_received(:recent_repos)
   end
 
   it "refuses a login GitHub could never have, without asking it" do

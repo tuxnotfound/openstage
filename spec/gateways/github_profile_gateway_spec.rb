@@ -18,9 +18,9 @@ RSpec.describe GithubProfileGateway do
       contributions: { nodes: nodes.map { |at, count| { occurredAt: at, commitCount: count } } } }
   end
 
-  def user(contributions)
+  def user(contributions, private_count: 0)
     { id: "U_ada", login: "ada", name: "Ada Lovelace", avatarUrl: "https://avatars.githubusercontent.com/u/2", bio: "", websiteUrl: nil,
-      contributionsCollection: { commitContributionsByRepository: contributions } }
+      contributionsCollection: { restrictedContributionsCount: private_count, commitContributionsByRepository: contributions } }
   end
 
   describe ".configured?" do
@@ -58,6 +58,16 @@ RSpec.describe GithubProfileGateway do
       expect(profile.repos.map(&:full_name)).to contain_exactly("ada/engine", "ada/notes")
     end
 
+    # GitHub shares the count only when they chose to show it on their profile.
+    it "sums the private contributions GitHub counts in each span" do
+      stub_request(:post, url).to_return do |request|
+        from = JSON.parse(request.body).dig("variables", "from")
+        { status: 200, headers: json, body: { data: { user: user([], private_count: from.start_with?("2026-01") ? 40 : 2) } }.to_json }
+      end
+
+      expect(described_class.profile("ada", from: Date.new(2026, 1, 1), to: Date.new(2026, 4, 10)).private_contributions).to eq(42)
+    end
+
     it "drops a private repo, should the token read one" do
       answer_by_span("2026-01-01" => [ contribution("secret", [ [ "2026-01-02T08:00:00Z", 9 ] ], private: true) ])
 
@@ -85,6 +95,28 @@ RSpec.describe GithubProfileGateway do
 
       expect { described_class.profile("ada", from: Date.new(2026, 1, 1), to: Date.new(2026, 1, 31)) }
         .to raise_error(ApplicationGateway::RateLimited)
+    end
+  end
+
+  describe ".recent_repos" do
+    def node(name, private: false, archived: false)
+      { nameWithOwner: "ada/#{name}", name: name, description: "", url: "https://github.com/ada/#{name}", homepageUrl: "https://#{name}.example",
+        pushedAt: "2024-04-09T10:00:00Z", isPrivate: private, isArchived: archived, primaryLanguage: { name: "Ruby" } }
+    end
+
+    it "returns the public repos they own, last updated first, none private or archived" do
+      stub_request(:post, url).to_return do |request|
+        expect(JSON.parse(request.body)["variables"]).to eq("login" => "ada", "count" => 6)
+        { status: 200, headers: json, body: { data: { user: { repositories: { nodes: [
+          node("notes"), node("secret", private: true), node("old", archived: true)
+        ] } } } }.to_json }
+      end
+
+      repos = described_class.recent_repos("ada", count: 6)
+
+      expect(repos.map(&:name)).to eq(%w[notes])
+      expect(repos.first).to have_attributes(full_name: "ada/notes", description: nil, homepage: "https://notes.example", language: "Ruby",
+                                             updated_at: Time.utc(2024, 4, 9, 10))
     end
   end
 

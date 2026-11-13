@@ -14,7 +14,11 @@ class GithubProfileGateway < ApplicationGateway
   # days: commits by Date.
   Repo = Data.define(:full_name, :name, :description, :url, :homepage, :archived, :days)
   # id: GitHub's node id, which the commits' author filter takes.
-  Profile = Data.define(:id, :login, :name, :avatar_url, :bio, :website, :repos)
+  # private_contributions: what GitHub counts of their private work in the
+  # spans, which it shares only when they chose to show it on their profile.
+  Profile = Data.define(:id, :login, :name, :avatar_url, :bio, :website, :repos, :private_contributions)
+  # A public repo they own, as its last update left it.
+  RecentRepo = Data.define(:full_name, :name, :description, :url, :homepage, :language, :updated_at)
   Commit = Data.define(:repo, :title, :authored_at, :url)
 
   PROFILE_QUERY = <<~GRAPHQL.freeze
@@ -22,10 +26,22 @@ class GithubProfileGateway < ApplicationGateway
       user(login: $login) {
         id login name avatarUrl bio websiteUrl
         contributionsCollection(from: $from, to: $to) {
+          restrictedContributionsCount
           commitContributionsByRepository(maxRepositories: #{REPOS_PER_SPAN}) {
             repository { nameWithOwner name description url homepageUrl isArchived isPrivate }
             contributions(first: 100) { nodes { occurredAt commitCount } }
           }
+        }
+      }
+    }
+  GRAPHQL
+
+  RECENT_REPOS_QUERY = <<~GRAPHQL.freeze
+    query($login: String!, $count: Int!) {
+      user(login: $login) {
+        repositories(first: $count, privacy: PUBLIC, ownerAffiliations: OWNER, isFork: false,
+                     orderBy: { field: PUSHED_AT, direction: DESC }) {
+          nodes { nameWithOwner name description url homepageUrl pushedAt isPrivate isArchived primaryLanguage { name } }
         }
       }
     }
@@ -45,7 +61,18 @@ class GithubProfileGateway < ApplicationGateway
     end
     user = users.first || raise(NotFound.new(status: 404))
     Profile.new(id: user[:id], login: user[:login], name: user[:name].presence, avatar_url: user[:avatarUrl],
-                bio: user[:bio].presence, website: user[:websiteUrl].presence, repos: repos(users))
+                bio: user[:bio].presence, website: user[:websiteUrl].presence, repos: repos(users),
+                private_contributions: users.compact.sum { |each| each.dig(:contributionsCollection, :restrictedContributionsCount).to_i })
+  end
+
+  # Up to count public repos they own, not forks, archived ones left out,
+  # the last updated first.
+  def self.recent_repos(login, count:)
+    nodes = query(RECENT_REPOS_QUERY, { login: login, count: count }).dig(:user, :repositories, :nodes)
+    Array(nodes).reject { |repo| repo[:isPrivate] || repo[:isArchived] }.map do |repo|
+      RecentRepo.new(full_name: repo[:nameWithOwner], name: repo[:name], description: repo[:description].presence, url: repo[:url],
+                     homepage: repo[:homepageUrl].presence, language: repo.dig(:primaryLanguage, :name), updated_at: Time.iso8601(repo[:pushedAt]))
+    end
   end
 
   # The latest commits author_id made to each repo's default branch, newest

@@ -10,10 +10,12 @@ module Previews
     LOGIN = /\A[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}\z/i
     KEPT_FOR = 1.hour
     # Bumped when Preview changes shape, so a cached one from before a deploy is never read.
-    CACHE_VERSION = 1
+    CACHE_VERSION = 2
     # The projects whose latest commits it reads, and how many from each.
     RECENT_REPOS = 4
     RECENT_PER_REPO = 6
+    # Public repos a preview with no commits shows instead.
+    QUIET_REPOS = 6
 
     attr_accessor :login, :today
     attr_reader :preview
@@ -31,7 +33,16 @@ module Previews
 
     def build
       profile = GithubProfileGateway.profile(login, from: Preview.first_day(today), to: today)
-      Preview.new(profile: profile, latest: latest(profile), today: today)
+      preview = Preview.new(profile: profile, latest: latest(profile), today: today)
+      return preview unless preview.empty?
+
+      Preview.new(profile: profile, latest: preview.latest, today: today, quiet_repos: quiet_repos)
+    end
+
+    # With no commits in the 12 months, the repos that would join the stage
+    # with their next commit: one more call, for quiet accounts alone.
+    def quiet_repos
+      GithubProfileGateway.recent_repos(login, count: QUIET_REPOS)
     end
 
     # The projects worked on last, as Recent commits shows them.

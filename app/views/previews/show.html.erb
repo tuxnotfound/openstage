@@ -35,11 +35,18 @@
     </div>
 
     <% if @preview.empty? %>
-      <%# The stage would be as empty, so it says what fills it, and shows
-          nothing it would not. %>
+      <%# The stage would be as empty, so it says what fills it: the private
+          work GitHub counts, when they share that count, else their next
+          pushes; their public repos follow (previews/_quiet_repos). %>
       <div class="mt-8 border-t border-line py-12 text-center">
         <p class="os-h3">No public commits in the last 12 months</p>
-        <p class="os-sm os-muted mt-1">Once it's yours, it fills as you push. Private repos can join it too.</p>
+        <p class="os-sm os-muted mt-1">
+          <% if @preview.private_contributions.positive? %>
+            GitHub counts <%= number_with_delimiter(@preview.private_contributions) %> private contributions in that time. Add those repos once it's yours, and their commits show here.
+          <% else %>
+            Once it's yours, it fills as you push. Private repos can join it too.
+          <% end %>
+        </p>
       </div>
     <% else %>
       <% section = @preview.section %>
@@ -63,6 +70,9 @@
     <% end %>
   </section>
 
+  <% if @preview.empty? && @preview.quiet_repos.any? %>
+    <%= render "previews/quiet_repos", repos: @preview.quiet_repos %>
+  <% end %>
   <% if @preview.cards.any? %>
     <%= render "previews/projects", preview: @preview %>
   <% end %>

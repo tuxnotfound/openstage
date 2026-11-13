@@ -144,8 +144,32 @@ RSpec.describe "Previews", type: :request do
       expect(response.body).to include("Too many previews this hour")
     end
 
+    it "shows the public repos the stage would show, for someone with no commits in the 12 months" do
+      allow(GithubProfileGateway).to receive(:profile).and_return(github_profile(repos: []))
+      allow(GithubProfileGateway).to receive(:recent_repos).and_return([ github_recent_repo(homepage: "https://notes.example") ])
+
+      get "/preview/ada", headers: browser
+
+      repos = Nokogiri::HTML(response.body).at_css("section[aria-labelledby='public-repos']")
+      expect(repos.at_css("h2").text).to eq("Public repos")
+      expect(repos.text.squish).to include("notes", "Notes on the engine", "Ruby · updated Apr 2024", "notes.example")
+      expect(repos.text).not_to match(/star/i)
+    end
+
+    it "names the private work GitHub counts, when they share it" do
+      allow(GithubProfileGateway).to receive(:profile).and_return(github_profile(repos: [], private_contributions: 1240))
+      allow(GithubProfileGateway).to receive(:recent_repos).and_return([])
+
+      get "/preview/ada", headers: browser
+
+      expect(Nokogiri::HTML(response.body).text.squish)
+        .to include("GitHub counts 1,240 private contributions in that time. Add those repos once it's yours, and their commits show here.")
+      expect(response.body).not_to include("public-repos")
+    end
+
     it "says so for someone with no public commits in the 12 months" do
       allow(GithubProfileGateway).to receive(:profile).and_return(github_profile(repos: []))
+      allow(GithubProfileGateway).to receive(:recent_repos).and_return([])
 
       get "/preview/ada", headers: browser
 
