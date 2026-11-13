@@ -37,11 +37,14 @@ RSpec.describe "Previews", type: :request do
       end
     end
 
-    it "says so for a name GitHub could never have" do
+    it "says so on the landing, the name kept in its box, for a name GitHub could never have" do
       get "/preview", params: { github: "your_username" }
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(response.body).to include("No GitHub user named @your_username")
+      field = Nokogiri::HTML(response.body).at_css("input#preview-login")
+      expect([ field["value"], field["aria-invalid"], field.key?("autofocus") ]).to eq([ "your_username", "true", true ])
+      expect(Nokogiri::HTML(response.body).at_css("#preview-login-error").text).to eq("No GitHub user named @your_username.")
+      expect(response.body).to include("Keep shipping.")
     end
 
     it "goes home with nothing typed" do
@@ -96,14 +99,18 @@ RSpec.describe "Previews", type: :request do
       expect(GithubProfileGateway).not_to have_received(:profile)
     end
 
-    it "answers 404 for a login GitHub does not know, with the form to try another" do
+    it "answers 404 with the landing for a login GitHub does not know, the login kept in the box" do
       allow(GithubProfileGateway).to receive(:profile).and_raise(ApplicationGateway::NotFound.new(status: 404))
 
-      get "/preview/nobody", headers: browser
+      get "/preview/nobdy", headers: browser
 
       expect(response).to have_http_status(:not_found)
-      expect(response.body).to include("No GitHub user named @nobody", "github.com/")
-      expect(Nokogiri::HTML(response.body).at_css("input[name=github]")["placeholder"]).to eq("tuxnotfound")
+      expect(response.headers["X-Robots-Tag"]).to eq("noindex, nofollow")
+      page = Nokogiri::HTML(response.body)
+      expect(page.at_css("input#preview-login")["value"]).to eq("nobdy")
+      expect(page.at_css("#preview-login-error").text).to eq("No GitHub user named @nobdy.")
+      expect(page.at_css("input#preview-login-end")["value"]).to eq("")
+      expect(response.body).to include("Keep shipping.", "How it works")
     end
 
     it "offers the sign-in when GitHub fails, and reports it" do
@@ -143,7 +150,7 @@ RSpec.describe "Previews", type: :request do
       get "/preview/ada", headers: browser
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("No public commits in the last 12 months")
+      expect(response.body).to include("No public commits in the last 12 months", "Once it's yours, it fills as you push. Private repos can join it too.")
       # The top's sign-in stays; the end's, with nothing to keep current, goes.
       expect(Nokogiri::HTML(response.body).css("main form[action='/auth/github'] button").map { |b| b.text.squish }).to eq([ "Make your own stage" ])
       expect(response.body).not_to include("Keep it current")

@@ -33,13 +33,17 @@ RSpec.describe Preview do
     expect(result.rest.map(&:name)).to eq(%w[p10 p11])
   end
 
-  it "counts a card's commits by week, this week last" do
-    card = preview([ github_profile_repo(days: { today => 2, today - 7 => 3, Date.new(2025, 11, 17) => 1 }) ]).cards.first
+  # The line runs 52 weeks, from 2025-11-17; the count is the 12 months the
+  # headline sums, from 2025-12-01, so the cards add up to it.
+  it "draws a card's 52 weeks, this week last, and counts the headline's 12 months" do
+    result = preview([ github_profile_repo(days: { today => 2, today - 7 => 3, Date.new(2025, 11, 17) => 1 }) ])
+    card = result.cards.first
 
     expect(card.weeks.size).to eq(52)
     expect(card.weeks.last(2)).to eq([ 3, 2 ])
     expect(card.weeks.first).to eq(1)
-    expect(card).to have_attributes(commits: 6, last_commit: today, description: "The analytical engine")
+    expect(card).to have_attributes(commits: 5, last_commit: today, description: "The analytical engine")
+    expect(result.cards.sum(&:commits)).to eq(result.commits)
   end
 
   it "draws its chart with the code that draws a stage's" do

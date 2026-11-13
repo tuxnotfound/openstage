@@ -11,14 +11,13 @@ class Preview
   LISTED = 20
 
   # A project's card, as the stage draws one from GitHub alone. weeks: its
-  # commits per ISO week, oldest first, this week last.
+  # commits per ISO week, oldest first, this week last, for its line. Its
+  # count is the 12 months' the headline sums, whose first day comes up to
+  # two weeks after the first of the 52 weeks: torvalds' cards summed 75
+  # commits more than his headline when they counted the weeks.
   Card = Data.define(:project, :repo, :weeks, :last_commit) do
-    delegate :name, :rank, to: :project
+    delegate :name, :rank, :commits, to: :project
     delegate :description, :url, :homepage, to: :repo
-
-    def commits
-      weeks.sum
-    end
 
     def archived?
       repo.archived

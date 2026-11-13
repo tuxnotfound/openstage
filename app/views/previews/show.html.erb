@@ -35,8 +35,11 @@
     </div>
 
     <% if @preview.empty? %>
+      <%# The stage would be as empty, so it says what fills it, and shows
+          nothing it would not. %>
       <div class="mt-8 border-t border-line py-12 text-center">
         <p class="os-h3">No public commits in the last 12 months</p>
+        <p class="os-sm os-muted mt-1">Once it's yours, it fills as you push. Private repos can join it too.</p>
       </div>
     <% else %>
       <% section = @preview.section %>

@@ -67,7 +67,7 @@
         <% if user_signed_in? %>
           <%= link_to "Go to your dashboard", dashboard_path, class: "os-btn" %>
         <% elsif previewing %>
-          <%= render "previews/form", id: "preview-login", note: "No sign-in needed to preview." %>
+          <%= render "previews/form", id: "preview-login", note: "No sign-in needed to preview.", value: @login, error: @missing %>
         <% else %>
           <%= render "home/sign_up" %>
           <p class="os-note mt-3.5"><%= sign_in_asks %></p>

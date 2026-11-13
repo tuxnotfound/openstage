@@ -4,6 +4,8 @@
 # own token, so bots get none, a visitor gets a few an hour, and search
 # keeps none: a preview is a page about someone who never asked for one.
 class PreviewsController < ApplicationController
+  include LandingPage
+
   # Previews one visitor may open in an hour, and all visitors together, so a
   # flood cannot spend the token's hourly allowance.
   PER_VISITOR = 20
@@ -20,7 +22,7 @@ class PreviewsController < ApplicationController
   def new
     @login = params[:github].to_s.strip.sub(%r{\A(?:https?://)?(?:www\.)?github\.com/}i, "").delete_prefix("@").split(%r{[/?#]}).first.to_s
     return redirect_to(root_path) if @login.blank?
-    return render(:missing, status: :unprocessable_content) unless @login.match?(Previews::BuildService::LOGIN)
+    return render_missing(:unprocessable_content) unless @login.match?(Previews::BuildService::LOGIN)
 
     redirect_to preview_path(@login)
   end
@@ -34,7 +36,7 @@ class PreviewsController < ApplicationController
     return render(:unavailable, status: :service_unavailable) unless GithubProfileGateway.configured?
 
     service = Previews::BuildService.new(login: @login, today: Date.current)
-    return render(:missing, status: :not_found) unless service.call
+    return render_missing(:not_found) unless service.call
 
     @preview = service.preview
     count_preview
@@ -72,6 +74,14 @@ class PreviewsController < ApplicationController
 
     session[:previewed] = @login.downcase
     Event.track("preview", detail: session[:signup_ref].presence || SignIns::CountStartService::UNTAGGED)
+  end
+
+  # The landing again, the username kept in its box and named under it, so
+  # a typo is one key from fixed and the page around it stays.
+  def render_missing(status)
+    load_landing
+    @missing = "No GitHub user named @#{@login}."
+    render "home/index", status: status
   end
 
   def github_unavailable(error)
