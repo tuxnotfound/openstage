@@ -6,6 +6,25 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["tooltip"]
 
+  // The tooltip keeps its place in pixels, so it closes when the window's
+  // width changes: left open as a desktop narrowed to a phone's width, it ran
+  // past the page's edge. The height alone never closes it, as a phone's
+  // address bar changes the height while the page scrolls. The charts' own
+  // tooltip does the same (charts/filter/widthChange.ts).
+  connect() {
+    this.width = window.innerWidth
+    this.closeOnWidthChange = () => {
+      if (window.innerWidth === this.width) return
+      this.width = window.innerWidth
+      this.hide()
+    }
+    window.addEventListener("resize", this.closeOnWidthChange)
+  }
+
+  disconnect() {
+    window.removeEventListener("resize", this.closeOnWidthChange)
+  }
+
   show(event) {
     const template = event.params.template && document.getElementById(event.params.template)
     if (template) {

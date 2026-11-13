@@ -1,8 +1,9 @@
-import { Fragment, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
 import type { ChartMark, CompareChartView } from "../types"
 import LineKey from "./LineKey"
 import { LINE_DASHES, lineOf, pathTops, tipLeft, type Lines } from "./lines"
 import Mark, { MarkIcon, type Lead } from "./Marks"
+import { onWidthChange } from "./widthChange"
 
 // Draws a chart filter's chart as the server worked it out
 // (CompareChartSerializer), as charts/_chart renders the same view: a line
@@ -59,6 +60,9 @@ export default function CompareChart({ chart, lines, focus, height = "", hidden,
   })
   const shown = chart.marks.filter((mark) => !(mark.key && mark.number && hidden?.({ key: mark.key, number: mark.number })))
   const forward = (mark: ChartMark) => !lit || (focus?.kind === "number" ? mark.number === focus.key : mark.key === focus?.key)
+
+  // A tooltip open as the window narrows would keep its old place (onWidthChange).
+  useEffect(() => onWidthChange(window, () => setAt(null)), [])
 
   function pointAt(event: PointerEvent) {
     const rect = box.current?.getBoundingClientRect()
