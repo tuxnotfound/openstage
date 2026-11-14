@@ -56,8 +56,12 @@ FROM base
 
 # Install packages needed for deployment
 # jemalloc: Ruby's default allocator fragments under threads; Rails 8's Dockerfile preloads it.
+# PostgreSQL's own repository: the nightly pg_dump must match the server's major version (18),
+# and Debian 13 ships 17, which refuses to dump an 18 server.
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 libvips postgresql-client fonts-liberation && \
+    apt-get install --no-install-recommends -y curl libjemalloc2 libvips postgresql-common fonts-liberation && \
+    /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y && \
+    apt-get install --no-install-recommends -y postgresql-client-18 && \
     ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 

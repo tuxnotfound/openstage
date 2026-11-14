@@ -35,6 +35,10 @@ production:
   roll_up:
     class: RollUpFanoutJob
     schedule: every day at 2am
+  # The database to R2 (Backups::RunService); a free slot on the shared box.
+  nightly_backup:
+    class: BackupJob
+    schedule: every day at 2:45am
   # The privacy page promises it goes within three days.
   forget_page_visitors:
     class: ForgetPageVisitorsJob

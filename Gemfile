@@ -66,6 +66,9 @@ gem "ruby-vips"
 # Payments
 gem "stripe"
 
+# The nightly database dump goes to Cloudflare R2 through its S3 API
+gem "aws-sdk-s3", require: false
+
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
