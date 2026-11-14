@@ -1,0 +1,113 @@
+# Kamal deploy config for Openstage → tux-box, the shared portfolio box (Hetzner CX33, Nuremberg).
+# Secrets come from .kamal/secrets, which reads the shell or the gitignored .env.kamal through bin/secret.
+# The box has no swap and runs five other apps, so every container here has a memory cap: a leak
+# restarts Openstage instead of starving its neighbours.
+
+service: openstage
+image: tuxnotfound/openstage
+
+servers:
+  web:
+    hosts:
+      - 2.28.203.124
+    options:
+      memory: 1g
+  # Solid Queue on the main database, as on Render. Async runs the supervisor, dispatcher,
+  # worker and scheduler as threads in one process: about 45% of 512 MB on Render, against
+  # 95 to 100% in fork mode (BUGS.md, 2026-10-20).
+  job:
+    hosts:
+      - 2.28.203.124
+    cmd: bin/jobs
+    options:
+      memory: 768m
+    env:
+      clear:
+        SOLID_QUEUE_SUPERVISOR_MODE: async
+
+proxy:
+  ssl: true
+  host: openstage.dev
+  # No Thruster in this image: Puma listens on 3000.
+  app_port: 3000
+  # Behind Cloudflare: pass its X-Forwarded-For through, or Rails sees the edge address as the
+  # client. config/initializers/cloudflare_proxies.rb does the rest.
+  forward_headers: true
+  healthcheck:
+    interval: 3
+    timeout: 5
+    path: /up
+
+registry:
+  server: ghcr.io
+  username: tuxnotfound
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+# MAIL_FROM, MAIL_REPLY_TO and OWNER_GITHUB_USERNAME are left out on purpose: the code reads them
+# with ENV.fetch and a default, and a secret missing from .env.kamal would arrive as "" and beat the
+# default. If Render sets one to something other than its default, add it under clear.
+env:
+  secret:
+    - DATABASE_URL
+    - SECRET_KEY_BASE
+    - ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
+    - ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY
+    - ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
+    - GITHUB_CLIENT_ID
+    - GITHUB_CLIENT_SECRET
+    - GITHUB_APP_CLIENT_ID
+    - GITHUB_APP_SLUG
+    - GITHUB_APP_PRIVATE_KEY
+    - GITHUB_APP_WEBHOOK_SECRET
+    - GITHUB_PREVIEW_TOKEN
+    - STRIPE_SECRET_KEY
+    - STRIPE_WEBHOOK_SECRET
+    - STRIPE_MONTHLY_PRICE_ID
+    - RESEND_API_KEY
+    - OWNER_GITHUB_UID
+    - OPENSTAGE_PROJECT_TOKEN
+    - GOOGLE_SITE_VERIFICATION
+    - UMAMI_WEBSITE_ID
+    - R2_ACCESS_KEY_ID
+    - R2_SECRET_ACCESS_KEY
+    - R2_ENDPOINT
+    - R2_BUCKET
+  clear:
+    RAILS_LOG_LEVEL: info
+
+aliases:
+  console: app exec --interactive --reuse "bin/rails console"
+  shell: app exec --interactive --reuse "bash"
+  logs: app logs -f
+  dbc: app exec --interactive --reuse "bin/rails dbconsole --include-password"
+
+asset_path: /rails/public/assets
+
+builder:
+  arch: amd64
+  # Builds on the box, as the other apps do (buildx_buildkit_kamal-remote-ssh on tux-box).
+  remote: ssh://root@2.28.203.124
+
+ssh:
+  user: root
+  keys: ["~/.ssh/id_ed25519_tuxnotfound"]
+
+accessories:
+  db:
+    image: postgres:18
+    host: 2.28.203.124
+    # No published port: the app reaches it as openstage-db on the kamal network, and Goal
+    # Atlas's database already holds 127.0.0.1:5432 on the box.
+    options:
+      memory: 512m
+    env:
+      clear:
+        POSTGRES_USER: openstage
+        POSTGRES_DB: openstage_production
+      secret:
+        - POSTGRES_PASSWORD
+    # Postgres 18 images keep their data under /var/lib/postgresql/18/docker and refuse a
+    # mount at /var/lib/postgresql/data, the path the 16 and 17 accessories on the box use.
+    directories:
+      - data:/var/lib/postgresql
