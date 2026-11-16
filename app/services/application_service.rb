@@ -72,9 +72,8 @@ class ApplicationService
   end
 
   # Runs the block once the surrounding transaction commits, or right away outside one.
-  # Never runs after a rollback. On Rails 7.2 or newer this becomes
-  # ActiveRecord.after_all_transactions_commit and the gem goes.
+  # Never runs after a rollback. Needs Rails 7.2 or newer.
   def after_commit(&block)
-    AfterCommitEverywhere.after_commit(&block)
+    ActiveRecord.after_all_transactions_commit(&block)
   end
 end

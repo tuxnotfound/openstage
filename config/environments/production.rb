@@ -101,6 +101,9 @@ Rails.application.configure do
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
 
+  # Only :id in a record's inspect, so an error report or a log line never prints a token or an email.
+  config.active_record.attributes_for_inspect = [ :id ]
+
   # Enable DNS rebinding protection and other `Host` header attacks.
   config.hosts = [
     "openstage.dev",

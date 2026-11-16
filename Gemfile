@@ -3,7 +3,7 @@ source "https://rubygems.org"
 ruby "3.4.12"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 7.1.6"
+gem "rails", "~> 7.2.4"
 
 # The original asset pipeline for Rails [https://github.com/rails/sprockets-rails]
 gem "sprockets-rails"
@@ -55,8 +55,6 @@ gem "faraday-retry"
 # Signs as the GitHub App that reads private repos (C12)
 gem "jwt", "~> 3.1"
 
-# ApplicationService#after_commit on Rails 7.1; 7.2 has it built in
-gem "after_commit_everywhere", "~> 1.4"
 
 # Pagination
 gem "kaminari"

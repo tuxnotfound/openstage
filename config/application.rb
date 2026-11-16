@@ -24,7 +24,12 @@ Bundler.require(*Rails.groups)
 module Openstage
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 7.1
+    config.load_defaults 7.2
+
+    # Rails 7.2 turns YJIT on by default. Ruby lets it take up to 128 MB, and Render gives each
+    # service 512 MB, which the web already hits. Off until the app runs on tux-box, where it
+    # has room (control-tower HOSTING.md, step 6).
+    config.yjit = false
 
     # Please, add to the `ignore` list any other `lib` subdirectories that do
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
