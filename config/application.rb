@@ -5,7 +5,10 @@ require "rails"
 require "active_model/railtie"
 require "active_job/railtie"
 require "active_record/railtie"
-require "active_storage/engine"
+# Active Storage stays out: nothing is attached and it has no tables. Loaded, it blocks libvips'
+# SVG loader for the whole process (Rails 7.2.4), which draws the charts and share cards
+# (config/initializers/vips.rb).
+# require "active_storage/engine"
 require "action_controller/railtie"
 require "action_mailer/railtie"
 # require "action_mailbox/engine"
