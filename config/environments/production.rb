@@ -101,6 +101,9 @@ Rails.application.configure do
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
 
+  # kamal-proxy and Render check /up every few seconds; those requests stay out of the log.
+  config.silence_healthcheck_path = "/up"
+
   # Only :id in a record's inspect, so an error report or a log line never prints a token or an email.
   config.active_record.attributes_for_inspect = [ :id ]
 
