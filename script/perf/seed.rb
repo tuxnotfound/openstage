@@ -1,6 +1,6 @@
 # A heavy builder for performance measurements: three years, 10 projects,
-# about 27,000 commits, 350,000 page views and a year of site visits on three
-# projects, among 50 other builders.
+# about 27,000 commits, 350,000 page views, a year of site visits on three
+# projects and a year of MRR on two (revenue.rb), among 50 other builders.
 # Writes thousands of rows, so it runs only on a database named for it:
 #   DATABASE_URL=postgres:///openstage_perf bin/rails db:create db:schema:load
 #   DATABASE_URL=postgres:///openstage_perf bin/rails runner script/perf/seed.rb
@@ -61,6 +61,8 @@ GithubRepo.where(user: heavy).order(:id).first(3).each_with_index do |repo, i|
   end
   batches(counts, SiteVisitCount)
 end
+
+load File.join(__dir__, "revenue.rb")
 
 # As the nightly jobs leave them: the days that ended in their totals, their hashes gone.
 User.find_each { |user| Analytics::RollUpService.new(user: user).call! }
