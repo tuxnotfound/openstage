@@ -29,6 +29,11 @@ module Analytics
       rows.map { |row| row.with(on: !row.idle && (in_view.empty? || in_view.include?(row.key))) }
     end
 
+    # Each project's last commit, ever, by repo.
+    def last_commits
+      ranking.last_commits
+    end
+
     private
 
     # [key, name, rank] of each page.
@@ -37,8 +42,12 @@ module Analytics
       stage + projects.map { |project| [ project.repo, project.name, project.rank ] }
     end
 
+    def ranking
+      @ranking ||= Progress::Projects.new(@user.entries.publicly_counted.without_tooling_noise, pinned: @user.github_repos.pinned_names)
+    end
+
     def projects
-      @projects ||= Progress::Projects.new(@user.entries.publicly_counted.without_tooling_noise, pinned: @user.github_repos.pinned_names).all
+      ranking.all
     end
 
     def row(key, name, rank)

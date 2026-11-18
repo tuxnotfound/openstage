@@ -15,7 +15,8 @@
 # writes it. A builder's stage, the dashboard and analytics (boxed_only) list
 # the rows with a colour alone; the stage names how many it leaves to its
 # list of projects, under the cards (more), analytics how many it leaves
-# out, while the dashboard's list starts under the table.
+# out, while the dashboard's list starts under the table. Analytics' Commits
+# tab adds a column of words after the numbers (text): Last commit.
 class ProjectsTableSerializer < ApplicationSerializer
   include Rails.application.routes.url_helpers
 
@@ -35,22 +36,26 @@ class ProjectsTableSerializer < ApplicationSerializer
   # chart: a Progress::ChartService or an Analytics::ReportService; changes:
   # whether each cell carries its change; manage: the builder's own table;
   # boxed_only: the stage's, the dashboard's or analytics' table, of the
-  # rows with a colour; anchor: where more leads, nil for nowhere.
-  def initialize(chart, changes: false, manage: false, boxed_only: false, anchor: MORE_ANCHOR)
+  # rows with a colour; anchor: where more leads, nil for nowhere; text: a
+  # column of words, {label:, values: {row's key => words}}, nil for none.
+  def initialize(chart, changes: false, manage: false, boxed_only: false, anchor: MORE_ANCHOR, text: nil)
     @chart = chart
     @changes = changes
     @manage = manage
     @boxed_only = boxed_only
     @anchor = anchor
+    @text = text
   end
 
   # columns: each number with its names, and the number it sits beside
   # (Progress::Numbers::Number#beside), nil for one with lines of its own:
   # the dashboard hides a cell at once while that number switches off.
-  # more: the link to the rows left out, nil with none.
+  # more: the link to the rows left out, nil with none. text: the words
+  # column's label, and each row's words, with one alone.
   def attributes
-    { columns: @chart.columns.map { |number| { key: number.key, label: number.label, word: number.word, beside: number.beside } },
-      rows: listed.map { |row| row_of(row) }, stack: stack, more: more }
+    table = { columns: @chart.columns.map { |number| { key: number.key, label: number.label, word: number.word, beside: number.beside } },
+              rows: listed.map { |row| row_of(row) }, stack: stack, more: more }
+    @text ? table.merge(text: { label: @text[:label] }) : table
   end
 
   private
@@ -65,15 +70,16 @@ class ProjectsTableSerializer < ApplicationSerializer
   # Your stage 76; at 768 px a panel holds 682 px, at 1024 px 909, so four
   # columns fit from md, and analytics' seven from lg.
   def stack
-    @chart.columns.size + (@manage ? 1 : 0) >= WIDE ? "lg" : "md"
+    @chart.columns.size + (@manage || @text ? 1 : 0) >= WIDE ? "lg" : "md"
   end
 
   # color_class: the class its box wears, or its swatch where it has none
   # (an idle row, Progress::Row); drawable: whether it has a box; on:
   # whether the chart draws it.
   def row_of(row)
-    { key: row.key, name: row.name, color_class: row.color_class, on: row.drawn?, drawable: row.boxed?,
-      cells: @chart.cells(row).map { |cell| cell_of(cell, row) } }.merge(manage_parts(row.repo, row.rank))
+    parts = { key: row.key, name: row.name, color_class: row.color_class, on: row.drawn?, drawable: row.boxed?,
+              cells: @chart.cells(row).map { |cell| cell_of(cell, row) } }.merge(manage_parts(row.repo, row.rank))
+    @text ? parts.merge(text: @text[:values][row.key]) : parts
   end
 
   # pick: the cell's switch, on while visitors see the number; nil without

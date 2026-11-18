@@ -35,7 +35,7 @@ RSpec.describe Progress::Projects do
     expect(projects.find("me/site").name).to eq("site")
   end
 
-  it "says when each project's commits and entries began, the ones with no project under nil, in the reads that rank them" do
+  it "says when each project's commits began and last came, and its entries began, the ones with no project under nil, in the reads that rank them" do
     create(:github_repo, user: user, full_name: "me/quiet", name: "quiet", hidden_numbers: [ "commits" ])
     create(:entry, user: user, repo_name: "me/b", occurred_at: Time.utc(2026, 3, 1))
     create(:entry, user: user, repo_name: "me/b", occurred_at: Time.utc(2026, 2, 1))
@@ -47,10 +47,11 @@ RSpec.describe Progress::Projects do
     reads = 0
     counter = ->(*, payload) { reads += 1 unless payload[:name] == "SCHEMA" || payload[:cached] }
 
-    ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { [ listed.all, listed.first_commits, listed.first_highlights ] }
+    ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { [ listed.all, listed.first_commits, listed.last_commits, listed.first_highlights ] }
 
     expect(listed.first_commits).to eq("me/b" => Time.utc(2026, 2, 1), "me/quiet" => Time.utc(2025, 5, 1), nil => Time.utc(2025, 6, 1))
     expect(listed.first_commits(shown: true)).to eq("me/b" => Time.utc(2026, 2, 1), nil => Time.utc(2025, 6, 1))
+    expect(listed.last_commits).to eq("me/b" => Time.utc(2026, 3, 1), "me/quiet" => Time.utc(2025, 5, 1), nil => Time.utc(2025, 6, 1))
     expect(listed.first_highlights).to eq("me/z" => Time.utc(2024, 1, 1), nil => Time.utc(2024, 2, 1))
     expect(reads).to eq(2)
   end

@@ -35,6 +35,11 @@ module Progress
       value.round.positive?
     end
 
+    # How many of some days any of these projects counted the number on.
+    def days_counted(key, repos, days)
+      repos.flat_map { |repo| daily(key, repo).filter_map { |date, count| date if count.positive? && days.cover?(date) } }.uniq.size
+    end
+
     # The first day any of these projects counted the number; nil for none.
     def first_day(key, repos)
       repos.filter_map { |repo| @firsts.dig(key, repo) }.min

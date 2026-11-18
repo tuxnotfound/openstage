@@ -39,6 +39,32 @@ RSpec.describe AnalyticsViewSerializer do
     expect(json["rowsLabel"]).to eq("Projects")
   end
 
+  it "sends the Commits tab's parts: Active days among the tiles, Last commit in the table, when the builder commits, and what's new" do
+    create(:entry, user: user, repo_name: "me/app", entry_type: "milestone", source: "manual", title: "Launched", occurred_at: 1.day.ago)
+    json = view(tab: "commits")
+
+    expect(json["tiles"].map { |tile| tile.values_at("key", "value", "figure", "suffix") }).to eq([ [ "commits", "1", false, nil ], [ "active_days", "1", true, "of 30" ] ])
+    expect(json["table"]["text"]).to eq("label" => "Last commit")
+    expect(json["table"]["rows"].sole["text"]).to eq("2 days ago")
+    hours = json["commits"]["hours"]
+    expect(hours.pluck("name")).to eq(%w[Mon Tue Wed Thu Fri Sat Sun])
+    expect(hours.flat_map { |day| day["cells"] }.reject { |cell| cell["step"].zero? }).to eq([ { "step" => 4, "title" => "Thu 12:00, 1 commit" } ])
+    expect(hours[3]["cells"][12]["title"]).to eq("Thu 12:00, 1 commit")
+    expect(json["commits"]["news"]).to eq([ { "id" => Entry.find_by!(title: "Launched").id, "date" => "Oct 23", "badge" => "milestone", "kind" => "Milestone",
+                                              "colorClass" => "os-project-1", "title" => "Launched", "project" => "app" } ])
+    expect(view.slice("commits")).to eq("commits" => nil)
+    expect(view["table"]).not_to have_key("text")
+  end
+
+  it "steps each hour by quarters of the busiest, and says when nothing shipped" do
+    { 9 => 4, 10 => 2, 11 => 3 }.each { |hour, count| count.times { create(:entry, user: user, repo_name: "me/app", occurred_at: 2.days.ago.change(hour: hour)) } }
+    commits = view(tab: "commits")["commits"]
+
+    expect(commits["hours"][3]["cells"][9..12].map { |cell| cell["step"] }).to eq([ 4, 2, 3, 1 ])
+    expect(commits["hours"][3]["cells"][9]["title"]).to eq("Thu 09:00, 4 commits")
+    expect(commits).to include("news" => [], "newsEmpty" => "Nothing shipped or published in the last 30 days.")
+  end
+
   it "sends no table on a tab with no row, as MRR with no revenue" do
     expect(view(tab: "mrr")).to include("table" => nil, "tiles" => [])
   end

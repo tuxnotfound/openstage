@@ -26,8 +26,9 @@ module Analytics
     # the pages' fixed order; drawing: the DrawService of the totals and the chart.
     # websites: the GatherWebsitesService of the website lists, on Site visits
     # alone; on_pages: the GatherPagesService of the lists of their pages, on
-    # Openstage views alone.
-    attr_reader :totals_window, :rows, :counts, :drawing, :websites, :on_pages
+    # Openstage views alone; commit_parts: the CommitParts of the Commits tab,
+    # while it has a row.
+    attr_reader :totals_window, :rows, :counts, :drawing, :websites, :on_pages, :commit_parts
 
     delegate :totals, :drawn, :default_drawn, :window, :chart, :earliest, to: :drawing
     delegate :sources, :countries, :links, :badges, to: :on_pages
@@ -89,9 +90,11 @@ module Analytics
       @totals_window = Progress::Window.new(range: range, today: today, first_activity: nil)
       return unless count
 
-      @rows = page_rows
+      @listing = PageRows.new(user: user, tab: tab, counts: counts, pages: pages, slot: slot)
+      @rows = @listing.all
       return unless draw
 
+      read_commits if tab.lists == :commits && rows.any?
       read_websites if tab.lists == :websites
       read_pages if tab.lists == :pages
     end
@@ -119,10 +122,6 @@ module Analytics
       @slot ||= SiteVisits::Slot.new(user)
     end
 
-    def page_rows
-      PageRows.new(user: user, tab: tab, counts: counts, pages: pages, slot: slot).all
-    end
-
     def draw
       service = Progress::DrawService.new(rows: rows, counts: counts, totals_window: totals_window, show: show, default_show: tab.opens_on, per: per,
                                           builder: true, numbers: numbers, items: highlights)
@@ -130,7 +129,11 @@ module Analytics
     end
 
     def highlights
-      Highlights.new(user, first: totals_window.span&.first, last: totals_window.last, rows: rows.select(&:drawn?)).all
+      @highlights ||= Highlights.new(user, first: totals_window.span&.first, last: totals_window.last, rows: rows.select(&:drawn?)).all
+    end
+
+    def read_commits
+      @commit_parts = CommitParts.new(user: user, window: totals_window, counts: counts, rows: selected, last_commits: @listing.last_commits, items: highlights)
     end
 
     # Every project of the builder's while all are in view, those with no row

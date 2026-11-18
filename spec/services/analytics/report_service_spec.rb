@@ -268,6 +268,43 @@ RSpec.describe Analytics::ReportService do
     expect(service.totals.sole.value).to eq(2 + 1 + 10)
   end
 
+  describe "the Commits tab's parts" do
+    it "count the days of the window with a commit, a day once, of the days since the window or the projects in view began" do
+      create(:entry, user: user, repo_name: "me/lib", occurred_at: 2.days.ago)
+
+      expect(report(tab: "commits").commit_parts).to have_attributes(active: 2, days: 30)
+      expect(report(tab: "commits", pages: %w[me/lib]).commit_parts).to have_attributes(active: 2, days: 4)
+      expect(report(tab: "commits", range: "all").commit_parts).to have_attributes(active: 3, days: 41)
+    end
+
+    it "count when the builder commits by weekday and hour in their zone: 23:30 UTC on a Sunday is 00:30 on Monday in Lisbon in summer" do
+      travel_to Time.utc(2026, 7, 15, 12)
+      user.update!(time_zone: "Europe/Lisbon")
+      create(:entry, user: user, repo_name: "me/app", occurred_at: Time.utc(2026, 7, 12, 23, 30))
+      create(:entry, user: user, repo_name: "me/app", occurred_at: Time.utc(2026, 7, 13, 9, 10))
+
+      expect(report(tab: "commits").commit_parts.hours).to eq([ 0, 0 ] => 1, [ 0, 10 ] => 1)
+    end
+
+    it "are the project's alone when it is picked alone: its hours, its days and what it shipped" do
+      create(:entry, user: user, repo_name: "me/lib", entry_type: "milestone", source: "manual", title: "Lib out", occurred_at: 3.days.ago)
+      create(:entry, user: user, repo_name: "me/app", entry_type: "milestone", source: "manual", title: "App out", occurred_at: 2.days.ago)
+      alone = report(tab: "commits", pages: %w[me/lib]).commit_parts
+
+      expect([ alone.hours, alone.active ]).to eq([ { [ 2, 12 ] => 1 }, 1 ])
+      expect(alone.news.map(&:title)).to eq([ "Lib out" ])
+      expect(report(tab: "commits").commit_parts.news.map(&:title)).to eq([ "App out", "Lib out" ])
+    end
+
+    it "read each project's last commit, ever, and nothing on another tab or with no row" do
+      parts = report(tab: "commits", range: "90d").commit_parts
+
+      expect([ parts.last_commit("me/app"), parts.last_commit("me/lib") ]).to eq([ Date.new(2026, 10, 22), Date.new(2026, 10, 21) ])
+      expect(report.commit_parts).to be_nil
+      expect(described_class.new(user: create(:user), tab: Analytics::Tab.find("commits")).tap(&:call!).commit_parts).to be_nil
+    end
+  end
+
   it "refuses without a builder" do
     expect(described_class.new.call).to be(false)
   end

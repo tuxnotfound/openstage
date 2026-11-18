@@ -49,6 +49,11 @@ module Progress
       commits.to_h { |repo, _count, first, first_shown| [ repo, shown ? first_shown : first ] }.compact
     end
 
+    # The time of each project's last commit, ever, by repo.
+    def last_commits
+      commits.to_h { |repo, _count, _first, _first_shown, last| [ repo, last ] }.compact
+    end
+
     # The time of each project's first shipped or published entry, ever, the
     # entries with no project under nil.
     def first_highlights
@@ -57,10 +62,12 @@ module Progress
 
     private
 
-    # [repo, commits, first commit, first commit visitors see] per repo.
+    # [repo, commits, first commit, first commit visitors see, last commit]
+    # per repo.
     def commits
       @commits ||= @entries.commits.group(:repo_name).pluck(:repo_name, Arel.sql("COUNT(*)"), Arel.sql("MIN(entries.occurred_at)"),
-                                                            Arel.sql("MIN(entries.occurred_at) FILTER (WHERE #{Entry::HIDDEN_COMMITS_SQL})"))
+                                                            Arel.sql("MIN(entries.occurred_at) FILTER (WHERE #{Entry::HIDDEN_COMMITS_SQL})"),
+                                                            Arel.sql("MAX(entries.occurred_at)"))
     end
 
     # [repo, rank] in rank order: the pinned ones first, then the rest from

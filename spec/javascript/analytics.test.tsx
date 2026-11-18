@@ -1,11 +1,12 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, test, vi } from "vitest"
 import AnalyticsTabs, { tabHref } from "../../app/javascript/charts/analytics/AnalyticsTabs"
+import CommitPartsView from "../../app/javascript/charts/analytics/CommitPartsView"
 import GoPro from "../../app/javascript/charts/analytics/GoPro"
 import { PageListsView, RankedList, SiteListsView } from "../../app/javascript/charts/analytics/RankedList"
 import Tiles from "../../app/javascript/charts/analytics/Tiles"
 import ProjectsTable, { type RowTargets } from "../../app/javascript/charts/filter/ProjectsTable"
-import type { LockedView, Ranked, TabLink, TableRow, Tile } from "../../app/javascript/charts/types"
+import type { CommitParts, LockedView, NewsItem, Ranked, TabLink, TableRow, Tile } from "../../app/javascript/charts/types"
 
 // The words on screen, a space between each element's.
 const words = (html: string) => html.replace(/<[^>]+>/g, " ").replace(/&#x27;/g, "'").replace(/\s+/g, " ").trim()
@@ -135,5 +136,45 @@ describe("analytics' table", () => {
     expect(html).not.toContain("<a ")
     expect(words(html)).toContain("12 more projects")
     expect(html).not.toContain("mt-5")
+  })
+
+  test("ends each row with its words under a text column, a dash for none", () => {
+    const html = renderToStaticMarkup(
+      <ProjectsTable table={{ columns: [], rows: [{ ...tableRow("shipnote", true), text: "yesterday" }, { ...tableRow("quill-md", true), text: null }], stack: "md", more: null,
+                              text: { label: "Last commit" } }}
+                     drawn={[]} lines={{}} indexed={false} words="last 30 days" focused={null} rows={rows} beside />,
+    )
+
+    expect(html).toMatch(/<th scope="col"[^>]*>Last commit<\/th>/)
+    expect(words(html)).toContain("shipnote Only Last commit yesterday")
+    expect(words(html)).toContain("quill-md Only Last commit –")
+  })
+})
+
+describe("the Commits tab's parts", () => {
+  const news = (id: number, more: Partial<NewsItem> = {}): NewsItem =>
+    ({ id, date: "Nov 12", badge: "shipped", kind: "Shipped", colorClass: "os-project-1", title: `Entry ${id}`, project: "shipnote", ...more })
+  const hours = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((name, day) => ({
+    name, cells: Array.from({ length: 24 }, (_, hour) => ({ step: (day === 0 && hour === 9 ? 4 : 0) as 0 | 4, title: `${name} ${String(hour).padStart(2, "0")}:00` })),
+  }))
+  const parts = (items: NewsItem[]): CommitParts => ({ hours, news: items, newsEmpty: "Nothing shipped or published in the last 30 days." })
+
+  test("draw a cell per weekday and hour, Monday first, darker with more, each saying its count on hover", () => {
+    const html = renderToStaticMarkup(<CommitPartsView commits={parts([])} words="last 30 days" />)
+
+    expect(html).toContain('role="img" aria-label="Commits by weekday and hour, last 30 days"')
+    expect(html.match(/title="[A-Z][a-z]{2} \d\d:00"/g)).toHaveLength(7 * 24)
+    expect(html).toContain('title="Mon 09:00" class="aspect-square max-h-[22px] rounded bg-heat-4"')
+    expect(html.match(/rounded bg-line/g)).toHaveLength(7 * 24 - 1)
+    expect(words(html)).toMatch(/^When you commit Fewer More Mon .* Sun 00:00 06:00 12:00 18:00 What's new Nothing shipped or published in the last 30 days\.$/)
+  })
+
+  test("list what's new, newest first, each row an entry's own, eight of them and the rest behind Show all", () => {
+    const html = renderToStaticMarkup(<CommitPartsView commits={parts([news(9, { badge: "milestone", kind: "Milestone", title: "Launched" }), ...Array.from({ length: 9 }, (_, i) => news(i))])} words="last 30 days" />)
+
+    expect(words(html)).toContain("What's new Milestone: Launched shipnote · Nov 12 Shipped: Entry 0 shipnote · Nov 12")
+    expect([...html.matchAll(/<li id="(entry-\d+)"/g)].map((match) => match[1])).toEqual(["entry-9", ...Array.from({ length: 9 }, (_, i) => `entry-${i}`)])
+    expect(html).toMatch(/<summary[^>]*>Show all 10<\/summary><ul[^>]*><li id="entry-7"/)
+    expect(html).toContain('<span class="os-project-1 inline-flex size-[22px]')
   })
 })

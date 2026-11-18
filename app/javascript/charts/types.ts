@@ -100,6 +100,8 @@ export type TableRow = {
   // page, which draws in ink.
   key: string
   name: string
+  // Its words under the table's text column, null with none.
+  text?: string | null
   // The colour its box wears, or on analytics its swatch where it has no
   // box; null for a project past the palette.
   colorClass: string | null
@@ -130,6 +132,9 @@ export type TableView = {
   rows: TableRow[]
   stack: "md" | "lg"
   more: { text: string; anchor: string | null } | null
+  // A column of words after the numbers, analytics' Last commit, each row's
+  // in its text; none elsewhere.
+  text?: { label: string }
 }
 
 // The stage's list of the projects past the cards, a page of them
@@ -272,10 +277,25 @@ export type AnalyticsView = FilterView & {
   quiet: string
   site: SiteLists | null
   pages: PageLists | null
-  // The Commits and MRR tabs' lists, to come.
-  commits: null
+  commits: CommitParts | null
+  // The MRR tab's lists, to come.
   revenue: null
 }
+
+// The Commits tab's parts under its chart (AnalyticsCommitsSerializer):
+// when the builder commits, a row per weekday, Monday first, and a cell
+// per hour, its step 0 for none, then 1 to 4 by quarters of the busiest
+// cell, and its words (title); and what's new, newest first, or the line
+// that says there is nothing (newsEmpty).
+export type CommitParts = {
+  hours: { name: string; cells: { step: 0 | 1 | 2 | 3 | 4; title: string }[] }[]
+  news: NewsItem[]
+  newsEmpty: string
+}
+
+// An entry of the Commits tab's What's new: its mark, in words (kind) and
+// in its project's colour, its title, its project and its day.
+export type NewsItem = { id: number; date: string; badge: Badge; kind: string; colorClass: string; title: string; project: string | null }
 
 // A tab Free does not open (AnalyticsLockedSerializer): what it shows on
 // Pro, and the button to Pro; nothing of its numbers.

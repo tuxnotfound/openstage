@@ -26,7 +26,8 @@ import { lineOf, type Lines } from "./lines"
 // than widening the table. Only shows on hover, and always on a touch
 // screen, where there is no hover to find it by. A table that is wider
 // still, as very large numbers can make one, scrolls inside its panel, never
-// the page. Analytics names how many projects it leaves out, with no link.
+// the page. Analytics names how many projects it leaves out, with no link,
+// and on its Commits tab ends each row with words: its last commit (text).
 
 export type RowTargets = {
   // A row's box; null when it is the last project in view.
@@ -86,6 +87,7 @@ export default function ProjectsTable({ table, drawn, lines, indexed, words, foc
                   </span>
                 </th>
               ))}
+              {table.text && <th scope="col" className="whitespace-nowrap pt-1.5 pb-2 pl-[18px] text-right font-bold stacked:hidden">{table.text.label}</th>}
             </tr>
           </thead>
           <tbody className="stacked:block">
@@ -188,6 +190,12 @@ function Row({ row, table, drawn, alone, hot, rows, switches }: {
           </td>
         )
       })}
+      {table.text && (
+        <td className="whitespace-nowrap py-2.5 pl-[18px] text-right text-sm font-medium text-ink-2 stacked:p-0 stacked:text-left">
+          <span className="os-xs os-muted mb-1 hidden stacked:block">{table.text.label}</span>
+          {row.text ?? "–"}
+        </td>
+      )}
     </tr>
   )
 }

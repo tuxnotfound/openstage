@@ -203,7 +203,7 @@ RSpec.describe "Analytics", type: :request do
         get "/analytics", params: { tab: tab }.compact
 
         expect(response).to have_http_status(:ok)
-        expect(numbers_named(view).uniq - %w[commits visits site_visitors]).to eq([])
+        expect(numbers_named(view).uniq - %w[commits active_days visits site_visitors]).to eq([])
         expect(view["table"]["rows"].pluck("key")).not_to include("page")
         expect(response.body).not_to include("Paying customers", "New followers", "Clicks out")
       end

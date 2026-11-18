@@ -22,6 +22,15 @@ RSpec.describe Progress::Counts do
     expect(counts.first_day("visits", %w[me/app])).to be_nil
   end
 
+  it "counts the days any of some projects counted a number on, a day once" do
+    both = described_class.new(days: { "commits" => { "me/app" => { Date.new(2026, 10, 1) => 2, Date.new(2026, 10, 7) => 5 },
+                                                      "me/lib" => { Date.new(2026, 10, 1) => 1, Date.new(2026, 10, 3) => 0 } } })
+
+    expect(both.days_counted("commits", %w[me/app me/lib], Date.new(2026, 10, 1)..Date.new(2026, 10, 6))).to eq(1)
+    expect(both.days_counted("commits", %w[me/app me/lib], Date.new(2026, 10, 1)..Date.new(2026, 10, 7))).to eq(2)
+    expect(both.days_counted("visits", %w[me/app], Date.new(2026, 10, 1)..Date.new(2026, 10, 7))).to eq(0)
+  end
+
   it "sums a project's days at each point, or averages each day's last seven" do
     week = bucket(Date.new(2026, 10, 1), Date.new(2026, 10, 7))
     day = bucket(Date.new(2026, 10, 7), Date.new(2026, 10, 7))

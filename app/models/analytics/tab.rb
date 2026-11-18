@@ -32,7 +32,7 @@ module Analytics
     ALL = [
       new(key: "overview", label: "Overview", numbers: %w[commits visits site_visitors mrr customers views visitors follows clicks],
           tiles: %w[commits visits mrr customers views follows clicks], opens_on: %w[commits visits mrr], stage: true, steps: %i[repos site stripe]),
-      new(key: "commits", label: "Commits", numbers: %w[commits], opens_on: %w[commits], every_project: false, steps: %i[repos]),
+      new(key: "commits", label: "Commits", numbers: %w[commits], opens_on: %w[commits], every_project: false, lists: :commits, steps: %i[repos]),
       new(key: "visits", label: "Site visits", numbers: %w[visits site_visitors], opens_on: %w[visits], lists: :websites, steps: %i[repos site]),
       new(key: "mrr", label: "MRR", numbers: %w[mrr customers], opens_on: %w[mrr], every_project: false, steps: %i[repos stripe], free: false,
           pitch: "Each project's MRR and paying customers, product by product, verified with Stripe."),

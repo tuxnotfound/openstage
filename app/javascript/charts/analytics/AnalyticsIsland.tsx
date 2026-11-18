@@ -6,6 +6,7 @@ import { lineOrder } from "../filter/lines"
 import { useFilter } from "../filter/useFilter"
 import type { AnalyticsView, LockedView, ProgressRange } from "../types"
 import AnalyticsTabs from "./AnalyticsTabs"
+import CommitPartsView from "./CommitPartsView"
 import GoPro from "./GoPro"
 import { PageListsView, SiteListsView } from "./RankedList"
 import Tiles from "./Tiles"
@@ -15,9 +16,10 @@ import Tiles from "./Tiles"
 // then the tab on the chart filter every chart page shares (useFilter): its
 // tiles, the chart, and its table, beside the chart on a tab where both fit
 // and under it on Overview, and none on a tab with no row, whose chart says
-// why; then the tab's lists. The window, the numbers
-// and the rows switch in place; a tab is a page of its own. On a tab Free
-// does not open, the Go Pro view, with no window.
+// why; then the tab's parts: when the builder commits and what's new, on
+// Commits, where a mark on the chart leads to its row, or the lists. The
+// window, the numbers and the rows switch in place; a tab is a page of its
+// own. On a tab Free does not open, the Go Pro view, with no window.
 
 export type AnalyticsProps = {
   initial: AnalyticsView | LockedView
@@ -72,7 +74,7 @@ function Open({ initial, endpoint, defaultRange, pro, step }: AnalyticsProps & {
     <>
       <Tiles tiles={view.tiles} lines={lines} indexed={view.chart.indexed} {...filter.numbers} />
       <p role="status" className="mt-2.5 text-[13px] font-semibold text-ink-2 empty:mt-0">{filter.notice}</p>
-      <CompareChart chart={view.chart} lines={lines} focus={focus} />
+      <CompareChart chart={view.chart} lines={lines} focus={focus} lead={view.commits ? "news" : undefined} />
       {step && view.chart.paths.length === 0 && (
         <p className="os-note mt-2" data-chart-step>{step.text} <a className="os-link text-[13px]" href={step.href} data-turbo="false">{step.label}</a></p>
       )}
@@ -106,6 +108,7 @@ function Open({ initial, endpoint, defaultRange, pro, step }: AnalyticsProps & {
           )}
         </section>
 
+        {view.commits && <CommitPartsView commits={view.commits} words={view.words} />}
         {view.site && <SiteListsView site={view.site} />}
         {view.pages && <PageListsView pages={view.pages} />}
       </div>
