@@ -84,8 +84,9 @@ module Progress
     end
 
     # A month cut short by the days picked gives its days: "Oct 3–31, 2026".
-    def bucket_title(bucket)
-      case unit
+    # by: a point's unit other than the window's, for a list by week or month.
+    def bucket_title(bucket, by = unit)
+      case by
       when :day then bucket.first.strftime("%a, %b %-d")
       when :week then "Week of #{span(bucket.first, bucket.last)}"
       else cut?(bucket) ? "#{span(bucket.first, bucket.last)}, #{bucket.first.year}" : bucket.first.strftime("%B %Y")

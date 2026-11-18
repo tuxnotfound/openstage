@@ -7,8 +7,8 @@
 # (AnalyticsTabsSerializer); a tile per number, a toggle for one with lines
 # and a figure for one that sits beside another; and the tab's own parts,
 # never another tab's: the Commits tab's (AnalyticsCommitsSerializer), its
-# Active days among the tiles and Last commit in the table, and the lists
-# (AnalyticsListsSerializer). The page renders it first
+# Active days among the tiles and Last commit in the table, the MRR tab's
+# (AnalyticsRevenueSerializer), and the lists (AnalyticsListsSerializer). The page renders it first
 # and its script asks for others (Api::AnalyticsController).
 class AnalyticsViewSerializer < ApplicationSerializer
   # report: an Analytics::ReportService.
@@ -20,7 +20,7 @@ class AnalyticsViewSerializer < ApplicationSerializer
   # changes compare with, while a tile or a cell has one (never for all
   # time, which compares with nothing); quiet: what a list with nothing in
   # it says after its words ("in the last 30 days", "between 3 Oct and 28
-  # Oct", "yet"). revenue: the MRR tab's lists, to come.
+  # Oct", "yet").
   def attributes
     @attributes ||= begin
       commits = AnalyticsCommitsSerializer.new(@report) if @report.commit_parts
@@ -32,7 +32,8 @@ class AnalyticsViewSerializer < ApplicationSerializer
       lists = AnalyticsListsSerializer.new(@report, quiet: quiet)
       view.merge(locked: false, tab: @report.tab.key, **AnalyticsTabsSerializer.new(@report.user).attributes, tiles: tiles,
                  rows_label: @report.per == "page" ? "Pages" : "Projects", changes_note: (changes_note if compared?(view, tiles)), quiet: quiet,
-                 site: lists.site, pages: lists.pages, commits: commits&.attributes, revenue: nil)
+                 site: lists.site, pages: lists.pages, commits: commits&.attributes,
+                 revenue: (AnalyticsRevenueSerializer.new(@report).attributes if @report.revenue_parts))
     end
   end
 

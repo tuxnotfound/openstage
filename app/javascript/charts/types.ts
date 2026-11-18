@@ -278,8 +278,18 @@ export type AnalyticsView = FilterView & {
   site: SiteLists | null
   pages: PageLists | null
   commits: CommitParts | null
-  // The MRR tab's lists, to come.
-  revenue: null
+  revenue: RevenueParts | null
+}
+
+// The MRR tab's parts under its chart (AnalyticsRevenueSerializer): its
+// products, each a ranked row with its subscriptions; and MRR by week or
+// by month, newest first, each row with what it added or took (amount, "–"
+// for nothing, up saying which) and where MRR stood at its end; with no
+// product counted for a project, the line that says so (empty).
+export type RevenueParts = {
+  products: (RankedRow & { subscriptions: string })[]
+  steps: { title: string; rows: { label: string; amount: string; up: boolean | null; mrr: string }[] }
+  empty: string | null
 }
 
 // The Commits tab's parts under its chart (AnalyticsCommitsSerializer):

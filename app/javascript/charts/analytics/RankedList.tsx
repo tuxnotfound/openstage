@@ -1,16 +1,20 @@
+import type { ReactNode } from "react"
 import type { PageLists, Ranked, SiteLists } from "../types"
 
 // The lists under an analytics tab's chart, a panel each, as many to a row
 // as fit. A ranked list: each row's name on a bar as long as its share of
 // the first, with the dot of its project or page where it carries one (its
 // name for a screen reader, and on hover), then its count; Other last, with
-// no bar. Its unit sits at the top right. A long name is cut, whole on
-// hover.
+// no bar. Its unit sits at the top right, or a tag in its place; a row
+// may say what its count is made of (a product's subscriptions) before it.
+// A long name is cut, whole on hover.
 
-const PANEL = "os-panel p-[clamp(16px,1.7vw,24px)]"
+export const PANEL = "os-panel p-[clamp(16px,1.7vw,24px)]"
 const GRID = "grid grid-cols-[repeat(auto-fit,minmax(min(100%,290px),1fr))] gap-4"
 
-export function RankedList({ id, title, unit, ranked }: { id: string; title: string; unit: string; ranked: Ranked }) {
+type Rows = { rows: (Ranked["rows"][number] & { subscriptions?: string })[]; empty: string | null }
+
+export function RankedList({ id, title, unit, ranked }: { id: string; title: string; unit: ReactNode; ranked: Rows }) {
   return (
     <section className={PANEL} aria-labelledby={id}>
       <Head id={id} title={title} unit={unit} />
@@ -26,6 +30,7 @@ export function RankedList({ id, title, unit, ranked }: { id: string; title: str
                   {row.of && <span className="sr-only">, {row.of}</span>}
                 </span>
               </span>
+              {row.subscriptions && <span className="flex-none text-[13px] whitespace-nowrap text-ink-3">{row.subscriptions}</span>}
               <Count count={row.count} muted={row.other} />
             </li>
           ))}
@@ -35,11 +40,11 @@ export function RankedList({ id, title, unit, ranked }: { id: string; title: str
   )
 }
 
-function Head({ id, title, unit }: { id: string; title: string; unit: string }) {
+export function Head({ id, title, unit }: { id: string; title: string; unit?: ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
       <h2 id={id} className="os-h3">{title}</h2>
-      <span className="text-xs font-bold whitespace-nowrap text-ink-3">{unit}</span>
+      {typeof unit === "string" ? <span className="text-xs font-bold whitespace-nowrap text-ink-3">{unit}</span> : unit}
     </div>
   )
 }

@@ -7,10 +7,12 @@ module Analytics
   # what Progress::DrawService makes of their counts, in the tab's order:
   # each number's total and change for the pages in view, and the one chart
   # of the numbers drawn, with what shipped and was published marked on it;
-  # and the lists under it, of the builder's websites (GatherWebsitesService)
-  # or of their pages on Openstage (GatherPagesService), on the tab that
-  # shows them alone. Free reads only Tab#numbers_for, and the site visits of
-  # its one project (SiteVisits::Slot).
+  # and the parts under it, on the tab that shows them alone: when the
+  # builder commits and what's new (CommitParts), their products and MRR by
+  # week (RevenueParts), the lists of their websites (GatherWebsitesService)
+  # or of their pages on Openstage (GatherPagesService). Free reads only
+  # Tab#numbers_for, and the site visits of its one project
+  # (SiteVisits::Slot).
   class ReportService < ApplicationService
     # A list's rows, before Other.
     TOP = 8
@@ -27,8 +29,9 @@ module Analytics
     # websites: the GatherWebsitesService of the website lists, on Site visits
     # alone; on_pages: the GatherPagesService of the lists of their pages, on
     # Openstage views alone; commit_parts: the CommitParts of the Commits tab,
-    # while it has a row.
-    attr_reader :totals_window, :rows, :counts, :drawing, :websites, :on_pages, :commit_parts
+    # while it has a row; revenue_parts: the RevenueParts of MRR, while the
+    # builder's Stripe account reads.
+    attr_reader :totals_window, :rows, :counts, :drawing, :websites, :on_pages, :commit_parts, :revenue_parts
 
     delegate :totals, :drawn, :default_drawn, :window, :chart, :earliest, to: :drawing
     delegate :sources, :countries, :links, :badges, to: :on_pages
@@ -95,6 +98,7 @@ module Analytics
       return unless draw
 
       read_commits if tab.lists == :commits && rows.any?
+      read_revenue if tab.lists == :revenue
       read_websites if tab.lists == :websites
       read_pages if tab.lists == :pages
     end
@@ -134,6 +138,11 @@ module Analytics
 
     def read_commits
       @commit_parts = CommitParts.new(user: user, window: totals_window, counts: counts, rows: selected, last_commits: @listing.last_commits, items: highlights)
+    end
+
+    def read_revenue
+      book = Revenue::Book.new(user)
+      @revenue_parts = RevenueParts.new(book: book, window: totals_window, counts: counts, rows: rows) if book.live?
     end
 
     # Every project of the builder's while all are in view, those with no row

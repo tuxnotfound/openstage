@@ -34,7 +34,7 @@ module Analytics
           tiles: %w[commits visits mrr customers views follows clicks], opens_on: %w[commits visits mrr], stage: true, steps: %i[repos site stripe]),
       new(key: "commits", label: "Commits", numbers: %w[commits], opens_on: %w[commits], every_project: false, lists: :commits, steps: %i[repos]),
       new(key: "visits", label: "Site visits", numbers: %w[visits site_visitors], opens_on: %w[visits], lists: :websites, steps: %i[repos site]),
-      new(key: "mrr", label: "MRR", numbers: %w[mrr customers], opens_on: %w[mrr], every_project: false, steps: %i[repos stripe], free: false,
+      new(key: "mrr", label: "MRR", numbers: %w[mrr customers], opens_on: %w[mrr], every_project: false, lists: :revenue, steps: %i[repos stripe], free: false,
           pitch: "Each project's MRR and paying customers, product by product, verified with Stripe."),
       new(key: "openstage", label: "Openstage views", numbers: %w[views visitors follows clicks], opens_on: %w[views], stage: true, lists: :pages, free: false,
           pitch: "Views of your stage and your project pages, where they came from, and the links followed.")

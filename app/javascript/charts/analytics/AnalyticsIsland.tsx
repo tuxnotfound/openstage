@@ -9,6 +9,7 @@ import AnalyticsTabs from "./AnalyticsTabs"
 import CommitPartsView from "./CommitPartsView"
 import GoPro from "./GoPro"
 import { PageListsView, SiteListsView } from "./RankedList"
+import RevenuePartsView from "./RevenuePartsView"
 import Tiles from "./Tiles"
 
 // The analytics page, all of it, as analytics/index hands it over: the
@@ -17,9 +18,10 @@ import Tiles from "./Tiles"
 // tiles, the chart, and its table, beside the chart on a tab where both fit
 // and under it on Overview, and none on a tab with no row, whose chart says
 // why; then the tab's parts: when the builder commits and what's new, on
-// Commits, where a mark on the chart leads to its row, or the lists. The
-// window, the numbers and the rows switch in place; a tab is a page of its
-// own. On a tab Free does not open, the Go Pro view, with no window.
+// Commits, where a mark on the chart leads to its row; the products and
+// MRR by week, on MRR; or the lists. The window, the numbers and the rows
+// switch in place; a tab is a page of its own. On a tab Free does not open,
+// the Go Pro view, with no window.
 
 export type AnalyticsProps = {
   initial: AnalyticsView | LockedView
@@ -109,6 +111,7 @@ function Open({ initial, endpoint, defaultRange, pro, step }: AnalyticsProps & {
         </section>
 
         {view.commits && <CommitPartsView commits={view.commits} words={view.words} />}
+        {view.revenue && <RevenuePartsView revenue={view.revenue} />}
         {view.site && <SiteListsView site={view.site} />}
         {view.pages && <PageListsView pages={view.pages} />}
       </div>

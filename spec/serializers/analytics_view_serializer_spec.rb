@@ -1,4 +1,5 @@
 require "rails_helper"
+require "support/revenue_data"
 
 RSpec.describe AnalyticsViewSerializer do
   let(:user) { create(:user, pro: true) }
@@ -63,6 +64,68 @@ RSpec.describe AnalyticsViewSerializer do
     expect(commits["hours"][3]["cells"][9..12].map { |cell| cell["step"] }).to eq([ 4, 2, 3, 1 ])
     expect(commits["hours"][3]["cells"][9]["title"]).to eq("Thu 09:00, 4 commits")
     expect(commits).to include("news" => [], "newsEmpty" => "Nothing shipped or published in the last 30 days.")
+  end
+
+  describe "the MRR tab's parts" do
+    let!(:app) { create(:github_repo, user: user, full_name: "me/app", name: "app") }
+
+    def stripe(**options)
+      user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok", read_at: Time.current, read_through: Date.new(2026, 10, 24), **options)
+    end
+
+    def product(name, account = stripe)
+      account.revenue_products.create!(external_id: "prod_#{name.parameterize}", name: name, github_repo: app)
+    end
+
+    it "lists each product on the last day read, in the chart's currency, largest first, adding up to the tile" do
+      ExchangeRate.create!(currency: "usd", day: Date.new(2026, 10, 20), per_euro: 1.1)
+      account = stripe
+      revenue_day(product("Monthly", account), day: Date.new(2026, 10, 24), mrr: 10_000, subscriptions: 10)
+      yearly = product("Yearly", account)
+      revenue_day(yearly, day: Date.new(2026, 10, 24), currency: "eur", mrr: 3_000, subscriptions: 4)
+      revenue_day(yearly, day: Date.new(2026, 10, 24), mrr: 2_000, subscriptions: 1)
+      json = view(tab: "mrr")
+
+      expect(json["tiles"].first.values_at("key", "value")).to eq([ "mrr", "$153" ])
+      expect(json["revenue"]["products"]).to eq([
+        { "label" => "Monthly", "count" => "$100", "width" => 100.0, "colorClass" => "os-project-1", "of" => "app", "other" => false, "subscriptions" => "10 subscriptions" },
+        { "label" => "Yearly", "count" => "$53", "width" => 53.0, "colorClass" => "os-project-1", "of" => "app", "other" => false, "subscriptions" => "5 subscriptions" }
+      ])
+      expect(json["revenue"]["empty"]).to be_nil
+    end
+
+    it "steps MRR by week, newest first, the first and the last week cut at the window's days, each with what it added or took, and by month past 90 days" do
+      account = stripe
+      monthly = product("Monthly", account)
+      (Date.new(2026, 9, 1)..Date.new(2026, 10, 24)).each do |day|
+        revenue_day(monthly, day: day, mrr: day < Date.new(2026, 10, 10) ? 8_000 : day < Date.new(2026, 10, 20) ? 12_000 : 10_000, subscriptions: 1)
+      end
+
+      steps = view(tab: "mrr")["revenue"]["steps"]
+      expect(steps["title"]).to eq("MRR by week")
+      expect(steps["rows"]).to eq([
+        { "label" => "Week of Oct 19–24", "amount" => "$20", "up" => false, "mrr" => "$100" },
+        { "label" => "Week of Oct 12–18", "amount" => "–", "up" => nil, "mrr" => "$120" },
+        { "label" => "Week of Oct 5–11", "amount" => "$40", "up" => true, "mrr" => "$120" },
+        { "label" => "Week of Sep 28 – Oct 4", "amount" => "–", "up" => nil, "mrr" => "$80" },
+        { "label" => "Week of Sep 25–27", "amount" => "–", "up" => nil, "mrr" => "$80" }
+      ])
+      year = view(tab: "mrr", range: "12m")["revenue"]["steps"]
+      expect(year["title"]).to eq("MRR by month")
+      expect(year["rows"].map { |row| row.values_at("label", "amount", "up", "mrr") }).to eq([ [ "October 2026", "$20", true, "$100" ], [ "September 2026", "$80", true, "$80" ] ])
+    end
+
+    it "says when no product counts for a project, and sends nothing with no Stripe account that reads" do
+      expect(view(tab: "mrr")["revenue"]).to be_nil
+
+      account = stripe(read_at: 4.days.ago)
+      expect(view(tab: "mrr")["revenue"]).to be_nil
+
+      account.update!(read_at: Time.current)
+      account.revenue_products.create!(external_id: "prod_lone", name: "Lone")
+      expect(view(tab: "mrr")["revenue"]).to eq("products" => [], "steps" => { "title" => "MRR by week", "rows" => [] }, "empty" => "No Stripe product counts for a project yet.")
+      expect(view["revenue"]).to be_nil
+    end
   end
 
   it "sends no table on a tab with no row, as MRR with no revenue" do

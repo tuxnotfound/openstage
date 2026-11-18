@@ -52,6 +52,16 @@ module Revenue
       Levels.new(rows, customers: customers(repos, from), ended_in: (days.order(day: :desc).pick(:currency) if rows.empty?))
     end
 
+    # Each product counted for these projects on the last day read, a row per
+    # currency it sold in, as [id, name, repo id, currency, mrr,
+    # subscriptions]; none before the first read, or while it is not live.
+    def last_day(repos)
+      return [] unless live? && read_day
+
+      counted_days.where(revenue_products: { github_repo_id: repos.map(&:id) }, day: read_day).order("revenue_products.id", :currency)
+                  .pluck("revenue_products.id", "revenue_products.name", "revenue_products.github_repo_id", :currency, :mrr, :subscriptions)
+    end
+
     private
 
     # { repo id => { date => its paying customers } }: a customer counts once

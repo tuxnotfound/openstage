@@ -2,11 +2,12 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, test, vi } from "vitest"
 import AnalyticsTabs, { tabHref } from "../../app/javascript/charts/analytics/AnalyticsTabs"
 import CommitPartsView from "../../app/javascript/charts/analytics/CommitPartsView"
+import RevenuePartsView from "../../app/javascript/charts/analytics/RevenuePartsView"
 import GoPro from "../../app/javascript/charts/analytics/GoPro"
 import { PageListsView, RankedList, SiteListsView } from "../../app/javascript/charts/analytics/RankedList"
 import Tiles from "../../app/javascript/charts/analytics/Tiles"
 import ProjectsTable, { type RowTargets } from "../../app/javascript/charts/filter/ProjectsTable"
-import type { CommitParts, LockedView, NewsItem, Ranked, TabLink, TableRow, Tile } from "../../app/javascript/charts/types"
+import type { CommitParts, LockedView, NewsItem, Ranked, RevenueParts, TabLink, TableRow, Tile } from "../../app/javascript/charts/types"
 
 // The words on screen, a space between each element's.
 const words = (html: string) => html.replace(/<[^>]+>/g, " ").replace(/&#x27;/g, "'").replace(/\s+/g, " ").trim()
@@ -176,5 +177,37 @@ describe("the Commits tab's parts", () => {
     expect([...html.matchAll(/<li id="(entry-\d+)"/g)].map((match) => match[1])).toEqual(["entry-9", ...Array.from({ length: 9 }, (_, i) => `entry-${i}`)])
     expect(html).toMatch(/<summary[^>]*>Show all 10<\/summary><ul[^>]*><li id="entry-7"/)
     expect(html).toContain('<span class="os-project-1 inline-flex size-[22px]')
+  })
+})
+
+describe("the MRR tab's parts", () => {
+  const product = { label: "shipnote Pro, monthly", count: "$612", width: 100, colorClass: "os-project-1", of: "shipnote", other: false, subscriptions: "68 subscriptions" }
+  const step = (label: string, amount: string, up: boolean | null) => ({ label, amount, up, mrr: "$1,322" })
+
+  test("list each product with its project's dot and subscriptions, verified with Stripe, and MRR by week with each week's change, its arrow in the colour of its way", () => {
+    const revenue: RevenueParts = {
+      products: [product], empty: null,
+      steps: { title: "MRR by week", rows: [step("Week of Nov 16–18", "–", null), step("Week of Nov 9–15", "$28", true), step("Week of Nov 2–8", "$65", false)] },
+    }
+    const html = renderToStaticMarkup(<RevenuePartsView revenue={revenue} />)
+
+    expect(words(html)).toBe(
+      "Products Verified with Stripe shipnote Pro, monthly , shipnote 68 subscriptions $612 MRR by week MRR by week: what each added or took, and where MRR stood at its end Change MRR "
+      + "Week of Nov 16–18 – $1,322 Week of Nov 9–15 ▲ up $28 $1,322 Week of Nov 2–8 ▼ down $65 $1,322",
+    )
+    expect(html).toContain('<span class="text-[11px] text-up" aria-hidden="true">▲</span>')
+    expect(html).toContain('<span class="text-[11px] text-down" aria-hidden="true">▼</span>')
+    expect(html).not.toContain("Show all")
+  })
+
+  test("keep thirteen rows and the rest behind Show all, and say when no product counts for a project", () => {
+    const rows = Array.from({ length: 36 }, (_, i) => step(`Month ${i}`, "$1", true))
+    const html = renderToStaticMarkup(<RevenuePartsView revenue={{ products: [], empty: null, steps: { title: "MRR by month", rows } }} />)
+    expect(html.match(/<tr class="border-t/g)).toHaveLength(13)
+    expect(words(html)).toContain("Show all 36")
+    expect(html).not.toContain("Products")
+
+    const empty = renderToStaticMarkup(<RevenuePartsView revenue={{ products: [], empty: "No Stripe product counts for a project yet.", steps: { title: "MRR by week", rows: [] } }} />)
+    expect(words(empty)).toBe("No Stripe product counts for a project yet.")
   })
 })
