@@ -8,17 +8,18 @@ module Progress
   # view, so in the totals; counted and shown: the numbers it counts and the
   # ones it shows, by key, never one that sits beside a number it does not
   # show (Numbers.shown); site: where its site visits stand
-  # (SiteVisits::Slot#state), nil without a synced repo and on analytics,
-  # which only reads its cells.
-  Row = Data.define(:key, :name, :rank, :color_class, :repo, :on, :counted, :shown, :site) do
-    def initialize(shown:, site: nil, **fields)
-      super(shown: Numbers.shown(shown), site: site, **fields)
+  # (SiteVisits::Slot#state), nil without a synced repo; idle: on an
+  # analytics tab, it counts none of the tab's numbers, so it keeps its
+  # colour and has no box, as it has no line to draw.
+  Row = Data.define(:key, :name, :rank, :color_class, :repo, :on, :counted, :shown, :site, :idle) do
+    def initialize(shown:, site: nil, idle: false, **fields)
+      super(shown: Numbers.shown(shown), site: site, idle: idle, **fields)
     end
 
-    # Whether it has a colour, so a box in the table and lines to draw: a
-    # project past the palette has none.
+    # Whether it has a box in the table and lines to draw: a project past
+    # the palette has no colour, and an idle row nothing to draw.
     def boxed?
-      color_class.present?
+      color_class.present? && !idle
     end
 
     # Whether the chart draws it: in view, and with a colour to draw in.

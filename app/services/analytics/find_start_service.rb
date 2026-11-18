@@ -4,9 +4,12 @@ module Analytics
   # to its website, and the first visitor, follower and click out on the
   # builder's own page (CountService::PAGE) and on each project's page. A chart
   # starts where the numbers it draws start, and a number compares with the
-  # window before only once it counted before the window began.
+  # window before only once it counted before the window began. It reads
+  # only the numbers wanted, as CountService does.
   class FindStartService < ApplicationService
-    attr_accessor :user
+    # numbers: the keys wanted, nil for every one; sites: the projects whose
+    # site visits count, as GithubRepo ids, nil for every one.
+    attr_accessor :user, :numbers, :sites
     # firsts: {number's key => {page => date}}.
     attr_reader :firsts
 
@@ -15,10 +18,33 @@ module Analytics
     private
 
     def execute
-      views = first_views
+      @firsts = { **on_github, **on_websites, **on_stripe, **on_openstage }
+    end
+
+    def wanted?(keys)
+      numbers.nil? || numbers.intersect?(keys)
+    end
+
+    def on_github
+      wanted?(%w[commits]) ? { "commits" => commits } : {}
+    end
+
+    def on_websites
+      return {} unless wanted?(CountService::ON_WEBSITES)
+
       visits, visitors = site_visits
-      @firsts = { "commits" => commits, "visits" => visits, "site_visitors" => visitors, "visitors" => views, "views" => views,
-                  "follows" => follows, "clicks" => clicks, **Revenue::Book.new(user).first_days }
+      { "visits" => visits, "site_visitors" => visitors }
+    end
+
+    def on_stripe
+      wanted?(CountService::ON_STRIPE) ? Revenue::Book.new(user).first_days : {}
+    end
+
+    def on_openstage
+      return {} unless wanted?(CountService::ON_OPENSTAGE)
+
+      views = first_views
+      { "visitors" => views, "views" => views, "follows" => follows, "clicks" => clicks }
     end
 
     def first_views
@@ -39,7 +65,8 @@ module Analytics
     # Counted on the builder's day already: the first day with a visit, and
     # the first with a visitor.
     def site_visits
-      firsts = user.site_visit_days.group("github_repos.full_name")
+      scope = sites ? user.site_visit_days.where(github_repo_id: sites) : user.site_visit_days
+      firsts = scope.group("github_repos.full_name")
                    .pluck("github_repos.full_name", Arel.sql("MIN(site_visit_days.day)"), Arel.sql("MIN(site_visit_days.day) FILTER (WHERE site_visit_days.visitors > 0)"))
       [ firsts.to_h { |page, day, _| [ page, day ] }, firsts.filter_map { |page, _, day| [ page, day ] if day }.to_h ]
     end

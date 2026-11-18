@@ -5,12 +5,19 @@ module Analytics
   # Openstage, by their keys in Progress::Numbers.
   # A page is the builder's own, PAGE, or a project's, by its repo's full
   # name. Days are in the builder's zone. Openstage's own numbers come from
-  # the daily totals, and from the raw rows since (Split).
+  # the daily totals, and from the raw rows since (Split). It reads only the
+  # numbers wanted, a place's together: site visits with site visitors, MRR
+  # with paying customers, and Openstage's four.
   class CountService < ApplicationService
     PAGE = "page".freeze
+    ON_WEBSITES = %w[visits site_visitors].freeze
+    ON_STRIPE = %w[mrr customers].freeze
+    ON_OPENSTAGE = %w[visitors views follows clicks].freeze
 
-    # from: the first day needed; nil for every day.
-    attr_accessor :user, :from
+    # from: the first day needed, nil for every day; numbers: the keys
+    # wanted, nil for every one; sites: the projects whose site visits
+    # count, as GithubRepo ids, nil for every one (Free counts one).
+    attr_accessor :user, :from, :numbers, :sites
     # counts: {number's key => {page => {date => count}}}; through and currency,
     # of the revenue, as Progress::Counts takes them, nil with none.
     attr_reader :counts, :through, :currency
@@ -20,20 +27,33 @@ module Analytics
     private
 
     def execute
+      @counts = { **on_github, **on_websites, **revenue, **on_openstage }
+    end
+
+    def wanted?(keys)
+      numbers.nil? || numbers.intersect?(keys)
+    end
+
+    def on_github
+      wanted?(%w[commits]) ? { "commits" => commits } : {}
+    end
+
+    def on_websites
+      return {} unless wanted?(ON_WEBSITES)
+
       visits, visitors = site_visits
-      @counts = {
-        "commits" => commits,
-        "visits" => visits,
-        "site_visitors" => visitors,
-        "visitors" => visitors_of_pages,
-        "views" => views,
-        "follows" => follows,
-        "clicks" => clicks,
-        **revenue
-      }
+      { "visits" => visits, "site_visitors" => visitors }
+    end
+
+    def on_openstage
+      return {} unless wanted?(ON_OPENSTAGE)
+
+      { "visitors" => visitors_of_pages, "views" => views, "follows" => follows, "clicks" => clicks }
     end
 
     def revenue
+      return {} unless wanted?(ON_STRIPE)
+
       book = Revenue::Book.new(user)
       repos = book.repos
       return {} if repos.empty?
@@ -54,6 +74,7 @@ module Analytics
     def site_visits
       scope = user.site_visit_days
       scope = scope.where(day: from..) if from
+      scope = scope.where(github_repo_id: sites) if sites
       sums = scope.group("github_repos.full_name", :day)
                   .pluck("github_repos.full_name", :day, Arel.sql("SUM(site_visit_days.visits)"), Arel.sql("SUM(site_visit_days.visitors)"))
       [ merge(sums.to_h { |page, date, visits, _| [ [ page, date ], visits ] }), merge(sums.to_h { |page, date, _, visitors| [ [ page, date ], visitors ] }) ]

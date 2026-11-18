@@ -13,8 +13,9 @@ RSpec.describe Analytics::ReportService do
     create(:entry, user: user, repo_name: "me/app", occurred_at: 40.days.ago)
   end
 
-  def report(**options)
-    described_class.new(user: user, **options).tap(&:call!)
+  # Overview unless a tab is named.
+  def report(tab: nil, **options)
+    described_class.new(user: user, tab: Analytics::Tab.find(tab), **options).tap(&:call!)
   end
 
   def total(service, key)
@@ -45,8 +46,8 @@ RSpec.describe Analytics::ReportService do
     create(:profile_view, user: user, viewed_at: 2.days.ago)
     user.project_views.create!(repo_name: "me/lib", viewed_at: 1.day.ago, ip_hash: "b")
 
-    expect(report.rows.to_h { |row| [ row.name, row.shown ] }).to eq("Your stage" => %w[visitors views], "app" => %w[commits visits site_visitors],
-                                                                     "lib" => %w[commits visitors views])
+    expect(report.rows.to_h { |row| [ row.name, row.shown ] }).to eq("Your stage" => %w[views visitors], "app" => %w[commits visits site_visitors],
+                                                                     "lib" => %w[commits views visitors])
   end
 
   it "sums site visitors over the window in each project's cell, picked days included, with the window before's, and has no toggle of them" do
@@ -69,7 +70,7 @@ RSpec.describe Analytics::ReportService do
     service = report(show: %w[site_visitors visits])
     expect([ service.drawn.map(&:key), service.chart.tips.map(&:key) ]).to eq([ %w[visits], %w[visits site_visitors] ])
     expect(service.chart.columns.find { |column| column.rows.any? }.rows.map { |row| [ row.name, row.values ] }).to eq([ [ "app", %w[30 9] ] ])
-    expect(report(show: %w[site_visitors]).drawn.map(&:key)).to eq(%w[commits])
+    expect(report(show: %w[site_visitors]).drawn.map(&:key)).to eq(%w[commits visits])
   end
 
   it "shows a project's site visits and site visitors whatever its builder hides from visitors" do
@@ -89,7 +90,7 @@ RSpec.describe Analytics::ReportService do
 
     service = report(show: %w[visitors views])
     expect([ service.drawn, service.totals.map(&:number), service.chart.tips ].map { |numbers| numbers.map(&:key) }).to eq([ %w[views], %w[commits views], %w[views visitors] ])
-    expect(service.columns.map(&:key)).to eq(%w[commits visitors views])
+    expect(service.columns.map(&:key)).to eq(%w[commits visits views visitors])
     expect(service.chart.columns.find { |column| column.rows.any? }.rows.map { |row| [ row.name, row.values ] }).to eq([ [ "Your stage", %w[2 2] ] ])
     expect(report(show: %w[visitors]).drawn.map(&:key)).to eq(%w[commits])
   end
@@ -100,11 +101,11 @@ RSpec.describe Analytics::ReportService do
     service = report
     row = service.rows.find { |each| each.name == "app" }
 
-    expect([ row.counted, row.shown ]).to eq([ %w[commits visitors views], %w[commits visitors views] ])
+    expect([ row.counted, row.shown ]).to eq([ %w[commits views visitors], %w[commits views visitors] ])
     expect(total(service, "commits").split.map { |each, _| each.name }).to include("app", "lib")
   end
 
-  it "opens on the last 30 days and commits alone, each point its own count, against the window before" do
+  it "opens on the last 30 days and on commits, site visits and MRR as far as they count, each point its own count, against the window before" do
     service = report
     commits = total(service, "commits")
 
@@ -126,7 +127,8 @@ RSpec.describe Analytics::ReportService do
   it "shows every page for pages it does not know, and the last 30 days for a window it does not know" do
     service = report(pages: %w[me/nope], range: "7d")
 
-    expect([ service.selected_keys, service.rows.map(&:on).uniq, service.totals_window.range ]).to eq([ [], [ true ], "30d" ])
+    expect([ service.selected_keys, service.rows.reject(&:idle).map(&:on).uniq, service.totals_window.range ]).to eq([ [], [ true ], "30d" ])
+    expect(service.rows.first).to have_attributes(key: "page", idle: true, on: false)
   end
 
   it "draws 12 months by week while the data is under 13 weeks old, then by month, and all time from where it starts" do
@@ -143,34 +145,36 @@ RSpec.describe Analytics::ReportService do
     create(:profile_view, user: user, viewed_at: 2.days.ago, referrer: "news.ycombinator.com", country: "PT")
     create(:profile_view, user: user, viewed_at: 100.days.ago, referrer: "x.com", country: "US")
     user.badge_impressions.create!(kind: "badge", viewed_at: 100.days.ago, referrer: "github.com")
-    recent = report
+    recent = report(tab: "openstage")
 
-    expect([ recent.sources.map(&:first), recent.countries.map(&:first), recent.badges.first ]).to eq([ [ "Hacker News" ], [ "PT" ], [ "badge", 0, 0 ] ])
-    ever = report(range: "all")
-    expect([ ever.sources.map(&:first), ever.badges.first ]).to eq([ [ "Hacker News", "Twitter / X" ], [ "badge", 1, 1 ] ])
-    expect(report(pages: %w[me/app]).sources).to eq([])
+    expect([ recent.sources.rows.map(&:first), recent.countries.rows.map(&:first), recent.badges.first ]).to eq([ [ "Hacker News" ], [ "PT" ], [ "badge", 0, 0 ] ])
+    ever = report(tab: "openstage", range: "all")
+    expect([ ever.sources.rows.map(&:first), ever.badges.first ]).to eq([ [ "Hacker News", "Twitter / X" ], [ "badge", 1, 1 ] ])
+    user.project_views.create!(repo_name: "me/app", viewed_at: 100.days.ago, ip_hash: "c")
+    expect(report(tab: "openstage", pages: %w[me/app]).sources.rows).to eq([])
   end
 
-  it "ends the sources and the countries with Other, what their lists leave out, and leaves out Cloudflare's XX and T1" do
-    hosts = %w[a.example b.example c.example d.example e.example f.example g.example]
-    hosts.each_with_index { |host, i| (8 - i).times { create(:profile_view, user: user, viewed_at: 2.days.ago, referrer: host, country: %w[PT ES FR DE IT NL BE][i]) } }
+  it "lists eight sources and eight countries, with what each leaves out, and leaves out Cloudflare's XX and T1" do
+    hosts = %w[a.example b.example c.example d.example e.example f.example g.example h.example i.example]
+    codes = %w[PT ES FR DE IT NL BE SE DK]
+    hosts.each_with_index { |host, i| (10 - i).times { create(:profile_view, user: user, viewed_at: 2.days.ago, referrer: host, country: codes[i]) } }
     %w[XX T1].each { |code| create(:profile_view, user: user, viewed_at: 2.days.ago, referrer: "a.example", country: code) }
 
-    service = report
-    expect(service.sources).to eq([ [ "a.example", 8 + 2 ] ] + hosts[1, 5].each_with_index.map { |host, i| [ host, 7 - i ] } + [ [ "Other", 2 ] ])
-    expect(service.countries).to eq([ [ "PT", 8 ], [ "ES", 7 ], [ "FR", 6 ], [ "DE", 5 ], [ "IT", 4 ], [ "Other", 3 + 2 ] ])
+    service = report(tab: "openstage")
+    expect(service.sources).to eq(Analytics::Ranked.new(rows: [ [ "a.example", 10 + 2 ] ] + hosts[1, 7].each_with_index.map { |host, i| [ host, 9 - i ] }, other: 2))
+    expect(service.countries).to eq(Analytics::Ranked.new(rows: codes.first(8).each_with_index.map { |code, i| [ code, 10 - i ] }, other: 2))
   end
 
   it "names the sources of the builder's pages as the website panels do: Openstage's own, and any other host as itself" do
     [ "openstage.dev", "www.IndieHackers.com", "news.ycombinator.com", nil ].each { |host| create(:profile_view, user: user, viewed_at: 2.days.ago, referrer: host) }
 
-    expect(report.sources).to eq([ [ "Direct", 1 ], [ "Hacker News", 1 ], [ "Openstage", 1 ], [ "indiehackers.com", 1 ] ])
+    expect(report(tab: "openstage").sources.rows).to eq([ [ "Direct", 1 ], [ "Hacker News", 1 ], [ "Openstage", 1 ], [ "indiehackers.com", 1 ] ])
   end
 
   it "counts a host that names no site, an address or a machine on someone's network, in Other, which stays last" do
     %w[localhost pedros-macbook-pro.local 192.168.1.23 news.ycombinator.com].each { |host| create(:profile_view, user: user, viewed_at: 2.days.ago, referrer: host) }
 
-    expect(report.sources).to eq([ [ "Hacker News", 1 ], [ "Other", 3 ] ])
+    expect(report(tab: "openstage").sources).to eq(Analytics::Ranked.new(rows: [ [ "Hacker News", 1 ] ], other: 3))
   end
 
   it "lists the links visitors followed, busiest first, on the pages in view" do
@@ -178,23 +182,90 @@ RSpec.describe Analytics::ReportService do
     2.times { EntryClick.create!(user: user, entry: entry, clicked_at: 1.day.ago) }
     user.project_clicks.create!(repo_name: "me/app", kind: "github", clicked_at: 1.day.ago)
 
-    expect(report.links.map { |link| [ link.title, link.page.name, link.count ] }).to eq([ [ "Launched", "lib", 2 ], [ "View on GitHub", "app", 1 ] ])
-    expect(report(pages: [ "me/app" ]).links.map(&:title)).to eq([ "View on GitHub" ])
+    expect(report(tab: "openstage").links.rows.map { |link| [ link.title, link.page.name, link.count ] }).to eq([ [ "Launched", "lib", 2 ], [ "View on GitHub", "app", 1 ] ])
+    expect(report(tab: "openstage", pages: [ "me/app" ]).links.rows.map(&:title)).to eq([ "View on GitHub" ])
   end
 
-  it "reads the website panels of every project of the builder's while all are in view, of the projects in view otherwise, and never of the stage" do
+  it "reads the website lists on Site visits alone: of every project of the builder's while all are in view, of the projects in view otherwise" do
     hidden = create(:github_repo, user: user, full_name: "me/hidden", name: "hidden")
+    lib = create(:github_repo, user: user, full_name: "me/lib", name: "lib")
+    app.site_visit_days.create!(day: 2.days.ago.to_date, visits: 2, visitors: 1)
+    lib.site_visit_days.create!(day: 2.days.ago.to_date, visits: 1, visitors: 1)
     app.site_visit_counts.create!(kind: "page", value: "/app", count: 2, day: 2.days.ago.to_date)
     hidden.site_visit_counts.create!(kind: "page", value: "/hidden", count: 1, day: 2.days.ago.to_date)
     app.site_visit_counts.create!(kind: "page", value: "/before", count: 5, day: 40.days.ago.to_date)
 
-    expect(report.rows.map(&:key)).not_to include("me/hidden")
-    expect(report.websites.ranks["page"]).to eq([ [ "/app", 2, "me/app" ], [ "/hidden", 1, "me/hidden" ] ])
-    expect(report(range: "90d").websites.ranks["page"]).to eq([ [ "/before", 5, "me/app" ], [ "/app", 2, "me/app" ], [ "/hidden", 1, "me/hidden" ] ])
-    expect(report(pages: %w[me/app]).websites.ranks["page"]).to eq([ [ "/app", 2, nil ] ])
-    expect([ report(pages: %w[page]).websites.state, report(pages: %w[page]).setup_row ]).to eq([ :off, nil ])
-    expect(report(pages: %w[page me/lib]).setup_row).to be_nil
-    expect(report(pages: %w[page me/app]).setup_row.name).to eq("app")
+    visits = report(tab: "visits")
+    expect(visits.rows.map(&:key)).to eq(%w[me/app me/lib])
+    expect(visits.websites.ranks["page"].rows).to eq([ [ "/app", 2, "me/app" ], [ "/hidden", 1, "me/hidden" ] ])
+    expect(report(tab: "visits", range: "90d").websites.ranks["page"].rows).to eq([ [ "/before", 5, "me/app" ], [ "/app", 2, "me/app" ], [ "/hidden", 1, "me/hidden" ] ])
+    expect(report(tab: "visits", pages: %w[me/app]).websites.ranks["page"].rows).to eq([ [ "/app", 2, nil ] ])
+    only_lib = report(tab: "visits", pages: %w[me/lib])
+    expect([ only_lib.websites.state, only_lib.setup_row.name ]).to eq([ :off, "lib" ])
+    expect([ report.websites, report.on_pages, report(tab: "openstage").websites, visits.on_pages ]).to all(be_nil)
+  end
+
+  it "lists each tab's numbers in its order, a figure for the ones beside another, and its rows as the tab says" do
+    app.site_visit_days.create!(day: 2.days.ago.to_date, visits: 30, visitors: 9)
+    create(:profile_view, user: user, viewed_at: 2.days.ago)
+
+    overview = report
+    expect([ overview.columns, overview.tiles.map(&:number) ].map { |numbers| numbers.map(&:key) }).to eq([ %w[commits visits site_visitors views visitors], %w[commits visits views] ])
+    expect([ overview.rows.map(&:key), overview.per, overview.drawn.map(&:key) ]).to eq([ %w[page me/app me/lib], "page", %w[commits visits] ])
+
+    commits = report(tab: "commits")
+    expect([ commits.rows.map(&:key), commits.columns.map(&:key), commits.drawn.map(&:key), commits.per ]).to eq([ %w[me/app me/lib], %w[commits], %w[commits], "project" ])
+
+    visits = report(tab: "visits")
+    expect(visits.rows.map { |row| [ row.key, row.boxed?, row.on ] }).to eq([ [ "me/app", true, true ], [ "me/lib", false, false ] ])
+    expect(visits.tiles.map { |total| [ total.number.key, total.value ] }).to eq([ [ "visits", 30 ], [ "site_visitors", 9 ] ])
+    expect(visits.selected_keys).to eq([])
+
+    openstage = report(tab: "openstage")
+    expect([ openstage.rows.map(&:key), openstage.columns.map(&:key), openstage.drawn.map(&:key) ]).to eq([ %w[page me/app me/lib], %w[views visitors], %w[views] ])
+  end
+
+  it "reads Free's commits and its one project's site visits alone, with no stage, whatever its other projects counted on Pro" do
+    lib = create(:github_repo, user: user, full_name: "me/lib", name: "lib")
+    app.update!(site_source: "script", site_set_up_at: 20.days.ago)
+    lib.update!(site_source: "script", site_set_up_at: 10.days.ago)
+    app.site_visit_days.create!(day: 2.days.ago.to_date, visits: 30, visitors: 9)
+    lib.site_visit_days.create!(day: 2.days.ago.to_date, visits: 7, visitors: 3)
+    app.site_visit_counts.create!(kind: "page", value: "/app", count: 30, day: 2.days.ago.to_date)
+    lib.site_visit_counts.create!(kind: "page", value: "/lib", count: 7, day: 2.days.ago.to_date)
+    create(:profile_view, user: user, viewed_at: 2.days.ago)
+    product = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok", read_at: Time.current, read_through: Date.current)
+                  .revenue_products.create!(external_id: "prod_m", name: "Monthly", github_repo: app)
+    product.revenue_days.create!(day: 3.days.ago.to_date, currency: "usd", mrr: 1_000, subscriptions: 1)
+    user.update!(pro: false)
+
+    service = report
+    expect([ service.rows.map(&:key), service.columns.map(&:key), service.tiles.map { |total| [ total.number.key, total.value ] } ])
+      .to eq([ %w[me/app me/lib], %w[commits visits site_visitors], [ [ "commits", 3 ], [ "visits", 30 ] ] ])
+    expect(service.cells(service.rows.last).map { |cell| [ cell.number.key, cell.value, cell.link ] }).to eq([ [ "commits", 1, nil ], [ "visits", nil, :paused ], [ "site_visitors", nil, nil ] ])
+    expect(%w[mrr customers views].map { |key| service.counts.first_day(key, %w[page me/app me/lib]) }).to all(be_nil)
+    expect(report(tab: "visits").websites.ranks["page"].rows).to eq([ [ "/app", 30, nil ] ])
+  end
+
+  it "marks on the chart what the pages in view shipped and published over the window, the stage's on the axis" do
+    create(:entry, user: user, repo_name: "me/app", entry_type: "milestone", source: "manual", title: "Launched", occurred_at: 3.days.ago)
+    create(:entry, user: user, entry_type: "milestone", source: "manual", title: "On my stage", occurred_at: 2.days.ago)
+    create(:entry, user: user, repo_name: "me/app", entry_type: "milestone", source: "manual", title: "Long ago", occurred_at: 60.days.ago)
+    create(:profile_view, user: user, viewed_at: 2.days.ago)
+
+    marks = ->(**options) { report(**options).chart.marks.map { |mark| [ mark.key, mark.number, mark.items.map(&:title) ] } }
+    expect(marks.call).to contain_exactly([ "me/app", "commits", [ "Launched" ] ], [ nil, nil, [ "On my stage" ] ])
+    expect(marks.call(pages: %w[me/lib])).to eq([])
+    expect(marks.call(tab: "commits")).to eq([ [ "me/app", "commits", [ "Launched" ] ] ])
+  end
+
+  it "keeps a project past the palette in the totals, with no colour and no line" do
+    10.times { |i| create(:entry, user: user, repo_name: "me/p#{i}", occurred_at: 2.days.ago) }
+
+    service = report(tab: "commits")
+    expect(service.rows.size).to eq(12)
+    expect(service.rows.last(2).map(&:color_class)).to eq([ nil, nil ])
+    expect(service.totals.sole.value).to eq(2 + 1 + 10)
   end
 
   it "refuses without a builder" do

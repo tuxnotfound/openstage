@@ -130,7 +130,8 @@ RSpec.describe "Entries the builder hid", type: :request do
     sign_in_as(user)
     get "/analytics", params: { range: "30d" }
 
-    expect(page.at_css("[aria-label='Numbers on the chart']").text.squish).to start_with("On GitHub Commits 4")
+    tiles = JSON.parse(page.at_css("script#analytics-props").text)["initial"]["tiles"]
+    expect(tiles.first.values_at("key", "value")).to eq([ "commits", "4" ])
   end
 
   it "counts them on the project's own view and its share cards" do

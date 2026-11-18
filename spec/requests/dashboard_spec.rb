@@ -108,9 +108,9 @@ RSpec.describe "Dashboard", type: :request do
       expect(menu).not_to include(">Admin<", "Explore builders")
     end
 
-    it "shows Analytics as a tab to Pro builders only" do
+    it "shows Analytics as a tab to every builder, Free opening three of its tabs" do
       get "/dashboard"
-      expect(response.body).not_to include(">Analytics<")
+      expect(response.body).to include(">Analytics<")
 
       user.update!(pro: true)
       get "/dashboard"

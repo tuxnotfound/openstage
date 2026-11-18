@@ -12,7 +12,8 @@ import { lineOf, type Lines } from "./lines"
 // shows it alone and Show all brings the rest back; the last row in view
 // keeps its box, and a click says so. A project past the palette has no
 // colour, so no box, and keeps its values in grey; a row with no box tells
-// a screen reader it draws no line. Hovering or focusing a row brings its
+// a screen reader it draws no line; on analytics, a row that counts none of
+// its tab's numbers keeps its colour as a swatch, with no box. Hovering or focusing a row brings its
 // lines forward. On the dashboard (manage) a row also has Edit, whether
 // the builder's page lists it and whether it is pinned there with a colour
 // (Pin), and each cell the switch for what visitors
@@ -25,7 +26,7 @@ import { lineOf, type Lines } from "./lines"
 // than widening the table. Only shows on hover, and always on a touch
 // screen, where there is no hover to find it by. A table that is wider
 // still, as very large numbers can make one, scrolls inside its panel, never
-// the page.
+// the page. Analytics names how many projects it leaves out, with no link.
 
 export type RowTargets = {
   // A row's box; null when it is the last project in view.
@@ -55,16 +56,18 @@ type Props = {
   switches?: CellSwitches
   // What a row is: "Projects", or "Pages" on analytics.
   label?: string
+  // Beside the chart, its top in line with the chart's, rather than under it.
+  beside?: boolean
 }
 
-export default function ProjectsTable({ table, drawn, lines, indexed, words, focused, rows, switches, label = "Projects" }: Props) {
+export default function ProjectsTable({ table, drawn, lines, indexed, words, focused, rows, switches, label = "Projects", beside = false }: Props) {
   if (table.rows.length === 0) {
     return <div className="mt-5"><p className="os-sm os-ink2">No repo has commits here yet. Your public repos appear once the first sync is done.</p></div>
   }
   const on = table.rows.filter((row) => row.on).length
   return (
     <>
-      <div className="-mx-1 mt-5 overflow-x-auto px-1" data-chart-table data-stack={table.stack}>
+      <div className={`-mx-1 overflow-x-auto px-1 ${beside ? "" : "mt-5"}`} data-chart-table data-stack={table.stack}>
         <table className="w-full border-collapse text-sm stacked:block">
           <caption className="sr-only">{label}: what the chart draws, and each number, {words}</caption>
           <thead className="stacked:block">
@@ -92,8 +95,10 @@ export default function ProjectsTable({ table, drawn, lines, indexed, words, foc
           </tbody>
         </table>
         {table.more && (
-          <p className="border-t border-line pt-3">
-            <a href={`#${table.more.anchor}`} className="os-link text-sm" data-turbo="false">{table.more.text} <span aria-hidden="true">↓</span></a>
+          <p className={`border-t border-line pt-3 ${table.more.anchor ? "" : "os-sm os-muted"}`}>
+            {table.more.anchor
+              ? <a href={`#${table.more.anchor}`} className="os-link text-sm" data-turbo="false">{table.more.text} <span aria-hidden="true">↓</span></a>
+              : table.more.text}
           </p>
         )}
       </div>
@@ -130,7 +135,7 @@ function Row({ row, table, drawn, alone, hot, rows, switches }: {
 }) {
   const box = row.drawable ? rows.box(row.key) : null
   const only = row.drawable && !alone ? rows.only(row.key) : null
-  const name = `wrap-anywhere font-bold ${row.drawable ? (row.on ? "" : "text-ink-2") : "font-semibold text-ink-3"}`
+  const name = `wrap-anywhere font-bold ${row.drawable ? (row.on ? "" : "text-ink-2") : row.colorClass ? "text-ink-2" : "font-semibold text-ink-3"}`
   return (
     <tr className={`group border-t border-line transition-colors stacked:grid stacked:grid-cols-3 stacked:gap-x-3 stacked:gap-y-2.5 stacked:py-3 ${hot ? "bg-surface" : ""}`}
         data-chart-row={row.key} onPointerEnter={(event) => { if (row.drawable && event.pointerType === "mouse") rows.focus(row.key) }}
@@ -150,7 +155,16 @@ function Row({ row, table, drawn, alone, hot, rows, switches }: {
               </span>
               <span className={name}>{row.name}</span>
             </label>
-          ) : <><span className={name}>{row.name}</span><span className="sr-only">, draws no line</span></>}
+          ) : (
+            <>
+              {row.colorClass && (
+                <span className="inline-flex size-[18px] flex-none items-center justify-center" aria-hidden="true">
+                  <span className={`${row.colorClass} size-2 rounded-[2px] bg-(--project)`} />
+                </span>
+              )}
+              <span className={name}>{row.name}</span><span className="sr-only">, draws no line</span>
+            </>
+          )}
           {only && (
             <button type="button" aria-label={`Show only ${row.name}`} onClick={only.go} onPointerEnter={only.warm} onFocus={only.warm}
                     className="min-h-7 shrink-0 rounded-md px-1.5 py-0.5 text-[13px] font-bold text-accent-ink opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 focus:opacity-100 stacked:opacity-100 pointer-coarse:opacity-100">Only</button>

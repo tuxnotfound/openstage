@@ -125,6 +125,15 @@
   --color-on-project-8: #0E0F12;
   --color-on-project-9: #0E0F12;
   --color-on-project-10: #FFFFFF;
+
+  /* A ranked list's bar, the accent over a panel; and the four steps of
+     "When you commit", from fewest to most. Each mixes the tokens of its
+     mode, so dark sets them again. */
+  --color-bar: color-mix(in oklab, var(--color-accent) 17%, var(--color-fill));
+  --color-heat-1: color-mix(in oklab, var(--color-accent) 24%, var(--color-fill));
+  --color-heat-2: color-mix(in oklab, var(--color-accent) 48%, var(--color-fill));
+  --color-heat-3: color-mix(in oklab, var(--color-accent) 74%, var(--color-fill));
+  --color-heat-4: var(--color-accent);
 }
 
 @layer base {
@@ -164,6 +173,11 @@
       --color-on-project-7: #0E0F12;
       --color-on-project-9: #F3F4F6;
       --color-on-project-10: #F3F4F6;
+      --color-bar: color-mix(in oklab, var(--color-accent) 24%, var(--color-fill));
+      --color-heat-1: color-mix(in oklab, var(--color-accent) 24%, var(--color-fill));
+      --color-heat-2: color-mix(in oklab, var(--color-accent) 48%, var(--color-fill));
+      --color-heat-3: color-mix(in oklab, var(--color-accent) 74%, var(--color-fill));
+      --color-heat-4: var(--color-accent);
     }
   }
 
@@ -176,6 +190,8 @@
 @layer components {
   /* Layout */
   .os-wrap { max-width: 1160px; margin: 0 auto; padding: 0 clamp(16px, 3.2vw, 40px); }
+  /* Analytics takes the screen's width: its header, flash, main and footer. */
+  .os-wide { max-width: 1680px; margin: 0 auto; padding: 0 clamp(16px, 2.2vw, 32px); }
   .os-narrow { max-width: 760px; margin: 0 auto; padding: 0 clamp(16px, 3.2vw, 40px); }
   .os-stack { display: flex; flex-direction: column; gap: 16px; }
   .os-between { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }

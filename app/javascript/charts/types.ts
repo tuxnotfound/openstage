@@ -100,7 +100,8 @@ export type TableRow = {
   // page, which draws in ink.
   key: string
   name: string
-  // The colour its box wears; null for a row with no box.
+  // The colour its box wears, or on analytics its swatch where it has no
+  // box; null for a project past the palette.
   colorClass: string | null
   // In view on the chart; drawable: on the builder's page, so it has a box.
   on: boolean
@@ -122,12 +123,13 @@ export type TableRow = {
 // its own. stack: the breakpoint below which the table stacks, as on a
 // phone, where its columns no longer fit (ProjectsTableSerializer#stack).
 // more: on a builder's stage, the link to the projects it leaves to the
-// list under the cards, null with none.
+// list under the cards; on analytics, how many it leaves out, with no
+// anchor; null with none.
 export type TableView = {
   columns: { key: string; label: string; word: string; beside: string | null }[]
   rows: TableRow[]
   stack: "md" | "lg"
-  more: { text: string; anchor: string } | null
+  more: { text: string; anchor: string | null } | null
 }
 
 // The stage's list of the projects past the cards, a page of them
@@ -215,32 +217,72 @@ export type ShippedItem = {
   project: string | null
 }
 
-// The analytics page (AnalyticsViewSerializer): the chart filter, then both
-// sets of panels: where views of the builder's pages on Openstage came
-// from, the links followed and the badge and embed; and the panels of
-// their websites.
-export type AnalyticsView = FilterView & {
-  // What the changes compare with; null for all time.
-  changesNote: string | null
-  // What a panel with nothing in it says: "in the last 30 days", "yet".
-  quiet: string
-  sources: { label: string; count: string; width: number }[]
-  countries: { label: string; count: string }[]
-  links: { title: string; page: string; count: string }[]
-  badges: { label: string; count: string; sites: string }[]
-  websites: WebsitesView
-}
+// The analytics page's tabs (Analytics::Tab), each a link to its own
+// address (path), to which the page adds the window and the projects in
+// view; pro: this builder's plan does not open it, so it wears Pro's mark.
+export type Tab = "overview" | "commits" | "visits" | "mrr" | "openstage"
+export type TabLink = { key: Tab; label: string; pro: boolean; path: string }
 
-// The panels of the builder's websites, each value with its count, the
-// busiest first and Other last, what the list leaves out, a page with its
-// project while pages of several projects count; with none of them, what shows
-// instead (empty) and, while none of the projects in view counts site
-// visits, the link that sets up the first one's (setup).
-export type WebsitesView = {
-  sources: { label: string; count: string; width: number }[]
-  refs: { label: string; count: string }[]
-  countries: { label: string; count: string }[]
-  pages: { label: string; count: string; project: string | null }[]
+// A number above an analytics tab's chart: a toggle while it has lines of
+// its own; a figure (figure) while it sits beside another, which draws
+// none, so it is no button; suffix: what follows its value, "of 30".
+export type Tile = NumberView & { figure: boolean; suffix: string | null }
+
+// A row of a ranked list (AnalyticsListsSerializer): width, its bar, its
+// share of the first row in percent; colorClass and of, the dot and the
+// name of its project or page, null with none; other, the row of what the
+// list leaves out, which has no bar.
+export type RankedRow = { label: string; count: string; width: number; colorClass: string | null; of: string | null; other: boolean }
+// empty: what the list says with no row, null with any.
+export type Ranked = { rows: RankedRow[]; empty: string | null }
+
+// The lists of the builder's websites, on Site visits: with none of them,
+// what shows instead (empty) and, while none of the projects in view
+// counts site visits, the link that sets one up (setup).
+export type SiteLists = {
+  pages: Ranked
+  sources: Ranked
+  refs: Ranked
+  countries: Ranked
   empty: string | null
   setup: { text: string; path: string } | null
+}
+
+// The lists of the builder's pages on Openstage, on Openstage views, and
+// where the badge and the embed were shown.
+export type PageLists = {
+  sources: Ranked
+  countries: Ranked
+  links: Ranked
+  badges: { label: string; count: string; sites: string }[]
+}
+
+// A tab of the analytics page (AnalyticsViewSerializer): the chart filter,
+// its tiles, and its own lists, null on every other tab.
+export type AnalyticsView = FilterView & {
+  locked: false
+  tab: Tab
+  tabs: TabLink[]
+  tiles: Tile[]
+  // What a row is: "Pages" while the builder's stage is one, else "Projects".
+  rowsLabel: string
+  // What the changes compare with; null for all time.
+  changesNote: string | null
+  // What a list with nothing in it says after its words: "in the last 30 days", "yet".
+  quiet: string
+  site: SiteLists | null
+  pages: PageLists | null
+  // The Commits and MRR tabs' lists, to come.
+  commits: null
+  revenue: null
+}
+
+// A tab Free does not open (AnalyticsLockedSerializer): what it shows on
+// Pro, and the button to Pro; nothing of its numbers.
+export type LockedView = {
+  locked: true
+  tab: Tab
+  tabs: TabLink[]
+  pitch: string
+  checkout: { label: string; path: string }
 }

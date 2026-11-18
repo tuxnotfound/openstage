@@ -1,6 +1,8 @@
 require "rails_helper"
 require "support/revenue_data"
 
+# The page is its builder's alone, so its script draws all of it: these read
+# what the server hands the script (the island's props).
 RSpec.describe "Analytics", type: :request do
   let(:user) { create(:user, pro: true, username: "builder") }
 
@@ -8,32 +10,19 @@ RSpec.describe "Analytics", type: :request do
     Nokogiri::HTML(response.body)
   end
 
-  def toggles
-    page.at_css("[aria-label='Numbers on the chart']")
+  def props
+    JSON.parse(page.at_css("script#analytics-props").text)
   end
 
-  # The numbers drawn, wherever their toggles sit.
-  def drawn
-    page.css("[aria-label='Numbers on the chart'] [aria-current='true'], [aria-label='More numbers'] [aria-current='true']").uniq
-        .map { |toggle| toggle.text.squish.split.first }
+  def view
+    props["initial"]
   end
 
-  # Each cell's words, its label for phones first.
-  def cells(key)
-    page.at_css("[data-chart-row='#{key}']").css("td").map { |cell| cell.text.squish }
-  end
-
-  def query(link)
-    Rack::Utils.parse_query(URI(link["href"]).query)
-  end
-
-  # A panel's words, a space between each element's.
-  def panel(id)
-    page.at_css("section[aria-labelledby='#{id}']").xpath(".//text()").map(&:text).join(" ").squish
-  end
-
-  def count(repo, kind, value, count, day: Date.new(2026, 10, 20))
-    repo.site_visit_counts.create!(kind: kind, value: value, count: count, day: day)
+  # The numbers a view names anywhere: its tiles, toggles, columns, the
+  # numbers drawn and the chart's lines and tooltip.
+  def numbers_named(json)
+    [ json["tiles"], json["numbers"], json["table"]["columns"], json["chart"]["tips"] ].flatten.pluck("key") +
+      json["drawn"] + json["defaultShow"] + json["chart"]["paths"].pluck("number")
   end
 
   it "sends a visitor who is not signed in home" do
@@ -41,12 +30,12 @@ RSpec.describe "Analytics", type: :request do
     expect(response).to redirect_to(root_path)
   end
 
-  it "sends a free builder to the dashboard, saying it is Pro" do
-    sign_in_as(create(:user, pro: false))
-    get "/analytics"
+  it "sends an old link to Openstage's own lists to the Openstage views tab, its other params kept" do
+    sign_in_as(user)
 
-    expect(response).to redirect_to(dashboard_path)
-    expect(flash[:alert]).to match(/Pro/)
+    get "/analytics", params: { panels: "openstage", range: "90d" }
+
+    expect(response).to redirect_to("/analytics?range=90d&tab=openstage")
   end
 
   context "as a Pro builder" do
@@ -57,30 +46,104 @@ RSpec.describe "Analytics", type: :request do
     before do
       travel_to Time.utc(2026, 10, 24, 12)
       create(:entry, user: user, repo_name: "builder/app", occurred_at: 40.days.ago)
+      create(:entry, user: user, repo_name: "builder/app", occurred_at: 2.days.ago)
       sign_in_as(user)
     end
 
-    it "says so when nothing happened on Openstage" do
-      get "/analytics", params: { panels: "openstage" }
-
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include("No views in the last 30 days.", "No clicks out in the last 30 days.")
-    end
-
-    it "opens on commits alone over the last 30 days, the window beside the title, the numbers in their groups with their changes" do
-      repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
-      repo.site_visit_days.create!(day: Date.new(2026, 9, 10), visits: 10, visitors: 9)
-      create(:entry, user: user, repo_name: "builder/app", occurred_at: 2.days.ago)
-      create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a")
-
+    it "hands the whole page to its script, the window, the tabs and Pro's mark, wide as the screen, with Analytics in the header" do
       get "/analytics"
 
-      expect(toggles.css("[role='group']").map { |group| group["aria-label"] }).to eq([ "On GitHub", "On your websites", "More numbers", "On Openstage" ])
-      expect(toggles.text.squish).to eq("On GitHub Commits 1 ± 0% On your websites + Site visits 30 ▲up 200% + 1 more On Openstage + Views 1")
-      expect(toggles.css("[aria-current='true']").map { |drawn| [ drawn.name, drawn.text.squish ] }).to eq([ [ "span", "Commits 1 ± 0%" ] ])
-      expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Commits per day by page, last 30 days")
-      expect(page.at_css("[aria-label='Time range'] a[aria-current='page']").text).to eq("30 days")
-      expect(response.body).to include("Changes compare each value with the 30 days before.")
+      expect(response).to have_http_status(:ok)
+      expect(page.at_css("[data-react='analytics']").children).to be_empty
+      expect(props.slice("endpoint", "defaultRange", "pro")).to eq("endpoint" => "/api/analytics", "defaultRange" => "30d", "pro" => true)
+      expect(view.values_at("locked", "tab", "range")).to eq([ false, "overview", "30d" ])
+      expect(view["tabs"].pluck("label")).to eq([ "Overview", "Commits", "Site visits", "MRR", "Openstage views" ])
+      expect(page.css("header, main, footer").map { |part| part["class"].split.first }).to eq(%w[os-wide os-wide os-wide])
+      expect(page.at_css("header nav[aria-label='Main'] a[aria-current='page']").text).to eq("Analytics")
+
+      get "/dashboard"
+      expect(page.at_css("header")["class"]).to eq("os-wrap")
+    end
+
+    it "opens each tab on its own numbers, its tiles, columns and rows in the tab's order, and Overview for a tab it does not know" do
+      repo.update!(site_source: "script", site_set_up_at: 30.days.ago)
+      repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
+      create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a")
+      user.project_clicks.create!(repo_name: "builder/app", kind: "visit", clicked_at: 1.day.ago)
+      tab = ->(key) { get("/analytics", params: { tab: key }) && view }
+
+      overview = tab.call(nil)
+      expect(overview["tiles"].map { |tile| tile.values_at("key", "figure") }).to eq([ [ "commits", false ], [ "visits", false ], [ "views", false ], [ "clicks", false ] ])
+      expect(overview["table"]["columns"].pluck("key")).to eq(%w[commits visits site_visitors views visitors clicks])
+      expect([ overview["drawn"], overview["rowsLabel"], overview["table"]["rows"].pluck("key") ]).to eq([ %w[commits visits], "Pages", %w[page builder/app] ])
+
+      visits = tab.call("visits")
+      expect([ visits["tiles"].map { |tile| tile.values_at("key", "figure") }, visits["drawn"], visits["rowsLabel"] ])
+        .to eq([ [ [ "visits", false ], [ "site_visitors", true ] ], %w[visits], "Projects" ])
+      expect(tab.call("commits")["table"]["columns"].pluck("key")).to eq(%w[commits])
+      expect(tab.call("openstage")["tiles"].pluck("key")).to eq(%w[views visitors clicks])
+      expect(tab.call("nope")["tab"]).to eq("overview")
+      expect(props["endpoint"]).to eq("/api/analytics")
+      get "/analytics", params: { tab: "visits" }
+      expect(props["endpoint"]).to eq("/api/analytics?tab=visits")
+    end
+
+    it "holds a tab's own lists and no other tab's" do
+      repo.update!(site_source: "script", site_set_up_at: 30.days.ago)
+      repo.site_visit_counts.create!(kind: "country", value: "PT", count: 4, day: Date.new(2026, 10, 22))
+      create(:profile_view, user: user, viewed_at: 2.days.ago, referrer: "news.ycombinator.com", country: "ES")
+
+      get "/analytics"
+      expect(view.values_at("site", "pages")).to eq([ nil, nil ])
+
+      get "/analytics", params: { tab: "visits" }
+      expect([ view["site"]["countries"]["rows"].pluck("label"), view["pages"] ]).to eq([ [ "Portugal" ], nil ])
+
+      get "/analytics", params: { tab: "openstage" }
+      expect([ view["pages"]["sources"]["rows"].pluck("label"), view["pages"]["countries"]["rows"].pluck("label"), view["site"] ]).to eq([ [ "Hacker News" ], [ "Spain" ], nil ])
+    end
+
+    it "draws the numbers and the pages asked for, and still reads analytics' old links" do
+      create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a")
+
+      get "/analytics", params: { show: "views,commits", projects: "builder/app" }
+      expect([ view["drawn"], view["selected"], view["chart"]["ariaLabel"] ]).to eq([ %w[views commits], [ "builder/app" ], "Commits per day by page, last 30 days" ])
+      expect(view["chart"]["note"]).to eq("None of the pages in view counts views.")
+
+      get "/analytics", params: { metric: "views", pages: [ "page" ] }
+      expect([ view["drawn"], view["selected"] ]).to eq([ %w[views], [ "page" ] ])
+    end
+
+    it "keeps on the chart and the table the numbers a project's builder hides from visitors, and changes nothing visitors see" do
+      repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
+      repo.update!(hidden_numbers: %w[commits visits site_visitors])
+
+      get "/analytics", params: { show: "visits" }
+      cells = view["table"]["rows"].find { |row| row["key"] == "builder/app" }["cells"]
+      expect(cells.map { |cell| [ cell["key"], cell["value"] ] }).to eq([ [ "commits", "1" ], [ "visits", "30" ], [ "site_visitors", "9" ] ])
+
+      get "/api/progress/builder", params: { project: "builder/app", range: "30d" }
+      expect(response.parsed_body["numbers"].pluck("key")).not_to include("visits")
+    end
+
+    it "marks what shipped and was published on the chart, on every tab" do
+      create(:entry, user: user, repo_name: "builder/app", entry_type: "milestone", source: "manual", title: "Launched", occurred_at: 3.days.ago)
+
+      get "/analytics"
+      expect(view["chart"]["marks"].map { |mark| [ mark["key"], mark["entries"].pluck("title") ] }).to eq([ [ "builder/app", [ "Launched" ] ] ])
+      get "/analytics", params: { tab: "commits" }
+      expect(view["chart"]["marks"].size).to eq(1)
+    end
+
+    it "says under an empty chart what fills it, as far as the tab asks" do
+      get "/analytics", params: { tab: "visits" }
+      expect(props["step"]).to eq("text" => "Connect your site to count its visits.", "label" => "Set up site visits", "href" => "/settings?tab=integrations")
+
+      get "/analytics", params: { tab: "mrr" }
+      expect(props["step"]).to eq("text" => "Connect Stripe to show your MRR.", "label" => "Connect Stripe", "href" => "/settings?tab=integrations")
+
+      get "/analytics", params: { tab: "commits" }
+      expect(props["step"]).to be_nil
     end
 
     context "with revenue" do
@@ -91,323 +154,88 @@ RSpec.describe "Analytics", type: :request do
         revenue_day(product, day: Date.new(2026, 10, 24), currency: "usd", mrr: 421_000, subscriptions: 230)
       end
 
-      def number(key)
-        get "/api/analytics", params: { range: "30d" }
-        JSON.parse(response.body)["numbers"].find { |each| each["key"] == key }
+      def tile(key, tab: nil)
+        get "/api/analytics", params: { range: "30d", tab: tab }.compact
+        response.parsed_body["tiles"].find { |each| each["key"] == key }
       end
 
-      it "groups MRR and paying customers on Stripe, what they stand at now, against where they stood as the window began" do
-        get "/analytics"
-
-        stripe = toggles.at_css("[aria-label='On Stripe']")
-        expect(stripe.text.squish).to include("MRR $4,210", "Paying customers 230")
-        expect(number("mrr")["value"]).to eq("$4,210")
-        expect(number("customers")["value"]).to eq("230")
-      end
-
-      it "draws MRR, in money, when asked for" do
-        get "/analytics", params: { show: "mrr" }
-
-        expect(page.at_css("svg[role='img']")["aria-label"]).to eq("MRR per day by page, last 30 days")
-        expect(page.css(".os-ylab").map(&:text)).to all(start_with("$"))
-        expect(cells("builder/app")).to include(a_string_including("$4,210"))
-      end
-
-      it "keeps what its builder hides from visitors" do
+      it "shows MRR and paying customers where they stand now, on Overview and MRR, hidden or not" do
         repo.update!(hidden_numbers: %w[mrr customers])
 
-        expect(number("mrr")["value"]).to eq("$4,210")
-        expect(number("customers")["value"]).to eq("230")
+        expect(tile("mrr")).to include("value" => "$4,210", "figure" => false)
+        expect(tile("customers", tab: "mrr")).to include("value" => "230", "figure" => false)
+        get "/analytics", params: { tab: "mrr" }
+        expect([ view["drawn"], view["table"]["rows"].pluck("key") ]).to eq([ %w[mrr], %w[builder/app] ])
       end
 
       it "takes both off while Stripe refuses the key" do
         user.revenue_accounts.first.update!(refused_at: Time.current)
 
-        expect(number("mrr")).to be_nil
-        expect(number("customers")).to be_nil
+        expect(tile("mrr")).to be_nil
+        expect(tile("customers")).to be_nil
       end
     end
+  end
 
-    it "says each change's direction in words to a screen reader, the arrow only to the eye" do
-      repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
-      repo.site_visit_days.create!(day: Date.new(2026, 9, 10), visits: 10, visitors: 9)
+  context "as a Free builder" do
+    let(:user) { create(:user, pro: false, username: "builder") }
+    let!(:held) { create(:github_repo, user: user, name: "app", full_name: "builder/app", site_source: "script", site_set_up_at: 20.days.ago) }
+    let!(:paused) { create(:github_repo, user: user, name: "lib", full_name: "builder/lib", site_source: "script", site_set_up_at: 10.days.ago) }
 
-      get "/analytics"
-
-      change = toggles.css("[aria-label='On your websites'] a span").find { |span| span.at_css(".sr-only") }
-      expect(change.at_css("[aria-hidden='true']").text).to eq("▲")
-      expect(change.at_css(".sr-only").text).to eq("up")
-    end
-
-    it "folds Openstage's own numbers behind a button that opens them in place, and shows them in a row of their own while one is drawn" do
-      repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
-      create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a")
-
-      get "/analytics"
-      expect(toggles.at_css("details summary").text).to eq("+ 1 more")
-      expect(toggles.css("details [role='group']").map { |group| group["aria-label"] }).to eq([ "More numbers", "On Openstage" ])
-      expect(page.at_css("[aria-label='Numbers on the chart'] + [aria-label='More numbers']")).to be_nil
-
-      get "/analytics", params: { show: "commits,views" }
-      expect(toggles.at_css("details")).to be_nil
-      expect(page.at_css("[aria-label='Numbers on the chart'] + [aria-label='More numbers']").text.squish).to eq("On Openstage Views 1")
-    end
-
-    it "lists every page under the chart in their fixed order, each value with its change, the builder's page with no commits or site visits" do
-      repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
-      create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a")
-      create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "b", referrer: "news.ycombinator.com", country: "PT")
-      user.project_views.create!(repo_name: "builder/app", viewed_at: 1.day.ago, ip_hash: "c", referrer: "x.com")
-      user.subscriptions.create!(email: "fan@example.com", github_repo: repo, confirmed_at: 3.days.ago)
+    # Both projects counted site visits; the second while its builder was on Pro.
+    before do
+      travel_to Time.utc(2026, 10, 24, 12)
+      create(:entry, user: user, repo_name: "builder/app", occurred_at: 2.days.ago)
+      create(:entry, user: user, repo_name: "builder/lib", occurred_at: 3.days.ago)
+      held.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
+      paused.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 7, visitors: 3)
+      paused.site_visit_counts.create!(kind: "page", value: "/lib", count: 7, day: Date.new(2026, 10, 22))
+      create(:profile_view, user: user, viewed_at: 2.days.ago, referrer: "news.ycombinator.com")
       user.project_clicks.create!(repo_name: "builder/app", kind: "visit", clicked_at: 1.day.ago)
-
-      get "/analytics"
-
-      expect(page.css("[data-chart-row]").map { |row| row["data-chart-row"] }).to eq([ "page", "builder/app" ])
-      expect(page.css("[data-chart-table] thead th").map { |head| head.text.squish })
-        .to eq([ "Pages", "Commits", "Site visits", "Site visitors", "Visitors", "Views", "New followers", "Clicks out" ])
-      expect(cells("page")).to eq([ "Commits –", "Site visits –", "Site visitors –", "Visitors 2", "Views 2", "New followers –", "Clicks out –" ])
-      expect(cells("builder/app")).to eq([ "Commits 0 ▼down 100%", "Site visits 30", "Site visitors 9", "Visitors 1", "Views 1", "New followers 1", "Clicks out 1" ])
-      expect(response.body).to include("Hacker News", "Twitter / X", "PT", "Visit app.example")
+      product = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok", read_at: Time.current, read_through: Date.new(2026, 10, 24))
+                    .revenue_products.create!(external_id: "prod_m", name: "Monthly", github_repo: held)
+      revenue_day(product, day: Date.new(2026, 10, 20), mrr: 1_000, subscriptions: 1)
+      sign_in_as(user)
     end
 
-    it "draws the numbers and the pages asked for, and still reads analytics' old links" do
-      repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
-      create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a")
+    it "opens Overview, Commits and Site visits, naming none of Pro's numbers, with no stage, and Analytics in the header" do
+      [ nil, "commits", "visits" ].each do |tab|
+        get "/analytics", params: { tab: tab }.compact
 
-      get "/analytics", params: { show: "views,commits", projects: "builder/app" }
-      expect(drawn).to eq(%w[Commits Views])
-      expect(page.at_css("[data-chart-row='page'] th > span > a:first-child")["aria-current"]).to be_nil
-      expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Views and commits per day by page, last 30 days")
-      expect(response.body).to include("No commits in the last 30 days. None of the pages in view counts views.")
-
-      get "/analytics", params: { metric: "site", pages: [ "builder/app" ] }
-      expect(drawn).to eq(%w[Site])
-      expect(page.at_css("[data-chart-row='builder/app'] [role='link'][aria-disabled='true']")).to be_present
-    end
-
-    it "links each control to its view, leaving the page's defaults out" do
-      create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a")
-
-      get "/analytics"
-
-      expect(query(toggles.css("a").find { |link| link.text.include?("Views") })).to eq("show" => "commits,views")
-      expect(query(page.css("[aria-label='Time range'] a").find { |link| link.text == "90 days" })).to eq("range" => "90d")
-      expect(query(page.at_css("[data-chart-row='page'] th > span > a:first-child"))).to eq("projects" => "builder/app")
-      expect(query(page.at_css("[data-chart-row='page'] a[aria-label='Show only Your stage']"))).to eq("projects" => "page")
-    end
-
-    it "draws 90 days by week and 12 months by month, and the last 30 days for a window it does not know" do
-      create(:entry, user: user, repo_name: "builder/app", occurred_at: 200.days.ago)
-
-      get "/analytics", params: { range: "90d" }
-      expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Commits per week by page, last 90 days")
-
-      get "/analytics", params: { range: "12m" }
-      expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Commits per month by page, last 12 months")
-
-      get "/analytics", params: { range: "all" }
-      expect(response.body).not_to include("Changes compare")
-
-      get "/analytics", params: { range: "7d" }
-      expect(page.at_css("svg[role='img']")["aria-label"]).to eq("Commits per day by page, last 30 days")
-    end
-
-    it "keeps on the chart and the table the numbers a project's builder hides from visitors, whatever their switches say" do
-      repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
-
-      [ %w[commits visits site_visitors], %w[visits], %w[site_visitors], [] ].each do |hidden|
-        repo.update!(hidden_numbers: hidden)
-
-        get "/analytics", params: { show: "visits" }
-
-        expect(cells("builder/app")).to eq([ "Commits 0 ▼down 100%", "Site visits 30", "Site visitors 9" ])
-        expect(page.css("[data-chart-table] thead th").map { |head| head.text.squish }).to include("Site visits", "Site visitors")
+        expect(response).to have_http_status(:ok)
+        expect(numbers_named(view).uniq - %w[commits visits site_visitors]).to eq([])
+        expect(view["table"]["rows"].pluck("key")).not_to include("page")
+        expect(response.body).not_to include("Paying customers", "New followers", "Clicks out")
       end
+      expect(props["pro"]).to be(false)
+      expect(page.at_css("header nav[aria-label='Main']").text).to include("Analytics")
     end
 
-    it "changes nothing visitors see: a number hidden here stays off the project's page" do
-      repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
-      repo.update!(hidden_numbers: %w[visits])
+    it "shows the site visits of its one project alone, the other's Paused, and lists that one's pages alone" do
+      get "/analytics"
+      cells = view["table"]["rows"].to_h { |row| [ row["key"], row["cells"].find { |cell| cell["key"] == "visits" }.values_at("value", "link") ] }
+      expect(cells.transform_values { |value, link| [ value, link&.fetch("text") ] }).to eq("builder/app" => [ "30", nil ], "builder/lib" => [ nil, "Paused" ])
+      expect(view["tiles"].find { |tile| tile["key"] == "visits" }["value"]).to eq("30")
 
-      get "/api/progress/builder", params: { project: "builder/app", range: "30d" }
-
-      expect(response.parsed_body["numbers"].pluck("key")).not_to include("visits")
+      get "/analytics", params: { tab: "visits" }
+      expect(view["site"]["pages"]).to eq("rows" => [], "empty" => "No page views in the last 30 days.")
     end
 
-    it "never draws site visitors, asked for or not, shows them beside site visits in the tooltip, and says a site visitor is one IP address or IPv6 network on one day" do
-      repo.site_visit_days.create!(day: Date.new(2026, 10, 2), visits: 30, visitors: 9)
-      repo.site_visit_days.create!(day: Date.new(2026, 10, 12), visits: 12, visitors: 4)
+    it "answers MRR and Openstage views with the Go Pro view alone, the API with 403" do
+      %w[mrr openstage].each do |tab|
+        get "/analytics", params: { tab: tab, range: "90d" }
 
-      get "/analytics", params: { show: "site_visitors", range: "2026-10-01..2026-10-10" }
+        expect(response).to have_http_status(:ok)
+        expect(view.keys).to contain_exactly("locked", "tab", "tabs", "pitch", "checkout")
+        expect(view["tabs"].select { |each| each["pro"] }.pluck("key")).to eq(%w[mrr openstage])
+        expect(props["step"]).to be_nil
 
-      expect(drawn).to eq([ "Commits" ])
-      expect(toggles.text).not_to include("Site visitors")
-      expect(page.at_css("svg[role='img']")["aria-label"]).to start_with("Commits per day by page")
-      expect(cells("builder/app")).to include("Site visitors 9")
-      expect(response.body).not_to include("a site visitor is one IP address")
-
-      get "/api/analytics", params: { show: "visits,site_visitors", range: "2026-10-01..2026-10-10" }
-      expect(response.parsed_body).to include("drawn" => [ "visits" ])
-      expect(response.parsed_body["numbers"].pluck("key")).not_to include("site_visitors")
-      chart = response.parsed_body["chart"]
-      expect(chart["tips"].pluck("key", "line")).to eq([ [ "visits", true ], [ "site_visitors", false ] ])
-      expect(chart["paths"].pluck("number")).to eq([ "visits" ])
-      expect(chart["columns"].first["rows"].map { |row| [ row["name"], row["values"] ] }).to eq([ [ "app", %w[30 9] ] ])
-
-      get "/api/analytics", params: { metric: "site_visitors" }
-      expect(response.parsed_body["drawn"]).to eq([ "commits" ])
-
-      repo.update!(hidden_numbers: %w[site_visitors])
-      get "/api/analytics", params: { show: "visits", range: "2026-10-01..2026-10-10" }
-      expect(response.parsed_body["chart"]["tips"].pluck("key")).to eq(%w[visits site_visitors])
-    end
-
-    it "never draws Openstage's own visitors, asked for or not, shows them in the tooltip right after views, and keeps their column in the table" do
-      2.times { create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a") }
-      user.project_views.create!(repo_name: "builder/app", viewed_at: 2.days.ago, ip_hash: "b")
-      user.project_clicks.create!(repo_name: "builder/app", kind: "visit", clicked_at: 2.days.ago)
-
-      get "/analytics", params: { show: "visitors" }
-      expect(drawn).to eq([ "Commits" ])
-      expect(toggles.text).not_to include("Visitors")
-      expect(page.css("[data-chart-table] thead th").map { |head| head.text.squish }).to eq([ "Pages", "Commits", "Visitors", "Views", "Clicks out" ])
-      expect(cells("page")).to eq([ "Commits –", "Visitors 1", "Views 2", "Clicks out –" ])
-
-      get "/api/analytics", params: { show: "views,clicks,visitors" }
-      expect(response.parsed_body["drawn"]).to eq(%w[views clicks])
-      expect(response.parsed_body["numbers"].pluck("key")).to eq(%w[commits views clicks])
-      chart = response.parsed_body["chart"]
-      expect(chart["tips"].pluck("key", "line")).to eq([ [ "views", true ], [ "visitors", false ], [ "clicks", true ] ])
-      expect(chart["paths"].pluck("number").uniq).to contain_exactly("views", "clicks")
-      expect(chart["columns"].find { |column| column["rows"].any? }["rows"].map { |row| [ row["name"], row["values"] ] })
-        .to eq([ [ "Your stage", %w[2 1 –] ], [ "app", %w[1 1 1] ] ])
-
-      get "/api/analytics", params: { metric: "visitors" }
-      expect(response.parsed_body["drawn"]).to eq([ "commits" ])
-    end
-
-    it "shows where the badge and the embed were shown" do
-      user.badge_impressions.create!(kind: "badge", viewed_at: 1.day.ago, referrer: "github.com")
-      user.badge_impressions.create!(kind: "badge", viewed_at: 1.day.ago, referrer: "example.com")
-
+        get "/api/analytics", params: { tab: tab }
+        expect(response).to have_http_status(:forbidden)
+      end
       get "/analytics", params: { panels: "openstage" }
-
-      expect(panel("badge-embed")).to include("README badge 2 · 2 sites", "Embed widget 0 · 0 sites")
-    end
-
-    describe "the panels under the chart" do
-      def switch
-        page.at_css("[role='group'][aria-label='Panels']")
-      end
-
-      before { repo.update!(site_source: "script", site_token: "os_a", site_set_up_at: 50.days.ago, site_first_visit_at: 50.days.ago) }
-
-      it "opens on the builder's websites, each panel saying what it counts and where, the sources named and Other last" do
-        count(repo, "source", "news.ycombinator.com", 5)
-        count(repo, "source", "t.co", 2)
-        count(repo, "source", "x.com", 2)
-        count(repo, "source", "openstage.dev", 3)
-        count(repo, "source", SiteVisitCount::DIRECT, 4)
-        count(repo, "source", "indiehackers.com", 1)
-        count(repo, "source", SiteVisitCount::OTHER, 2)
-        count(repo, "ref", "hn", 3)
-        count(repo, "country", "PT", 6)
-        count(repo, "page", "/pricing", 9)
-        count(repo, "page", "/docs/*", 4)
-        count(repo, "page", SiteVisitCount::OTHER, 7)
-        create(:profile_view, user: user, viewed_at: 2.days.ago, referrer: "reddit.com")
-
-        get "/analytics"
-
-        expect(switch.css("a").map { |option| [ option.text, option["aria-current"] ] }).to eq([ [ "On your websites", "page" ], [ "On Openstage", nil ] ])
-        expect(switch.parent.text.squish).to end_with("Visitors and page views on your websites, counted by Openstage's script.")
-        expect(panel("site-sources")).to eq("Where visitors came from Visitors to your websites, by the site they came from, last 30 days. " \
-                                            "Hacker News 5 Direct 4 Twitter / X 4 Openstage 3 indiehackers.com 1 Other 2 Countries PT 6")
-        expect(panel("site-refs")).to eq("Ref tags Visitors by the ref or utm_source tag in their link, last 30 days. hn 3")
-        expect(panel("site-pages")).to eq("Top pages Page views on your websites, by path, last 30 days. /pricing 9 /docs/* 4 Other 7")
-        expect(page.css("section[aria-labelledby='site-sources'] [style]").map { |bar| bar["style"] }.first(2)).to eq([ "width: 100%", "width: 80%" ])
-        expect(page.at_css("section[aria-labelledby='visitors-from']")).to be_nil
-      end
-
-      it "shows Openstage's own panels as before when the URL names them, and the websites' for a name it does not know" do
-        count(repo, "source", "news.ycombinator.com", 5)
-        create(:profile_view, user: user, viewed_at: 2.days.ago, referrer: "reddit.com", country: "ES")
-        user.project_clicks.create!(repo_name: "builder/app", kind: "github", clicked_at: 1.day.ago)
-
-        get "/analytics", params: { panels: "openstage" }
-
-        expect(switch.css("a").map { |option| [ option.text, option["aria-current"] ] }).to eq([ [ "On your websites", nil ], [ "On Openstage", "page" ] ])
-        expect(switch.parent.text.squish).to end_with("Views and clicks out on your stage and your project pages, and where your badge and embed were shown.")
-        expect(panel("visitors-from")).to eq("Where views came from Views of your Openstage pages, by the site they came from, last 30 days. Reddit 1 Countries ES 1")
-        expect(panel("links-followed")).to eq("Links they followed Clicks from your Openstage pages, last 30 days. View on GitHub app 1")
-        expect(page.at_css("section[aria-labelledby='site-sources']")).to be_nil
-
-        get "/analytics", params: { panels: "github" }
-        expect(panel("site-sources")).to include("Hacker News 5")
-      end
-
-      it "links each option to its view without the script, and keeps the panels on every other link and the days form" do
-        create(:profile_view, user: user, viewed_at: 2.days.ago, ip_hash: "a")
-
-        get "/analytics", params: { range: "90d", show: "commits,views", projects: "builder/app" }
-        expect(switch.css("a").map { |option| query(option) }).to eq([ { "range" => "90d", "show" => "commits,views", "projects" => "builder/app" },
-                                                                       { "range" => "90d", "show" => "commits,views", "projects" => "builder/app", "panels" => "openstage" } ])
-
-        get "/analytics", params: { panels: "openstage" }
-        expect(query(page.css("[aria-label='Time range'] a").find { |link| link.text == "90 days" })).to eq("range" => "90d", "panels" => "openstage")
-        expect(query(toggles.css("a").find { |link| link.text.include?("Views") })).to eq("show" => "commits,views", "panels" => "openstage")
-        expect(query(page.at_css("[data-chart-row='page'] a[aria-label='Show only Your stage']"))).to eq("projects" => "page", "panels" => "openstage")
-        expect(page.css("[aria-label='Time range'] form input[type='hidden']").map { |field| [ field["name"], field["value"] ] }).to eq([ [ "panels", "openstage" ] ])
-      end
-
-      it "follows the window, the days picked and the projects in view; with all in view, every project with website data, and never the stage" do
-        quiet = create(:github_repo, user: user, name: "quiet", full_name: "builder/quiet", homepage: "https://quiet.example")
-        lib = create(:github_repo, user: user, name: "lib", full_name: "builder/lib")
-        create(:entry, user: user, repo_name: "builder/lib", occurred_at: 3.days.ago)
-        count(repo, "page", "/", 3)
-        count(repo, "page", "/old", 8, day: Date.new(2026, 9, 1))
-        count(repo, "page", "/early", 2, day: Date.new(2026, 10, 2))
-        count(quiet, "page", "/quiet", 5)
-        count(lib, "page", "/lib", 1)
-
-        get "/analytics"
-        expect(page.css("[data-chart-row]").map { |row| row["data-chart-row"] }).to eq([ "page", "builder/app", "builder/lib" ])
-        expect(panel("site-pages")).to end_with("/quiet builder/quiet 5 / app 3 /early app 2 /lib lib 1")
-
-        get "/analytics", params: { range: "90d" }
-        expect(panel("site-pages")).to end_with("/old app 8 /quiet builder/quiet 5 / app 3 /early app 2 /lib lib 1")
-
-        get "/analytics", params: { range: "2026-10-01..2026-10-10" }
-        expect(panel("site-pages")).to eq("Top pages Page views on your websites, by path, 1 Oct – 10 Oct. /early 2")
-        get "/analytics", params: { from: "2026-10-01", to: "2026-10-10" }
-        expect(panel("site-pages")).to end_with("/early 2")
-
-        get "/analytics", params: { projects: "builder/lib" }
-        expect(panel("site-pages")).to end_with("by path, last 30 days. /lib 1")
-
-        get "/analytics", params: { projects: "page" }
-        expect(page.at_css("section[aria-labelledby='site-pages']")).to be_nil
-        note = page.css("p.os-note").find { |each| each.text.include?("None of the projects") }
-        expect([ note.text.squish, note.at_css("a") ]).to eq([ "None of the projects in view counts site visits.", nil ])
-      end
-
-      it "says when none of the projects in view counts site visits, with a link to set up the first one's, and when none came in the window" do
-        repo.update!(site_source: nil)
-        get "/analytics"
-        note = page.css("p.os-note").find { |each| each.text.include?("None of the projects") }
-        expect(note.text.squish).to eq("None of the projects in view counts site visits. Set up app's site visits")
-        expect(note.at_css("a")["href"]).to eq("/projects/#{repo.id}/edit?site=open#site-visits")
-
-        repo.update!(site_source: "script")
-        count(repo, "page", "/", 3, day: Date.new(2026, 8, 1))
-        get "/analytics"
-        expect(page.css("p.os-note").map { |each| each.text.squish }).to include("No site visits in the last 30 days.")
-        expect(response.body).not_to include("None of the projects in view counts site visits.")
-
-        get "/analytics", params: { range: "all" }
-        expect(panel("site-pages")).to end_with("/ 3")
-      end
+      follow_redirect!
+      expect(view["locked"]).to be(true)
     end
   end
 end

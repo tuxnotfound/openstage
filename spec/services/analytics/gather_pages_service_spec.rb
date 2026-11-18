@@ -24,17 +24,25 @@ RSpec.describe Analytics::GatherPagesService do
   end
 
   it "adds what came today to the closed days' totals" do
-    panels = gather
+    lists = gather
 
-    expect(panels.sources).to eq([ [ "Direct", 3 ] ])
-    expect(panels.countries).to eq([ [ "PT", 4 ] ])
-    expect(panels.links.map { |link| [ link.title, link.count ] }).to eq([ [ "View on GitHub", 5 ] ])
-    expect(panels.badges).to eq([ [ "badge", 7, 2 ], [ "embed", 0, 0 ] ])
+    expect(lists.sources).to eq(Analytics::Ranked.new(rows: [ [ "Direct", 3 ] ], other: 0))
+    expect(lists.countries).to eq(Analytics::Ranked.new(rows: [ [ "PT", 4 ] ], other: 0))
+    expect(lists.links.rows.map { |link| [ link.title, link.count ] }).to eq([ [ "View on GitHub", 5 ] ])
+    expect(lists.badges).to eq([ [ "badge", 7, 2 ], [ "embed", 0, 0 ] ])
   end
 
   it "reads only the days asked for, and only the pages in view" do
-    expect(gather(first: Date.new(2026, 10, 21), last: Date.new(2026, 10, 23)).sources).to eq([])
-    expect(gather(on: [ pages.first ]).countries).to eq([ [ "PT", 1 ] ])
+    expect(gather(first: Date.new(2026, 10, 21), last: Date.new(2026, 10, 23)).sources).to eq(Analytics::Ranked.new(rows: [], other: 0))
+    expect(gather(on: [ pages.first ]).countries.rows).to eq([ [ "PT", 1 ] ])
+  end
+
+  it "lists eight links followed, the busiest first, and what it leaves out" do
+    10.times { |i| create(:entry, user: user, repo_name: "me/app", title: "Post #{i}").then { |entry| user.entry_click_days.create!(entry: entry, day: Date.new(2026, 10, 20), clicks: 20 - i) } }
+
+    links = gather.links
+    expect(links.rows.map { |link| [ link.title, link.count ] }).to eq((0..7).map { |i| [ "Post #{i}", 20 - i ] })
+    expect(links.other).to eq(12 + 11 + 5)
   end
 
   it "needs a builder and its days" do

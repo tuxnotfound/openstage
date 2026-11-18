@@ -4,11 +4,12 @@
 # its line. view: a ChartFilterSerializer's attributes.
 module ChartFilterHelper
   # What a builder is asked to do under a chart with nothing to draw, on their
-  # own pages alone: a visitor can connect nothing here. repo: a project's page's.
-  def chart_step(user, view, repo: nil)
+  # own pages alone: a visitor can connect nothing here. repo: a project's page's;
+  # steps: the ones the page asks (Progress::ChartStep).
+  def chart_step(user, view, repo: nil, steps: Progress::ChartStep::STEPS)
     return unless current_user == user
 
-    case Progress::ChartStep.new(user, repo: repo, nothing_shown: view[:numbers].empty?).key
+    case Progress::ChartStep.new(user, repo: repo, nothing_shown: view[:numbers].empty?, steps: steps).key
     when :repos then { text: "Connect your repos to see your commits here.", label: "Connect GitHub", href: new_github_installation_path }
     when :hidden then { text: "You hide every number here.", label: "Choose what shows", href: repo ? edit_project_path(repo) : dashboard_path }
     when :site then { text: "Connect your site to count its visits.", label: "Set up site visits", href: repo ? edit_project_path(repo) : settings_path(tab: "integrations") }

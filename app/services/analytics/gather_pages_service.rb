@@ -1,16 +1,17 @@
 module Analytics
-  # Analytics' panels of the builder's pages on Openstage, for the pages in
-  # view over some days: where their views came from, the countries Cloudflare
-  # names, the links followed and where the badge and embed showed.
+  # Analytics' lists of the builder's pages on Openstage, for the pages in
+  # view over some days: where their views came from, the countries
+  # Cloudflare names, the links followed and where the badge and embed
+  # showed; as many of each list as one shows (ReportService::TOP), with
+  # what each leaves out.
   class GatherPagesService < ApplicationService
     Link = Data.define(:title, :page, :count)
 
     # pages: the Progress::Rows in view; split: the Split of the days.
     attr_accessor :user, :pages, :split
-    # sources and countries: [[label, count]], the busiest first, then Other
-    # while the list leaves anything out; links: the Links followed, the
-    # busiest first; badges: [kind, times shown, sites] for the README badge
-    # and the embed.
+    # sources and countries: a Ranked each, by views; links: a Ranked of the
+    # Links followed; badges: [kind, times shown, sites] for the README
+    # badge and the embed.
     attr_reader :sources, :countries, :links, :badges
 
     validates :user, :split, presence: true
@@ -30,9 +31,9 @@ module Analytics
       views = [ (user.profile_views if page_for(CountService::PAGE)), user.project_views.where(repo_name: pages.map(&:key)) ].compact
       views = views.map { |scope| split.raw(scope, :viewed_at) }
       sources = counted("source").transform_keys { |host| named(host) }.to_a + views.flat_map { |scope| scope.group(:referrer).count.to_a }
-      @sources = ranked(tally(sources) { |host| source_label(host) }, ReportService::TOP)
+      @sources = ranked(tally(sources) { |host| source_label(host) })
       countries = views.flat_map { |scope| scope.where.not(country: [ nil, "", *SiteVisits::PageView::NO_COUNTRY ]).group(:country).count.to_a }
-      @countries = ranked(tally(counted("country").to_a + countries, &:itself), ReportService::TOP_COUNTRIES)
+      @countries = ranked(tally(counted("country").to_a + countries, &:itself))
     end
 
     def counted(kind)
@@ -55,17 +56,17 @@ module Analytics
       host.blank? || SiteVisits::PageView.site?(host) ? ReferrerClassifier.label(host) : ReportService::OTHER
     end
 
-    # The busiest, at most top of them, then Other while the list leaves
-    # anything out, the hosts source_label sends there included.
-    def ranked(sorted, top)
-      shown = sorted.reject { |label, _count| label == ReportService::OTHER }.first(top)
-      rest = sorted.sum(&:last) - shown.sum(&:last)
-      rest.positive? ? shown + [ [ ReportService::OTHER, rest ] ] : shown
+    # The busiest, with what the list leaves out, the hosts source_label
+    # sends to Other included.
+    def ranked(sorted)
+      shown = sorted.reject { |label, _count| label == ReportService::OTHER }.first(ReportService::TOP)
+      Ranked.new(rows: shown, other: sorted.sum(&:last) - shown.sum(&:last))
     end
 
     # Entry links and project buttons, together, busiest first.
     def top_links
-      (entry_links + button_links).sort_by { |link| [ -link.count, link.title ] }.first(ReportService::TOP)
+      all = (entry_links + button_links).sort_by { |link| [ -link.count, link.title ] }
+      Ranked.new(rows: all.first(ReportService::TOP), other: all.drop(ReportService::TOP).sum(&:count))
     end
 
     def entry_links

@@ -30,9 +30,11 @@ module Progress
     # in line order; default_show: the page's own. average: each point a
     # 7-day average; lone: one project's page; per: what a row is, "project"
     # or "page". items: the shipped and published entries the page lists,
-    # which the chart marks; none on analytics. builder: the builder's own view.
-    attr_accessor :rows, :counts, :totals_window, :show, :default_show, :average, :lone, :per, :items, :builder
-    # shown: every number a row shows, in the pages' order, the table's;
+    # which the chart marks. builder: the builder's own view. numbers: the
+    # numbers the page lists, in its order; every one, in the pages' order
+    # (Numbers::ALL), for none.
+    attr_accessor :rows, :counts, :totals_window, :show, :default_show, :average, :lone, :per, :items, :builder, :numbers
+    # shown: every number a row shows, in the page's order, the table's;
     # totals: a Total of each the chart can draw, the toggles'; window: the
     # chart's points.
     attr_reader :shown, :totals, :drawn, :default_drawn, :window, :chart
@@ -48,31 +50,35 @@ module Progress
     end
 
     # A row's cells under the table's numbers (columns); manage: the
-    # builder's own table, where they pick what visitors see.
-    def cells(row, columns, manage: false)
+    # builder's own table, where they pick what visitors see; links: Set up
+    # and Paused in a switch's place (Row#link), on that table and on
+    # analytics.
+    def cells(row, columns, manage: false, links: manage)
       columns.map do |number|
         key = number.key
         shown = seen?(row, key)
-        link = (row.link(key) if manage)
+        link = (row.link(key) if links)
         Cell.new(number: number, value: listed(number, row, shown || (manage && row.counts?(key)), link), previous: (previous(number, [ row ]) if shown),
                  shown: shown, pick: (row.pick(key) if manage), link: link)
       end
     end
 
-    private
-
-    def execute
-      @shown = Numbers::ALL.select { |number| Array(rows).any? { |row| seen?(row, number.key) } }
-      @totals = shown.select(&:drawable?).map { |number| total(number) }
-      @default_drawn = drawable(default_show)
-      @drawn = drawable(show).presence || default_drawn.presence || totals.first(1).map(&:number)
-      @chart = draw
-    end
-
+    # A number's Total, for the rows in view: a toggle's, and on analytics a
+    # figure's too, for a number that draws no line (Numbers::Number#beside).
     def total(number)
       in_view = showing(number)
       split = in_view.map { |row| [ row, value(number, row) ] }
       Total.new(number: number, value: (split.sum(&:last) if in_view.any?), previous: previous(number, in_view), split: split.select { |_, count| count.positive? })
+    end
+
+    private
+
+    def execute
+      @shown = (numbers || Numbers::ALL).select { |number| Array(rows).any? { |row| seen?(row, number.key) } }
+      @totals = shown.select(&:drawable?).map { |number| total(number) }
+      @default_drawn = drawable(default_show)
+      @drawn = drawable(show).presence || default_drawn.presence || totals.first(1).map(&:number)
+      @chart = draw
     end
 
     # The numbers some keys name that the chart can draw, as the totals have

@@ -10,6 +10,26 @@ RSpec.describe Analytics::CountService do
     described_class.new(user: user, from: from).tap(&:call!).counts
   end
 
+  it "reads only the numbers wanted, a place's together, and the site visits of the projects asked for alone" do
+    app = create(:github_repo, user: user, full_name: "me/app", name: "app")
+    lib = create(:github_repo, user: user, full_name: "me/lib", name: "lib")
+    app.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
+    lib.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 7, visitors: 3)
+    create(:profile_view, user: user, viewed_at: 1.day.ago)
+    product = user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok", read_at: Time.current, read_through: Date.new(2026, 10, 24))
+                  .revenue_products.create!(external_id: "prod_m", name: "Monthly", github_repo: app)
+    revenue_day(product, day: Date.new(2026, 10, 20), mrr: 1_000, subscriptions: 1)
+    read = ->(numbers, sites = nil) { described_class.new(user: user, from: Date.new(2026, 10, 18), numbers: numbers, sites: sites).tap(&:call!).counts }
+
+    expect(read.call(%w[visits]).keys).to eq(%w[visits site_visitors])
+    expect(read.call(%w[commits visits site_visitors], [ app.id ])["visits"].keys).to eq(%w[me/app])
+    expect(read.call(%w[views]).keys).to eq(%w[visitors views follows clicks])
+    expect(read.call(%w[mrr]).keys).to eq(%w[mrr customers])
+    expect(read.call(nil).keys).to contain_exactly(*Progress::Numbers::ALL.map(&:key))
+    expect(Analytics::FindStartService.new(user: user, numbers: %w[commits visits site_visitors], sites: [ app.id ]).tap(&:call!).firsts.keys)
+      .to eq(%w[commits visits site_visitors])
+  end
+
   it "counts each day in the builder's zone, a visitor once a day" do
     create(:profile_view, user: user, viewed_at: Time.utc(2026, 10, 21, 23, 30), ip_hash: "a")
     create(:profile_view, user: user, viewed_at: Time.utc(2026, 10, 22, 8), ip_hash: "a")

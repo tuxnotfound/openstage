@@ -12,9 +12,10 @@
 # colour, so no box: it keeps its values, in grey, as it draws no line.
 # Which rows the chart draws (Row#drawn?) and which cells list a value, a
 # switch or a link (DrawService#cells) is the chart's to say; this only
-# writes it. A builder's stage and dashboard (boxed_only) list the rows with
-# a box alone; the stage names how many it leaves to its list of projects,
-# under the cards (more), while the dashboard's list starts under the table.
+# writes it. A builder's stage, the dashboard and analytics (boxed_only) list
+# the rows with a colour alone; the stage names how many it leaves to its
+# list of projects, under the cards (more), analytics how many it leaves
+# out, while the dashboard's list starts under the table.
 class ProjectsTableSerializer < ApplicationSerializer
   include Rails.application.routes.url_helpers
 
@@ -33,12 +34,14 @@ class ProjectsTableSerializer < ApplicationSerializer
 
   # chart: a Progress::ChartService or an Analytics::ReportService; changes:
   # whether each cell carries its change; manage: the builder's own table;
-  # boxed_only: the stage's or the dashboard's table, of the rows with a box.
-  def initialize(chart, changes: false, manage: false, boxed_only: false)
+  # boxed_only: the stage's, the dashboard's or analytics' table, of the
+  # rows with a colour; anchor: where more leads, nil for nowhere.
+  def initialize(chart, changes: false, manage: false, boxed_only: false, anchor: MORE_ANCHOR)
     @chart = chart
     @changes = changes
     @manage = manage
     @boxed_only = boxed_only
+    @anchor = anchor
   end
 
   # columns: each number with its names, and the number it sits beside
@@ -53,7 +56,7 @@ class ProjectsTableSerializer < ApplicationSerializer
   private
 
   def listed
-    @boxed_only ? @chart.rows.select(&:boxed?) : @chart.rows
+    @boxed_only ? @chart.rows.select(&:color_class) : @chart.rows
   end
 
   # The breakpoint below which the table stacks, as on a phone (the stacked
@@ -65,7 +68,8 @@ class ProjectsTableSerializer < ApplicationSerializer
     @chart.columns.size + (@manage ? 1 : 0) >= WIDE ? "lg" : "md"
   end
 
-  # color_class: the class its box wears; drawable: whether it has one; on:
+  # color_class: the class its box wears, or its swatch where it has none
+  # (an idle row, Progress::Row); drawable: whether it has a box; on:
   # whether the chart draws it.
   def row_of(row)
     { key: row.key, name: row.name, color_class: row.color_class, on: row.drawn?, drawable: row.boxed?,
@@ -116,6 +120,6 @@ class ProjectsTableSerializer < ApplicationSerializer
     return if @manage
 
     left = @chart.rows.size - listed.size
-    { text: "#{left} more #{'project'.pluralize(left)}", anchor: MORE_ANCHOR } if left.positive?
+    { text: "#{left} more #{'project'.pluralize(left)}", anchor: @anchor } if left.positive?
   end
 end

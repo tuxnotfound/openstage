@@ -1,63 +1,86 @@
 module Analytics
-  # Everything the Pro analytics page shows for a window, the numbers drawn
-  # and the pages in view, on the chart filter every chart page shares: a row
-  # per page, the builder's own and one per project, as the public page
-  # orders and colours them, each counting Openstage's own four numbers and a
-  # project also its commits, MRR, paying customers, site visits and site
-  # visitors, those its builder hides from visitors too; what
-  # Progress::DrawService makes of their counts, each number's total and change
-  # for the pages in view and the one chart of the numbers drawn; and the panels
-  # of those pages (GatherPagesService) and of the builder's websites
-  # (GatherWebsitesService).
+  # Everything a tab of the analytics page (Tab) shows for a window, the
+  # numbers drawn and the pages in view, on the chart filter every chart
+  # page shares: a row per page, the builder's stage on the tabs that list
+  # it, then each project, as the public page orders and colours them, each
+  # counting the tab's numbers, those its builder hides from visitors too;
+  # what Progress::DrawService makes of their counts, in the tab's order:
+  # each number's total and change for the pages in view, and the one chart
+  # of the numbers drawn, with what shipped and was published marked on it;
+  # and the lists under it, of the builder's websites (GatherWebsitesService)
+  # or of their pages on Openstage (GatherPagesService), on the tab that
+  # shows them alone. Free reads only Tab#numbers_for, and the site visits of
+  # its one project (SiteVisits::Slot).
   class ReportService < ApplicationService
-    # It opens on commits alone, over the window every chart page opens on.
-    DEFAULT_SHOW = %w[commits].freeze
-    TOP = 6
-    TOP_COUNTRIES = 5
-    # The last row of a ranked panel: everything its list leaves out, so its
-    # rows add up to its total.
+    # A list's rows, before Other.
+    TOP = 8
+    # A list's last row: everything it leaves out, so its rows add up to
+    # its total.
     OTHER = "Other".freeze
 
-    # range: a Progress::Window range, nil for the default; show: the numbers
-    # asked for, by key in line order; pages: the pages in view, by key, none
-    # for all of them.
-    attr_accessor :user, :range, :show, :pages
+    # tab: an Analytics::Tab; range: a Progress::Window range, nil for the
+    # default; show: the numbers asked for, by key in line order; pages: the
+    # pages in view, by key, none for all of them.
+    attr_accessor :user, :tab, :range, :show, :pages
     # totals_window: the Window the totals cover; rows: a Progress::Row per page, in
     # the pages' fixed order; drawing: the DrawService of the totals and the chart.
-    # websites: the GatherWebsitesService of the website panels; on_pages: the
-    # GatherPagesService of the panels of their pages.
+    # websites: the GatherWebsitesService of the website lists, on Site visits
+    # alone; on_pages: the GatherPagesService of the lists of their pages, on
+    # Openstage views alone.
     attr_reader :totals_window, :rows, :counts, :drawing, :websites, :on_pages
 
     delegate :totals, :drawn, :default_drawn, :window, :chart, :earliest, to: :drawing
     delegate :sources, :countries, :links, :badges, to: :on_pages
 
-    validates :user, presence: true
+    validates :user, :tab, presence: true
 
     def selected
       rows.select(&:on)
     end
 
-    # The pages in view, by key; none for all of them.
+    # The pages in view, by key; none while every one with a box is.
     def selected_keys
-      rows.all?(&:on) ? [] : selected.map(&:key)
+      rows.select(&:boxed?).all?(&:on) ? [] : selected.map(&:key)
     end
 
-    # The table's numbers: every one a page shows.
+    # The tab's numbers this builder reads, in its order.
+    def numbers
+      @numbers ||= tab.numbers_for(user).map { |key| Progress::Numbers.find(key) }
+    end
+
+    # The table's numbers: the tab's that a row shows, and site visits
+    # whatever, on the tabs that list them, so Set up has a place.
     def columns
-      drawing.shown
+      @columns ||= numbers.select { |number| drawing.shown.include?(number) || number.key == "visits" }
     end
 
-    # A row's cells under the table's numbers. Analytics only reads them:
-    # what visitors see is picked on the dashboard.
+    # The tiles' numbers, each with its Total: the tab's that a row shows.
+    def tiles
+      numbers.select { |number| tab.tiles.include?(number.key) && drawing.shown.include?(number) }
+             .map { |number| totals.find { |total| total.number == number } || drawing.total(number) }
+    end
+
+    # A row's cells under the table's numbers, with Set up and Paused where
+    # site visits do not count. Analytics only reads them: what visitors see
+    # is picked on the dashboard.
     def cells(row)
-      drawing.cells(row, columns)
+      drawing.cells(row, columns, links: true)
     end
 
-    # The first project in view, whose site visits the website panels offer
-    # to set up while none of the projects in view counts them; nil when only
-    # the builder's stage is.
+    # What a row is: a page while the builder's stage is one, else a project.
+    def per
+      tab.stage?(user) ? "page" : "project"
+    end
+
+    # The project whose site visits the website lists offer to set up while
+    # none of the projects in view counts them: on Free the one it counts,
+    # else the first in view, or the first that counts none, which is never
+    # in view; nil when none has a repo.
     def setup_row
-      selected.find(&:repo)
+      held = slot.repo
+      return rows.find { |row| row.repo == held } if held && !user.pro?
+
+      selected.find(&:repo) || rows.find { |row| row.idle && row.repo }
     end
 
     private
@@ -69,8 +92,8 @@ module Analytics
       @rows = page_rows
       return unless draw
 
-      read_pages
-      read_websites
+      read_websites if tab.lists == :websites
+      read_pages if tab.lists == :pages
     end
 
     def today
@@ -79,52 +102,51 @@ module Analytics
 
     # The window before the range too, for the changes; every day for all time.
     def count
-      start = FindStartService.new(user: user)
+      keys = numbers.map(&:key)
+      start = FindStartService.new(user: user, numbers: keys, sites: sites)
       return unless run(start)
 
-      service = CountService.new(user: user, from: totals_window.span_before&.first)
+      service = CountService.new(user: user, from: totals_window.span_before&.first, numbers: keys, sites: sites)
       @counts = Progress::Counts.new(days: service.counts, firsts: start.firsts, through: service.through, currency: service.currency) if run(service)
     end
 
-    # The builder's page first, then each project, as far as the pages asked
-    # for keep them in view (Progress::Filter.in_view).
+    # The projects whose site visits count: every one on Pro, Free's one.
+    def sites
+      Array(slot.repo&.id) unless user.pro?
+    end
+
+    def slot
+      @slot ||= SiteVisits::Slot.new(user)
+    end
+
     def page_rows
-      synced = user.github_repos.by_full_name(projects.map(&:repo))
-      all = [ [ CountService::PAGE, "Your stage", nil ] ] + projects.map { |project| [ project.repo, project.name, project.rank ] }
-      in_view = Progress::Filter.in_view(pages, all.select { |_key, _name, rank| ProgressChart::Palette.colored?(rank) }.map(&:first))
-      all.map { |key, name, rank| row(key, name, rank, synced[key], in_view.empty? || in_view.include?(key)) }
-    end
-
-    def projects
-      @projects ||= Progress::Projects.new(user.entries.publicly_counted.without_tooling_noise, pinned: user.github_repos.pinned_names).all
-    end
-
-    # A page counts a number once it has counted it on any day, and shows every
-    # one it counts: this page is its builder's alone, and a project's switches
-    # only say what visitors see.
-    def row(key, name, rank, repo, on)
-      counted = Progress::Numbers::ALL.map(&:key).select { |number| counts.first_day(number, [ key ]) }
-      Progress::Row.new(key: key, name: name, rank: rank, color_class: ProgressChart::Palette.project_class(rank), repo: repo, on: on,
-                        counted: counted, shown: counted)
+      PageRows.new(user: user, tab: tab, counts: counts, pages: pages, slot: slot).all
     end
 
     def draw
-      service = Progress::DrawService.new(rows: rows, counts: counts, totals_window: totals_window, show: show, default_show: DEFAULT_SHOW, per: "page", builder: true)
+      service = Progress::DrawService.new(rows: rows, counts: counts, totals_window: totals_window, show: show, default_show: tab.opens_on, per: per,
+                                          builder: true, numbers: numbers, items: highlights)
       @drawing = service if run(service)
+    end
+
+    def highlights
+      Highlights.new(user, first: totals_window.span&.first, last: totals_window.last, rows: rows.select(&:drawn?)).all
+    end
+
+    # Every project of the builder's while all are in view, those with no row
+    # too, else the projects in view; their stage is not a website. Free's
+    # one alone.
+    def read_websites
+      repos = selected_keys.empty? ? user.github_repos : user.github_repos.where(id: selected.filter_map { |row| row.repo&.id })
+      repos = repos.where(id: sites) if sites
+      service = GatherWebsitesService.new(user: user, repos: repos, days: totals_window.span)
+      @websites = service if run(service)
     end
 
     def read_pages
       split = Split.new(user, first: totals_window.span&.first, last: totals_window.last)
       service = GatherPagesService.new(user: user, pages: selected, split: split)
       @on_pages = service if run(service)
-    end
-
-    # Every project of the builder's while all are in view, those with no row
-    # too, else the projects in view; their stage is not a website.
-    def read_websites
-      repos = selected_keys.empty? ? user.github_repos : selected.filter_map(&:repo)
-      service = GatherWebsitesService.new(user: user, repos: repos, days: totals_window.span)
-      @websites = service if run(service)
     end
 
     def run(service)

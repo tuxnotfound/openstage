@@ -134,16 +134,38 @@ RSpec.describe "Days picked for a chart's window", type: :request do
     end
   end
 
+  # Its script draws the whole page, so these read what the server hands it.
   describe "analytics" do
     before { sign_in_as(user) }
 
-    it_behaves_like "a window of days picked", "/analytics", "Commits per day by page, 1 Sep – 30 Sep", 4
+    def view
+      JSON.parse(page.at_css("script#analytics-props").text)["initial"]
+    end
+
+    it "draws the days picked, names them for the Pick dates pill, reads the form's from and to, and the default for days that are not days" do
+      get "/analytics", params: { range: range }
+
+      expect(view.values_at("range", "words")).to eq([ range, "1 Sep – 30 Sep" ])
+      expect([ view["chart"]["ariaLabel"], view["chart"]["axis"], view["tiles"].first.values_at("key", "value") ])
+        .to eq([ "Commits per day by page, 1 Sep – 30 Sep", [ "Sep 1", "Sep 16", "Sep 30" ], [ "commits", "4" ] ])
+      expect(view["calendar"]).to eq("today" => "2026-10-15", "earliest" => "2026-06-02",
+                                     "picked" => { "from" => "2026-09-01", "to" => "2026-09-30", "name" => "1 Sep – 30 Sep" })
+
+      get "/analytics", params: { from: "2026-09-30", to: "2026-09-01", range: "90d" }
+      expect(view["range"]).to eq(range)
+
+      get "/analytics", params: { range: "2026-09-31..2026-10-02" }
+      expect(view["range"]).to eq("30d")
+    end
 
     it "says what its changes compare with, and counts no visit after the last day picked" do
       create(:profile_view, user: user, viewed_at: Time.utc(2026, 10, 10, 12), referrer: "news.ycombinator.com")
-      get "/analytics", params: { range: range, panels: "openstage" }
 
-      expect(response.body).to include("Changes compare each value with the 30 days before.", "No views between 1 Sep and 30 Sep.")
+      get "/analytics", params: { range: range }
+      expect(view["changesNote"]).to eq("Changes compare each value with the 30 days before.")
+
+      get "/analytics", params: { range: range, tab: "openstage" }
+      expect(view["pages"]["sources"]["empty"]).to eq("No views between 1 Sep and 30 Sep.")
     end
   end
 

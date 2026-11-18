@@ -30,18 +30,19 @@ RSpec.describe "Analytics after the rollup" do
     end
   end
 
-  def report(range, pages = nil)
-    service = Analytics::ReportService.new(user: User.find(user.id), range: range, show: numbers, pages: pages).tap(&:call!)
+  def report(tab, range, pages = nil)
+    service = Analytics::ReportService.new(user: User.find(user.id), tab: Analytics::Tab.find(tab), range: range, show: numbers, pages: pages).tap(&:call!)
     JSON.parse(AnalyticsViewSerializer.new(service).to_json)
   end
 
+  # Overview's numbers, and Openstage views' lists.
   def shown
-    views.to_h { |range, pages| [ [ range, pages ], report(range, pages) ] }
+    views.product(%w[overview openstage]).to_h { |(range, pages), tab| [ [ tab, range, pages ], report(tab, range, pages) ] }
   end
 
   it "shows the same before the rollup, after it, and with the hashes gone" do
     before_rollup = shown
-    expect(before_rollup.values.first.to_s).to include("Hacker News")
+    expect(before_rollup.values.to_s).to include("Hacker News")
 
     Analytics::RollUpService.new(user: user).call!
     expect(PageDay.where(user: user)).to be_present
