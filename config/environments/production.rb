@@ -29,6 +29,14 @@ Rails.application.configure do
   # Do not fall back to assets pipeline if a precompiled asset is missed.
   config.assets.compile = false
 
+  # One manifest name for every build. Sprockets names it at random, and
+  # Kamal keeps the last deploy's assets beside the new ones (asset_path),
+  # so the box held two manifests and Rails read whichever the disk listed
+  # first: on 2026-11-21 the previous deploy's, with its stylesheet and
+  # import map. Kamal copies the new build first and never overwrites, so
+  # under one name the new manifest always wins.
+  config.assets.manifest = Rails.root.join("public/assets/.sprockets-manifest.json")
+
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 
