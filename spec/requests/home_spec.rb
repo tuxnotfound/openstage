@@ -39,6 +39,10 @@ RSpec.describe "Home", type: :request do
       hero = page.at_css("main section")
       expect(hero.css("form").map { |form| form["action"] }).to eq(%w[/preview /auth/github])
       expect([ hero.at_css("form button").text, hero.at_css("form button")["class"] ]).to eq([ "Preview your stage", "os-btn" ])
+      # While the preview builds, the button names its two parts in turn.
+      box = hero.at_css("form[data-preview-form]")
+      expect([ box.at_css("button")["data-turbo-submits-with"], box["data-waiting-then-value"] ])
+        .to eq([ "Reading your public repos…", "Drawing your commit chart…" ])
       # "No sign-in" sits under the button, inside the form.
       expect(hero.at_css("form[data-preview-form] button + p.os-note").text).to eq("No sign-in needed to preview.")
       # On a wide screen the sign-in link shares the second row with the demo
