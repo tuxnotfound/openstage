@@ -1,8 +1,9 @@
 <%# A card per project with a colour, as the stage draws them (profiles/page/
     _projects), from GitHub alone: its name opens the repo, as a preview has
     no project pages. The rest follow by name, busiest first, as many as
-    Preview::LISTED. %>
-<section class="os-panel" aria-labelledby="projects">
+    Preview::LISTED. The claim bar comes once it has scrolled past
+    (claim_bar_controller). %>
+<section class="os-panel" aria-labelledby="projects" data-claim-bar-target="projects">
   <h2 id="projects" class="os-h2">Projects</h2>
   <div class="os-grid2 mt-4">
     <% preview.cards.each do |card| %>

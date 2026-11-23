@@ -1,13 +1,23 @@
 <%= render "previews/meta", login: @preview.login %>
 <% content_for :main_class, "os-wrap pt-1.5" %>
 
-<div class="os-stack">
-  <section class="os-panel flex flex-wrap items-center justify-between gap-x-6 gap-y-3.5" aria-labelledby="claim" data-preview-claim>
-    <div class="min-w-0">
-      <h2 id="claim" class="os-h3">@<%= @preview.login %>'s stage, built from public GitHub</h2>
-      <p class="os-note mt-1">Sign-in asks only for your email. Never posts to your X or other accounts.</p>
+<%# The claim bar needs something to scroll through between the projects
+    and the page's last card, so it comes with Recent commits alone. %>
+<% groups = @preview.recent %>
+<%= tag.div class: "os-stack", data: { controller: ("claim-bar" if groups.any?) } do %>
+  <%# The page speaks to the login's owner, who typed it or was sent it. What
+      the sign-in asks sits under its button: centred there on a wide
+      screen, where the words beside it line up with the button, and on the
+      left with everything else once the button drops under them. %>
+  <section class="os-panel flex flex-wrap items-start justify-between gap-x-6 gap-y-3.5" aria-labelledby="claim" data-preview-claim>
+    <div class="min-w-0 md:pt-[3px]">
+      <h2 id="claim" class="os-h3 [overflow-wrap:anywhere]">@<%= @preview.login %>, this is your stage.</h2>
+      <p class="os-sm os-muted mt-0.5">Claim it and it stays live and updates as you push.</p>
     </div>
-    <%= render "previews/claim" %>
+    <div class="flex flex-col items-start md:items-center">
+      <%= render "previews/claim" %>
+      <p class="os-note mt-1.5 max-w-[270px] text-balance md:text-center">Free. Sign-in asks only for your email. Never posts to your X or other accounts.</p>
+    </div>
   </section>
 
   <section class="os-panel" aria-label="Profile">
@@ -75,20 +85,23 @@
   <% if @preview.cards.any? %>
     <%= render "previews/projects", preview: @preview %>
   <% end %>
-  <% if (groups = @preview.recent).any? %>
+  <% if groups.any? %>
     <%= render "previews/recent", preview: @preview, groups: groups %>
   <% end %>
 
-  <%# Its end repeats the sign-in for whoever read this far; with no public
+  <%# Its end repeats the claim for whoever read this far; with no public
       commits there is nothing to keep current, and the top's button is
       a glance away. %>
   <% unless @preview.empty? %>
-    <section class="os-panel flex flex-wrap items-center justify-between gap-x-6 gap-y-3.5" aria-labelledby="claim-end">
+    <section class="os-panel flex flex-wrap items-center justify-between gap-x-6 gap-y-3.5" aria-labelledby="claim-end" data-claim-bar-target="end">
       <div class="min-w-0">
-        <h2 id="claim-end" class="os-h3">Keep it current</h2>
-        <p class="os-sm os-muted mt-0.5">A page per project, private repos if you add them, and the sync every 2 hours.</p>
+        <h2 id="claim-end" class="os-h3">Claim it and it keeps itself current.</h2>
+        <p class="os-sm os-muted mt-0.5">A page per project, private repos if you add them, synced every 2 hours.</p>
       </div>
       <%= render "previews/claim" %>
     </section>
   <% end %>
-</div>
+  <% if groups.any? %>
+    <%= render "previews/bar" %>
+  <% end %>
+<% end %>

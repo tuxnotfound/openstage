@@ -61,12 +61,30 @@ RSpec.describe "Previews", type: :request do
       expect(response.headers["X-Robots-Tag"]).to eq("noindex, nofollow")
       body = response.body
       expect(body).to include('<meta name="robots" content="noindex, nofollow">')
-      expect(body).to include("@ada's stage, built from public GitHub", "Ada Lovelace", "engine", "The analytical engine", "Add the mill")
+      expect(body).to include("@ada, this is your stage.", "Ada Lovelace", "engine", "The analytical engine", "Add the mill")
       expect(body).to include("commits, last 12 months")
-      claim = Nokogiri::HTML(body).css("[data-preview-claim] form").first
+      banner = Nokogiri::HTML(body).at_css("[data-preview-claim]")
+      claim = banner.at_css("form")
       expect(claim["action"]).to eq("/auth/github")
-      expect([ claim.at_css("button").text.squish, claim.at_css("button")["class"] ]).to eq([ "Make your own stage", "os-btn h-[52px] px-6 text-[17px]" ])
+      expect([ claim.at_css("button").text.squish, claim.at_css("button")["class"] ]).to eq([ "Claim this stage", "os-btn h-[52px] px-6 text-[17px]" ])
       expect(claim.css("input[name=ref]").first["value"]).to eq("preview")
+      expect(banner.text.squish).to include("Claim it and it stays live and updates as you push.",
+                                            "Free. Sign-in asks only for your email. Never posts to your X or other accounts.")
+    end
+
+    # The bar comes once the projects have scrolled past and goes when the
+    # last card comes up (claim_bar_controller), so it starts out of reach.
+    it "repeats the claim on a bar after the projects and on the page's last card" do
+      get "/preview/ada", headers: browser
+
+      page = Nokogiri::HTML(response.body)
+      expect(page.at_css("[data-controller='claim-bar'] section[data-claim-bar-target='projects'] h2").text).to eq("Projects")
+      bar = page.at_css("[data-claim-bar-target='bar']")
+      expect([ bar.key?("inert"), bar.at_css("p").text, bar.at_css("form button").text.squish, bar.at_css("input[name=ref]")["value"] ])
+        .to eq([ true, "This stage is yours to claim.", "Claim it free", "preview" ])
+      last = page.at_css("[data-claim-bar-target='end']")
+      expect(last.text.squish).to start_with("Claim it and it keeps itself current. A page per project, private repos if you add them, synced every 2 hours.")
+      expect(last.at_css("form button").text.squish).to eq("Claim this stage")
     end
 
     it "counts a preview once per username a visitor looks at, by the tag they came with" do
@@ -209,9 +227,10 @@ RSpec.describe "Previews", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("No public commits in the last 12 months", "Once it's yours, it fills as you push. Private repos can join it too.")
-      # The top's sign-in stays; the end's, with nothing to keep current, goes.
-      expect(Nokogiri::HTML(response.body).css("main form[action='/auth/github'] button").map { |b| b.text.squish }).to eq([ "Make your own stage" ])
-      expect(response.body).not_to include("Keep it current")
+      # The top's claim stays; the end's and the bar, with nothing to keep
+      # current, go.
+      expect(Nokogiri::HTML(response.body).css("main form[action='/auth/github'] button").map { |b| b.text.squish }).to eq([ "Claim this stage" ])
+      expect(response.body).not_to include("keeps itself current", "yours to claim", "claim-bar")
     end
   end
 
