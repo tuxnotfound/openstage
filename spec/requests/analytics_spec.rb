@@ -65,6 +65,18 @@ RSpec.describe "Analytics", type: :request do
       expect(page.at_css("header")["class"]).to eq("os-wrap")
     end
 
+    it "counts an open for /admin once per tab and day, and none from the API" do
+      2.times { get "/analytics" }
+      get "/analytics", params: { tab: "commits", range: "90d" }
+      get "/api/analytics", params: { tab: "mrr" }
+      travel 1.day
+      get "/analytics"
+
+      opens = Event.named("analytics_opened").where(user: user).order(:day, :detail)
+      expect(opens.pluck(:detail, :day)).to eq([ [ "commits", Date.new(2026, 10, 24) ], [ "overview", Date.new(2026, 10, 24) ],
+                                                 [ "overview", Date.new(2026, 10, 25) ] ])
+    end
+
     it "opens each tab on its own numbers, its tiles, columns and rows in the tab's order, and Overview for a tab it does not know" do
       repo.update!(site_source: "script", site_set_up_at: 30.days.ago)
       repo.site_visit_days.create!(day: Date.new(2026, 10, 22), visits: 30, visitors: 9)
@@ -236,6 +248,7 @@ RSpec.describe "Analytics", type: :request do
       get "/analytics", params: { panels: "openstage" }
       follow_redirect!
       expect(view["locked"]).to be(true)
+      expect(Event.named("analytics_opened").where(user: user).pluck(:detail)).to contain_exactly("mrr", "openstage")
     end
   end
 end

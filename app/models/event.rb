@@ -14,6 +14,7 @@ class Event < ApplicationRecord
     card_opened card_downloaded
     progress_card_downloaded progress_post_copied
     preview
+    analytics_opened
   ].freeze
 
   validates :name, inclusion: { in: NAMES }

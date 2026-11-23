@@ -1,16 +1,19 @@
 # A builder's analytics, a tab at a time (Analytics::Tab): the chart filter
 # every chart page shares, with the tab's numbers for their stage and each
 # project, then the tab's lists. Free opens three of the tabs, with its own
-# numbers alone; a tab it does not open shows the Go Pro view.
+# numbers alone; a tab it does not open shows the Go Pro view. /admin counts
+# who opens each tab (Analytics::Opens).
 class AnalyticsController < ApplicationController
   before_action :require_authentication
   before_action :follow_old_panels
 
   # The view asked for (Progress::Filter, old links too) renders first; the
   # page's script asks Api::AnalyticsController for the others, and a tab is
-  # a page of its own.
+  # a page of its own. An open counts once per builder, tab and day, the Go
+  # Pro view too; the API's answers do not count.
   def index
     @tab = Analytics::Tab.find(params[:tab])
+    Event.track("analytics_opened", user: current_user, detail: @tab.key)
     return unless @tab.opens?(current_user)
 
     filter = Progress::Filter.from_analytics(params)

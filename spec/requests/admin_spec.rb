@@ -90,6 +90,22 @@ RSpec.describe "Admin", type: :request do
         expect(response.body).to include('data-sign-in-start="reddit" data-count="2"')
       end
 
+      it "counts the builders who opened analytics, each once per tab, leaving me and test accounts out" do
+        builder = create(:user)
+        other = create(:user)
+        Event.track("analytics_opened", user: builder, detail: "overview")
+        Event.track("analytics_opened", user: builder, detail: "mrr")
+        travel_to(1.day.ago) { Event.track("analytics_opened", user: builder, detail: "overview") }
+        travel_to(40.days.ago) { Event.track("analytics_opened", user: other, detail: "visits") }
+        Event.track("analytics_opened", user: other, detail: "overview")
+        [ owner, create(:user, internal: true) ].each { |each| Event.track("analytics_opened", user: each, detail: "commits") }
+
+        get "/admin"
+        expect(response.body).to include('data-analytics-tab="any" data-count="2"', 'data-analytics-tab="overview" data-count="2"',
+                                         'data-analytics-tab="mrr" data-count="1"', 'data-analytics-tab="commits" data-count="0"',
+                                         'data-analytics-tab="visits" data-count="0"', 'data-analytics-tab="openstage" data-count="0"')
+      end
+
       it "labels rows that predate ref tagging rather than dropping them" do
         create(:user, username: "old_row", signup_ref: nil, created_at: 2.days.ago)
 

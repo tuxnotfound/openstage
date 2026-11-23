@@ -22,6 +22,7 @@ class AdminController < ApplicationController
     @ref_visits     = by_ref("ref_visit")
     @sign_in_starts = by_ref("sign_in_start")
     @previews       = by_ref("preview")
+    @analytics      = Analytics::Opens.new(User.counted.where.not(id: current_user.id), since: @since)
     @shared_repos   = shared_repos
   end
 
