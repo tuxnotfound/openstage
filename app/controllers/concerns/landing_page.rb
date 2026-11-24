@@ -14,6 +14,7 @@ module LandingPage
   def load_landing
     @demo_user = demo_user
     @demo = demo_section(@demo_user) if @demo_user
-    @lately = Entry.lately
+    lately = Feed::LatelyService.new
+    @lately = lately.call ? lately.entries : []
   end
 end

@@ -14,16 +14,17 @@
     </nav>
   </div>
 
-  <% if @entries.empty? %>
+  <% if @feed.cards.empty? %>
     <p class="os-sm os-muted mt-4 rounded-card border border-dashed border-line py-14 text-center">No public entries yet.</p>
   <% else %>
+    <% builders = @feed.cards.map { |card| card.user.id }.uniq.size %>
     <p class="os-card mt-4 border-transparent bg-accent-soft os-sm os-ink2">
-      The latest <b class="os-num text-[22px] text-accent-ink"><%= @entries.size %></b> entries come from
-      <b class="os-num text-[22px] text-accent-ink"><%= @entries.map(&:user_id).uniq.size %></b> <%= @entries.map(&:user_id).uniq.one? ? "builder" : "builders" %>.
+      The latest <b class="os-num text-[22px] text-accent-ink"><%= @feed.cards.sum(&:total) %></b> entries come from
+      <b class="os-num text-[22px] text-accent-ink"><%= builders %></b> <%= "builder".pluralize(builders) %>.
     </p>
     <div id="feed-groups" class="os-stack mt-4">
-      <%= render partial: "feed/group", collection: feed_groups(@entries), as: :group %>
+      <%= render partial: "feed/group", collection: @feed.cards, as: :group %>
     </div>
-    <%= render "feed/load_more", entries: @entries %>
+    <%= render "feed/load_more", feed: @feed %>
   <% end %>
 </section>

@@ -1,10 +1,10 @@
 <%= turbo_stream.append "feed-groups" do %>
-  <%= render partial: "feed/group", collection: feed_groups(@entries), as: :group %>
+  <%= render partial: "feed/group", collection: @feed.cards, as: :group %>
 <% end %>
 
-<% if @entries.next_page %>
+<% if @feed.next_cursor %>
   <%= turbo_stream.replace "load-more" do %>
-    <%= render "feed/load_more", entries: @entries %>
+    <%= render "feed/load_more", feed: @feed %>
   <% end %>
 <% else %>
   <%= turbo_stream.remove "load-more" %>

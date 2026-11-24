@@ -118,13 +118,6 @@ class Entry < ApplicationRecord
   # builder hides, as on every page.
   scope :on_feed, -> { publicly_listed.without_tooling_noise.without_hidden_commits.joins(:user).merge(User.active.not_owner) }
 
-  # A few of the latest feed entries, newest first, at most per_builder from
-  # any one builder, so one busy day does not fill them all.
-  def self.lately(count: 12, per_builder: 3)
-    on_feed.includes(:user).chronological.limit(count * 5).group_by(&:user_id).values
-           .flat_map { |entries| entries.first(per_builder) }.sort_by(&:occurred_at).reverse.first(count)
-  end
-
   # What a builder's pages count: their public entries, tooling noise left
   # out. reveal: one repo they hid, counted anyway as its project page would
   # count it, for the builder's own look at that page.

@@ -27,6 +27,40 @@ RSpec.describe "Feed", type: :request do
       expect([ button.text, button["href"] ]).to eq([ "Open stage", "/builder" ])
     end
 
+    it "keeps a builder's busy day in one card, past a page's worth of entries, so the others still show" do
+      travel_to Time.utc(2026, 11, 24, 18)
+      busy = create(:user, username: "busy")
+      45.times { |i| create(:entry, user: busy, title: "live numbers sync #{i}", occurred_at: 2.hours.ago + i.minutes) }
+      create(:entry, user: create(:user, username: "other"), title: "Add the login page", occurred_at: 3.hours.ago)
+
+      get "/feed"
+
+      cards = Nokogiri::HTML(response.body).css("#feed-groups article").map { |card| card.text.squish }
+      expect(cards.size).to eq(2)
+      expect(cards.first).to include("@busy", "45 commits · today", "and 42 more that day")
+      expect(cards.last).to include("@other", "Add the login page")
+      expect(response.body).not_to include("Load more")
+    end
+
+    it "loads more from the last card shown, never repeating one" do
+      travel_to Time.utc(2026, 11, 24, 18)
+      12.times { |i| create(:entry, user: create(:user, username: "builder#{i}"), title: "Work #{i}", occurred_at: (i + 1).hours.ago) }
+
+      get "/feed"
+      more = Nokogiri::HTML(response.body).at_css("#load-more a")["href"]
+      get more, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      appended = Nokogiri::HTML(response.body).css("article").map { |card| card.at_css("p.font-bold").text }
+      expect(appended).to eq(%w[@builder10 @builder11])
+      expect(response.body).to include(%(<turbo-stream action="remove" target="load-more">))
+    end
+
+    it "refuses a Load more link that was tampered with" do
+      get "/feed", params: { before: "yesterday", builder: "1" }
+
+      expect(response).to have_http_status(:bad_request)
+    end
+
     it "leaves out merges, dependency bumps and the owner's own work, so it shows the others" do
       builder = create(:user, username: "builder")
       owner = create(:user, username: "tuxnotfound", github_username: "tuxnotfound")

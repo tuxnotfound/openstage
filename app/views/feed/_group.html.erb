@@ -1,4 +1,5 @@
-<%# One builder's day: up to three entries in their words, and how many more. %>
+<%# One builder's day, a Feed::ListService::Card: up to three entries in their
+    words, and how many more. %>
 <% user = group.user %>
 <article class="os-card <%= feed_color(user) %> p-5">
   <div class="os-between">
@@ -12,14 +13,14 @@
     <%= link_to "Open stage", profile_path(user.username), class: "os-btn2 sm" %>
   </div>
   <div class="mt-2.5">
-    <% group.entries.first(3).each do |entry| %>
+    <% group.entries.each do |entry| %>
       <div class="os-row flex items-baseline gap-2.5 py-2 text-[15px]">
         <span class="os-dot size-2 shrink-0 bg-(--project)"></span>
         <span class="min-w-0"><%= entry.title %><% if entry.repo_name.present? %> <span class="os-xs os-muted"><%= entry.repo_name.split("/").last %></span><% end %></span>
       </div>
     <% end %>
   </div>
-  <% if group.entries.size > 3 %>
-    <p class="os-note border-t border-line pt-2"><%= "and #{group.entries.size - 3} more that day" %></p>
+  <% if group.more.positive? %>
+    <p class="os-note border-t border-line pt-2"><%= "and #{group.more} more that day" %></p>
   <% end %>
 </article>
