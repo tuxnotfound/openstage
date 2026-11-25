@@ -33,9 +33,16 @@ module SiteVisitsHelper
     end
   end
 
-  # The line a builder pastes into their site's pages.
-  def site_script_tag(repo)
-    %(<script defer src="#{request.base_url}/v.js" data-project="#{repo.site_token}"></script>)
+  # The line a builder pastes into their site's pages. base_url: the app's,
+  # where no request is at hand (SiteVisitsSetupSerializer).
+  def site_script_tag(repo, base_url: request.base_url)
+    %(<script defer src="#{base_url}/v.js" data-project="#{repo.site_token}"></script>)
+  end
+
+  # What the line counts on a website, said under it, before "What it counts".
+  def site_script_note(host)
+    "It counts only on #{host}. No cookie: a visitor is one IP address, or one IPv6 network, on one day. Only the day's totals are kept, " \
+      "views by page and visitors by the site they came from, ref tag and country."
   end
 
   # "today at 14:02", or "Oct 24", in the builder's zone.

@@ -31,7 +31,7 @@ module ApplicationHelper
   # The tab each controller's pages sit under in the app header. A page reached
   # from inside a tab (an entry's edit form, the week card) keeps that tab lit.
   NAV_TABS = {
-    "dashboard" => :dashboard, "entries" => :dashboard,
+    "dashboard" => :dashboard, "entries" => :dashboard, "site_visits_setups" => :dashboard,
     "feed" => :feed, "analytics" => :analytics,
     "settings" => :settings, "github_repos" => :settings
   }.freeze

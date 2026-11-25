@@ -17,6 +17,9 @@ Rails.application.routes.draw do
 
   # Dashboard
   get "/dashboard", to: "dashboard#index"
+  # Set up site visits: a project, its website, the line to paste and its
+  # first visit, on one page that every "Set up site visits" leads to.
+  resource :site_visits_setup, only: [ :show, :update ], path: "dashboard/site-visits"
 
   # Owner-only deploy/migration diagnostics
   get "/_deploy_check", to: "diagnostics#show"
@@ -43,6 +46,9 @@ Rails.application.routes.draw do
     get "progress/:username", to: "progress#show", as: :progress, constraints: { username: /[a-zA-Z0-9_-]+/ }
     get "projects/:username", to: "projects#show", as: :projects, constraints: { username: /[a-zA-Z0-9_-]+/ }
     get "analytics", to: "analytics#show", as: :analytics
+    # Where a project's site visits stand, as Set up site visits asks while
+    # it waits for the first visit.
+    get "site_visits/:project_id", to: "site_visits#show", as: :site_visits
   end
 
   # Sync triggers

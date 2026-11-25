@@ -1,0 +1,20 @@
+<%# Set up site visits: the page is its builder's alone, so its script draws
+    the three steps (SiteSetupIsland), as analytics draws its tabs. 830 px
+    wide, so the line to paste stays on one line. %>
+<% content_for :title, "Set up site visits — Openstage" %>
+<% content_for :main_class, "os-wrap os-stack pt-1.5" %>
+
+<div class="os-stack mx-auto box-border w-full max-w-[830px]">
+  <nav aria-label="Breadcrumb" class="flex items-center gap-2 px-1 text-sm font-bold">
+    <%= link_to "Dashboard", dashboard_path, class: "os-link text-sm" %>
+    <span class="os-muted" aria-hidden="true">/</span>
+    <span aria-current="page">Set up site visits</span>
+  </nav>
+  <div>
+    <h1 class="os-h2 text-[30px]">Set up site visits</h1>
+    <p class="mt-2 mb-0 text-base text-ink-2">One line in your site's code counts its visits. Your project's page shows them.</p>
+  </div>
+  <%= react_island("site_setup",
+                   SiteVisitsSetupSerializer.new(@setup, base_url: request.base_url, website: @website, refusal: @refusal).as_json,
+                   id: "site-setup") %>
+</div>

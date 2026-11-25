@@ -316,3 +316,24 @@ export type LockedView = {
   pitch: string
   checkout: { label: string; path: string }
 }
+
+// Where the project picked on Set up site visits stands
+// (SiteVisitsStatusSerializer): its step, the app's line for its first
+// visit once one came, and whether its page shows its site visits.
+export type SiteStatusView = { step: "pick" | "line" | "done"; firstVisit: string | null; seen: boolean }
+
+// Set up site visits (SiteVisitsSetupSerializer): the projects to pick
+// from, the one picked with its website, its line and where it leads,
+// where it stands, and what a refused Continue said. project and status
+// are null for a builder with no project yet.
+export type SiteSetupView = {
+  projects: { id: number; label: string }[]
+  free: boolean
+  refusal: string | null
+  project: {
+    id: number; name: string; host: string | null; website: string; visit: string | null; line: string | null; note: string | null
+    page: string; dashboard: string; numbers: string; statusPath: string
+  } | null
+  status: SiteStatusView | null
+  paths: { setup: string; pricing: string; privacy: string; connect: string }
+}
