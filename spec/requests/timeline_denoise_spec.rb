@@ -143,14 +143,14 @@ RSpec.describe "Distribution surfaces", type: :request do
     expect(footer_button).to be_nil
   end
 
-  it "nudges the badge on the dashboard until one has rendered somewhere" do
+  # The badge's card left the dashboard with the chart (2026-11-25): its
+  # snippet is in Settings.
+  it "offers the badge in Settings, and no longer on the dashboard" do
     sign_in_as(user)
     get "/dashboard"
-    expect(response.body).to include("data-badge-nudge")
-    expect(response.body).to include("/builder?ref=badge")
+    expect(response.body).not_to include("data-badge-nudge", "/builder?ref=badge")
 
-    user.badge_impressions.create!(kind: "badge", viewed_at: Time.current)
-    get "/dashboard"
-    expect(response.body).not_to include("data-badge-nudge")
+    get "/settings", params: { tab: "integrations" }
+    expect(response.body).to include("README badge", "/builder?ref=badge")
   end
 end

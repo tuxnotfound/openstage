@@ -1,5 +1,5 @@
 <%# The kinds of entry a builder logs by hand, as toggle pills over radios. %>
-<div class="os-pills" role="radiogroup" aria-label="Kind">
+<div class="os-pills <%= local_assigns[:css] %>" role="radiogroup" aria-label="Kind">
   <% [ %w[milestone Milestone], %w[shipped Shipped], %w[note Note], %w[link Link], %w[released Released] ].each do |value, label| %>
     <label class="cursor-pointer">
       <%= f.radio_button :entry_type, value, id: "#{id_prefix}_#{value}", class: "peer sr-only", checked: value == current %>

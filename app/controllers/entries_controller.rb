@@ -19,7 +19,7 @@ class EntriesController < ApplicationController
   def show
     return redirect_to(dashboard_path) unless turbo_frame_request?
 
-    render partial: "dashboard/entry_row", locals: { entry: @entry, tab: "timeline" }
+    render partial: "dashboard/entry_row", locals: { entry: @entry, list: helpers.entry_list_of(@entry) }
   end
 
   def edit
@@ -74,6 +74,6 @@ class EntriesController < ApplicationController
   # row was clicked in.
   def changed
     @entry_tabs = entries_tabs
-    @stays = !@entry.destroyed? && @entry_tabs.find { |tab| tab.key == @from }.includes?(@entry)
+    @stays = !@entry.destroyed? && @entry_tabs.find { |tab| tab.key == @from }&.includes?(@entry) || false
   end
 end

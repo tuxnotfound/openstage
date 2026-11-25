@@ -105,7 +105,7 @@ RSpec.describe "Entries", type: :request do
       it "deletes the entry and redirects to dashboard" do
         entry = create(:entry, user: user)
         expect { delete entry_path(entry) }.to change(Entry, :count).by(-1)
-        expect(response).to redirect_to(dashboard_path(anchor: "entries"))
+        expect(response).to redirect_to(dashboard_path(tab: "entries", anchor: "entries"))
       end
 
       it "remembers a deleted commit so the sync never brings it back" do
@@ -138,54 +138,57 @@ RSpec.describe "Entries", type: :request do
       Nokogiri::HTML(response.body).at_css("turbo-stream[target='#{target}'] template")&.inner_html.to_s
     end
 
-    it "hides a row in place: it leaves the timeline, Hidden appears with it, the counts follow" do
-      patch entry_path(commit), params: { hidden: true, tab: "timeline", q: "", type: "", repo: "" }, headers: stream
+    it "hides a commit in place: it leaves Commits, Hidden takes it with its switch off, the counts follow" do
+      patch entry_path(commit), params: { hidden: true, list: "commits", q: "", repo: "" }, headers: stream
 
       expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
       expect(commit.reload.hidden).to be(true)
-      expect(streams).to eq([ [ "replace", "entries-tabs" ], [ "remove", "entry_#{commit.id}" ], [ "replace", "entries-count-timeline" ],
-                              [ "replace", "entries-total-timeline" ], [ "replace", "entries-hidden" ], [ "replace", "entries-private" ] ])
-      expect(Nokogiri::HTML(template("entries-tabs")).css("a").map(&:text)).to eq([ "Entries (1)", "Hidden (1)" ])
-      expect(template("entries-hidden")).to include("Fix the login", "Restore")
-      expect(template("entries-total-timeline")).to include("1 entry in all")
+      expect(streams).to eq([ [ "replace", "entries-tabs" ], [ "replace", "entries-news" ], [ "replace", "entries-commits" ],
+                              [ "replace", "entries-hidden" ], [ "replace", "entries-private" ] ])
+      expect(Nokogiri::HTML(template("entries-tabs")).css("a").map(&:text)).to eq([ "What's new 1", "Commits 0", "Hidden 1" ])
+      hidden = Nokogiri::HTML(template("entries-hidden"))
+      expect(hidden.text).to include("Fix the login")
+      expect(hidden.at_css("button[role='switch']").attributes.transform_values(&:value))
+        .to include("aria-checked" => "false", "aria-label" => "Show Fix the login on your stage")
     end
 
-    it "restores a row from Hidden in place: Hidden goes with its last entry, the timeline gets it back" do
+    it "restores a row from Hidden in place, and Commits gets it back" do
       commit.update!(hidden: true)
-      patch entry_path(commit), params: { hidden: false, tab: "hidden" }, headers: stream
+      patch entry_path(commit), params: { hidden: false, list: "hidden" }, headers: stream
 
       expect(commit.reload.hidden).to be(false)
-      expect(streams).to include([ "replace", "entries-hidden" ], [ "replace", "entries-timeline" ])
-      expect(Nokogiri::HTML(template("entries-tabs")).css("a").map(&:text)).to eq([ "Entries (2)" ])
-      expect(template("entries-timeline")).to include("Fix the login")
+      expect(streams).to include([ "replace", "entries-hidden" ], [ "replace", "entries-commits" ])
+      expect(Nokogiri::HTML(template("entries-tabs")).css("a").map(&:text)).to eq([ "What's new 1", "Commits 1", "Hidden 0" ])
+      expect(template("entries-commits")).to include("Fix the login")
       expect(template("entries-hidden")).to include("Nothing here now.")
     end
 
-    it "keeps the filters on the lists a click redraws" do
+    it "keeps the search on the lists a click redraws" do
       commit.update!(hidden: true)
-      patch entry_path(commit), params: { hidden: false, tab: "hidden", q: "note" }, headers: stream
+      patch entry_path(commit), params: { hidden: false, list: "hidden", q: "login" }, headers: stream
 
-      expect(template("entries-timeline")).to include("Wrote a note", "1 entry of 2")
-      expect(template("entries-timeline")).not_to include("Fix the login")
+      expect(template("entries-commits")).to include("Fix the login", "1 entry of 1")
+      expect(template("entries-news")).to include("No entries match that.")
     end
 
-    it "redraws a row that stays, as a pin or a lock changes it, and the private list it joins" do
+    it "redraws a row that stays as a pin changes it, and moves one made private to Private" do
       user.update!(pro: true)
-      patch entry_path(note), params: { visibility: "private", tab: "timeline" }, headers: stream
+      create(:entry, user: user, source: "manual", entry_type: "milestone", title: "Shipped v1", occurred_at: 3.hours.ago)
+      patch entry_path(note), params: { pinned: "true", list: "news" }, headers: stream
+      expect(note.reload.pinned?).to be(true)
+      expect(streams).to include([ "replace", "entry_#{note.id}" ])
+      expect(template("entry_#{note.id}")).to include("Unpin from your stage", "Pinned")
 
+      patch entry_path(note), params: { visibility: "private", list: "news" }, headers: stream
       expect(note.reload).to be_private_entry
-      expect(streams).to include([ "replace", "entry_#{note.id}" ], [ "replace", "entries-private" ])
-      expect(template("entry_#{note.id}")).to include("Make public", "· private")
+      expect(streams).to include([ "remove", "entry_#{note.id}" ], [ "replace", "entries-private" ])
       expect(template("entries-private")).to include("Wrote a note")
-
-      patch entry_path(note), params: { pinned: "true", tab: "timeline" }, headers: stream
-      expect([ note.reload.pinned?, template("entry_#{note.id}") ]).to match([ true, include("Unpin") ])
     end
 
     it "says on the row why a click was refused, and changes nothing else" do
       user.update!(pro: true)
       create_list(:entry, 3, user: user, pinned: true)
-      patch entry_path(note), params: { pinned: "true", tab: "timeline" }, headers: stream
+      patch entry_path(note), params: { pinned: "true", list: "news" }, headers: stream
 
       expect(note.reload.pinned?).to be(false)
       expect(streams).to eq([ [ "replace", "entry_#{note.id}" ] ])
@@ -193,21 +196,22 @@ RSpec.describe "Entries", type: :request do
     end
 
     it "deletes a row in place" do
-      delete entry_path(note), params: { tab: "timeline" }, headers: stream
+      create(:entry, user: user, source: "manual", entry_type: "milestone", title: "Shipped v1", occurred_at: 3.hours.ago)
+      delete entry_path(note), params: { list: "news" }, headers: stream
 
       expect(Entry.exists?(note.id)).to be(false)
       expect(streams).to include([ "remove", "entry_#{note.id}" ], [ "replace", "entries-tabs" ])
     end
 
     it "redraws the list whole once its last row leaves, so it says it is empty" do
-      patch entry_path(commit), params: { hidden: true, tab: "timeline", q: "login" }, headers: stream
+      patch entry_path(commit), params: { hidden: true, list: "commits", q: "login" }, headers: stream
 
-      expect(streams).to include([ "replace", "entries-timeline" ])
-      expect(template("entries-timeline")).to include("No entries match that.")
+      expect(streams).to include([ "replace", "entries-commits" ])
+      expect(template("entries-commits")).to include("No entries match that.")
     end
 
     it "saves an edit in place and gives Cancel the row back in its frame" do
-      patch entry_path(note), params: { entry: { entry_type: "note", title: "A better note", occurred_at: note.occurred_at }, tab: "timeline" },
+      patch entry_path(note), params: { entry: { entry_type: "note", title: "A better note", occurred_at: note.occurred_at }, list: "news" },
                               headers: stream
       expect(template("entry_#{note.id}")).to include("A better note")
 
@@ -218,11 +222,11 @@ RSpec.describe "Entries", type: :request do
       expect(response).to redirect_to(dashboard_path)
     end
 
-    it "redirects without JavaScript to the tab and filters the click came from" do
+    it "redirects without JavaScript to the list and the search the click came from" do
       commit.update!(hidden: true)
-      patch entry_path(commit), params: { hidden: false, tab: "hidden", q: "login", type: "", repo: "" }
+      patch entry_path(commit), params: { hidden: false, list: "hidden", q: "login", repo: "" }
 
-      expect(response).to redirect_to(dashboard_path(q: "login", tab: "hidden", anchor: "entries"))
+      expect(response).to redirect_to(dashboard_path(q: "login", tab: "entries", list: "hidden", anchor: "entries"))
       expect(commit.reload.hidden).to be(false)
     end
   end

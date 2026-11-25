@@ -325,3 +325,195 @@
   animation: entry-highlight 2.4s ease-out;
   border-radius: theme(borderRadius.lg);
 }
+
+/* The dashboard, in two tabs (DASHBOARD_TABS_PLAN.md, 2026-11-25): the
+   sketch's stylesheet (revamp/dashboard-tabs/sketch-slide/dt.css), its
+   numbers as drawn, on the app's tokens. Its lists' pills wrap at phone
+   width, as every other pill does (the plan's call 6). */
+@layer components {
+  .dt-small { height: 30px; padding: 0 12px; border-radius: 9px; font-size: 13px; }
+  .dt-count { margin-left: 8px; font-weight: 600; color: var(--color-ink-3); font-variant-numeric: tabular-nums; }
+
+  /* What did you build? One line until the builder is in it; the week beside its title. */
+  .dt-box { padding: clamp(16px, 1.7vw, 24px); }
+  .dt-box-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 28px; }
+  .dt-week { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; margin: 0; font-size: 14px; color: var(--color-ink-2); }
+  .dt-week b { color: var(--color-ink); }
+  .dt-week .t { font-family: var(--font-display); font-weight: 700; color: var(--color-ink); }
+  .dt-streak { font-size: 13px; color: var(--color-ink-3); }
+  .dt-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; margin-top: 12px; }
+  .dt-form.open { grid-template-columns: minmax(0, 1fr) minmax(220px, 320px); }
+  /* The kinds come first, for a keyboard as for the eye; they show once the builder is in the box. */
+  .dt-kinds { grid-column: 1 / -1; grid-row: 1; justify-self: start; max-width: 100%; box-sizing: border-box; }
+  .dt-form:not(.open) :is(.dt-kinds, .dt-area, .dt-url, .dt-repo, .dt-when, .dt-send) { display: none; }
+  .dt-form.open > .dt-shut { display: none; }
+  .dt-form.open .dt-line { grid-column: 1; grid-row: 2; }
+  .dt-form.open .dt-url { grid-column: 2; grid-row: 2; }
+  .dt-form.open .dt-area { grid-column: 1; grid-row: 3 / 5; min-height: 98px; height: 100%; }
+  .dt-form.open .dt-repo { grid-column: 2; grid-row: 3; }
+  .dt-form.open .dt-when { grid-column: 2; grid-row: 4; }
+  .dt-send { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+
+  /* Go Pro, on Free: one line. */
+  .dt-pro { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 24px; padding: 16px clamp(16px, 1.7vw, 24px); }
+  .dt-pro p { margin: 2px 0 0; }
+
+  /* The two tabs, as analytics has tabs, with whether GitHub is synced at the end of their line. */
+  .dt-tabsrow { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 4px 24px; margin-top: 4px; border-bottom: 1px solid var(--color-line); }
+  .dt-tabs { display: flex; gap: 0 30px; overflow-x: auto; scrollbar-width: none; }
+  .dt-tab { display: inline-flex; align-items: center; height: 44px; flex: none; font-size: 15px; font-weight: 700; color: var(--color-ink-3); white-space: nowrap; cursor: pointer; }
+  .dt-tab:hover { color: var(--color-ink); }
+  .dt-tab[aria-selected="true"] { color: var(--color-ink); box-shadow: inset 0 -3px 0 var(--color-accent); }
+  .dt-sync { display: flex; align-items: center; gap: 12px; padding-bottom: 7px; }
+
+  /* A tab is one list: a row a thing, with one switch, On your stage. */
+  .dt-panel { padding: clamp(16px, 1.7vw, 24px); }
+  .dt-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 16px; }
+  .dt-find { height: 36px; width: 260px; font-size: 14px; }
+  .dt-filter { display: flex; flex-wrap: wrap; gap: 8px; }
+  .dt-select { height: 36px; width: auto; padding: 0 10px; font-size: 14px; cursor: pointer; }
+  .dt-note { margin: 0 0 14px; }
+  .dt-head { padding-bottom: 8px; font-size: 12px; font-weight: 700; color: var(--color-ink-3); }
+  .dt-egrid { display: grid; grid-template-columns: 124px minmax(0, 1fr) 150px 60px 112px 30px; align-items: center; gap: 6px 18px; }
+  .dt-row { box-sizing: border-box; min-height: 52px; padding: 8px 0; border-top: 1px solid var(--color-line); }
+  .dt-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .dt-nodot { width: 10px; flex: none; }
+  .dt-row.off .dt-title .t { color: var(--color-ink-3); }
+  .dt-cell { display: flex; align-items: center; min-width: 0; }
+  .dt-pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; border-top: 1px solid var(--color-line); padding-top: 12px; }
+  .dt-pager-btns { display: inline-flex; gap: 8px; }
+  .dt-pager .led { opacity: .45; cursor: default; }
+  .dt-history { margin-top: 14px; border-top: 1px solid var(--color-line); padding-top: 12px; }
+  .dt-history summary { font-size: 13px; color: var(--color-ink-3); cursor: pointer; list-style: none; }
+  .dt-history summary::-webkit-details-marker { display: none; }
+  .dt-history summary:hover { color: var(--color-ink); }
+  .dt-history ul { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; max-width: 420px; }
+  .dt-history li { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; }
+  .dt-history i { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+
+  /* An entry: what it is, its title, a link when it has one, its project and its day. */
+  .dt-kind { display: inline-flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; font-weight: 700; color: var(--color-ink-2); white-space: nowrap; }
+  .dt-kind i { width: 20px; height: 20px; flex: none; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--project); color: var(--on-project); }
+  .dt-kind i svg { width: 12px; height: 12px; display: block; }
+  .dt-kind .os-tag { max-width: 124px; box-sizing: border-box; display: inline-block; line-height: 22px; overflow: hidden; text-overflow: ellipsis; }
+  .dt-title { display: flex; align-items: center; gap: 8px; margin: 0; min-width: 0; font-size: 15px; font-weight: 600; line-height: 1.35; }
+  .dt-title .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-ink); text-decoration: none; border-radius: 4px; }
+  .dt-title a.t:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .dt-title .os-tag { flex: none; height: 22px; }
+  .dt-out { color: var(--color-ink-3); font-weight: 500; }
+  .dt-proj { display: inline-flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: var(--color-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dt-proj .os-dot { width: 8px; height: 8px; border-radius: 2px; background: var(--project); }
+  .dt-date { font-size: 13px; color: var(--color-ink-3); white-space: nowrap; }
+  /* A row its project keeps off the stage: no switch, but what is off there, and the way to it. */
+  .dt-lock { padding: 0; border: 0; border-radius: 4px; background: transparent; font: inherit; font-size: 13px; font-weight: 700; color: var(--color-ink-2); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; cursor: pointer; }
+  .dt-lock:hover { color: var(--color-ink); }
+  .dt-menu { position: relative; display: inline-flex; justify-self: end; }
+  .dt-dots { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--color-ink-3); cursor: pointer; list-style: none; }
+  .dt-dots::-webkit-details-marker { display: none; }
+  .dt-dots:hover, .dt-menu[open] > .dt-dots { background: var(--color-line); color: var(--color-ink); }
+  .dt-dots svg { width: 16px; height: 16px; display: block; }
+  .dt-menu-list { position: absolute; z-index: 6; top: 34px; right: 0; display: grid; min-width: 210px; padding: 5px; border: 1px solid var(--color-line); border-radius: 12px; background: var(--color-surface); box-shadow: 0 10px 28px rgba(0, 0, 0, .28); }
+  .dt-menu-list :is(button, a) { display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 100%; height: 36px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: var(--color-ink); font: inherit; font-size: 14px; font-weight: 600; text-align: left; white-space: nowrap; cursor: pointer; }
+  .dt-menu-list :is(button, a):hover { background: var(--color-fill); }
+  .dt-menu-list button.down { color: var(--color-down); }
+  .dt-menu-list button.led { cursor: default; }
+  .dt-menu-list button.led > span:first-child { color: var(--color-ink-3); }
+  .dt-menu-list button.led:hover { background: transparent; }
+  .dt-menu-list .os-tag { height: 20px; padding: 0 8px; font-size: 11px; }
+  .dt-empty { margin: 0; border-top: 1px solid var(--color-line); padding: 22px 0 8px; font-size: 14px; color: var(--color-ink-3); }
+  .dt-more { border-top: 1px solid var(--color-line); padding-top: 14px; text-align: center; }
+  .os-switch[aria-disabled="true"] { cursor: default; opacity: .5; }
+
+  @media (max-width: 900px) {
+    .dt-find { width: 100%; }
+    .dt-filter { flex: 1 1 100%; }
+    .dt-filter .dt-find { flex: 1 1 180px; width: auto; }
+    .dt-form, .dt-form.open { grid-template-columns: minmax(0, 1fr); }
+    .dt-form.open :is(.dt-line, .dt-url, .dt-area, .dt-repo, .dt-when) { grid-column: 1; grid-row: auto; }
+    .dt-form .os-btn { width: 100%; }
+    .dt-tabs { gap: 0 22px; }
+    /* One head stays, over the switches at the end of each row's first line: On your stage. */
+    .dt-head.dt-egrid { display: flex; justify-content: flex-end; padding: 0 0 8px; }
+    .dt-head > span { display: none; }
+    .dt-head > span.sw { display: inline; }
+    /* An entry: its title and its switch, then what it is, its project, its day and its menu. */
+    .dt-egrid { grid-template-columns: auto auto minmax(0, 1fr) auto; grid-template-areas: "title title title switch" "kind proj date menu"; gap: 6px 12px; padding: 12px 0; }
+    .dt-egrid .dt-title { grid-area: title; }
+    .dt-egrid .dt-title .t { white-space: normal; overflow-wrap: anywhere; }
+    .dt-egrid .dt-cell { grid-area: switch; justify-self: end; }
+    .dt-egrid .dt-kind { grid-area: kind; }
+    .dt-egrid .dt-proj { grid-area: proj; }
+    .dt-egrid .dt-date { grid-area: date; }
+    .dt-egrid .dt-menu { grid-area: menu; }
+  }
+
+  /* The Projects tab: the list, a project and its one switch a row. No project is selected when the
+     page opens, and the list has the tab's whole width. A click on a project brings its numbers in
+     from the right, a line each: its name, where it comes from, and one control. From 901 px the
+     list makes room and the numbers stand beside it, in view while the list scrolls. Under 901 px
+     they cover the list, with a way back. */
+  .dt-two { --dt-ease: cubic-bezier(.33, 1, .68, 1); --dt-time: .42s; --dt-side: min(64cqw, 100cqw - 300px); display: flex; align-items: flex-start; container-type: inline-size; }
+  .dt-two > .dt-list { flex: 1 1 0; min-width: 0; }
+  .dt-lgrid { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0 16px; }
+  .dt-list .dt-head .sw { justify-self: end; }
+  .dt-list .dt-row { min-height: 52px; margin: 0 -10px; padding: 0 10px; transition: background-color .18s ease, box-shadow .18s ease; }
+  .dt-list .dt-pick { appearance: none; width: 100%; min-height: 52px; min-width: 0; padding: 0; border: 0; border-radius: 6px; background: transparent; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+  .dt-pick-name { min-width: 0; font-size: 15px; font-weight: 700; color: var(--color-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dt-row.off .dt-pick-name { color: var(--color-ink-3); }
+  /* A row says it opens: an arrow after the project's name, and a tint under the pointer. */
+  .dt-chev { flex: none; box-sizing: border-box; width: 8px; height: 8px; border: solid var(--color-ink-3); border-width: 2px 2px 0 0; transform: rotate(45deg); transition: transform .18s ease, border-color .18s ease; }
+  .dt-list .dt-row:not(.sel):has(.dt-pick:hover) { background: color-mix(in oklab, var(--color-ink) 6%, transparent); }
+  .dt-list .dt-pick:hover .dt-chev { border-color: var(--color-ink); transform: translateX(3px) rotate(45deg); }
+  .dt-list .dt-pick:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+  /* The selected row is tinted, so it reads as the one whose numbers stand beside the list. */
+  .dt-list .dt-row.sel { background: color-mix(in oklab, var(--color-accent) 13%, transparent); box-shadow: inset 3px 0 0 var(--color-accent); }
+  .dt-list .dt-row.sel .dt-chev { border-color: var(--color-accent); }
+  /* The numbers come in from the right: their part widens from nothing while the list makes room,
+     and what it holds, laid out at its full width from the start, slides the last steps in. */
+  .dt-side { flex: none; width: 0; min-width: 0; overflow: hidden; position: sticky; top: 16px; transition: width var(--dt-time) var(--dt-ease); }
+  .dt-two.open .dt-side { width: var(--dt-side); }
+  .dt-side-in { box-sizing: border-box; width: calc(var(--dt-side) - 16px); margin-left: 16px; padding: clamp(16px, 1.7vw, 24px); }
+  .dt-back { display: none; }
+  .dt-pane-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 16px; }
+  .dt-pane-name { display: flex; align-items: center; gap: 10px; min-width: 0; margin: 0; }
+  .dt-pane-name:focus { outline: none; }
+  .dt-pane-name:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+  .dt-pane-links { display: inline-flex; gap: 8px; }
+  .dt-pane-links a { text-decoration: none; }
+  .dt-close { cursor: pointer; }
+  .dt-line-head { display: flex; justify-content: space-between; padding-bottom: 8px; font-size: 12px; font-weight: 700; color: var(--color-ink-3); }
+  .dt-line { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px; border-top: 1px solid var(--color-line); }
+  .dt-line-what { display: grid; grid-template-columns: minmax(120px, 190px) minmax(0, 1fr); align-items: baseline; gap: 2px 16px; flex: 1; min-width: 0; }
+  .dt-line-name { font-size: 15px; font-weight: 700; }
+  .dt-line-state { font-size: 13px; color: var(--color-ink-3); }
+  .dt-line-do { display: inline-flex; align-items: center; gap: 10px; flex: none; }
+  .dt-line-do a { text-decoration: none; }
+  .dt-line-do .os-btn { color: var(--color-on-accent); }
+  .dt-line .os-switch.led { cursor: default; opacity: .5; }
+  .dt-line.sep { margin-top: 12px; }
+  @media (min-width: 901px) {
+    .dt-side-in { opacity: 0; transform: translateX(28px); transition: opacity .26s ease .03s, transform var(--dt-time) var(--dt-ease); }
+    .dt-two.open .dt-side-in { opacity: 1; transform: none; }
+    @starting-style { .dt-two.open .dt-side-in { opacity: 0; transform: translateX(28px); } }
+  }
+  /* Under 901 px there is no room beside the list: the numbers slide over it from the right, as a
+     card with a way back to the list. The list keeps its height under the card, so the page does
+     not jump and the way back lands where the builder was. */
+  @media (max-width: 900px) {
+    .dt-two { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; overflow-x: clip; }
+    .dt-two > .dt-list, .dt-side { grid-area: 1 / 1; }
+    .dt-two > .dt-list { transition: opacity .24s ease .12s; }
+    .dt-two.open > .dt-list { opacity: 0; visibility: hidden; transition: opacity .24s ease, visibility 0s var(--dt-time); }
+    .dt-side { top: 12px; z-index: 1; width: auto; overflow: visible; visibility: hidden; transform: translateX(calc(100% + 40px)); transition: transform var(--dt-time) var(--dt-ease), visibility 0s var(--dt-time); }
+    .dt-two.open .dt-side { width: auto; visibility: visible; transform: none; transition: transform var(--dt-time) var(--dt-ease), visibility 0s; }
+    .dt-side-in { width: auto; margin: 0; }
+    .dt-back { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin: -8px 0 4px -4px; padding: 0 12px 0 4px; border: 0; border-radius: 8px; background: transparent; font: inherit; font-size: 14px; font-weight: 700; color: var(--color-ink-2); cursor: pointer; }
+    .dt-chev.back { border-color: var(--color-ink-2); transform: rotate(-135deg); }
+    .dt-close { display: none; }
+    .dt-head.dt-lgrid { display: flex; justify-content: flex-end; padding: 0 0 8px; }
+    .dt-pane-head { margin-bottom: 12px; }
+    .dt-line-what { grid-template-columns: minmax(0, 1fr); }
+    .dt-line { min-height: 60px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .dt-two > .dt-list, .dt-list .dt-row, .dt-chev, .dt-side, .dt-side-in { transition: none !important; } }
+}

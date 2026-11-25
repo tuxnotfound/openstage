@@ -1,0 +1,36 @@
+<%# The rest of a row: Share on X, Pin to your stage and Make private while it
+    is on the stage, Pro's two named with Pro's mark on Free; Edit for what
+    the builder typed; Delete for that, and for what they hid. A native
+    menu, which the dropdown controller closes on a click outside or Escape. %>
+<% form = { data: { turbo_frame: "_top" } } %>
+<% delete = entry.manual? || list == "hidden" %>
+<% if on || entry.manual? || delete %>
+  <details class="dt-menu" data-controller="dropdown">
+    <summary class="dt-dots" aria-label="More for <%= entry.title %>" title="More">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
+    </summary>
+    <div class="dt-menu-list" role="menu">
+      <% if on %>
+        <a href="<%= share_on_x_url(entry, current_user) %>" target="_blank" rel="noopener" role="menuitem">Share on X</a>
+        <% if current_user.pro? %>
+          <%= button_to (entry.pinned? ? "Unpin from your stage" : "Pin to your stage"), entry_path(entry), method: :patch,
+                params: entry_action_params(list, pinned: (!entry.pinned?).to_s), form: form, role: "menuitem" %>
+          <%= button_to "Make private", entry_path(entry), method: :patch, params: entry_action_params(list, visibility: "private"), form: form, role: "menuitem" %>
+        <% else %>
+          <% [ "Pin to your stage", "Make private" ].each do |label| %>
+            <button type="button" class="led" role="menuitem" aria-disabled="true"><span><%= label %></span><span class="os-tag pro">✦ Pro</span></button>
+          <% end %>
+        <% end %>
+      <% end %>
+      <% if entry.manual? %>
+        <%= link_to "Edit", edit_entry_path(entry), role: "menuitem", data: { turbo_frame: entry_row_id(entry, list) } %>
+      <% end %>
+      <% if delete %>
+        <%= button_to "Delete", entry_path(entry), method: :delete, params: entry_action_params(list), form: form, class: "down", role: "menuitem",
+              data: { turbo_confirm: "Permanently delete this entry?" } %>
+      <% end %>
+    </div>
+  </details>
+<% else %>
+  <span class="dt-menu"></span>
+<% end %>

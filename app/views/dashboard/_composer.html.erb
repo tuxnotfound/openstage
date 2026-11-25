@@ -1,22 +1,39 @@
-<%# Logging by hand: what commits can't say. %>
-<section class="os-panel" aria-labelledby="log-update">
-  <h2 id="log-update" class="os-h3">What did you build?</h2>
-  <%= form_with url: entries_path, method: :post, scope: :entry, class: "os-stack mt-3 gap-2.5" do |f| %>
-    <%= render "entries/type_picker", f: f, current: "milestone", id_prefix: "entry_type" %>
-    <%= f.text_field :title, placeholder: "In one line", aria: { label: "What you built, in one line" }, class: "os-field" %>
-    <%= f.text_area :body, placeholder: "More detail (optional)", rows: 2, aria: { label: "More detail (optional)" }, class: "os-area" %>
-    <div class="grid gap-2.5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-      <%= f.url_field :url, placeholder: "Link (optional)", aria: { label: "Link (optional)" }, class: "os-field" %>
-      <%= f.text_field :repo_name, list: "project-suggestions", placeholder: "Project / repo (optional)",
-            aria: { label: "Project / repo (optional)" }, class: "os-field" %>
-      <%= f.datetime_local_field :occurred_at, value: Time.current.strftime("%Y-%m-%dT%H:%M"), aria: { label: "When" }, class: "os-field" %>
-    </div>
-    <datalist id="project-suggestions">
-      <% current_user.project_names.each do |name| %><option value="<%= name %>"></option><% end %>
-    </datalist>
-    <div class="os-between">
+<%# What did you build? One line and Post entry until the builder is in it;
+    then the kinds, first, and every field it has (composer controller). The
+    week beside its title: what the commits and the updates say, and the
+    streak. %>
+<section class="os-panel dt-box" aria-labelledby="log-update">
+  <div class="dt-box-head">
+    <h2 id="log-update" class="os-h3">What did you build?</h2>
+    <p class="dt-week">
+      <span class="t">This week</span>
+      <% if @recap_prompt %>
+        <% by_repo = @recap_prompt.candidates_by_repo.transform_values(&:size) %>
+        <% commits = by_repo.values.sum %>
+        <% updates = @recap_prompt.highlights.size %>
+        <span><% if commits.positive? %>You shipped <b><%= pluralize(commits, "commit") %></b> <%= by_repo.size == 1 ? "in #{by_repo.keys.first}" : "across #{by_repo.size} repos" %>.<% end %>
+          <%= updates.positive? ? "You logged #{pluralize(updates, 'update')}." : "You logged no updates yet." %></span>
+      <% else %>
+        <span>Quiet week so far. An update tells visitors what the commits don't.</span>
+      <% end %>
+      <% if @streak > 0 %><span class="dt-streak"><%= @streak %>-day streak</span><% end %>
+    </p>
+  </div>
+  <%= form_with url: entries_path, method: :post, scope: :entry, class: "dt-form", data: { controller: "composer", action: "focusin->composer#open" } do |f| %>
+    <%= render "entries/type_picker", f: f, current: "milestone", id_prefix: "entry_type", css: "dt-kinds" %>
+    <%= f.text_field :title, placeholder: "In one line", aria: { label: "What you built, in one line" }, class: "os-field dt-line" %>
+    <%= f.submit "Post entry", class: "os-btn dt-shut" %>
+    <%= f.text_area :body, placeholder: "More detail (optional)", rows: 2, aria: { label: "More detail (optional)" }, class: "os-area dt-area" %>
+    <%= f.url_field :url, placeholder: "Link (optional)", aria: { label: "Link (optional)" }, class: "os-field dt-url" %>
+    <%= f.text_field :repo_name, list: "project-suggestions", placeholder: "Project / repo (optional)",
+          aria: { label: "Project / repo (optional)" }, class: "os-field dt-repo" %>
+    <%= f.datetime_local_field :occurred_at, value: Time.current.strftime("%Y-%m-%dT%H:%M"), aria: { label: "When" }, class: "os-field dt-when" %>
+    <div class="dt-send">
       <span class="os-xs os-muted">Shows on your stage and on its project's page.</span>
       <%= f.submit "Post entry", class: "os-btn" %>
     </div>
   <% end %>
+  <datalist id="project-suggestions">
+    <% current_user.project_names.each do |name| %><option value="<%= name %>"></option><% end %>
+  </datalist>
 </section>

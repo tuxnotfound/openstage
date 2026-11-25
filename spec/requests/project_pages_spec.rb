@@ -283,7 +283,7 @@ RSpec.describe "Project pages", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Only you can see this page", "Ship the form", "Launched it")
-      expect(Nokogiri::HTML(response.body).at_css("a:contains('Show it again on the dashboard')")["href"]).to eq("/dashboard#activity")
+      expect(Nokogiri::HTML(response.body).at_css("a:contains('Show it again on the dashboard')")["href"]).to eq("/dashboard?row=#{user.github_repos.find_by!(name: "side.app").id}")
       expect(user.project_views.count).to eq(0)
     end
 
@@ -478,11 +478,6 @@ RSpec.describe "Project pages", type: :request do
       expect([ view["drawn"], view["chart"]["note"], page.at_css(".os-chart ~ .os-note") ]).to eq([ [], nil, nil ])
       expect(page.css("svg[role='img']")).to be_empty
       expect(response.body).not_to include("Site visitors", "site_visitors")
-
-      sign_in_as(user)
-      get "/dashboard"
-      expect(JSON.parse(Nokogiri::HTML(response.body).at_css("#activity-chart-props").text)["initial"]["chart"]["note"])
-        .to eq("No project here shows a number yet.")
     end
 
     it "keeps a project's site visitors off the stage, the tooltip, the script's view and its own page while it hides its site visits, whatever their own switch says" do

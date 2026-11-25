@@ -8,7 +8,8 @@ class ProjectPagesController < ApplicationController
     @user = User.active.find_by(username: params[:username])
     return render_not_found unless @user
 
-    @revealed = hidden_repo&.full_name
+    @hidden_repo = hidden_repo
+    @revealed = @hidden_repo&.full_name
     filter = Progress::Filter.from(params, repo: false)
     service = Progress::FocusService.new(user: @user, slug: params[:project], range: filter.range, show: filter.show, reveal: @revealed)
     return redirect_to(profile_path(@user.username), alert: "That project is not on #{@user.display_name}'s page.") unless service.call

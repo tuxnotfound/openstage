@@ -10,21 +10,34 @@
   <% if current_user.pro? %><span class="os-tag pro">✦ Pro</span><% end %>
 </div>
 
-<%= render "dashboard/this_week", section: @activity %>
 <%= render "dashboard/composer" %>
+<%= render "dashboard/upgrade" unless current_user.pro? %>
 
-<%# The chart over the table of projects that switches it: hiding a project
-    from the page reloads the page here, and its line is gone. %>
-<div id="activity" class="scroll-mt-4">
-  <%= render "dashboard/activity", chart: @chart if @chart %>
-</div>
-<%# One column on a phone, which never grows past the page: the badge's
-    line of code truncates instead of widening it. %>
-<% if @badge_nudge || !current_user.pro? %>
-  <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-    <%= render "dashboard/badge" if @badge_nudge %>
-    <%= render "dashboard/upgrade" unless current_user.pro? %>
+<%# Two tabs, each with its count, and whether GitHub is synced at the end of
+    their line. Links, so a tab opens without JavaScript; with it, the tabs
+    controller switches in place and keeps the tab in the address. %>
+<div class="os-stack" data-controller="tabs" data-tabs-active-value="<%= @tab %>" data-tabs-param-value="tab">
+  <div class="dt-tabsrow">
+    <div class="dt-tabs" role="tablist" aria-label="Dashboard">
+      <% [ [ "projects", "Projects", dashboard_projects.count("all") ], [ "entries", "Entries", entries_total(@entry_tabs) ] ].each do |key, label, count| %>
+        <%= link_to dashboard_path(tab: (key unless key == DashboardController::TABS.first)), id: "tab-#{key}", class: "dt-tab", role: "tab",
+              aria: { selected: key == @tab, controls: "panel-#{key}" }, data: { tabs_target: "tab", tabs_tab: key, action: "tabs#show" } do %><%= label %> <span class="dt-count"><%= number_with_delimiter(count) %></span><% end %>
+      <% end %>
+    </div>
+    <%= render "dashboard/sync" %>
   </div>
-<% end %>
+  <% if (error = @sync_logs.first&.error_message).present? %>
+    <p class="os-xs -mt-2 line-clamp-2 font-semibold <%= @sync_logs.first.failed? ? 'text-down' : 'text-warn' %>" title="<%= error %>"><%= error %></p>
+  <% end %>
 
-<%= render "dashboard/entries" %>
+  <div id="panel-projects" role="tabpanel" aria-labelledby="tab-projects" data-tabs-target="panel" data-tabs-panel="projects" class="<%= "hidden" unless @tab == "projects" %>">
+    <%= react_island("dashboard_projects",
+                     { initial: DashboardProjectsSerializer.new(dashboard_projects).as_json, endpoint: api_dashboard_projects_path,
+                       open: (DashboardLinesSerializer.new(@open_lines, color_class: dashboard_projects.color_class(@open_lines.repo)).as_json if @open_lines),
+                       row: params[:row].presence&.to_i, history: sync_history(@sync_logs) },
+                     id: "dashboard-projects") %>
+  </div>
+  <div id="panel-entries" role="tabpanel" aria-labelledby="tab-entries" data-tabs-target="panel" data-tabs-panel="entries" class="<%= "hidden" unless @tab == "entries" %>">
+    <%= render "dashboard/entries" %>
+  </div>
+</div>

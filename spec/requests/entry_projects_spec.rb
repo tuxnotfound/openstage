@@ -27,17 +27,17 @@ RSpec.describe "Tagging entries with a project" do
 
     get "/dashboard"
     expect(section.text.squish).to include("#{progress_untagged(year)} entries in the last 12 months have no project. Tag them")
-    expect(section.at_css("a")["href"]).to eq("/dashboard?tag=1#activity")
+    expect(section.at_css("a")["href"]).to eq("/dashboard?tab=entries&tag=1")
   end
 
-  # The chart above may show 90 days or one project; the backlog is the
-  # same last 12 months, as the stage showed it before.
-  it "counts the last 12 months whatever the chart shows, and keeps the chart's view on its links" do
+  # The backlog is the last 12 months, whatever the address asks of a window.
+  it "counts the last 12 months, on What's new, and leads back to the Entries tab" do
     sign_in_as(user)
-    get "/dashboard", params: { range: "90d", projects: progress_repo(0) }
+    get "/dashboard", params: { range: "90d" }
 
+    expect(Nokogiri::HTML(response.body).at_css("#entries-news turbo-frame#untagged")).to be_present
     expect(section.text.squish).to include("#{progress_untagged(year)} entries in the last 12 months have no project.")
-    expect(section.at_css("a")["href"]).to eq("/dashboard?projects=#{CGI.escape(progress_repo(0))}&range=90d&tag=1#activity")
+    expect(section.at_css("a")["href"]).to eq("/dashboard?tab=entries&tag=1")
   end
 
   it "redraws the panel alone in its frame, a row for each entry it counts" do
@@ -60,9 +60,9 @@ RSpec.describe "Tagging entries with a project" do
 
   it "tags any entry type and redraws the period with the panel open" do
     sign_in_as(user)
-    patch "/entries/#{post.id}/project", params: { repo_name: progress_repo(4), range: "30d" }
+    patch "/entries/#{post.id}/project", params: { repo_name: progress_repo(4), tab: "entries" }
 
-    expect(response).to redirect_to("/dashboard?range=30d&tag=1#activity")
+    expect(response).to redirect_to("/dashboard?tab=entries&tag=1")
     expect(post.reload.repo_name).to eq(progress_repo(4))
     follow_redirect!
     expect(section.css("[data-tag-row]").size).to eq(progress_untagged(year) - 1)

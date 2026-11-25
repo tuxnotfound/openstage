@@ -64,24 +64,14 @@ RSpec.describe "A chart with nothing to draw", type: :request do
     expect(step).to be_nil
   end
 
-  it "keeps the plot and the note on the dashboard, and adds the step" do
-    sign_in_as(user)
-
-    get "/dashboard", params: { range: "30d" }
-
-    page = Nokogiri::HTML(response.body)
-    expect(page.css(".os-chart").size).to eq(1)
-    expect(page.text).to include("No commits in the last 30 days.")
-    expect(step.text.squish).to eq("Connect your site to count its visits. Set up site visits")
-  end
-
-  it "asks a builder with no repos at all to connect GitHub" do
+  it "asks a builder with no repos at all to connect GitHub, on the dashboard's Projects, which draws no chart" do
     Entry.delete_all
     sign_in_as(user)
 
     get "/dashboard"
 
-    expect(step.text.squish).to eq("Connect your repos to see your commits here. Connect GitHub")
-    expect(step.at_css("a")["href"]).to eq("/github_app/install")
+    list = JSON.parse(Nokogiri::HTML(response.body).at_css("#dashboard-projects-props").text)["initial"]
+    expect(list.values_at("empty", "connect")).to eq([ "Connect your repos to see your commits here.", "/github_app/install" ])
+    expect(step).to be_nil
   end
 end

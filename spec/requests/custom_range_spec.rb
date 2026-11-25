@@ -120,20 +120,6 @@ RSpec.describe "Days picked for a chart's window", type: :request do
     end
   end
 
-  describe "the dashboard" do
-    before { sign_in_as(user) }
-
-    it_behaves_like "a window of days picked", "/dashboard", "7-day average of commits per day by project, 1 Sep – 30 Sep", 4
-
-    it "keeps the entry filters on the form and its links, and compares with as many days before" do
-      get "/dashboard", params: { from: "2026-09-01", to: "2026-09-30", q: "work" }
-
-      expect(form_fields["q"]).to include("type" => "hidden", "value" => "work")
-      expect(query(window.css("a").first["href"])).to eq("q" => "work")
-      expect(page.at_css("[aria-label='Numbers on the chart']").text.squish).to include("Commits 4 ▲up 300%")
-    end
-  end
-
   # Its script draws the whole page, so these read what the server hands it.
   describe "analytics" do
     before { sign_in_as(user) }

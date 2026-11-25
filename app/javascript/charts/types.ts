@@ -337,3 +337,28 @@ export type SiteSetupView = {
   status: SiteStatusView | null
   paths: { setup: string; pricing: string; privacy: string; connect: string }
 }
+
+// The dashboard's list of projects (DashboardProjectsSerializer): a row per
+// project with its colour while it wears one and its switch, On your stage;
+// past ten projects, the views and their counts, the page, and the app's
+// words for a search that finds nothing.
+export type DashboardRow = { id: number; name: string; colorClass: string | null; pinned: boolean; stage: boolean; switch: string }
+export type DashboardView = "pinned" | "all" | "hidden"
+export type DashboardList = {
+  many: boolean; count: number; view: DashboardView; query: string; page: number; pages: number; pinned: number
+  views: { key: DashboardView; label: string; count: string }[]; range: string | null; empty: string | null; connect: string | null; rows: DashboardRow[]
+}
+
+// A project's numbers on the dashboard (DashboardLinesSerializer), a line
+// each with where it comes from and its one control: a switch for what
+// visitors see, a step that sets the number up (filled for the first), or
+// Pro's mark.
+export type DashboardControl =
+  | { kind: "switch"; on: boolean; dead: boolean; path: string; number: string | null; aria: string; filled: boolean }
+  | { kind: "link"; label: string; path: string; aria: string; filled: boolean }
+  | { kind: "pro"; filled: boolean }
+export type DashboardLine = { key: string; name: string; state: string; sep: boolean; control: DashboardControl }
+export type DashboardLines = { id: number; name: string; colorClass: string | null; page: string; edit: string; lines: DashboardLine[] }
+
+// A sync of the builder's work, newest first, at the foot of the list.
+export type SyncLogView = { state: "up" | "down" | "warn"; source: string; added: number | null; ago: string }

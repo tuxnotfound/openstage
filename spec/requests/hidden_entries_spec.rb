@@ -121,8 +121,8 @@ RSpec.describe "Entries the builder hid", type: :request do
     sign_in_as(user)
     get "/dashboard"
 
-    expect(page.at_css("section[data-recap-prompt]").text.squish).to include("You shipped 4 commits in app", "You logged 2 updates")
-    expect(page.at_css("[data-tabs-panel='timeline']").text).not_to include("Hidden commit", "Hidden launch")
+    expect(page.at_css(".dt-box .dt-week").text.squish).to include("You shipped 4 commits in app", "You logged 2 updates")
+    expect(page.css("[data-tabs-panel='news'], [data-tabs-panel='commits']").text).not_to include("Hidden commit", "Hidden launch")
     expect(page.at_css("[data-tabs-panel='hidden']").text).to include("Hidden commit", "Hidden launch")
   end
 

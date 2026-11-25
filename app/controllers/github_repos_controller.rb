@@ -41,17 +41,12 @@ class GithubReposController < ApplicationController
     GithubSyncJob.perform_later(current_user.id) if @repo.included? && @repo.last_synced_at.nil?
 
     respond_to do |format|
+      # The dashboard's Projects tab, whose row keeps its place.
+      format.json { head :no_content }
       format.turbo_stream
-      # Back to the project's own view when switched there; else to the
-      # dashboard's chart, in the view it showed, so the line that went or
-      # came back is in view, or to its list of projects, on the list's view.
-      format.html do
-        next redirect_to(edit_project_path(@repo)) if params[:back] == "project"
-
-        kept = params.permit(:show, :projects, *Progress::Listing.names(Progress::Listing::DASHBOARD))
-        redirect_to dashboard_path(**kept.to_h.symbolize_keys.compact_blank, range: Progress::Filter.new(range: params[:range]).range,
-                                   anchor: params[:back] == "list" ? ProjectsTableSerializer::MORE_ANCHOR : "activity")
-      end
+      # Back to the project's own view when switched there; else to its row
+      # on the dashboard, where the switch is.
+      format.html { redirect_to(params[:back] == "project" ? edit_project_path(@repo) : dashboard_path(row: @repo.id)) }
     end
   end
 

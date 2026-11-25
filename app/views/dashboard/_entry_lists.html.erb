@@ -1,8 +1,10 @@
-<%# The tabs, with how many entries the filters match in each, and a panel
-    per tab: one frame, which the filters redraw whole. %>
+<%# A panel per list: one frame, which the search and the repo redraw whole,
+    and with it the lists' counts (entries-tabs), by a stream inside it. %>
 <% active = entry_tab_active(tabs) %>
-<%= turbo_frame_tag "entries-lists", class: "mt-3.5 block" do %>
-  <%= render "dashboard/entry_tabs", tabs: tabs, active: active %>
+<%= turbo_frame_tag "entries-lists", class: "block" do %>
+  <% if turbo_frame_request? %>
+    <%= turbo_stream.replace "entries-tabs", partial: "dashboard/entry_tabs", locals: { tabs: tabs, active: active } %>
+  <% end %>
   <% tabs.each do |tab| %>
     <div data-tabs-target="panel" data-tabs-panel="<%= tab.key %>" role="tabpanel" aria-label="<%= DashboardHelper::ENTRY_TABS[tab.key] %>"
          class="<%= "hidden" unless tab.key == active %>">

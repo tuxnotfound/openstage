@@ -1,27 +1,27 @@
-# What the dashboard's Entries section shows: a tab per list the builder
-# manages (every entry their pages list, the ones they hid, the private
-# ones), each narrowed by the same search, type and repo, a page at a time,
-# newest first. DashboardController renders it with the page, the tabs and
+# What the dashboard's Entries tab shows: four lists, What's new (all but
+# GitHub's commits), Commits, what the builder hid, and the private ones,
+# each narrowed by the same search and repo, a page at a time, newest
+# first. DashboardController renders it with the page, the tabs and
 # lists alone into their frame as the filters change, and the next page for
 # Load more; EntriesController redraws what a click on a row changed. Both
 # read it here, so the two cannot drift apart.
 module EntriesSection
   extend ActiveSupport::Concern
 
-  PER_PAGE = 25
-  # The lists, the one the section opens on first.
-  TABS = %w[timeline hidden private].freeze
+  PER_PAGE = 10
+  # The lists. What's new opens first while it holds an entry; else Commits.
+  TABS = %w[news commits hidden private].freeze
 
-  # query, type and repo narrow every tab; repos: the ones they can pick,
-  # from every tab's entries.
-  Filter = Data.define(:query, :type, :repo, :repos) do
+  # query and repo narrow every list; repos: the ones they can pick, from
+  # every list's entries.
+  Filter = Data.define(:query, :repo, :repos) do
     def any?
-      query.present? || type.present? || repo.present?
+      query.present? || repo.present?
     end
 
     # As a URL carries them, the blank ones left out.
     def to_params
-      { q: query.presence, type: type, repo: repo }.compact
+      { q: query.presence, repo: repo }.compact
     end
   end
 
@@ -81,22 +81,29 @@ module EntriesSection
   end
 
   included do
-    helper_method :entries_filter, :entries_tab_key
+    helper_method :entries_filter, :entries_tab_key, :dashboard_projects
   end
 
   private
 
+  # The builder's projects as the dashboard lists them (Projects::DashboardList):
+  # the Projects tab's rows, and each entry's project, its colour and whether
+  # it keeps the entry off the stage. row: a project the tab opens on.
+  def dashboard_projects
+    @dashboard_projects ||= Projects::DashboardList.new(current_user, row: params[:row])
+  end
+
   def entries_filter
     @entries_filter ||= begin
       repos = current_user.entries.listed.or(current_user.entries.where(hidden: true)).repo_names
-      Filter.new(query: params[:q].to_s.strip, type: params[:type].presence_in(Entry.entry_types.keys),
-                 repo: params[:repo].presence_in(repos), repos: repos)
+      Filter.new(query: params[:q].to_s.strip, repo: params[:repo].presence_in(repos), repos: repos)
     end
   end
 
-  # The tab the request came from or asks for; the timeline by default.
+  # The list the request came from or asks for; nil when it names none, and
+  # the page opens on What's new or Commits (DashboardHelper#entry_tab_active).
   def entries_tab_key
-    params[:tab].presence_in(TABS) || TABS.first
+    params[:list].presence_in(TABS)
   end
 
   def entries_tabs
@@ -111,22 +118,22 @@ module EntriesSection
   def entries_list(key)
     case key
     when "hidden" then current_user.entries.where(hidden: true)
-    when "private" then current_user.entries.listed.where(visibility: :private_entry)
-    else current_user.entries.listed
+    when "private" then current_user.entries.listed.private_entry
+    when "commits" then current_user.entries.listed.public_entry.commits
+    else current_user.entries.listed.public_entry.where.not(source: :github, entry_type: :shipped)
     end
   end
 
-  # An unknown type or repo is ignored rather than emptying the list.
+  # An unknown repo is ignored rather than emptying the list.
   def narrowed(list)
     filter = entries_filter
-    list = list.where(entry_type: filter.type) if filter.type
     list = list.where(repo_name: filter.repo) if filter.repo
     filter.query.present? ? list.search(filter.query) : list
   end
 
-  # The tab and filters a click came from, for the dashboard to open on.
+  # The list and filters a click came from, for the dashboard to open on.
   def entries_back_params
-    { **entries_filter.to_params, tab: (entries_tab_key unless entries_tab_key == TABS.first) }.compact
+    { **entries_filter.to_params, tab: "entries", list: entries_tab_key }.compact
   end
 
   # The last row Load more showed, as "time,id"; nil for the first page. A

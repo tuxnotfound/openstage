@@ -1,8 +1,7 @@
 module Projects
   # A number its builder shows a project's visitors, or hides from them:
-  # from the dashboard's table, by the chart's script (which then asks for
-  # the chart again) or by its form without it, and from the project's own
-  # view (back=project).
+  # from its numbers on the dashboard, by their script, and from the
+  # project's own view (back=project).
   class NumbersController < ApplicationController
     before_action :require_authentication
 
@@ -30,12 +29,12 @@ module Projects
       end
     end
 
-    # Back where the switch was: the project's own view, or the dashboard's
-    # chart as it showed.
+    # Back where the switch was: the project's own view, or its numbers on
+    # the dashboard.
     def back_to(repo)
       return edit_project_path(repo, anchor: "numbers") if params[:back] == "project"
 
-      dashboard_path(**params.permit(:range, :show, :projects).to_h.symbolize_keys.compact_blank, anchor: "your-activity")
+      dashboard_path(project: repo.id)
     end
   end
 end

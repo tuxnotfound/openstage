@@ -49,6 +49,10 @@ Rails.application.routes.draw do
     # Where a project's site visits stand, as Set up site visits asks while
     # it waits for the first visit.
     get "site_visits/:project_id", to: "site_visits#show", as: :site_visits
+    # The dashboard's Projects tab: a view of its list, and one project's
+    # numbers, brought in on a click.
+    get "dashboard/projects", to: "dashboard_projects#index", as: :dashboard_projects
+    get "dashboard/projects/:id", to: "dashboard_projects#show", as: :dashboard_project
   end
 
   # Sync triggers

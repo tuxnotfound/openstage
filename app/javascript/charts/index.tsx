@@ -4,6 +4,7 @@ import ProgressIsland, { type ProgressProps } from "./progress/ProgressIsland"
 import AnalyticsIsland, { type AnalyticsProps } from "./analytics/AnalyticsIsland"
 import ProjectsIsland, { type ProjectsProps } from "./projects/ProjectsIsland"
 import SiteSetupIsland, { type SiteSetupProps } from "./setup/SiteSetupIsland"
+import ProjectsTab, { type ProjectsTabProps } from "./dashboard/ProjectsTab"
 
 // Mounts each [data-react] island over the HTML the server rendered for it,
 // with the props in the <script type="application/json"> it names. The server
@@ -19,6 +20,7 @@ function render(name: string, props: unknown) {
   if (name === "analytics") return <AnalyticsIsland {...(props as AnalyticsProps)} />
   if (name === "projects") return <ProjectsIsland {...(props as ProjectsProps)} />
   if (name === "site_setup") return <SiteSetupIsland {...(props as SiteSetupProps)} />
+  if (name === "dashboard_projects") return <ProjectsTab {...(props as ProjectsTabProps)} />
   return null
 }
 

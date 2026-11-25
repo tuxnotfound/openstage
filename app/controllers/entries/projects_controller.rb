@@ -9,14 +9,8 @@ module Entries
       service = TagService.new(entry: entry, repo_name: params[:repo_name], no_project: params[:no_project] == "1")
       return head(:unprocessable_entity) unless service.call
 
-      redirect_to dashboard_path(**back_params, anchor: "activity"), status: :see_other
-    end
-
-    private
-
-    # Back to the chart's view the click came from, with the panel open.
-    def back_params
-      params.permit(*ProgressHelper::PROGRESS_PARAMS).to_h.symbolize_keys.merge(tag: "1").compact_blank
+      # Back to the Entries tab, with the panel open.
+      redirect_to dashboard_path(tab: "entries", tag: "1"), status: :see_other
     end
   end
 end
