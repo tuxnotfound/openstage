@@ -253,9 +253,11 @@
   .os-chip { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 700; border: 1.5px solid var(--color-line); background: transparent; color: var(--color-ink-3); cursor: pointer; }
   .os-chip:hover { border-color: var(--color-ink-3); }
   .os-chip.on, .os-chip[aria-pressed="true"], .os-chip[aria-current="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-on-accent); }
-  /* A button or a checkbox. The knob is a gradient, which a checkbox can draw. */
+  /* A button or a checkbox. The knob is a gradient, which a checkbox can draw.
+     Off, its track is darker than the line it used to wear (1.2:1 on a
+     panel): the dashboard's call 8, for every switch (2026-11-25). */
   .os-switch { appearance: none; position: relative; width: 40px; height: 22px; flex: none; margin: 0; padding: 0; border: 0; border-radius: 999px; cursor: pointer;
-    background: radial-gradient(circle at 11px 50%, #FFFFFF 7.5px, transparent 8px), var(--color-line); }
+    background: radial-gradient(circle at 11px 50%, var(--color-on-accent) 7.5px, transparent 8px), color-mix(in oklab, var(--color-ink-3) 80%, var(--color-fill)); }
   .os-switch.on, .os-switch:checked, .os-switch[aria-checked="true"] {
     background: radial-gradient(circle at 29px 50%, var(--color-on-accent) 7.5px, transparent 8px), var(--color-accent); }
   /* A switch for what visitors see, drawn as an eye: open while they see
