@@ -13,7 +13,7 @@ signed_cookie = Rack::Utils.escape(req.cookie_jar[key])
 
 paths = ARGV.empty? ? %w[/ /heavy /heavy?range=all /heavy/project-1 /api/progress/heavy?range=12m /api/progress/heavy?range=all /dashboard /analytics /analytics?range=12m /analytics?range=all /api/analytics?range=90d /api/analytics?range=12m /api/analytics?range=all /feed] : ARGV
 paths.each do |path|
-  signed = path.start_with?("/dashboard", "/analytics", "/api/analytics")
+  signed = path.start_with?("/dashboard", "/analytics", "/api/analytics", "/api/dashboard", "/api/site_visits")
   session = ActionDispatch::Integration::Session.new(Rails.application)
   session.host! "localhost"
   headers = { "HTTP_USER_AGENT" => "Mozilla/5.0 (Macintosh) Safari/605.1.15" }
