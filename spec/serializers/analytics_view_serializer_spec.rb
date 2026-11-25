@@ -194,7 +194,7 @@ RSpec.describe AnalyticsViewSerializer do
     repo = create(:github_repo, user: user, full_name: "me/app", name: "app")
 
     expect(view(tab: "visits")["site"].slice("empty", "setup")).to eq("empty" => "None of the projects in view counts site visits.",
-                                                                      "setup" => { "text" => "Set up app's site visits", "path" => "/projects/#{repo.id}/edit?site=open#site-visits" })
+                                                                      "setup" => { "text" => "Set up app's site visits", "path" => "/dashboard/site-visits?project=#{repo.id}" })
     repo.update!(site_source: "script")
     expect(view(tab: "visits", range: "90d")["site"].slice("empty", "setup")).to eq("empty" => "No site visits in the last 90 days.", "setup" => nil)
     expect(view(tab: "visits", range: "all")["site"]["empty"]).to eq("No site visits yet.")
@@ -204,7 +204,7 @@ RSpec.describe AnalyticsViewSerializer do
     repo = create(:github_repo, user: user, full_name: "me/app", name: "app")
     cell = ->(json) { json["table"]["rows"].find { |row| row["key"] == "me/app" }["cells"].find { |each| each["key"] == "visits" } }
 
-    expect(cell.call(view)).to include("value" => nil, "pick" => nil, "link" => { "text" => "Set up", "label" => "Set up app's site visits", "path" => "/projects/#{repo.id}/edit?site=open#site-visits" })
+    expect(cell.call(view)).to include("value" => nil, "pick" => nil, "link" => { "text" => "Set up", "label" => "Set up app's site visits", "path" => "/dashboard/site-visits?project=#{repo.id}" })
     expect(cell.call(view(tab: "visits"))["link"]["text"]).to eq("Set up")
   end
 

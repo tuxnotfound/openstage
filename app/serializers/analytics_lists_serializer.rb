@@ -90,7 +90,7 @@ class AnalyticsListsSerializer < ApplicationSerializer
 
   def setup
     row = @report.setup_row
-    { text: "Set up #{row.name}'s site visits", path: edit_project_path(row.repo, site: "open", anchor: "site-visits") } if row
+    { text: "Set up #{row.name}'s site visits", path: site_visits_setup_path(project: row.repo.id) } if row
   end
 
   def badges

@@ -149,7 +149,7 @@ RSpec.describe "Analytics", type: :request do
 
     it "says under an empty chart what fills it, as far as the tab asks" do
       get "/analytics", params: { tab: "visits" }
-      expect(props["step"]).to eq("text" => "Connect your site to count its visits.", "label" => "Set up site visits", "href" => "/settings?tab=integrations")
+      expect(props["step"]).to eq("text" => "Connect your site to count its visits.", "label" => "Set up site visits", "href" => "/dashboard/site-visits")
 
       get "/analytics", params: { tab: "mrr" }
       expect(props["step"]).to eq("text" => "Connect Stripe to show your MRR.", "label" => "Connect Stripe", "href" => "/settings?tab=integrations")

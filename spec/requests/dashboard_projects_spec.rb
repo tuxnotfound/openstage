@@ -152,7 +152,7 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90", "true" ], [ "30", "true" ] ])
       expect(cells("builder/bare")).to eq([ [ "1", "true" ], [ "Set up", nil ], [ "–", nil ] ])
       expect(page.css("[data-chart-table] thead th").map { |head| head.text.squish }).to eq([ "Projects", "Your stage", "Commits", "Site visits", "Site visitors" ])
-      expect(page.at_css("[data-chart-row='builder/bare'] a[aria-label^='Set up']")["href"]).to eq("/projects/#{bare.id}/edit?site=open#site-visits")
+      expect(page.at_css("[data-chart-row='builder/bare'] a[aria-label^='Set up']")["href"]).to eq("/dashboard/site-visits?project=#{bare.id}")
       activity = page.at_css("section[aria-labelledby='your-activity']").text.squish
       expect(activity).to include("Site visits 90")
       expect(drawn).to contain_exactly("commits", "commits", "visits")
@@ -194,7 +194,7 @@ RSpec.describe "The dashboard's activity and projects", type: :request do
       get "/dashboard"
       expect(cells("builder/app")).to eq([ [ "3", "true" ], [ "90 Set up", nil ], [ "30", nil ] ])
       expect(island_cell("builder/app")).to include("value" => "90", "pick" => nil)
-      expect(island_cell("builder/app")["link"]).to eq("text" => "Set up", "label" => "Set up app's site visits", "path" => "/projects/#{tool.id}/edit?site=open#site-visits")
+      expect(island_cell("builder/app")["link"]).to eq("text" => "Set up", "label" => "Set up app's site visits", "path" => "/dashboard/site-visits?project=#{tool.id}")
 
       tool.site_visit_days.update_all(day: 60.days.ago.to_date)
       get "/dashboard", params: { range: "30d" }

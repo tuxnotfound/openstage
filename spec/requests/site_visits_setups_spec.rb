@@ -133,4 +133,36 @@ RSpec.describe "Set up site visits", type: :request do
       expect(bare.reload).to have_attributes(website_edit: nil, site_source: nil, site_set_up_at: nil)
     end
   end
+
+  describe "its doors" do
+    def link_named(label)
+      Nokogiri::HTML(response.body).css("a").find { |each| each.text.squish == label }
+    end
+
+    it "leads analytics' empty chart to the page, and Continue to the line to paste" do
+      get "/analytics", params: { tab: "visits" }
+      island = JSON.parse(Nokogiri::HTML(response.body).at_css("#analytics-props").text)
+      get island["step"]["href"]
+      expect(props["project"]["id"]).to eq(repo.id)
+
+      patch "/dashboard/site-visits", params: { project_id: props["project"]["id"], website: props["project"]["website"] }
+      follow_redirect!
+      expect(props["status"]["step"]).to eq("line")
+    end
+
+    it "leads Settings' Site analytics to the page" do
+      get "/settings", params: { tab: "integrations" }
+      get link_named("Set up on a project's page")["href"]
+
+      expect(response).to have_http_status(:ok)
+      expect(props["project"]["id"]).to eq(repo.id)
+    end
+
+    it "leads a project's own view to the page, on that project" do
+      get "/projects/#{bare.id}/edit"
+      get Nokogiri::HTML(response.body).at_css("#site-visits a[href^='/dashboard/site-visits']")["href"]
+
+      expect(props["project"]["id"]).to eq(bare.id)
+    end
+  end
 end

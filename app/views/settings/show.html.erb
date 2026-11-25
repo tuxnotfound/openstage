@@ -205,7 +205,7 @@
         <% if @counted_sites.any? %>
           <span class="os-sm font-bold text-up"><%= @counted_sites.one? ? "Counting #{@counted_sites.first}" : "Counting #{@counted_sites.size} sites" %></span>
         <% else %>
-          <span class="os-xs os-muted">Set up on a project's page</span>
+          <%= link_to "Set up on a project's page", site_visits_setup_path, class: "os-link text-[13px]" %>
         <% end %>
       </div>
       <p class="os-xs os-muted border-t border-line pt-3">

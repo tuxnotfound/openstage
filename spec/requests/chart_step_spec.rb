@@ -29,7 +29,7 @@ RSpec.describe "A chart with nothing to draw", type: :request do
 
     expect(Nokogiri::HTML(response.body).css(".os-chart")).to be_empty
     expect(step.text.squish).to eq("Connect your site to count its visits. Set up site visits")
-    expect(step.at_css("a")["href"]).to eq("/settings?tab=integrations")
+    expect(step.at_css("a")["href"]).to eq("/dashboard/site-visits")
     expect(island["step"]).to include("label" => "Set up site visits")
   end
 
@@ -43,12 +43,13 @@ RSpec.describe "A chart with nothing to draw", type: :request do
     expect(island["step"]).to include("label" => "Set up site visits")
   end
 
-  it "sends a project's page to that project's own view, which opens" do
+  it "sends a project's page to Set up site visits on that project, which opens" do
     sign_in_as(user)
 
     get "/builder/shipnote", params: { range: "30d" }
 
     expect(step.text.squish).to eq("Connect your site to count its visits. Set up site visits")
+    expect(step.at_css("a")["href"]).to eq("/dashboard/site-visits?project=#{repo.id}")
     get step.at_css("a")["href"]
     expect(response).to have_http_status(:ok)
   end

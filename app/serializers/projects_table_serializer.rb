@@ -91,12 +91,13 @@ class ProjectsTableSerializer < ApplicationSerializer
   end
 
   # Paused or Set up (Row#link), with its name for a screen reader, which
-  # starts with the word on screen, and the project's Site visits row it
-  # leads to, which says why and what to do. Both the island and the first
-  # paint write these words.
+  # starts with the word on screen, and where it leads: the page Set up site
+  # visits, or for Paused the project's Site visits row, which says why.
+  # Both the island and the first paint write these words.
   def link_of(link, row)
-    text, label = link == :paused ? [ "Paused", "Paused: see why #{row.name}'s site visits do not count" ] : [ "Set up", "Set up #{row.name}'s site visits" ]
-    { text: text, label: label, path: edit_project_path(row.repo, site: "open", anchor: "site-visits") }
+    return { text: "Set up", label: "Set up #{row.name}'s site visits", path: site_visits_setup_path(project: row.repo.id) } unless link == :paused
+
+    { text: "Paused", label: "Paused: see why #{row.name}'s site visits do not count", path: edit_project_path(row.repo, site: "open", anchor: "site-visits") }
   end
 
   # A project with no synced repo behind it has nothing to edit or save.

@@ -17,8 +17,9 @@ RSpec.describe "Setting up a project's site visits", type: :request do
     Nokogiri::HTML(response.body).at_xpath("//div[@id='site-visits']/following-sibling::div[contains(@class, 'os-row')][.//span[text()='Site visitors']]")
   end
 
-  it "offers to set up what counts the site's visits, and to edit the setup once a counter is picked" do
-    expect(view.at_css("[data-toggle-target='openIcon']").text).to eq("Set up")
+  it "leads its first Set up to the page Set up site visits, on this project, and edits the setup here once a counter is picked" do
+    expect(view.at_css("a[href='/dashboard/site-visits?project=#{repo.id}']").text).to eq("Set up")
+    expect(view.at_css("[data-toggle-target='openIcon']")).to be_nil
     expect(view.at_css("#site-source .os-label").text).to eq("What counts shipnote.app's visits")
     expect(view.css("#site-source [role='group'][aria-label='Counter'] button").map(&:text)).to eq([ "Openstage's script", "Off" ])
 

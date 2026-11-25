@@ -27,7 +27,7 @@ RSpec.describe ProjectsTableSerializer do
 
   # The words in a switch's place, each named for a screen reader from the word on screen.
   def set_up(name, repo)
-    { "text" => "Set up", "label" => "Set up #{name}'s site visits", "path" => site_row(repo) }
+    { "text" => "Set up", "label" => "Set up #{name}'s site visits", "path" => "/dashboard/site-visits?project=#{repo.id}" }
   end
 
   def paused(name, repo)
