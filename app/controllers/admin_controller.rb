@@ -5,9 +5,12 @@ class AdminController < ApplicationController
   before_action :require_owner
 
   DAYS = 30
+  # A gate's cohort can sign up more than 30 days before its read.
+  WINDOWS = [ DAYS, 60, 90 ].freeze
 
   def show
-    @since = DAYS.days.ago
+    @days  = WINDOWS.include?(params[:days].to_i) ? params[:days].to_i : DAYS
+    @since = @days.days.ago
     load_signups
     load_cohort
     load_strangers
@@ -82,7 +85,8 @@ class AdminController < ApplicationController
     @with_email = cohort.where.not(email: [ nil, "" ]).count
   end
 
-  # Gate 1's north star, scored on people who are not me.
+  # Gate 1's north star, scored on people who are not me; then each of them
+  # by the retention rule's three clauses, as Gate 4 reads them.
   def load_strangers
     strangers    = cohort.where.not(id: current_user.id)
     @strangers   = strangers.count
@@ -90,6 +94,7 @@ class AdminController < ApplicationController
     week_old     = strangers.where(created_at: ..7.days.ago)
     @week_old    = week_old.count
     @second_week = Event.second_week_user_ids(week_old).size
+    @gates       = Gates::Cohort.new(strangers)
   end
 
   # F2: who got the weekly emails. An open cannot be seen without a tracking
@@ -119,18 +124,15 @@ class AdminController < ApplicationController
          .sort_by { |_repo, builders| -builders }
   end
 
-  # One count per day of the window, the empty days included.
+  # One count per day of the window, today and the empty days included.
   def signups_by_day
-    start   = DAYS.days.ago.to_date
+    start   = @since.to_date
     grouped = User.counted
                   .where(created_at: start.beginning_of_day..)
                   .group("DATE(created_at AT TIME ZONE 'UTC')")
                   .count
 
-    (0...DAYS).each_with_object({}) do |offset, counts|
-      date = start + offset
-      counts[date.to_s] = grouped[date] || 0
-    end
+    (start..Date.current).to_h { |date| [ date.to_s, grouped[date] || 0 ] }
   end
 
   def require_owner

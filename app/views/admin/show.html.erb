@@ -2,11 +2,19 @@
 <% content_for :main_class, "os-wrap os-stack pt-1.5" %>
 
 <% peak = [ @signups_by_day.values.max, 1 ].max %>
+<% old = @gates.old_enough %>
 
-
-  <div>
-    <h1 class="os-h2 text-[30px]">Admin</h1>
-    <p class="os-sm os-muted mt-0.5">Last <%= AdminController::DAYS %> days. The numbers the gates are scored on, and nothing else.</p>
+  <div class="os-between">
+    <div>
+      <h1 class="os-h2 text-[30px]">Admin</h1>
+      <p class="os-sm os-muted mt-0.5">Last <%= @days %> days. The numbers the gates are scored on, and nothing else.</p>
+    </div>
+    <nav class="os-pills" aria-label="Window">
+      <% AdminController::WINDOWS.each do |days| %>
+        <%= link_to "#{days} days", admin_path(days: (days unless days == AdminController::DAYS)), class: "os-pill",
+              aria: { current: (days == @days ? "page" : nil) } %>
+      <% end %>
+    </nav>
   </div>
 
   <!-- Gate numbers -->
@@ -71,6 +79,41 @@
       </div>
     </div>
     <p class="os-xs os-muted mt-2">Signups in the window, not counting you. Counted from 2026-09-21; earlier visits were never recorded.</p>
+  </section>
+
+  <!-- The second week by the retention rule's three clauses: Gate 4's bar 2 -->
+  <section class="os-panel">
+    <h2 class="os-h3">Kept in their second week</h2>
+    <div class="mt-2.5">
+      <% [ [ "any", "By any of the three", old.count(&:retained?) ],
+           [ "came-back", "Came back, signed in", old.count(&:came_back) ],
+           [ "seen", "Seen twice by others", old.count(&:seen?) ],
+           [ "shown", "A badge or an embed shown", old.count(&:shown?) ] ].each do |key, label, count| %>
+        <div class="os-row os-between py-2" data-kept="<%= key %>" data-count="<%= count %>">
+          <span class="os-sm"><%= label %></span>
+          <span class="os-sm os-num font-bold"><%= count %> of <%= old.size %> old enough</span>
+        </div>
+      <% end %>
+    </div>
+    <p class="os-xs os-muted mt-2">Days 7 to 13 after signup, not counting you. A view is someone else's: a builder's own and a bot's are never recorded.</p>
+  </section>
+
+  <!-- What the builders in the window set up, and Revamp bar 3 -->
+  <section class="os-panel">
+    <h2 class="os-h3">What they set up</h2>
+    <div class="mt-2.5">
+      <% [ [ "sites", "Set up site visits", @gates.rows.count { |row| row.sites.positive? } ],
+           [ "counting", "Counted a first visit", @gates.rows.count { |row| row.counting.positive? } ],
+           [ "stripe", "Connected Stripe", @gates.rows.count(&:stripe) ],
+           [ "pro", "On Pro", @gates.rows.count { |row| row.user.pro? } ],
+           [ "outside", "A project page reached from GitHub or their own site", @gates.rows.count { |row| row.outside.positive? } ] ].each do |key, label, count| %>
+        <div class="os-row os-between py-2" data-set-up="<%= key %>" data-count="<%= count %>">
+          <span class="os-sm"><%= label %></span>
+          <span class="os-sm os-num font-bold"><%= count %> of <%= @gates.rows.size %></span>
+        </div>
+      <% end %>
+    </div>
+    <p class="os-xs os-muted mt-2">Builders who signed up in the window, not counting you, since their signup.</p>
   </section>
 
   <!-- Tagged link visits -->
@@ -195,6 +238,33 @@
 
   </div>
 
+  <!-- Each builder, as the gates read them -->
+  <section class="os-panel" aria-labelledby="each-builder">
+    <h2 id="each-builder" class="os-h3">Each builder in the window</h2>
+    <% if @gates.rows.any? %>
+      <div class="mt-2.5 overflow-x-auto">
+        <table class="os-sm w-full border-collapse text-left">
+          <thead>
+            <tr class="os-muted">
+              <% [ "Builder", "Signed up", "First touch", "Second week", "Came back", "Views by others", "Badge or embed", "Kept",
+                   "From GitHub or own site", "Site visits", "Stripe", "Plan" ].each do |head| %>
+                <th scope="col" class="py-2 pr-4 font-normal whitespace-nowrap"><%= head %></th>
+              <% end %>
+            </tr>
+          </thead>
+          <tbody>
+            <% @gates.rows.each do |row| %>
+              <%= render "admin/builder", row: row %>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <p class="os-sm os-muted mt-2.5">No signups in the window.</p>
+    <% end %>
+    <p class="os-xs os-muted mt-2">The second week's columns count days 7 to 13 after signup. The last four count since signup.</p>
+  </section>
+
   <!-- Email smoke test -->
   <section class="os-panel">
     <h2 class="os-h3">Email</h2>
@@ -209,6 +279,6 @@
   </section>
 
   <p class="os-xs os-muted">
-    Gate 0 is Sep 21 &middot; Gate 1 Oct 12 &middot; Gate 2 Oct 26 &middot; Gate 3 Nov 15.
-    See <code>control-tower/projects/openstage/REBIRTH_PLAN.md</code>.
+    Gate 0 is Sep 21 &middot; Gate 1 Oct 12 &middot; Gate 2 Oct 26 &middot; Gate 3 Nov 15 &middot; the Revamp read Nov 30 &middot; Gate 4 Dec 14.
+    See <code>control-tower/projects/openstage/PLAN.md</code>.
   </p>

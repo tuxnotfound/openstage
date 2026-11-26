@@ -1,0 +1,22 @@
+<%# One builder of the window, as Gates::Cohort reads them: a row of the
+    table on /admin. A second week still ahead has nothing to read yet. %>
+<% ahead = row.week == :ahead %>
+<% kept = if ahead then "not yet" elsif row.retained? then "yes" elsif row.week == :open then "no so far" else "no" end %>
+<tr class="border-t border-line" data-builder="<%= row.user.username %>" data-week="<%= row.week %>" data-retained="<%= row.retained? %>">
+  <th scope="row" class="py-2 pr-4 font-bold whitespace-nowrap"><%= link_to row.user.username, profile_path(row.user.username) %></th>
+  <td class="py-2 pr-4 whitespace-nowrap"><%= row.user.created_at.utc.strftime("%b %-d") %></td>
+  <td class="py-2 pr-4 whitespace-nowrap"><%= row.user.signup_ref.presence || "unattributed" %></td>
+  <td class="py-2 pr-4 whitespace-nowrap">
+    <%= row.first_day.strftime("%b %-d") %> to <%= row.last_day.strftime("%b %-d") %><% if row.week == :open %>, open<% elsif ahead %>, ahead<% end %>
+  </td>
+  <td class="py-2 pr-4 whitespace-nowrap"><%= ahead ? "not yet" : (row.came_back ? "yes" : "no") %></td>
+  <td class="os-num py-2 pr-4"><%= ahead ? "not yet" : row.views %></td>
+  <td class="os-num py-2 pr-4"><%= ahead ? "not yet" : row.impressions %></td>
+  <td class="py-2 pr-4 font-bold whitespace-nowrap"><%= kept %></td>
+  <td class="os-num py-2 pr-4"><%= row.outside %></td>
+  <td class="py-2 pr-4 whitespace-nowrap">
+    <% if row.counting.positive? %>counting on <%= row.counting %><% elsif row.sites.positive? %>set up, no visit yet<% else %>no<% end %>
+  </td>
+  <td class="py-2 pr-4 whitespace-nowrap"><%= row.stripe ? "connected" : "no" %></td>
+  <td class="py-2 whitespace-nowrap"><%= row.user.pro? ? "Pro" : "Free" %></td>
+</tr>
