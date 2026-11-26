@@ -91,7 +91,7 @@
            [ "shown", "A badge or an embed shown", old.count(&:shown?) ] ].each do |key, label, count| %>
         <div class="os-row os-between py-2" data-kept="<%= key %>" data-count="<%= count %>">
           <span class="os-sm"><%= label %></span>
-          <span class="os-sm os-num font-bold"><%= count %> of <%= old.size %> old enough</span>
+          <span class="os-sm os-num font-bold"><%= count %><%= " of #{old.size} old enough" if key == "any" %></span>
         </div>
       <% end %>
     </div>
@@ -106,14 +106,14 @@
            [ "counting", "Counted a first visit", @gates.rows.count { |row| row.counting.positive? } ],
            [ "stripe", "Connected Stripe", @gates.rows.count(&:stripe) ],
            [ "pro", "On Pro", @gates.rows.count { |row| row.user.pro? } ],
-           [ "outside", "A project page reached from GitHub or their own site", @gates.rows.count { |row| row.outside.positive? } ] ].each do |key, label, count| %>
+           [ "outside", "From GitHub or their own site", @gates.rows.count { |row| row.outside.positive? } ] ].each do |key, label, count| %>
         <div class="os-row os-between py-2" data-set-up="<%= key %>" data-count="<%= count %>">
           <span class="os-sm"><%= label %></span>
           <span class="os-sm os-num font-bold"><%= count %> of <%= @gates.rows.size %></span>
         </div>
       <% end %>
     </div>
-    <p class="os-xs os-muted mt-2">Builders who signed up in the window, not counting you, since their signup.</p>
+    <p class="os-xs os-muted mt-2">Builders who signed up in the window, not counting you, since their signup. The last row: a project's page seen by someone who came from there.</p>
   </section>
 
   <!-- Tagged link visits -->
@@ -248,7 +248,7 @@
             <tr class="os-muted">
               <% [ "Builder", "Signed up", "First touch", "Second week", "Came back", "Views by others", "Badge or embed", "Kept",
                    "From GitHub or own site", "Site visits", "Stripe", "Plan" ].each do |head| %>
-                <th scope="col" class="py-2 pr-4 font-normal whitespace-nowrap"><%= head %></th>
+                <th scope="col" class="max-w-24 py-2 pr-4 align-bottom font-normal"><%= head %></th>
               <% end %>
             </tr>
           </thead>
