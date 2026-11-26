@@ -190,6 +190,8 @@
 @layer components {
   /* Layout */
   .os-wrap { max-width: 1160px; margin: 0 auto; padding: 0 clamp(16px, 3.2vw, 40px); }
+  /* The dashboard and analytics take the screen's width: their header, flash, main and footer. */
+  .os-wide { max-width: 1680px; margin: 0 auto; padding: 0 clamp(16px, 2.2vw, 32px); }
   .os-narrow { max-width: 760px; margin: 0 auto; padding: 0 clamp(16px, 3.2vw, 40px); }
   .os-stack { display: flex; flex-direction: column; gap: 16px; }
   .os-between { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }

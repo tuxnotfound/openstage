@@ -1,4 +1,5 @@
-<header class="os-wrap">
+<%# The dashboard and analytics take the screen's width, and the header follows them there. %>
+<header class="<%= content_for(:wrap) || "os-wrap" %>">
   <% if user_signed_in? %>
     <%# On a phone the tabs take a row of their own and scroll sideways. %>
     <div class="os-top max-md:h-auto max-md:flex-wrap max-md:gap-x-3 max-md:gap-y-1 max-md:pt-3">
