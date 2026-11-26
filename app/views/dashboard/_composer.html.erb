@@ -1,8 +1,9 @@
 <%# What did you build? One line and Post entry until the builder is in it;
-    then the kinds, first, and every field it has (composer controller). The
-    week beside its title: what the commits and the updates say, and the
-    streak. %>
-<section class="os-panel dt-box" aria-labelledby="log-update">
+    then it grows to the kinds, first, and every field it has, and a click
+    outside it or Escape folds it back, keeping what was typed (composer
+    controller). The week beside its title: what the commits and the updates
+    say, and the streak. %>
+<section class="os-panel dt-box" aria-labelledby="log-update" data-controller="composer">
   <div class="dt-box-head">
     <h2 id="log-update" class="os-h3">What did you build?</h2>
     <p class="dt-week">
@@ -19,9 +20,11 @@
       <% if @streak > 0 %><span class="dt-streak"><%= @streak %>-day streak</span><% end %>
     </p>
   </div>
-  <%= form_with url: entries_path, method: :post, scope: :entry, class: "dt-form", data: { controller: "composer", action: "focusin->composer#open" } do |f| %>
+  <%= form_with url: entries_path, method: :post, scope: :entry, class: "dt-form",
+                data: { composer_target: "form", action: "focusin->composer#open keydown.esc->composer#escape" } do |f| %>
     <%= render "entries/type_picker", f: f, current: "milestone", id_prefix: "entry_type", css: "dt-kinds" %>
-    <%= f.text_field :title, placeholder: "In one line", aria: { label: "What you built, in one line" }, class: "os-field dt-line" %>
+    <%= f.text_field :title, placeholder: "In one line", aria: { label: "What you built, in one line" }, class: "os-field dt-line",
+          data: { composer_target: "line", action: "click->composer#open" } %>
     <%= f.submit "Post entry", class: "os-btn dt-shut" %>
     <%= f.text_area :body, placeholder: "More detail (optional)", rows: 2, aria: { label: "More detail (optional)" }, class: "os-area dt-area" %>
     <%= f.url_field :url, placeholder: "Link (optional)", aria: { label: "Link (optional)" }, class: "os-field dt-url" %>
