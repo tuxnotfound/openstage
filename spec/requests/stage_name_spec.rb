@@ -44,11 +44,10 @@ RSpec.describe "The builder's stage, by name", type: :request do
 
   it "names it on the landing, pricing and privacy pages, and to visitors of a stage" do
     get "/"
-    expect_stage_only("Share your stage wherever you like", "Your stage, a page for each project", "Your stage charts each project",
-                      "on your stage and on the project")
+    expect_stage_only("Share your stage wherever you like", "Your stage, a page for each project", "on your stage and on the project")
 
     get "/pricing"
-    expect_stage_only("free forever: your stage, a page for each project", "Your proof-of-work stage, synced from GitHub",
+    expect_stage_only("free forever: your stage, a page per project", "Your proof-of-work stage, synced from GitHub",
                       "A subscribe box on your stage", "every address that confirmed on your stage")
 
     get "/privacy"
