@@ -52,11 +52,12 @@ module ApplicationHelper
   # the script mounts and to any visitor without it. The props go in the JSON
   # beside it (app/javascript/charts/index.tsx). The page asks for the bundle
   # only when it has an island; Turbo adds the script on the first page that
-  # does, and it stays for the visit.
+  # does, and it stays for the visit. It stays out of the Link header: Firefox
+  # would load it before the page's import map, and then ignore the map.
   def react_island(name, props, id:, **options, &block)
     unless @charts_script
       @charts_script = true
-      content_for(:head, javascript_include_tag("charts", type: "module"))
+      content_for(:head, javascript_include_tag("charts", type: "module", preload_links_header: false))
     end
     safe_join([
       tag.div(**options, data: { react: name, react_props: "#{id}-props" }, &block),

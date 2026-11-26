@@ -33,6 +33,10 @@
     <%# Site-wide structured data (Organization + WebSite) %>
     <script type="application/ld+json"><%= site_structured_data.to_json.html_safe %></script>
 
+    <%# The import map comes before any module script, the charts' bundle in
+        yield :head included: Firefox ignores an import map that follows one,
+        and then no controller, Turbo or view count runs on that page. %>
+    <%= javascript_importmap_tags %>
     <%= yield :head %>
     <% if ENV["GOOGLE_SITE_VERIFICATION"].present? %>
       <meta name="google-site-verification" content="<%= ENV["GOOGLE_SITE_VERIFICATION"] %>" />
@@ -48,7 +52,6 @@
     <%= preload_link_tag "funnel-display-latin.woff2" %>
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-    <%= javascript_importmap_tags %>
     <%# Turbo runs every script again when it draws an error page, such as a
         claim page's 404, and a counter loaded twice counts every view after
         it twice. data-turbo-eval="false" keeps the first one; a page load
