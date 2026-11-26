@@ -10,8 +10,8 @@ RSpec.describe "Home", type: :request do
     it "leads with the friction, not a feature list" do
       get "/"
 
-      expect(response.body).to include("Keep shipping.")
-      expect(response.body).to include("Openstage does the showing.")
+      expect(response.body).to include("A launch post shows one day.")
+      expect(response.body).to include("Openstage shows all of them.")
     end
 
     # Signing in claims a stage the visitor has already seen, so the landing
@@ -92,11 +92,12 @@ RSpec.describe "Home", type: :request do
 
     # The whole feed left the landing on 2026-09-29, when it sold a network of
     # a handful of people. One entry at a time shows the product in use.
-    it "shows other builders' latest work one entry at a time, three at most from any builder" do
+    it "shows other builders' latest work one entry at a time, three at most from any builder and one from any project" do
       owner = create(:user, username: "tuxnotfound", github_username: "tuxnotfound")
       create(:entry, user: owner, title: "The owner's own commit", occurred_at: 1.minute.ago)
       alice = create(:user, username: "alice")
-      4.times { |i| create(:entry, user: alice, title: "Alice step #{i}", repo_name: "alice/app", occurred_at: (i + 1).hours.ago) }
+      4.times { |i| create(:entry, user: alice, title: "Alice step #{i}", repo_name: "alice/app#{i}", occurred_at: (i + 1).hours.ago) }
+      create(:entry, user: alice, title: "Alice again", repo_name: "alice/app0", occurred_at: 6.hours.ago)
       create(:entry, user: alice, title: "Merge pull request #3 from alice/x", occurred_at: 10.minutes.ago)
       bob = create(:user, username: "bob")
       create(:entry, user: bob, entry_type: "milestone", source: "manual", title: "Bob's launch", occurred_at: 5.hours.ago)
@@ -106,9 +107,9 @@ RSpec.describe "Home", type: :request do
       lately = Nokogiri::HTML(response.body).at_css("section[aria-labelledby='lately']")
       items = lately.css("[data-rotate-target='item']")
       expect(items.map { |item| item.at_css(".font-semibold").text }).to eq([ "Alice step 0", "Alice step 1", "Alice step 2", "Bob's launch" ])
-      expect(items.map { |item| item["href"] }).to eq(%w[/alice/app /alice/app /alice/app /bob])
+      expect(items.map { |item| item["href"] }).to eq(%w[/alice/app0 /alice/app1 /alice/app2 /bob])
       expect(items.map { |item| item["inert"].present? }).to eq([ false, true, true, true ])
-      expect(lately.text).not_to include("owner's own", "Merge pull request")
+      expect(lately.text).not_to include("owner's own", "Merge pull request", "Alice again")
     end
 
     it "leaves out of the strip the commits of a project whose builder hides them, keeping its milestones" do

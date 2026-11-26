@@ -44,7 +44,7 @@ RSpec.describe "Previews", type: :request do
       field = Nokogiri::HTML(response.body).at_css("input#preview-login")
       expect([ field["value"], field["aria-invalid"], field.key?("autofocus") ]).to eq([ "your_username", "true", true ])
       expect(Nokogiri::HTML(response.body).at_css("#preview-login-error").text).to eq("No GitHub user named @your_username.")
-      expect(response.body).to include("Keep shipping.")
+      expect(response.body).to include("A launch post shows one day.")
     end
 
     it "goes home with nothing typed" do
@@ -152,7 +152,7 @@ RSpec.describe "Previews", type: :request do
       expect(page.at_css("input#preview-login")["value"]).to eq("nobdy")
       expect(page.at_css("#preview-login-error").text).to eq("No GitHub user named @nobdy.")
       expect(page.at_css("input#preview-login-end")["value"]).to eq("")
-      expect(response.body).to include("Keep shipping.", "How it works")
+      expect(response.body).to include("A launch post shows one day.", "How it works")
     end
 
     it "offers the sign-in when GitHub fails, and reports it" do

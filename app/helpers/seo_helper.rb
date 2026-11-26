@@ -1,8 +1,8 @@
 module SeoHelper
   SITE_NAME = "Openstage".freeze
   DEFAULT_TITLE = "Openstage: what you're building, project by project".freeze
-  DEFAULT_DESCRIPTION = "Openstage keeps a public page of what you're building, project by project, " \
-    "current from your GitHub commits. Free for indie builders.".freeze
+  DEFAULT_DESCRIPTION = "Openstage keeps a page for each project you build: what you built and when, who visits its website, " \
+    "and what it earns. Free for indie builders.".freeze
 
   # Title shown in <title> and og:title. Pages set it with `content_for :title`.
   # Dynamic pages (e.g. profiles) should use the block form so user data is escaped.

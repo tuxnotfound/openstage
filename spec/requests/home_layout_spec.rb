@@ -11,7 +11,7 @@ RSpec.describe "Home layout", type: :request do
   it "keeps the four agreed sections, in order" do
     get "/"
 
-    order = [ "Keep shipping.", "How it works", "Frequently asked questions", "Your commits already tell the story." ]
+    order = [ "A launch post shows one day.", "How it works", "Frequently asked questions", "rather ship than post about it." ]
     positions = order.map { |text| response.body.index(text) }
 
     expect(positions).to all(be_present)
@@ -49,8 +49,8 @@ RSpec.describe "Home layout", type: :request do
   it "sells projects: a line each, and what each one is" do
     get "/"
 
-    expect(response.body).to include("Every project gets its line")
-    expect(response.body).to include("What each project is")
+    expect(response.body).to include("Every project gets a page")
+    expect(response.body).to include("Its numbers, on one chart")
   end
 
   # The recap picker, the week card and Make a card are gone.

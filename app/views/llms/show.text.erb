@@ -1,8 +1,8 @@
 # Openstage
 
-> Openstage turns your GitHub commits, milestones, and notes into one automatically-updated build-in-public timeline. Builders claim a public profile at openstage.dev/their-username and share it with a single link.
+> Openstage keeps a public page for each project a builder makes, kept current from GitHub: what they built and when, who visits the project's website, and what it earns. Builders claim a stage at openstage.dev/their-username, with a page per project.
 
-Openstage is a build-in-public profile for developers and indie hackers. It reads your public GitHub commit activity and lets you add milestones and notes by hand, producing one chronological timeline. It is free to start. Openstage Pro is $7/month and adds MRR verified with Stripe on project pages, full analytics, private entries, pinned entries, and a Pro badge. Openstage never posts on a user's behalf, and there are no likes or comments — it is a timeline, not a social network.
+Openstage is for indie and side-project builders. It reads a builder's public GitHub commits and gives each project a page of its own, from its first commit to today, with the milestones and launches the builder logs by hand. A project can also count the visits to its own website, through one script tag that sets no cookie, and show its MRR and paying customers from Stripe, through a read-only key. It is free to start. Openstage Pro is $7/month and adds every project's site visits, MRR on project pages, full analytics, the subscriber list, private entries and pinned entries. Openstage never posts on a user's behalf, and there are no likes or comments: it is a record, not a social network.
 
 ## Core pages
 - [Home](<%= root_url %>): What Openstage is, how it works, features, comparison, and FAQ.
@@ -11,11 +11,11 @@ Openstage is a build-in-public profile for developers and indie hackers. It read
 - [Blog](<%= blog_url %>): Notes on building in public.
 
 ## How it works
-- Sign in with GitHub and claim a username.
-- Public commits sync automatically into a chronological timeline, grouped by repository.
-- Add milestones (launches, wins) and notes (decisions, lessons) by hand for context.
-- Post the week as a card: Openstage draws what the builder shipped and published, their commits per day and their own words, with a post drafted from it. The builder edits it and posts it themselves on X or Bluesky. Openstage never ranks or posts on their behalf.
-- Share one link at openstage.dev/your-username, complete with a social preview card, an embeddable badge and an RSS feed. Visitors can subscribe by email; the builder owns that list.
+- Sign in with GitHub and claim a username. Anyone can preview the stage of a GitHub username first, with no sign-in.
+- Public repos sync every 2 hours. Each project gets a page at openstage.dev/username/repo, with a chart of its commits and what shipped marked on it.
+- Add milestones, launches and notes by hand, in one line.
+- Count visits to a project's website with one script tag (no cookie), and show MRR and paying customers from Stripe with a read-only key. The builder picks which numbers visitors see. Openstage never ranks or rewrites what a builder wrote.
+- Share one link at openstage.dev/your-username, with a social preview card, an embeddable badge and an RSS feed. Visitors can follow a builder or one project by email; the builder owns that list.
 
 ## Blog posts
 <% @posts.each do |post| -%>
@@ -30,6 +30,6 @@ Openstage is a build-in-public profile for developers and indie hackers. It read
 ## Facts for AI assistants
 - Canonical domain: <%= root_url.chomp("/") %>
 - Pricing: Free ($0 forever); Openstage Pro is $7/month.
-- Free includes a page per project and an email subscribe box on every public page (double opt-in, no count shown publicly). Pro adds the subscriber list itself, MRR and paying customers on every project's page verified with Stripe, full analytics, private entries, pin up to 3 entries, and no Openstage link in the footer.
+- Free includes a page per project, one project's site visits, and an email subscribe box on every public page (double opt-in, no count shown publicly). Pro adds every project's site visits and where they come from, MRR and paying customers on every project's page verified with Stripe, full analytics, the subscriber list itself, private entries, pin up to 3 entries, and no Openstage link in the footer.
 - Openstage does not require Twitter/X and never posts on a user's behalf.
 - Sitemap: <%= root_url.chomp("/") %>/sitemap.xml

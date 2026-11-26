@@ -1,19 +1,21 @@
 <% content_for :title, "Openstage: what you're building, project by project" %>
-<% content_for :meta_description, "Connect GitHub once. Openstage keeps a public page of your projects: what each one is, how its commits move, and what shipped. Free for indie builders." %>
+<% content_for :meta_description, "Connect GitHub once. Openstage keeps a page for each project you build: what you built and when, who visits its website, and what it earns. Free to start." %>
 <% content_for :main_class, "os-wrap os-stack pt-1.5" %>
 
 <%
-  # Four questions, each one an objection a builder has before signing in.
+  # Five questions, each one an objection a builder has before signing in.
   # The FAQPage JSON-LD below mirrors these, so the markup matches visible text.
   faqs = [
     { q: "What is Openstage?",
-      a: "A public page of what you're building, project by project, kept current from GitHub. Each project shows what it is, how its commits move over time and what shipped. It is for indie and side-project builders who want their work seen without a second job." },
+      a: "A public page for each project you build, kept current from GitHub: what it is, what you built and when, and the numbers you choose to show, such as visits to its website and MRR. It is for indie and side-project builders who want their work seen without a second job." },
+    { q: "Where do visits and MRR come from?",
+      a: "Visits come from one script tag you paste into a project's website. It sets no cookie and counts page views and visitors per day. MRR and paying customers come from Stripe, through a read-only key. Each number shows on a project's page only while you leave it on, and MRR shows there on Pro." },
     { q: "What does it read from GitHub?",
       a: "Sign-in asks only for your email address. Public repos you push to sync every 2 hours, with the description, website and preview image you set on each. Private repos stay out unless you connect them in Settings and include each one, and even then only commit messages and release names appear, never links to the code." },
     { q: "Does it post for me?",
       a: "No. Openstage never posts to your X or other accounts, and never ranks or rewrites what you wrote. Share your stage wherever you like; it keeps itself current." },
     { q: "What does it cost?",
-      a: "Your stage, a page for each project, the sync and a subscribe box are free for good. Pro is $7 a month and adds your subscriber list, MRR on your projects' pages, full analytics, private entries and pins." }
+      a: "Your stage, a page for each project, the sync, one project's site visits and a subscribe box are free for good. Pro is $7 a month and adds every project's site visits, MRR on your projects' pages, full analytics, your subscriber list, private entries and pins." }
   ]
 %>
 
@@ -61,8 +63,9 @@
   <div class="grid lg:grid-cols-2 lg:grid-rows-[auto_auto_1fr] lg:gap-x-9">
     <div class="lg:col-start-1 lg:row-start-1 lg:self-end">
       <span class="os-tag">For indie and side-project builders</span>
-      <h1 class="os-h1 mt-4.5"><%= safe_join(HomeHelper::TAGLINE, tag.br) %></h1>
-      <p class="os-p mt-4 text-lg">Openstage keeps a public page of everything you're building, project by project. It stays current from your GitHub commits while you work.</p>
+      <%# A block a line, so each sentence wraps evenly by itself: a forced break turns the balancing off. %>
+      <h1 class="os-h1 mt-4.5 text-[clamp(34px,4vw,48px)]"><% HomeHelper::TAGLINE.each do |line| %><span class="block text-balance"><%= line %></span><% end %></h1>
+      <p class="os-p mt-4 text-lg">Openstage keeps a page for each project you build, from its first commit to today: what you built and when, who visits its website, and what it earns. You pick what visitors see, and it updates on its own while you ship.</p>
       <div class="mt-6">
         <% if user_signed_in? %>
           <%= link_to "Go to your dashboard", dashboard_path, class: "os-btn" %>
@@ -95,9 +98,9 @@
   <p class="os-p mt-1.5">One sign-in and the page fills itself. The rest is optional.</p>
   <ol class="os-grid2 mt-4.5">
     <% [ [ "Connect GitHub once", "Your public repos sync every 2 hours. Private ones join only if you add them in Settings. Nothing to install." ],
-         [ "Every project gets its line", "Your stage charts each project's commits over 30 days, 90 days or 12 months. Visitors see what you work on now and what came before, all together or one project at a time." ],
-         [ "What each project is", "Its description, website and picture come from GitHub, or from its README when GitHub has none. Fill any gap once, from your dashboard." ],
-         [ "Launches stand out", "Log a launch or a post in one line. It shows under What's new, on your stage and on the project's own page." ] ].each_with_index do |(title, about), i| %>
+         [ "Every project gets a page", "What it is and what you built, from its first commit to today. Its description, website and picture come from GitHub, and you can write your own." ],
+         [ "Its numbers, on one chart", "Commits come by themselves. One script tag adds the visits to its website, and a read-only Stripe key its MRR. Free does it for one project; Pro for all of them, with MRR on the page." ],
+         [ "Launches stand out", "Log a launch or a post in one line. It marks the chart on its day and shows under What's new, on your stage and on the project's page." ] ].each_with_index do |(title, about), i| %>
       <li class="os-card">
         <div class="os-num text-[28px] text-ink-3"><%= format("%02d", i + 1) %></div>
         <h3 class="os-h3 mt-1.5"><%= title %></h3>
@@ -128,8 +131,8 @@
 </section>
 
 <section class="os-panel p-7 text-center sm:p-14">
-  <h2 class="os-h1 text-[clamp(30px,4vw,46px)]">Your commits already tell the story.</h2>
-  <p class="os-p mt-2.5 text-lg">Give them a page. Free, and it fills itself.</p>
+  <h2 class="os-h1 text-[clamp(30px,4vw,46px)] text-balance">For builders who'd rather ship than post about it.</h2>
+  <p class="os-p mt-2.5 text-lg">Give your projects a page. Free, and it fills itself.</p>
   <div class="mt-5.5">
     <% if user_signed_in? %>
       <%= link_to "Go to your dashboard", dashboard_path, class: "os-btn" %>
