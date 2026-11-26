@@ -2,6 +2,7 @@
     GitHub's sign-in: the header's, and the one ending a stage or a project's
     page (layouts/_invite). ref: a tag for
     /admin, the visitor's first touch when they came with none
-    (SignIns::CountStartService); form_class: its form's. %>
+    (SignIns::CountStartService); form_class: its form's; button_class:
+    more of its own. %>
 <%= button_to "Make your own stage", "/auth/github", method: :post, params: (local_assigns[:ref] ? { ref: ref } : {}),
-              data: { turbo: false, make_your_own: true }, class: "os-btn sm", form_class: local_assigns[:form_class] %>
+              data: { turbo: false, make_your_own: true }, class: [ "os-btn sm", local_assigns[:button_class] ], form_class: local_assigns[:form_class] %>

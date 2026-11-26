@@ -18,7 +18,7 @@ RSpec.describe "The header", type: :request do
       get path
       expect([ form_of("Make your own stage")&.[]("action"), form_of("Sign in")&.[]("action") ]).to eq([ "/auth/github", "/auth/github" ])
     end
-    expect(form_of("Make your own stage").at_css("button")["class"]).to eq("os-btn sm")
+    expect(form_of("Make your own stage").at_css("button")["class"]).to start_with("os-btn sm")
     expect(header.text).not_to include("with GitHub")
   end
 
@@ -27,11 +27,14 @@ RSpec.describe "The header", type: :request do
 
     expect(header.at_css("nav")["class"]).to include("max-sm:hidden")
     expect(header.at_css("[data-controller='theme']").parent["class"]).to eq("max-sm:hidden")
-    expect(form_of("Make your own stage")["class"]).to eq("max-sm:ml-auto")
+    expect(form_of("Make your own stage")["class"]).to start_with("max-sm:ml-auto")
     expect(header.at_css("nav").text.squish).to eq("Feed Pricing Blog Sign in")
 
     menu = header.at_css("details[data-phone-menu]")
     expect(menu["class"]).to include("sm:hidden")
+    # Under 360 px the button takes a row of its own, the menu beside the logo.
+    expect(form_of("Make your own stage")["class"]).to include("max-[359px]:order-last", "max-[359px]:w-full")
+    expect(header.at_css(".os-top")["class"]).to include("max-[359px]:flex-wrap")
     expect(menu.at_css("summary")["aria-label"]).to eq("Menu")
     expect(menu.css("nav a").map { |link| [ link.text, link["href"] ] }).to eq([ %w[Feed /feed], %w[Pricing /pricing], %w[Blog /blog] ])
     expect(menu.at_css("form[action='/auth/github']").text.squish).to eq("Sign in")

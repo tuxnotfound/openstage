@@ -37,8 +37,9 @@
     <%# A visitor's one action is their own stage, straight to GitHub's sign-in,
         which a member uses too; "Sign in" names it for them beside the links.
         On a phone only the logo and the button fit, so the links and the
-        theme fold into a menu beside the button. %>
-    <div class="os-top max-sm:gap-3">
+        theme fold into a menu beside the button. Under 360 px the three
+        do not fit one row, so the button takes a row of its own. %>
+    <div class="os-top max-sm:gap-3 max-[359px]:h-auto max-[359px]:flex-wrap max-[359px]:gap-y-2.5 max-[359px]:py-3">
       <%= link_to "openstage", root_path, class: "os-logo" %>
       <nav class="os-nav ml-auto items-center max-sm:hidden" aria-label="Main">
         <%= link_to "Feed", feed_path, aria: { current: (controller_name == "feed" ? "page" : nil) } %>
@@ -48,8 +49,8 @@
                       class: "cursor-pointer whitespace-nowrap text-ink-2 hover:text-ink" %>
       </nav>
       <span class="max-sm:hidden"><%= render "layouts/theme_toggle" %></span>
-      <%= render "layouts/make_your_own", form_class: "max-sm:ml-auto" %>
-      <details class="relative sm:hidden" data-controller="dropdown" data-phone-menu>
+      <%= render "layouts/make_your_own", form_class: "max-sm:ml-auto max-[359px]:order-last max-[359px]:ml-0 max-[359px]:w-full", button_class: "max-[359px]:w-full" %>
+      <details class="relative sm:hidden max-[359px]:ml-auto" data-controller="dropdown" data-phone-menu>
         <summary class="os-chip size-8.5 cursor-pointer justify-center p-0 text-ink-2 list-none [&::-webkit-details-marker]:hidden" aria-label="Menu">
           <svg class="size-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
         </summary>
