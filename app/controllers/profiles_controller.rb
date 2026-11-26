@@ -1,5 +1,6 @@
 class ProfilesController < ApplicationController
   include CountsPageViews
+  include RefusesFilterCrawls
 
   def show
     @user = User.active.find_by(username: params[:username])

@@ -3,6 +3,7 @@
 # builder hid the project: then it opens for them alone, as it would show.
 class ProjectPagesController < ApplicationController
   include CountsPageViews
+  include RefusesFilterCrawls
 
   def show
     @user = User.active.find_by(username: params[:username])
