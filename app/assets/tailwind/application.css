@@ -198,6 +198,17 @@
   .os-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 16px; }
   .os-grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
   .os-row { border-top: 1px solid var(--color-line); padding: 12px 0; }
+
+  /* A page's messages: in the page's flow under the header, then held at
+     the top of the screen while it scrolls. The list lets a click through
+     beside a message, so nothing under it is covered but by the message. */
+  .os-flash { position: sticky; top: 8px; z-index: 40; margin-bottom: 8px; pointer-events: none; }
+  .os-flash-list { display: flex; flex-direction: column; gap: 8px; }
+  .os-msg { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 10px 8px 10px 16px; border-radius: var(--radius-control); background: var(--color-accent-soft); color: var(--color-ink); font-size: 14px; line-height: 1.45; box-shadow: 0 6px 20px -8px rgb(0 0 0 / .35); pointer-events: auto; animation: os-msg-in .28s cubic-bezier(.33, 1, .68, 1); }
+  .os-msg.down { background: var(--color-down-soft); }
+  .os-msg p { margin: 0; padding: 3px 0; min-width: 0; overflow-wrap: anywhere; }
+  .os-msg-x { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 0; border-radius: 8px; background: transparent; color: var(--color-ink-2); font: inherit; font-size: 20px; line-height: 1; cursor: pointer; }
+  .os-msg-x:hover { background: color-mix(in oklab, var(--color-ink) 10%, transparent); color: var(--color-ink); }
   .os-rowflex { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; }
 
   /* Header and footer */
@@ -316,6 +327,16 @@
    little wider than its row, then fades; os-picked is the mark's, set again
    on every click (Marks.reveal). A shadow, inset over the background and
    spread past the edge, so a card keeps its own background after. */
+/* A message comes down into its place (.os-msg). */
+@keyframes os-msg-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os-msg { animation: none; }
+}
+
 @keyframes entry-highlight {
   0%, 35% { box-shadow: inset 0 0 0 100vmax var(--color-accent-soft), 0 0 0 8px var(--color-accent-soft); }
   100%    { box-shadow: inset 0 0 0 100vmax transparent, 0 0 0 8px transparent; }

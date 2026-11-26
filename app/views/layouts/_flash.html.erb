@@ -1,10 +1,17 @@
-<% if flash[:notice] || flash[:alert] %>
-  <div class="<%= content_for(:wrap) || "os-wrap" %> os-stack mb-2 gap-2">
-    <% if flash[:notice] %>
-      <p role="status" class="rounded-control bg-accent-soft px-4 py-2.5 text-sm"><%= flash[:notice] %></p>
-    <% end %>
-    <% if flash[:alert] %>
-      <p role="alert" class="rounded-control bg-down-soft px-4 py-2.5 text-sm"><%= flash[:alert] %></p>
-    <% end %>
+<%# What an action answered, a success or a refusal: under the header as the
+    page opens, and held at the top of the screen as the page scrolls, so a
+    page that comes back where the click was still shows it. Dismiss takes one
+    away (flash controller); the next page has none. %>
+<% messages = [ [ :notice, "status", "" ], [ :alert, "alert", " down" ] ].select { |key, _role, _look| flash[key].present? } %>
+<% if messages.any? %>
+  <div class="os-flash" data-controller="flash">
+    <div class="<%= content_for(:wrap) || "os-wrap" %> os-flash-list">
+      <% messages.each do |key, role, look| %>
+        <div role="<%= role %>" class="os-msg<%= look %>" data-flash-target="message">
+          <p><%= flash[key] %></p>
+          <button type="button" class="os-msg-x" aria-label="Dismiss this message" data-action="flash#dismiss">&times;</button>
+        </div>
+      <% end %>
+    </div>
   </div>
 <% end %>

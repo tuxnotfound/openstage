@@ -11,9 +11,10 @@ module Projects
       saved = service.call
       flash_message = saved ? { notice: "Site visits saved." } : { alert: service.errors.full_messages.to_sentence }
 
-      # Back with the setup open, so a script just picked shows its line. A
-      # refusal lands at the top of the page, where its alert says why.
-      redirect_to edit_project_path(repo, site: ("open" if params[:source].present?), anchor: ("site-visits" if saved)),
+      # Back with the setup open, so a script just picked shows its line; a
+      # refusal too, since its alert holds to the top of the screen
+      # (layouts/_flash).
+      redirect_to edit_project_path(repo, site: ("open" if params[:source].present?), anchor: "site-visits"),
                   status: :see_other, **flash_message
     end
   end

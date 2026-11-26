@@ -10,9 +10,9 @@ module Projects
       service = Revenue::CountProductService.new(repo: repo, product: product, counted: ActiveModel::Type::Boolean.new.cast(params[:counted]))
       flash_message = service.call ? {} : { alert: service.errors.full_messages.to_sentence }
 
-      # Back with the products open, under the row; a refusal lands at the
-      # top of the page, where its alert says why.
-      redirect_to edit_project_path(repo, revenue: "open", anchor: ("revenue" if flash_message.empty?)), status: :see_other, **flash_message
+      # Back with the products open, under the row; a refusal too, since its
+      # alert holds to the top of the screen (layouts/_flash).
+      redirect_to edit_project_path(repo, revenue: "open", anchor: "revenue"), status: :see_other, **flash_message
     end
   end
 end
