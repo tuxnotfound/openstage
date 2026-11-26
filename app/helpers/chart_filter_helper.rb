@@ -13,7 +13,7 @@ module ChartFilterHelper
     when :repos then { text: "Connect your repos to see your commits here.", label: "Connect GitHub", href: new_github_installation_path }
     when :hidden then { text: "You hide every number here.", label: "Choose what shows", href: repo ? edit_project_path(repo) : dashboard_path }
     when :site then { text: "Connect your site to count its visits.", label: "Set up site visits", href: site_visits_setup_path(project: repo&.id) }
-    when :stripe then { text: "Connect Stripe to show your MRR.", label: "Connect Stripe", href: settings_path(tab: "integrations") }
+    when :stripe then { text: "Connect Stripe to show your MRR.", label: "Connect Stripe", href: settings_path(tab: "integrations", project: repo&.id) }
     end
   end
 

@@ -40,6 +40,36 @@ RSpec.describe "Connecting a payment provider for MRR", type: :request do
       expect(section.at_css("#stripe-connect")).to be_nil
     end
 
+    describe "come from a project's Set up MRR" do
+      let(:repo) { create(:github_repo, user: user, name: "shipnote", full_name: "builder/shipnote") }
+
+      it "names the project in the form, and goes on to its products once Stripe is connected" do
+        get "/settings", params: { tab: "integrations", project: repo.id }
+        expect(Nokogiri::HTML(response.body).at_css("#stripe-connect input[type='hidden'][name='project']")["value"]).to eq(repo.id.to_s)
+
+        post "/revenue_accounts", params: { provider: "stripe", api_key: "rk_test_abc123", project: repo.id }
+
+        expect(response).to redirect_to(edit_project_path(repo, revenue: "open", anchor: "revenue"))
+        expect(flash[:notice]).to eq("Stripe connected.")
+      end
+
+      it "keeps the project for the next try when a key is refused" do
+        post "/revenue_accounts", params: { provider: "stripe", api_key: "sk_live_full", project: repo.id }
+
+        expect(response).to redirect_to(settings_path(tab: "integrations", project: repo.id, anchor: "revenue"))
+      end
+
+      it "never takes another builder's project" do
+        other = create(:github_repo, name: "theirs", full_name: "someone/theirs")
+
+        get "/settings", params: { tab: "integrations", project: other.id }
+        expect(Nokogiri::HTML(response.body).at_css("#stripe-connect input[name='project']")).to be_nil
+
+        post "/revenue_accounts", params: { provider: "stripe", api_key: "rk_test_abc123", project: other.id }
+        expect(response).to redirect_to(settings_path(tab: "integrations", anchor: "revenue"))
+      end
+    end
+
     it "says why a key is refused" do
       post "/revenue_accounts", params: { provider: "stripe", api_key: "sk_live_full" }
 

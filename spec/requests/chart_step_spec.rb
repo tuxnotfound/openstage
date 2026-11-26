@@ -54,6 +54,17 @@ RSpec.describe "A chart with nothing to draw", type: :request do
     expect(response).to have_http_status(:ok)
   end
 
+  it "sends a Pro project's page to Connect Stripe naming that project, so Connect goes on to its products" do
+    user.update!(pro: true)
+    repo.update!(site_set_up_at: 1.day.ago)
+    sign_in_as(user)
+
+    get "/builder/shipnote", params: { range: "30d" }
+
+    expect(step.text.squish).to eq("Connect Stripe to show your MRR. Connect Stripe")
+    expect(step.at_css("a")["href"]).to eq(settings_path(tab: "integrations", project: repo.id))
+  end
+
   it "leaves a builder's page alone with nothing to connect" do
     repo.update!(site_set_up_at: 1.day.ago)
     user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok")

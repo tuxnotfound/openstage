@@ -17,8 +17,8 @@ RSpec.describe "A project's Revenue (MRR) row", type: :request do
     Nokogiri::HTML(response.body).at_css("#revenue")
   end
 
-  it "leads to Integrations until Stripe is connected" do
-    expect(row.at_css("a[href='/settings?tab=integrations#revenue']").text).to eq("Connect Stripe")
+  it "leads to Integrations until Stripe is connected, naming the project to come back to" do
+    expect(row.at_css("a[href='/settings?project=#{shipnote.id}&tab=integrations#revenue']").text).to eq("Connect Stripe")
     expect(row.text).to include("From Stripe, once you connect it on Integrations.")
   end
 
@@ -124,7 +124,7 @@ RSpec.describe "A project's Revenue (MRR) row", type: :request do
 
     expect(section.at_css(".os-row .os-num").text).to eq("–")
     expect(section.text).to include("Stripe refuses your key")
-    expect(section.at_css("a[href='/settings?tab=integrations#revenue']").text).to eq("Connect Stripe")
+    expect(section.at_css("a[href='/settings?project=#{shipnote.id}&tab=integrations#revenue']").text).to eq("Connect Stripe")
     expect(section.at_css("#revenue-products")).to be_nil
     expect(section.css("button[role='switch']")).to be_empty
   end

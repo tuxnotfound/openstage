@@ -172,6 +172,7 @@
       <% if @stripe_account.nil? || @stripe_account.refused_at %>
         <%= form_with url: revenue_accounts_path, id: "stripe-connect", class: "os-stack gap-2.5 pb-3" do |f| %>
           <%= f.hidden_field :provider, value: "stripe" %>
+          <% if @revenue_project %><%= f.hidden_field :project, value: @revenue_project.id %><% end %>
           <p class="os-sm">In Stripe, under Developers and API keys, create a restricted key with Read on Products, Prices, Subscriptions and Invoices, and None on everything else.
             <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener" class="os-link">Open Stripe's API keys ↗</a>
             <%= link_to "What it reads and keeps", privacy_path(anchor: "stripe"), class: "os-link" %></p>

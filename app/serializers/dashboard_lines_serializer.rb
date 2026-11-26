@@ -79,7 +79,7 @@ class DashboardLinesSerializer < ApplicationSerializer
   # Call 2 of the plan: Settings' Revenue panel until Stripe takes a key,
   # then the project's own view with its products open.
   def mrr_path
-    @lines.stripe_ready? ? edit_project_path(@repo, revenue: "open", anchor: "revenue") : settings_path(tab: "integrations", anchor: "revenue")
+    @lines.stripe_ready? ? edit_project_path(@repo, revenue: "open", anchor: "revenue") : settings_path(tab: "integrations", project: @repo.id, anchor: "revenue")
   end
 
   def link(label, path, aria, filled:)

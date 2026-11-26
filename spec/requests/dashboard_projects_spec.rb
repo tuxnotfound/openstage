@@ -104,7 +104,7 @@ RSpec.describe "The dashboard's Projects tab", type: :request do
                  [ "MRR", "Not counted yet", "link", "Set up MRR" ] ])
       expect(line(tool, "visits")["control"]).to include("path" => "/dashboard/site-visits?project=#{tool.id}", "filled" => true,
                                                         "aria" => "Set up site visits for app")
-      expect(line(tool, "mrr")["control"]).to include("path" => "/settings?tab=integrations#revenue", "filled" => false)
+      expect(line(tool, "mrr")["control"]).to include("path" => settings_path(tab: "integrations", project: tool.id, anchor: "revenue"), "filled" => false)
       expect(line(tool, "commits")["control"]).to include("on" => true, "dead" => false, "path" => "/projects/#{tool.id}/numbers",
                                                          "number" => "commits", "aria" => "Show Commits for app")
     end
@@ -135,7 +135,7 @@ RSpec.describe "The dashboard's Projects tab", type: :request do
     end
 
     it "sets MRR up on Settings until Stripe takes a key, then on the project's own view with its products open" do
-      expect(line(tool, "mrr")["control"]["path"]).to eq("/settings?tab=integrations#revenue")
+      expect(line(tool, "mrr")["control"]["path"]).to eq(settings_path(tab: "integrations", project: tool.id, anchor: "revenue"))
 
       user.revenue_accounts.create!(provider: "stripe", api_key: "rk_test_ok")
       expect(line(tool, "mrr")["control"]["path"]).to eq("/projects/#{tool.id}/edit?revenue=open#revenue")

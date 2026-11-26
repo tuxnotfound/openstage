@@ -58,6 +58,8 @@ class SettingsController < ApplicationController
     @embed_script_tag     = "<script src=\"#{profile_embed_url(current_user.username)}\"></script>"
     @counted_sites        = SiteVisits::Slot.new(current_user).counting_hosts
     @stripe_account       = current_user.revenue_accounts.find_by(provider: "stripe")
+    # The project whose Set up MRR led here: Connect goes on to its products.
+    @revenue_project      = params[:project].presence && current_user.github_repos.find_by(id: params[:project])
     # Free sees how many; Pro sees who, and for which page.
     @subscribers          = current_user.subscriptions.confirmed.includes(:github_repo).order(confirmed_at: :desc)
   end

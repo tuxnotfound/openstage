@@ -17,7 +17,7 @@
       <span class="os-xs os-muted block"><%= line %></span>
     </span>
     <% if account.nil? || account.refused_at %>
-      <%= link_to "Connect Stripe", settings_path(tab: "integrations", anchor: "revenue"), class: "os-link whitespace-nowrap text-[13px]" %>
+      <%= link_to "Connect Stripe", settings_path(tab: "integrations", project: repo.id, anchor: "revenue"), class: "os-link whitespace-nowrap text-[13px]" %>
     <% elsif overview.revenue_slot_project %>
       <%= link_to "Go Pro", pricing_path, class: "os-link whitespace-nowrap text-[13px]" %>
     <% else %>
