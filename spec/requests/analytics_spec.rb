@@ -50,7 +50,7 @@ RSpec.describe "Analytics", type: :request do
       sign_in_as(user)
     end
 
-    it "hands the whole page to its script, the window, the tabs and Pro's mark, wide as the screen, with Analytics in the header" do
+    it "hands the whole page to its script, the window, the tabs and Pro's mark, as wide as the dashboard, with Analytics in the header" do
       get "/analytics"
 
       expect(response).to have_http_status(:ok)
@@ -58,11 +58,11 @@ RSpec.describe "Analytics", type: :request do
       expect(props.slice("endpoint", "defaultRange", "pro")).to eq("endpoint" => "/api/analytics", "defaultRange" => "30d", "pro" => true)
       expect(view.values_at("locked", "tab", "range")).to eq([ false, "overview", "30d" ])
       expect(view["tabs"].pluck("label")).to eq([ "Overview", "Commits", "Site visits", "MRR", "Openstage views" ])
-      expect(page.css("header, main, footer").map { |part| part["class"].split.first }).to eq(%w[os-wide os-wide os-wide])
+      expect(page.css("header, main, footer").map { |part| part["class"].split.first }).to eq(%w[os-wrap os-wrap os-wrap])
       expect(page.at_css("header nav[aria-label='Main'] a[aria-current='page']").text).to eq("Analytics")
 
       get "/dashboard"
-      expect(page.at_css("header")["class"]).to eq("os-wrap")
+      expect(page.css("header, main, footer").map { |part| part["class"].split.first }).to eq(%w[os-wrap os-wrap os-wrap])
     end
 
     it "counts an open for /admin once per tab and day, and none from the API" do
