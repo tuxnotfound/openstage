@@ -65,7 +65,7 @@ RSpec.describe "Analytics", type: :request do
       expect(page.css("header, main, footer").map { |part| part["class"].split.first }).to eq(%w[os-wide os-wide os-wide])
 
       get "/settings"
-      expect(page.at_css("header")["class"]).to eq("os-wrap")
+      expect(page.css("header, main, footer").map { |part| part["class"].split.first }).to eq(%w[os-wide os-wrap os-wrap])
     end
 
     it "counts an open for /admin once per tab and day, and none from the API" do

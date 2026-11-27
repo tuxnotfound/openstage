@@ -49,6 +49,20 @@ RSpec.describe "The header", type: :request do
     expect(header.text).not_to include("Make your own stage", "Sign in")
   end
 
+  it "keeps the dashboard's width for a member on every page, so the menu never moves, and the pages' width for a visitor" do
+    get "/pricing", headers: browser
+    expect(header["class"]).to eq("os-wrap")
+
+    user = create(:user)
+    sign_in_as(user)
+    [ "/dashboard", "/feed", "/settings", "/pricing", "/#{user.username}" ].each do |path|
+      get path
+
+      expect(response).to have_http_status(:ok), path
+      expect(header["class"]).to eq("os-wide"), path
+    end
+  end
+
   it "counts each start by the tag the visitor came with, and none of a member reconnecting" do
     get "/", params: { ref: "reddit" }, headers: browser
     post "/auth/github", headers: browser
