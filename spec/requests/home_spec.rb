@@ -10,8 +10,8 @@ RSpec.describe "Home", type: :request do
     it "leads with the friction, not a feature list" do
       get "/"
 
-      expect(response.body).to include("A launch post shows one day.")
-      expect(response.body).to include("Openstage shows all of them.")
+      expect(response.body).to include("Keep shipping.")
+      expect(response.body).to include("Openstage does the showing.")
     end
 
     # Signing in claims a stage the visitor has already seen, so the landing

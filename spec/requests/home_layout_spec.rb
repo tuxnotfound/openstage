@@ -11,7 +11,7 @@ RSpec.describe "Home layout", type: :request do
   it "keeps the four agreed sections, in order" do
     get "/"
 
-    order = [ "A launch post shows one day.", "How it works", "Frequently asked questions", "rather ship than post about it." ]
+    order = [ "Keep shipping.", "How it works", "Frequently asked questions", "rather ship than post about it." ]
     positions = order.map { |text| response.body.index(text) }
 
     expect(positions).to all(be_present)

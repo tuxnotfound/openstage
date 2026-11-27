@@ -63,8 +63,7 @@
   <div class="grid lg:grid-cols-2 lg:grid-rows-[auto_auto_1fr] lg:gap-x-9">
     <div class="lg:col-start-1 lg:row-start-1 lg:self-end">
       <span class="os-tag">For indie and side-project builders</span>
-      <%# A block a line, so each sentence wraps evenly by itself: a forced break turns the balancing off. %>
-      <h1 class="os-h1 mt-4.5 text-[clamp(34px,4vw,48px)]"><% HomeHelper::TAGLINE.each do |line| %><span class="block text-balance"><%= line %></span><% end %></h1>
+      <h1 class="os-h1 mt-4.5"><%= safe_join(HomeHelper::TAGLINE, tag.br) %></h1>
       <p class="os-p mt-4 text-lg">Openstage keeps a page for each project you build, from its first commit to today: what you built and when, who visits its website, and what it earns. You pick what visitors see, and it updates on its own while you ship.</p>
       <div class="mt-6">
         <% if user_signed_in? %>
