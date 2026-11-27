@@ -240,7 +240,7 @@
         <% if current_user.pro? %><span class="os-tag pro">✦ Pro</span><% end %>
       </div>
       <% if current_user.pro? %>
-        <p class="os-sm os-ink2 mt-2.5">Every project's site visits, MRR on your projects' pages, full analytics, your subscriber list, private entries, up to three pins, and no Openstage link in your footer.</p>
+        <p class="os-sm os-ink2 mt-2.5">Every project's site visits, MRR on your projects' pages, full analytics, your subscriber list, private entries, and no Openstage link in your footer.</p>
         <div class="os-row os-between mt-3.5">
           <span class="os-sm">Pro since <%= current_user.pro_since&.strftime("%B %-d, %Y") %></span>
           <span class="os-sm os-muted"><%= current_user.stripe_subscription_id.present? ? "Monthly" : "Lifetime" %></span>
@@ -249,7 +249,7 @@
           <div class="pt-3"><%= link_to "Manage billing on Stripe", billing_portal_path, data: { turbo: false }, class: "os-btn2" %></div>
         <% end %>
       <% else %>
-        <p class="os-sm os-ink2 mt-2.5">Free plan. Pro adds every project's site visits, MRR on your projects' pages, full analytics, your subscriber list, private entries and pins.</p>
+        <p class="os-sm os-ink2 mt-2.5">Free plan. Pro adds every project's site visits, MRR on your projects' pages, full analytics, your subscriber list and private entries.</p>
         <div class="pt-3">
           <%= button_to "Go Pro for $7 a month", checkout_path, method: :post, form: { data: { turbo: false } }, class: "os-btn" %>
         </div>

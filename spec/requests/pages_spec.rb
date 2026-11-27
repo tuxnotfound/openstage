@@ -91,8 +91,20 @@ RSpec.describe "Marketing pages", type: :request do
 
       page = Nokogiri::HTML(response.body).text.squish
       expect(page).to include("One project's MRR from Stripe, seen only by you")
-      expect(page).to include("MRR and paying customers on every project's page.", "Verified with Stripe. Hide either one whenever you like.")
+      expect(page).to include("MRR and paying customers on every project's page.", "Verified with Stripe.")
       expect(page).to include("How does Openstage count MRR?", "A refund does not change it.")
+    end
+
+    it "lists what Pro gives with no word on Free's limits or on pins, and names each plan's analytics" do
+      get "/pricing"
+
+      page = Nokogiri::HTML(response.body)
+      free, pro = page.css(".os-grid2 > .os-card").map { |card| card.text.squish }
+      expect(free).to include("Analytics: commits and one project's site visits")
+      expect(pro).to include("Visits to every project's website.", "On its page and in analytics, with where they come from.",
+                             "Analytics: commits, site visits, MRR and Openstage views", "Everything in Free")
+      expect(pro).not_to match(/Free counts|Hide either|\bpin/i)
+      expect(page.text).not_to match(/\bpin/i)
     end
 
     it "shows the upgrade CTA for signed-out visitors" do
